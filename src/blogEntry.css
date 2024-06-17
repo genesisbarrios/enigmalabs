@@ -1,0 +1,32 @@
+.blogimage{
+    max-height:100%;
+    margin-bottom: 10px;
+    margin-top:0px;
+  }
+
+  .pBlogBody{
+      margin-top:10px;
+      margin-bottom:0px;
+      padding-bottom: 0px;
+  }
+
+  #coverImage{
+    object-fit: cover;
+
+  }
+
+  @media only screen and (max-width: 900px) {
+    #coverImage{
+        height:120px!important;
+        width:100%;
+    
+      }
+  }
+
+  @media only screen and (max-width: 600px) {
+    #coverImage{
+        height:100px!important;
+        width:100%;
+    
+      }
+  }
