@@ -9,6 +9,7 @@ import Button from 'react-bootstrap/Button';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import * as THREE from "three";
 import ButtonMailTo from "./ButtonMailTo";
+import "./app.css";
 
 const Home = () => {
   // 2019 (c) Diego Albini CMD Srl 
@@ -264,7 +265,7 @@ const Home = () => {
       <div style={homeContainer} className="HomeContainer">
         <Row style={rowStyle} >
           <Col sm={12}>
-            <h1 style={{textAlign:"center", marginTop:'5%'}}>no rules. no formula. just art.</h1>
+            <h1 id="title" style={{textAlign:"center", marginTop:'5%'}}>no rules. no formula. just art.</h1>
           </Col>
         </Row>
       

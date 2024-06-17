@@ -42,3 +42,17 @@ body {
     transform: rotate(360deg);
   }
 }
+@media (max-width: 800px) {
+  #title {
+    font-size: 0.9em;
+    position: absolute;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+  }
+
+  #buttonContactUs{
+    margin-top:"-30%";
+  }
+}
