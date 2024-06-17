@@ -218,7 +218,7 @@ const Home = () => {
     };
 
     const buttonRowStyle = {
-      marginTop: '-10%',
+      marginTop: '-20%',
       marginBottom:"10%"
     };
 
@@ -234,7 +234,7 @@ const Home = () => {
 
     const homeContainer = {
       marginTop: '-55%',
-      width:'90%'
+      width:'100%'
     }
 
     const aboutButtonStyle = {
@@ -314,18 +314,14 @@ const Home = () => {
           <Col sm={4}></Col>
           <Col sm={4}> 
             {/* <Button style={aboutButtonStyle} id="aboutButton" onClick={routeChange}>Learn more</Button> */}
-            <a href="mailto:enigmasoftwareconsulting@gmail.com" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>Contact Us</Button></a>
+            <a href="mailto:info@enigma-labs.com" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>Contact Us</Button></a>
           </Col>
           <Col sm={4}></Col>
         </Row>
-        <Row id="buttonContactUs">
-        <Col sm={12} style={{ position: 'fixed', width: '100%', height: '100%', padding: 0, margin: 0 }}>
-          <img style={{ width: '100%', height: '100%', objectFit: 'cover' }} src="/Aliens.png" alt="Aliens" />
-      </Col>
-         
-        </Row>
       </div>
+      <img style={{ width: '100%', height: '100%', objectFit: 'cover' }} src="Aliens.png" alt="Aliens" />
     </Container>
+    
   );
 };
 
