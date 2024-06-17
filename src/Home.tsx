@@ -218,7 +218,8 @@ const Home = () => {
     };
 
     const buttonRowStyle = {
-      marginTop: '-30%'
+      marginTop: '-10%',
+      marginBottom:"10%"
     };
 
     const servicesStyle = {
@@ -263,8 +264,7 @@ const Home = () => {
       <div style={homeContainer} className="HomeContainer">
         <Row style={rowStyle} >
           <Col sm={12}>
-            <h1>Enigma is here for all your software consulting needs.</h1>
-            <p>Start here by viewing all of our services.</p>
+            <h1 style={{textAlign:"center", marginTop:'5%'}}>no rules. no formula. just art.</h1>
           </Col>
         </Row>
       
@@ -275,32 +275,37 @@ const Home = () => {
               <a href="panamia.club" target="_blank"><img style={imgStyle} className="servicesImg" alt="Panamia Club" src="/panamia.png" /></a>
                 <Card.Body>
                   <h5>Website Development and Maintenance</h5>
-                  {/* <Card.Text>
-                    Some quick example text to build on the card title and make up the bulk of
-                    the card's content.
+                  <Card.Text>
+                   Web Design and Development <br></br>
+                   Website Maintenance <br></br>
+                   NFT Collections and Decentralized Apps <br></br>
                   </Card.Text>
-                  <Button variant="primary">Go somewhere</Button> */}
                 </Card.Body>
               </Card>
             </Col>
             <Col xs={12} md={4}>
               <Card style={{ height: "auto"  }} className="servicesCards">
-                <a href="refound.app" target="_blank"><img style={imgStyle} className="servicesImg"  alt="Refound Journalism" src="/refound.png" /></a>
+                <a href="#" target="_blank"><img style={imgStyle} className="servicesImg"  alt="Audio Engineering Services" src="/audio.JPG" /></a>
                 <Card.Body>
-                <h5>NFT Collections and Decentralized Applications</h5>
-                  {/* <Card.Text>
-                    Some quick example text to build on the card title and make up the bulk of
-                    the card's content.
+                <h5>Audio Engineering</h5>
+                  <Card.Text>
+                    Music Production <br></br>
+                    Mixing <br></br>
+                    Mastering
                   </Card.Text>
-                  <Button variant="primary">Go somewhere</Button> */}
                 </Card.Body>
               </Card>
             </Col>
             <Col xs={12} md={4}>
               <Card style={{ height: "auto"  }} className="servicesCards">
-                <img style={imgStyle} className="servicesImg" src="/as.jpg" />
+                <img style={imgStyle} className="servicesImg" alt="video services" src="/video.png" />
                 <Card.Body>
-                  <h5>Design, Photography, and Editing</h5>
+                  <h5>Visual and Social Media Services</h5>
+                  <Card.Text>
+                    Photography, Videography <br></br>
+                    Graphic Design  <br></br>
+                    Social Media Management
+                  </Card.Text>
                 </Card.Body>
               </Card>
             </Col>
@@ -312,6 +317,12 @@ const Home = () => {
             <a href="mailto:enigmasoftwareconsulting@gmail.com" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>Contact Us</Button></a>
           </Col>
           <Col sm={4}></Col>
+        </Row>
+        <Row id="buttonContactUs">
+        <Col sm={12} style={{ position: 'fixed', width: '100%', height: '100%', padding: 0, margin: 0 }}>
+          <img style={{ width: '100%', height: '100%', objectFit: 'cover' }} src="/Aliens.png" alt="Aliens" />
+      </Col>
+         
         </Row>
       </div>
     </Container>

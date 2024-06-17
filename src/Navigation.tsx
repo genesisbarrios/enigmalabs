@@ -5,7 +5,7 @@ const Navigation = () => {
         <>
             <Navbar collapseOnSelect fixed='top' expand="sm" bg="black" variant="dark">
                 <Container id="navbarcontainer">
-                    <h3>ENIGMA SOFTWARE CONSULTING</h3>
+                    <img width={150} src="logo.png"></img>
                     <Navbar.Toggle aria-controls='responsive-navbar-nav'></Navbar.Toggle>
                     <Navbar.Collapse id='responsive-navbar-nav'>
                         <Nav>

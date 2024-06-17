@@ -19,21 +19,22 @@ const About = () => {
           </Row>
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h5>Based out of Miami, Florida Enigma Software Consulting provides modern, custom websites that fit the needs of our clients. With four years of experience in Software Development, we are equipped with the tools needed for any project. From static websites, to dynamic websites, to NFTs, product photography, videography, and e-commerce, we provide it all.</h5>
-              <h5>With experience in Angular, React, Azure, Java, Node.js, and Web3 development we have the experience to build any type of application. From websites, to mobile applications, to Decentralized Applications.</h5>
+              <h5>Based out of Miami, Florida Enigma Labs is your all in one creative agency. We provide Audiovisual services as well as modern, custom websites that fit the needs of our clients.</h5>
+              <h5>With over half a decade of experience in Software Development and a decade of experience in Music Production Audio Engineering, and Songwriting, we are equipped with the tools needed for any project. From websites, to NFTs, to music production, photography and videography, we provide it all.</h5>
+              <h5>Our creative services include Graphic Design, as well as Music Production, Audio Engineering, Photography, Videography, Editing, and Social Media Management.</h5>
               <h5 style={{marginTop: "5%"}}>Why should you hire a consultant?</h5>
               <ul>
-                <li>Prioritize your software needs</li>
-                <li>Save money on software</li>
-                <li>Custom Software</li>
+                <li>Prioritize your needs</li>
+                <li>Save money on licensing software</li>
+                <li>Save time and have your projects completed by experts</li>
               </ul>
               <hr style={{backgroundColor:"white", marginTop: "5%"}}/>
               <h5>CEO, Genesis Barrios</h5>
-              <p>B.S. in Computer Science - Florida International University</p>
-              <a className="socialLinks" href="https://linkedin.com/in/genesis-barrios" target="_blank">LinkedIn</a>
-              <a  className="socialLinks" href="http://genesisbarrios.co" target="_blank">Portfolio</a>
+              <p> B.S. in Computer Science - Florida International University </p>
+              <a  className="socialLinks" href="http://twitter.com/_enigmalabs" target="_blank">Twitter</a>
+              <a  className="socialLinks" href="https://linkedin.com/in/genesis-barrios" target="_blank">LinkedIn</a>
+              <a  className="socialLinks" href="http://genesisbarrios.xyz" target="_blank">Portfolio</a>
               <a  className="socialLinks" href="http://github.com/genesisbarrios" target="_blank">Github</a>
-              <a  className="socialLinks" href="http://twitter.com/enigmasoftwarec" target="_blank">Twitter</a>
             </Col>
           </Row>
         </Container>
