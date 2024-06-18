@@ -249,7 +249,8 @@ const Home = () => {
     };
 
     const buttonContactStyle = {
-      width:"100%"
+      width:"100%",
+      marginTop:"40%!important"
     }
 
 
@@ -315,7 +316,7 @@ const Home = () => {
           <Col sm={4}></Col>
           <Col sm={4}> 
             {/* <Button style={aboutButtonStyle} id="aboutButton" onClick={routeChange}>Learn more</Button> */}
-            <a href="mailto:info@enigma-labs.com" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>Contact Us</Button></a>
+            <a href="mailto:info@enigma-labs.com" style={{color:"white"}}> <Button style={{width:"100%", marginTop:"30%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>Contact Us</Button></a>
           </Col>
           <Col sm={4}></Col>
         </Row>
