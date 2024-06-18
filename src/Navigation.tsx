@@ -1,4 +1,5 @@
 import { Navbar, Nav, Container } from 'react-bootstrap';
+import './Navigation.css'; // import your custom CSS file
 
 const Navigation = () => {
     return (
@@ -9,7 +10,7 @@ const Navigation = () => {
                         <img width={150} src="logo.png" alt="Logo" />
                     </Navbar.Brand>
                     <Navbar.Toggle aria-controls='responsive-navbar-nav' />
-                    <Navbar.Collapse id='responsive-navbar-nav' className="justify-content-end">
+                    <Navbar.Collapse id='responsive-navbar-nav' className="custom-navbar-collapse">
                         <Nav>
                             <Nav.Link className="navLinks" href="/">Home</Nav.Link>
                             <Nav.Link className="navLinks" href="/About">About</Nav.Link>

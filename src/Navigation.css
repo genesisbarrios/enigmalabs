@@ -1,0 +1,9 @@
+@media (max-width: 767px) {
+    .custom-navbar-collapse {
+      position: absolute;
+      top: 56px; /* Adjust this value as needed */
+      right: 0;
+      left: auto;
+      width: 50px; /* Adjust this value as needed */
+    }
+  }
