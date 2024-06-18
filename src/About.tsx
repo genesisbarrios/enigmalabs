@@ -4,7 +4,7 @@ import { Row, Col, Container, Button } from "react-bootstrap";
 const About = () => {
 
   const rowStyle = {
-    marginTop: '5%'
+    margin: '5%'
   };
 
       return (
@@ -28,13 +28,23 @@ const About = () => {
                 <li>Save money on licensing software</li>
                 <li>Save time and have your projects completed by experts</li>
               </ul>
+            
               <hr style={{backgroundColor:"white", marginTop: "5%"}}/>
+              <h2>Team</h2>
               <h5>CEO, Genesis Barrios</h5>
-              <p> B.S. in Computer Science - Florida International University </p>
-              <a  className="socialLinks" href="http://twitter.com/_enigmalabs" target="_blank">Twitter</a>
+              <p> Software Engineer, Music Producer and Audio Engineer, Photographer, Videographer and Editor </p>
+              <a  className="socialLinks" href="http://twitter.com/gendotwav" target="_blank">Twitter</a>
+              <a  className="socialLinks" href="http://instagram.com/@gen.wav" target="_blank">Instagram</a>
               <a  className="socialLinks" href="https://linkedin.com/in/genesis-barrios" target="_blank">LinkedIn</a>
               <a  className="socialLinks" href="http://genesisbarrios.xyz" target="_blank">Portfolio</a>
               <a  className="socialLinks" href="http://github.com/genesisbarrios" target="_blank">Github</a>
+              
+              <br></br>
+
+              <h5>Chris Fernandez</h5>
+              <p> Music Producer, Photographer, Videographer and Editor </p>
+              <a  className="socialLinks" href="http://instagram.com/@khrissosick" target="_blank">Instagram</a>
+              <a  className="socialLinks" href="https://linktr.ee/khrissosick" target="_blank">Links</a>
             </Col>
           </Row>
         </Container>
