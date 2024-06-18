@@ -271,8 +271,8 @@ const Home = () => {
         </Row>
       
         <Row style={servicesStyle}><h1 className="centerText" id="services">Services</h1></Row>
-        <Row style={rowStyle} id="servicesContainerRow">
-            <Col xs={12} md={4} className="d-flex align-items-center">
+        <Row style={rowStyle} id="servicesContainerRow" className="d-flex align-items-center">
+            <Col xs={12} md={4} >
               <Card style={{ height: "auto" }} className="servicesCards">
               <a href="panamia.club" target="_blank"><img style={imgStyle} className="servicesImg" alt="Panamia Club" src="/panamia.png" /></a>
                 <Card.Body>
@@ -282,10 +282,11 @@ const Home = () => {
                    Website Maintenance <br></br>
                    NFT Collections and Decentralized Apps <br></br>
                   </Card.Text>
+                  <a href="mailto:info@enigma-labs.com" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>Contact Us</Button></a>
                 </Card.Body>
               </Card>
             </Col>
-            <Col xs={12} md={4} className="d-flex align-items-center">
+            <Col xs={12} md={4} >
               <Card style={{ height: "auto"  }} className="servicesCards">
                 <a href="#" target="_blank"><img style={imgStyle} className="servicesImg"  alt="Audio Engineering Services" src="/audio.JPG" /></a>
                 <Card.Body>
@@ -295,10 +296,11 @@ const Home = () => {
                     Mixing <br></br>
                     Mastering
                   </Card.Text>
+                  <a href="genwav.beatstars.com" target="_blank" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>Book Us</Button></a>
                 </Card.Body>
               </Card>
             </Col>
-            <Col xs={12} md={4} className="d-flex align-items-center">
+            <Col xs={12} md={4}>
               <Card style={{ height: "auto"  }} className="servicesCards">
                 <img style={imgStyle} className="servicesImg" alt="video services" src="/video.png" />
                 <Card.Body>
@@ -308,20 +310,17 @@ const Home = () => {
                     Graphic Design  <br></br>
                     Social Media Management
                   </Card.Text>
+                    
+                   <a href="mailto:info@enigma-labs.com" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>Contact Us</Button></a>
                 </Card.Body>
               </Card>
             </Col>
         </Row>
-        <Row style={buttonRowStyle} id="buttonContactUs">
-          <Col sm={4}></Col>
-          <Col sm={4}> 
-            {/* <Button style={aboutButtonStyle} id="aboutButton" onClick={routeChange}>Learn more</Button> */}
-            <a href="mailto:info@enigma-labs.com" style={{color:"white"}}> <Button style={{width:"100%", marginTop:"30%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>Contact Us</Button></a>
-          </Col>
-          <Col sm={4}></Col>
-        </Row>
+      <Row style={rowStyle}>
+       <img style={{ width: '100%', height: '100%', objectFit: 'cover' }} src="Aliens.png" alt="Aliens" />
+      </Row>
       </div>
-      <img style={{ width: '100%', height: '100%', objectFit: 'cover' }} src="Aliens.png" alt="Aliens" />
+     
     </Container>
     
   );

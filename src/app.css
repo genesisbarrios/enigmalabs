@@ -42,7 +42,7 @@ body {
     transform: rotate(360deg);
   }
 }
-@media (max-width: 800px) {
+@media (max-width: 1170px) {
   #title {
     font-size: 0.9em;
     position: absolute;
@@ -50,6 +50,10 @@ body {
     left: 50%;
     transform: translate(-50%, -50%);
     text-align: center;
+  }
+
+  .servicesCards{
+    margin-bottom:"5%"!important;
   }
 
 }
