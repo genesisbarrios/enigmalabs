@@ -272,7 +272,7 @@ const Home = () => {
       
         <Row style={servicesStyle}><h1 className="centerText" id="services">Services</h1></Row>
         <Row style={rowStyle} id="servicesContainerRow">
-            <Col xs={12} md={4}>
+            <Col xs={12} md={4} className="d-flex align-items-center">
               <Card style={{ height: "auto" }} className="servicesCards">
               <a href="panamia.club" target="_blank"><img style={imgStyle} className="servicesImg" alt="Panamia Club" src="/panamia.png" /></a>
                 <Card.Body>
@@ -285,7 +285,7 @@ const Home = () => {
                 </Card.Body>
               </Card>
             </Col>
-            <Col xs={12} md={4}>
+            <Col xs={12} md={4} className="d-flex align-items-center">
               <Card style={{ height: "auto"  }} className="servicesCards">
                 <a href="#" target="_blank"><img style={imgStyle} className="servicesImg"  alt="Audio Engineering Services" src="/audio.JPG" /></a>
                 <Card.Body>
@@ -298,7 +298,7 @@ const Home = () => {
                 </Card.Body>
               </Card>
             </Col>
-            <Col xs={12} md={4}>
+            <Col xs={12} md={4} className="d-flex align-items-center">
               <Card style={{ height: "auto"  }} className="servicesCards">
                 <img style={imgStyle} className="servicesImg" alt="video services" src="/video.png" />
                 <Card.Body>
