@@ -224,7 +224,8 @@ const Home = () => {
     };
 
     const servicesStyle = {
-      marginTop: '0%'
+      marginTop: '0%',
+      width:"100%"
     };
 
     const canvasStyle = {
@@ -263,6 +264,7 @@ const Home = () => {
   return (
     <Container id="top">
       <canvas style={canvasStyle} id="canv"></canvas>
+
       <div style={homeContainer} className="HomeContainer">
         <Row style={rowStyle} >
           <Col sm={12}>
@@ -270,7 +272,9 @@ const Home = () => {
           </Col>
         </Row>
       
-        <Row style={servicesStyle}><h1 className="centerText" id="services">Services</h1></Row>
+        <Row style={servicesStyle}>
+          <h1 className="centerText" id="services">Services</h1>
+        </Row>
         <Row style={rowStyle} id="servicesContainerRow" className="d-flex align-items-center">
             <Col xs={12} md={4} >
               <Card style={{ height: "auto" }} className="servicesCards">
@@ -278,9 +282,9 @@ const Home = () => {
                 <Card.Body>
                   <h5>Website Development and Maintenance</h5>
                   <Card.Text>
-                   Web Design and Development <br></br>
-                   Website Maintenance <br></br>
-                   NFT Collections and Decentralized Apps <br></br>
+                  Web Design and Development <br></br>
+                  Website Maintenance <br></br>
+                  NFT Collections and Decentralized Apps <br></br>
                   </Card.Text>
                   <a href="mailto:info@enigma-labs.com" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>Contact Us</Button></a>
                 </Card.Body>
@@ -290,13 +294,13 @@ const Home = () => {
               <Card style={{ height: "auto"  }} className="servicesCards">
                 <a href="#" target="_blank"><img style={imgStyle} className="servicesImg"  alt="Audio Engineering Services" src="/audio.JPG" /></a>
                 <Card.Body>
-                <h5>Audio Engineering</h5>
+                <h5>Music Services</h5>
                   <Card.Text>
                     Music Production <br></br>
-                    Mixing <br></br>
-                    Mastering
+                    Mixing + Mastering  <br></br>
+                    Music Videos
                   </Card.Text>
-                  <a href="genwav.beatstars.com" target="_blank" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>Book Us</Button></a>
+                  <a href="https://genwav.beatstars.com" target="_blank" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>Book Us</Button></a>
                 </Card.Body>
               </Card>
             </Col>
@@ -311,14 +315,14 @@ const Home = () => {
                     Social Media Management
                   </Card.Text>
                     
-                   <a href="mailto:info@enigma-labs.com" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>Contact Us</Button></a>
+                  <a href="mailto:info@enigma-labs.com" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>Contact Us</Button></a>
                 </Card.Body>
               </Card>
             </Col>
         </Row>
-      <Row style={rowStyle}>
-       <img style={{ width: '100%', height: '100%', objectFit: 'cover' }} src="Aliens.png" alt="Aliens" />
-      </Row>
+        <Row className="d-flex align-items-center">
+          <img style={{ width: '100%', height: '100%', objectFit: 'cover', padding:"0"}} src="Aliens.png" alt="Aliens" />
+        </Row>
       </div>
      
     </Container>

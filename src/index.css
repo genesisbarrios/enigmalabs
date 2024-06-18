@@ -11,6 +11,7 @@ body {
 #root {
   min-height: 100vh;
   display: flex;
+  width:100%;
 }
 
 .page-footer{
@@ -59,29 +60,6 @@ button:focus {
 button:disabled {
   opacity: 0.8;
   pointer-events: none;
-}
-
-.image1{
-  margin-top:12%;
-  height: 30%;
-  width:100%;
-  border: 1px solid white;
-}
-
-.image2{
-  height: 25%;
-  width:80%;
-  border-radius:25%;
-  margin-left:25%;
-  margin-top:10%;
-  margin-bottom:5%;
-}
-
-.image3{
-  height: 90%;
-  width:80%;
-  margin-left:10%;
-  margin-top:5%;
 }
 
 .centerText{
@@ -168,6 +146,7 @@ button:disabled {
   #author{
     margin-top:160%;
   }
+
 }
 
 @media only screen and (max-width: 900px) {

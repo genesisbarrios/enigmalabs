@@ -56,4 +56,13 @@ body {
     margin-bottom:5% !important;
   }
 
+  #servicesContainerRow{
+    
+    margin-bottom: 140%;
+  }
+
+  .card-text{
+    font-size: 0.85em;
+  }
+
 }
