@@ -28,16 +28,19 @@ const About = () => {
                 <li>Save money on licensing software</li>
                 <li>Save time and have your projects completed by experts</li>
               </ul>
+
+              <h4 className="mt-5">Email Us</h4>
+              <a href="mailto:info@enigma-labs.com" className="text-white">info@enigma-labs.com</a>
             
-              <hr style={{backgroundColor:"white", marginTop: "5%"}}/>
+              <hr style={{backgroundColor:"white", marginTop: "3%"}}/>
               <h2>Team</h2>
               <h5>CEO, Genesis Barrios</h5>
               <p> Software Engineer, Music Producer and Audio Engineer, Photographer, Videographer and Editor </p>
-              <a  className="socialLinks" href="http://twitter.com/gendotwav" target="_blank">Twitter</a>
-              <a  className="socialLinks" href="http://instagram.com/@gen.wav" target="_blank">Instagram</a>
+              <a  className="socialLinks" href="https://instagram.com/@gen.wav" target="_blank">Instagram</a>
+              <a  className="socialLinks" href="https://genwav.xyz/GENESIS" target="_blank">Music + Music Videos</a>
               <a  className="socialLinks" href="https://linkedin.com/in/genesis-barrios" target="_blank">LinkedIn</a>
-              <a  className="socialLinks" href="http://genesisbarrios.xyz" target="_blank">Portfolio</a>
-              <a  className="socialLinks" href="http://github.com/genesisbarrios" target="_blank">Github</a>
+              <a  className="socialLinks" href="https://genesisbarrios.xyz" target="_blank">Programming Portfolio</a>
+              <a  className="socialLinks" href="https://github.com/genesisbarrios" target="_blank">Github</a>
               
               <br></br>
 
@@ -45,6 +48,9 @@ const About = () => {
               <p> Music Producer, Photographer, Videographer and Editor </p>
               <a  className="socialLinks" href="http://instagram.com/@khrissosick" target="_blank">Instagram</a>
               <a  className="socialLinks" href="https://linktr.ee/khrissosick" target="_blank">Links</a>
+
+             
+            
             </Col>
           </Row>
         </Container>
