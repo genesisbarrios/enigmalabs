@@ -70,6 +70,8 @@ const Music = () => {
                 <li>Have an experienced Music Producer personally craft your sound</li>
                 <li>Have a professional handle all the detailed work</li>
               </ul>
+
+              <a href="https://genwav.beatstars.com" style={{color:"white"}}> <Button style={{width:"50%", margin:"0 auto", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>Book Us</Button></a>
             
             </Col>
             <Col sm={12}>

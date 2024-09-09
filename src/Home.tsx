@@ -286,7 +286,7 @@ const Home = () => {
                   Website Maintenance <br></br>
                   NFT Collections and Decentralized Apps <br></br>
                   </Card.Text>
-                  <a href="/Tech" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>See More</Button></a>
+                  <a href="/Tech" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>See Work</Button></a>
                 </Card.Body>
               </Card>
             </Col>
@@ -296,11 +296,11 @@ const Home = () => {
                 <Card.Body>
                 <h5>Music</h5>
                   <Card.Text>
-                    Music Production <br></br>
-                    Mixing + Mastering  <br></br>
-                    Music Videos
+                    Music Production, Composition, Vocal Production <br></br>
+                    Editing, Mixing + Mastering  <br></br>
+                    Recording
                   </Card.Text>
-                  <a href="https://genwav.beatstars.com" target="_blank" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>Book Us</Button></a>
+                  <a href="/Music" target="_blank" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>See Work</Button></a>
                 </Card.Body>
               </Card>
             </Col>
@@ -310,12 +310,13 @@ const Home = () => {
                 <Card.Body>
                   <h5>Visuals</h5>
                   <Card.Text>
-                    Photography, Videography <br></br>
-                    Graphic Design  <br></br>
-                    Social Media Management
+                    Photography, Videography, Music Videos <br></br>
+                    Short Form Content,  Social Media Management <br></br>
+                    Graphic Design, Branding  <br></br>
+                   
                   </Card.Text>
                     
-                  <a href="/Visuals" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>See Our Work</Button></a>
+                  <a href="/Visuals" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>See Work</Button></a>
                 </Card.Body>
               </Card>
             </Col>
