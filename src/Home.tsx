@@ -286,7 +286,7 @@ const Home = () => {
                   Website Maintenance <br></br>
                   NFT Collections and Decentralized Apps <br></br>
                   </Card.Text>
-                  <a href="mailto:info@enigma-labs.com" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>Contact Us</Button></a>
+                  <a href="/Tech" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>See More</Button></a>
                 </Card.Body>
               </Card>
             </Col>
