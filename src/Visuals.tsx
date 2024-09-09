@@ -46,7 +46,7 @@ const videoStyle = {
           </Row>
           <Row style={rowStyle}>
             <Col sm={3}>
-              <a href="https://www.instagram.com/neptunemiami/" target="_blank"><img style={imgStyle} className="servicesImg"   alt="neptune studios" src="/neptune.jpg" /></a>
+              <a href="https://www.instagram.com/neptunemiami/" target="_blank"><img style={imgStyle} className="servicesImg"   alt="neptune studios" src="/neptune.JPG" /></a>
             </Col>
             <Col sm={3}>
               <a href="https://www.instagram.com/neptunemiami/" target="_blank"><img style={imgStyle} className="servicesImg"   alt="neptune studios" src="/pyramid.jpg" /></a>
