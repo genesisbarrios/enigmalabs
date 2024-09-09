@@ -1,0 +1,220 @@
+html,
+body {
+  margin: 0;
+  font-family: Bebas Neue, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: white;
+  background-color: #0f0f0f;
+  color: white;
+  overflow-x: hidden;
+}
+#root {
+  min-height: 100vh;
+  display: flex;
+  width:100%;
+}
+
+.page-footer{
+  text-align:center;
+  background-color: #343A40;
+}
+
+h1 {
+  font-size: 5rem;
+}
+
+#navbar{
+  background-color: transparent;
+}
+
+
+.card {
+  background-color: #fff;
+  padding: 1rem;
+  border-radius: 1rem;
+  color: #000;
+  box-shadow: 3.1px 6.2px 6.2px hsl(0deg 0% 0% / 0.4);
+}
+
+button {
+  cursor: pointer;
+  background-color: #000;
+  color: #fff;
+  border: none;
+  font-weight: bold;
+  font-family: inherit;
+  padding: 1.2rem 2rem;
+  text-transform: uppercase;
+  border-radius: 3rem;
+  font-size: 1.2rem;
+}
+
+button:hover {
+  background-color: #121212;
+}
+
+button:focus {
+  background-color: #222;
+}
+
+button:disabled {
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.centerText{
+  text-align:center;
+}
+
+.centerDiv{
+  margin-left:25%;
+  margin-bottom:10%;
+}
+
+.rewardsTitle{
+  font-size:3em;
+}
+
+.aboutTitle{
+  margin: 0 auto;
+}
+
+.aboutContainer{
+  align-content: center;
+  margin-top: 10%;
+}
+
+.blogimage{
+  max-height:50px;
+  width: 100%;
+  object-fit: cover;
+}
+
+.footerMargin{
+  margin-bottom:0px!important;
+  padding-bottom:0px!important; 
+}
+
+.socialLinks{
+  color: #68FF00;
+  display: block;
+}
+
+.navLinks{
+  color: #68FF00;
+}
+
+.navLinks:hover{
+  color: #45ab01!important;
+}
+
+.socialLinks:hover{
+  color: #45ab01;
+}
+
+#navbarcontainer{
+  padding-left: 0;
+  margin-left:0;
+}
+
+.HomeContainer{
+  width:100%!important;
+}
+
+@media only screen and (max-width: 1500px) {
+  #author{
+    margin-top:170%;
+  }
+}
+
+@media only screen and (max-width: 1200px) {
+  .servicesCards{
+    width:15rem !important;
+    max-width: 700px;
+    font-size:1rem !important;
+  }
+
+  #services{
+    margin-top:10%;
+    margin-left:2%;
+  }
+
+  .centerText{
+    font-size:4rem;
+  }
+
+  #author{
+    margin-top:160%;
+  }
+
+}
+
+@media only screen and (max-width: 900px) {
+  .HomeContainer{
+    margin-top:-130% !important;
+  }
+
+  #services{
+    margin-top:30%;
+    margin-left:2%;
+  }
+
+
+  .centerText{
+    font-size:3rem;
+  }
+
+  #author{
+    margin-top:140%;
+  }
+  
+}
+
+
+@media only screen and (max-width: 600px) {
+  .HomeContainer{
+    margin-top:-160% !important;
+    font-size:1.5em;
+  }
+  
+  .servicesImg{
+    height:80% !important;
+  }
+
+  .servicesCards{
+    width:65rem !important;
+    margin-left:10%;
+    height:90% !important;
+    max-width: 300px;
+  }
+
+  #services{
+    margin-left:-8%;
+  }
+
+  h1{
+    width:60%;
+    font-size:3rem;
+  }
+
+  p{
+    font-size:1rem;
+  }
+
+  h5{
+    font-size:1rem;
+  }
+
+  #servicesContainerRow{
+    margin-bottom:60%;
+  }
+
+  #buttonContactUs{
+    margin-top:20% !important;
+  }
+
+  #author{
+    margin-top:140%;
+  }
+}
+
