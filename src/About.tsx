@@ -38,7 +38,7 @@ const About = () => {
               <p> Software Engineer, Music Producer and Audio Engineer, Photographer, Videographer and Editor </p>
               <a  className="socialLinks" href="https://instagram.com/@gen.wav" target="_blank">Instagram</a>
               <a  className="socialLinks" href="https://genwav.xyz/GENESIS" target="_blank">Music + Music Videos</a>
-              <a className="socialLinks" href="https://genwav.beatstars.com/" target="_blank">Beats</a>
+              <a className="socialLinks" href="https://www.beatstars.com/genwav" target="_blank">Beats</a>
               <a  className="socialLinks" href="https://linkedin.com/in/genesis-barrios" target="_blank">LinkedIn</a>
               <a  className="socialLinks" href="https://genesisbarrios.xyz" target="_blank">Programming Portfolio</a>
               <a  className="socialLinks" href="https://github.com/genesisbarrios" target="_blank">Github</a>

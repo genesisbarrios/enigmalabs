@@ -13,7 +13,7 @@ const Music = () => {
           <Row style={rowStyle}>
             <Col sm={2}></Col>
             <Col sm={8}>
-              <h2 className="centerText aboutTitle">Music Production + Audio Engineering</h2>
+              <h5 className="centerText">Music Production | Audio Engineering</h5>
             </Col>
             <Col sm={2}></Col>
           </Row>
@@ -71,7 +71,7 @@ const Music = () => {
                 <li>Have a professional handle all the detailed work</li>
               </ul>
 
-              <a href="https://genwav.beatstars.com" style={{color:"white"}}> <Button style={{width:"50%", margin:"0 auto", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>Book Us</Button></a>
+              <a href="https://www.beatstars.com/genwav" style={{color:"white"}}> <Button style={{width:"50%", margin:"0 auto", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>Book Us</Button></a>
             
             </Col>
             <Col sm={12}>

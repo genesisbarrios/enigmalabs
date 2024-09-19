@@ -15,8 +15,8 @@ const Navigation = () => {
                             <Nav.Link className="navLinks" href="/">Home</Nav.Link>
                             <Nav.Link className="navLinks" href="/About">About</Nav.Link>
                             <Nav.Link className="navLinks" href="/Music">Music</Nav.Link>
-                            <Nav.Link className="navLinks" href="/Visuals">Visuals</Nav.Link>
                             <Nav.Link className="navLinks" href="/Tech">Tech</Nav.Link>
+                            <Nav.Link className="navLinks" href="/Visuals">Visuals</Nav.Link>
                             <Nav.Link className="navLinks" href="https://enigma-labs.printify.me/products">Merch</Nav.Link>
                             {/* <Nav.Link className="navLinks" href="/Blog">Blog</Nav.Link> */}
                         </Nav>

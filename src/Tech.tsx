@@ -24,7 +24,7 @@ const videoStyle = {
           <Row style={rowStyle}>
             <Col sm={2}></Col>
             <Col sm={8}>
-              <h2 className="centerText aboutTitle">Web Development | Web Design | Maintenance</h2>
+              <h5 className="centerText">Web Development | Web Design | Maintenance</h5>
             </Col>
             <Col sm={2}></Col>
           </Row>
