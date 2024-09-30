@@ -4,7 +4,7 @@ import { Row, Col, Container, Button } from "react-bootstrap";
 const Tech = () => {
 
   const rowStyle = {
-    margin: '2%'
+    margin: '1%'
   };
 
   const imgStyle = {
@@ -24,7 +24,7 @@ const videoStyle = {
           <Row style={rowStyle}>
             <Col sm={2}></Col>
             <Col sm={8}>
-              <h5 className="centerText">Web Development | Web Design | Maintenance</h5>
+              <h5 className="centerText">Web Development | Web Design</h5>
             </Col>
             <Col sm={2}></Col>
           </Row>
@@ -32,12 +32,15 @@ const videoStyle = {
             <Col sm={12}>
               <h5 style={{marginTop: "5%"}}>Services</h5>
               <ul>
-                <li>Web Design, and Custom Web Development using Next.js and React</li>
+                <li>Custom Web Design, and Web Development</li>
                 <li>Website Maintenance: Updating Design, Functionality, Content, Links, Posts, etc. on a recurring basis</li>
                 <li>Graphic Design: Logos, Branding, Posters, Stickers and more.</li>
               </ul>
             </Col>
           </Row>
+
+        
+
           
           <Row style={rowStyle}>
             <Col sm={12}>
@@ -51,6 +54,34 @@ const videoStyle = {
             </Col>
           </Row>
         
+          <Row style={rowStyle}>
+            <Col sm={12}>
+              <h5 style={{marginTop: "5%"}}>Pricing</h5>
+             
+            </Col>
+            <Col sm={6}>
+            <ul>
+                <li>Pay Up Front</li>
+                  <ul>  
+                    <li>$3000 for a 5 page website</li>
+                    <li>$25 a month: hosting and general maintenance</li>
+                    <li>$50 a month: unlimited edits and 24/7 support </li>
+                    <li>$100 one time fee per page after 5</li>
+                    <li>$500 for a custom blog that you can edit yourself</li>
+                  </ul>
+              </ul>
+              
+            </Col>
+            <Col sm={6}>
+            <ul>
+                <li>Monthly Subscription</li>
+                <ul>  
+                  <li>$250 a month for a 5+ Page Website</li>
+                  <li>Includes unlimited Edits, 24/7 Support, Hosting, Maintenance, etc.</li>
+                </ul>
+              </ul>
+            </Col>
+          </Row>
 
           <Row style={rowStyle}>
 

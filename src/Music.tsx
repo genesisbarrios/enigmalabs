@@ -4,7 +4,7 @@ import { Row, Col, Container, Button } from "react-bootstrap";
 const Music = () => {
 
   const rowStyle = {
-    margin: '2%'
+    margin: '1%'
   };
 
       return (
@@ -21,12 +21,12 @@ const Music = () => {
             <Col sm={12}>
               <h5 style={{marginTop: "5%"}}>Services</h5>
               <ul>
-                <li>Recording</li>
-                <li>Music Production, Composition, and Vocal Production</li>
+                <li>Recording, Music Production, Composition, and Vocal Production</li>
                 <li>Audio Engineering (Mixing, Mastering, Editing)</li>
               </ul>
             </Col>
           </Row>
+
           <Row style={rowStyle}>
             <Col sm={12}>
               <h5 style={{marginTop: "5%"}}>Projects</h5>
@@ -63,7 +63,36 @@ const Music = () => {
             </Col>
           </Row>
           <Row style={rowStyle}>
-          <Col sm={6}>
+            <Col sm={12}>
+              <h5 style={{marginTop: "5%"}}>Pricing</h5>
+              <ul>
+                <li>Recording: $35/hr</li>
+                <li>Mixing + Mastering: $200</li>
+                <li>Beat Licenses</li>
+                <ul>  
+                  <li>Non-Exclusive License: $20</li>
+                  <li>Unlimited Streams License: $100</li>
+                  <li>Exclusive License: NEGOTIATE (min.$300)</li>
+                </ul>
+              </ul>
+            </Col>
+          </Row>
+
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width:"100%" }}>
+                <a href="https://www.beatstars.com/genwav" style={{ color: "white" }}>
+                  <Button style={{ width: "100%", backgroundColor: "green", cursor: 'pointer', color: "white", borderColor: "green" }}>
+                    Book Your Session or Mix Today
+                  </Button>
+                </a>
+              </div>
+
+          <Row style={rowStyle}>
+        
+            <Col sm={12}>
+              
+             <hr style={{backgroundColor:"white", marginTop: "3%"}}/>
+             
+             
               <h5 style={{marginTop: "5%"}}>Why should you hire a Producer or Engineer?</h5>
               <ul>
                 <li>Prioritize your singing and songwriting</li>
@@ -71,11 +100,6 @@ const Music = () => {
                 <li>Have a professional handle all the detailed work</li>
               </ul>
 
-              <a href="https://www.beatstars.com/genwav" style={{color:"white"}}> <Button style={{width:"50%", margin:"0 auto", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>Book Us</Button></a>
-            
-            </Col>
-            <Col sm={12}>
-             <hr style={{backgroundColor:"white", marginTop: "3%"}}/>
               <h4 className="mt-5">Email Us</h4>
               <a href="mailto:info@enigma-labs.com" className="text-white">info@enigma-labs.com</a>
              <div style={{marginBottom:"3%"}}></div>

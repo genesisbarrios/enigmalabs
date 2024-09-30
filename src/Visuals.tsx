@@ -23,7 +23,7 @@ const videoStyle = {
           
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h5 className="centerText aboutTitle">Photography | Videography | Graphic Design | Social Media Management</h5>
+              <h5 className="centerText aboutTitle">Photography | Videography | Graphic Design</h5>
             </Col>
           </Row>
           <Row style={rowStyle}>
@@ -31,7 +31,6 @@ const videoStyle = {
               <h5 style={{marginTop: "5%"}}>Services</h5>
               <ul>
                 <li>Photography, Videography, Music Videos, Short Form Content</li>
-                <li>Photo + Video Editing</li>
                 <li>Graphic Design: Logos, Branding, Album Covers, Stickers, Posters and more.</li>
               </ul>
             </Col>
@@ -40,7 +39,7 @@ const videoStyle = {
           
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h2>SOCIAL MEDIA CLIENTS</h2>
+              <h2>CLIENTS</h2>
               <h5>Mars Miami Studios + Neptune Studios</h5>
             </Col>
           </Row>
@@ -117,6 +116,43 @@ const videoStyle = {
             <img style={imgStyle} className="servicesImg" src="/bts3.JPG" />
             </Col>
           </Row>
+
+          <Row style={rowStyle}>
+            <Col sm={12}>
+              <h5 style={{marginTop: "5%"}}>Pricing</h5>
+             
+            </Col>
+            <Col sm={6}>
+            <ul>
+                <li>Photography</li>
+                  <ul>  
+                    <li>2 HR Shoot 20 Edits: $200</li>
+                  </ul>
+              </ul>
+              <ul>
+                <li>Videography</li>
+                <ul>  
+                  <li>2HR Run and Gun Music Video: $250</li>
+                  <li>1HR Run and Gun Music Video: $125 </li>
+                  <li>1HR Short Form Content Shoot + 2 Edits: $125</li>
+
+                </ul>
+              </ul>
+            </Col>
+            <Col sm={6}>
+            <ul>
+                <li>GRAPHIC DESIGN</li>
+                  <ul>  
+                    <li>Logos and Album Covers: $50</li>
+                    <li>1 Hr Photo Shoot + Album Cover: $100</li>
+                  </ul>
+              </ul>
+              
+            
+            </Col>
+          </Row>
+
+          <hr style={{backgroundColor:"white", marginTop: "3%"}}/>
 
           <Row style={rowStyle}>
 
