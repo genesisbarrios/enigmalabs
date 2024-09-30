@@ -72,7 +72,7 @@ const Music = () => {
                 <ul>  
                   <li>Non-Exclusive License: $20</li>
                   <li>Unlimited Streams License: $100</li>
-                  <li>Exclusive License: NEGOTIATE (min.$300)</li>
+                  <li>Exclusive License: NEGOTIATE</li>
                 </ul>
               </ul>
             </Col>
