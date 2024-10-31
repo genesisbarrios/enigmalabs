@@ -50,7 +50,7 @@ const Music = () => {
           </Row>
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h5 style={{marginTop: "5%"}}>Beats</h5>
+              <h5 style={{marginTop: "5%"}}>Beats - BUY 2 GET 1 FREE</h5>
             </Col>
           </Row>
           <Row style={rowStyle}>
