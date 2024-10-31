@@ -321,6 +321,14 @@ const Home = () => {
               </Card>
             </Col>
         </Row>
+
+        <Row style={servicesStyle}>
+            <h1 className="centerText" id="services">Contact Us</h1>
+          </Row>
+          <Row style={rowStyle}>
+            
+        </Row>
+
         <Row className="d-flex align-items-center">
           <img style={{ width: '100%', height: '100%', objectFit: 'cover', padding:"0"}} src="Aliens.png" alt="Aliens" />
         </Row>
