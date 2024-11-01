@@ -107,7 +107,7 @@ const Music = () => {
           </Row>
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h5 style={{marginTop: "2%"}}>Beats <span style={{color:"#DF0000"}}>(BUY 2 GET 1 FREE)</span></h5>
+              <h5 style={{marginTop: "5%"}}>Beats <span style={{color:"#DF0000"}}>(BUY 2 GET 1 FREE)</span></h5>
             </Col>
           </Row>
           <Row style={rowStyle}>
