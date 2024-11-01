@@ -76,7 +76,7 @@ const Music = () => {
           </Row>
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h5 style={{marginTop: "3%"}}>Services</h5>
+              <h5 style={{marginTop: "2%"}}>Services</h5>
               <ul>
                 <li>Recording, Music Production, Composition, and Vocal Production</li>
                 <li>Audio Engineering (Mixing, Mastering, Editing)</li>
