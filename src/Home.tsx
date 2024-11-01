@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import axios from 'axios';
 import { Link, useNavigate } from "react-router-dom";
 import About from "./About"
 import Container from 'react-bootstrap/Container';
@@ -10,6 +11,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls'
 import * as THREE from "three";
 import ButtonMailTo from "./ButtonMailTo";
 import "./app.css";
+import { Alert } from "react-bootstrap";
 
 const Home = () => {
   // 2019 (c) Diego Albini CMD Srl 
@@ -20,6 +22,14 @@ const Home = () => {
   // then put canvas into a three js box
 
   // canvas vars  
+
+  const [email, setEmail] = useState("");
+  const [audio, setAudio] = useState(false);
+  const [visuals, setVisuals] = useState(false);
+  const [web, setWeb] = useState(false);
+  const [message, setMessage] = useState("");
+  const [alert, setAlert] = useState("");
+
   window.onload = function () {
     var message = "0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1";
     var letters = message.split(" ");
@@ -100,7 +110,6 @@ const Home = () => {
         }
     }
 
-
     function draw_random(){
 
     // write opaque background
@@ -126,14 +135,12 @@ const Home = () => {
     }
     } // end function draw random
 
-
     function randomize_column(col){
       for (y=0;y<rows;y++){
         draw_text[col][y]=letters[randomizza(0,letters.length)];
       }
 
     }
-
 
     function randomizza(min,max){
       return Math.floor(Math.random() * max) + min;
@@ -146,7 +153,6 @@ const Home = () => {
       ctx.fillText(draw_text[x][y],x*font_size,y*font_size);
       }
     }
-
 
     //                 THREE JS FUNCTS
 
@@ -186,7 +192,6 @@ const Home = () => {
       controls.target.set( 0, 0, 0 );
       controls.update();
       
-      
      // window.addEventListener( 'resize', onWindowResize, true );
     }
 
@@ -213,6 +218,41 @@ const Home = () => {
     }
   }
 
+  function handleSubmit() {
+    console.log('handle submit request to subscribe')
+  
+    // Check if data is valid
+    if (!email) {
+      console.log('No e-mail address provided');
+      setAlert('Please set an e-mail address~');
+      return;
+    }
+
+    const dataToSend = {
+      email,
+      audio,
+      visuals,
+      web
+    };
+  
+    // Make a POST request using Axios
+    axios.post('https://genwav-node-server.vercel.app/addUser', dataToSend, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+      .then(() => {
+        console.log('Request successful');
+        setMessage("Your e-mail has been saved!")
+        setAlert(''); // Resetting alert if necessary
+      })
+      .catch((error) => {
+        setAlert("There was an error.");
+        console.error('Error: ', error);
+        setMessage(''); // Resetting message if necessary
+      });
+  }
+
   const rowStyle = {
       marginTop: '5%',
       height:'80vh'
@@ -227,6 +267,12 @@ const Home = () => {
       marginTop: '0%',
       width:"100%"
     };
+
+  const newsletterStyle = {
+      marginTop: '0%',
+      width:"100%",
+      padding:"13% 0"
+  }
 
     const canvasStyle = {
       marginLeft: '-36%',
@@ -323,15 +369,81 @@ const Home = () => {
         </Row>
 
         <Row style={servicesStyle}>
-            <h1 className="centerText" id="services">Contact Us</h1>
-          </Row>
-          <Row style={rowStyle}>
-            
+          <h1 className="centerText" id="services">NEWSLETTER</h1>
+        </Row>
+        <Row style={newsletterStyle}>
+          <Col  xs={12} md={6} style={{width:"50%"}}>
+            <img style={{ width: '100%', height: '100%', objectFit: 'cover', padding:"0"}} src="Aliens.png" alt="Aliens" />
+          </Col>
+          <Col xs={12} md={6}  style={{ margin:"5% auto" }}>
+              <form style={{textAlign:"center", margin:"0 auto"}}>
+                <h3 style={{color:"green"}}>Sign Up For our Newsletter</h3>  
+                <input type="text" name="e-mail" placeholder="e-mail" style={{display:"inline-block", marginBottom:"20px", width:"60%"}}  
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                  }}
+                ></input>
+                <label style={{display:"block"}}>What services are you interested in?</label>
+                <div style={{display:'inline'}}>
+                  <input
+                    style={{borderRadius:"10px", backgroundColor:"#CBD5E1", display:'inline'}}
+                    type="checkbox"
+                    name="audio"
+                    value="0"
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setAudio(true);
+                      } else {
+                        setAudio(false);
+                      }
+                    }}
+                  />
+                  <p style={{display:'inline',  margin:"0 5px"}}>Beats, Loops, Engineering</p>
+                  <br></br>
+                  <input
+                    style={{borderRadius:"10px", backgroundColor:"#CBD5E1", display:'inline'}}
+                    type="checkbox"
+                    name="visuals"
+                    value="0"
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setVisuals(true);
+                      } else {
+                        setVisuals(false);
+                      }
+                    }}
+                  />
+                  <p style={{display:'inline', margin:"0 5px"}}>visuals</p>
+                  <br></br>
+                  <input
+                  style={{borderRadius:"10px", backgroundColor:"#CBD5E1", display:'inline'}}
+                  type="checkbox"
+                  name="web"
+                  value="0"
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      setWeb(true);
+                    } else {
+                      setWeb(false);
+                    }
+                  }}
+                />
+                <p style={{display:'inline', margin:"0 5px"}}>web dev</p>
+                <br></br>
+                <button onClick={(e) => {
+                  e.preventDefault();
+                  handleSubmit();
+                }} style={{marginTop:"20px", padding:"2px 5px", width:"40%", backgroundColor:"green"}} type="submit">
+                  Submit
+                </button>
+                {message && <Alert style={{marginTop:"5%", marginBottom:"5%", backgroundColor:"green", borderColor:"green", color:"white"}}>{message.toString()}</Alert>}
+                {alert && <Alert style={{marginTop:"5%", marginBottom:"5%", backgroundColor:"red", borderColor:"red", color:"white"}} >{alert.toString()}</Alert>}
+              </div>
+            </form>
+          </Col>
+
         </Row>
 
-        <Row className="d-flex align-items-center">
-          <img style={{ width: '100%', height: '100%', objectFit: 'cover', padding:"0"}} src="Aliens.png" alt="Aliens" />
-        </Row>
       </div>
      
     </Container>
