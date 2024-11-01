@@ -121,7 +121,7 @@ const Music = () => {
           </Row>
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h5 style={{marginTop: "5%"}}>Pricing</h5>
+              <h5 style={{marginTop: "10%"}}>Pricing</h5>
               <ul>
                 <li>Recording: $40/hr</li>
                 <li>Mixing + Mastering: $200</li>
