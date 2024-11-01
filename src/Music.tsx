@@ -66,7 +66,7 @@ const Music = () => {
             <Col sm={12}>
               <h5 style={{marginTop: "5%"}}>Pricing</h5>
               <ul>
-                <li>Recording: $35/hr</li>
+                <li>Recording: $40/hr</li>
                 <li>Mixing + Mastering: $200</li>
                 <li>Beat Licenses</li>
                 <ul>  
