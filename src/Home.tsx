@@ -24,7 +24,8 @@ const Home = () => {
   // canvas vars  
 
   const [email, setEmail] = useState("");
-  const [audio, setAudio] = useState(false);
+  const [beats, setBeats] = useState(false);
+  const [loops, setLoops] = useState(false);
   const [visuals, setVisuals] = useState(false);
   const [web, setWeb] = useState(false);
   const [message, setMessage] = useState("");
@@ -230,13 +231,14 @@ const Home = () => {
 
     const dataToSend = {
       email,
-      audio,
+      beats,
+      loops,
       visuals,
       web
     };
   
     // Make a POST request using Axios
-    axios.post('https://genwav-node-server.vercel.app/addUser', dataToSend, {
+    axios.post('https://genwav-node-server.vercel.app/addUserEnigma', dataToSend, {
       headers: {
         'Content-Type': 'application/json'
       }
@@ -359,7 +361,6 @@ const Home = () => {
                     Photography, Videography, Music Videos <br></br>
                     Short Form Content,  Social Media Management <br></br>
                     Graphic Design, Branding  <br></br>
-                   
                   </Card.Text>
                     
                   <a href="/Visuals" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>See Work</Button></a>
@@ -383,22 +384,37 @@ const Home = () => {
                     setEmail(e.target.value);
                   }}
                 ></input>
-                <label style={{display:"block"}}>What services are you interested in?</label>
+                <label style={{display:"block"}}>What are you interested in?</label>
                 <div style={{display:'inline'}}>
                   <input
                     style={{borderRadius:"10px", backgroundColor:"#CBD5E1", display:'inline'}}
                     type="checkbox"
-                    name="audio"
+                    name="beats"
                     value="0"
                     onChange={(e) => {
                       if (e.target.checked) {
-                        setAudio(true);
+                        setBeats(true);
                       } else {
-                        setAudio(false);
+                        setBeats(false);
                       }
                     }}
                   />
-                  <p style={{display:'inline',  margin:"0 5px"}}>Beats, Loops, Engineering</p>
+                  <p style={{display:'inline',  margin:"0 5px"}}>Beats & Audio Engineering</p>
+                  <br></br>
+                  <input
+                    style={{borderRadius:"10px", backgroundColor:"#CBD5E1", display:'inline'}}
+                    type="checkbox"
+                    name="loops"
+                    value="0"
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setLoops(true);
+                      } else {
+                        setLoops(false);
+                      }
+                    }}
+                  />
+                  <p style={{display:'inline',  margin:"0 5px"}}>Loop Packs</p>
                   <br></br>
                   <input
                     style={{borderRadius:"10px", backgroundColor:"#CBD5E1", display:'inline'}}
@@ -428,7 +444,7 @@ const Home = () => {
                     }
                   }}
                 />
-                <p style={{display:'inline', margin:"0 5px"}}>web dev</p>
+                <p style={{display:'inline', margin:"0 5px"}}>web development</p>
                 <br></br>
                 <button onClick={(e) => {
                   e.preventDefault();
