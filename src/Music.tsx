@@ -124,7 +124,7 @@ const Music = () => {
               </div>
 
           <Row style={rowStyle}>
-            <hr style={{backgroundColor:"white", marginTop: "3%", width:"100%"}}/>
+           
            
             <Col xs={12} md={6} >
               <h5 style={{marginTop: "10%"}}>Why should you hire a Producer or Engineer?</h5>
@@ -220,9 +220,8 @@ const Music = () => {
             </Col>
           </Row>
 
-          <hr></hr>
-
           <Row style={rowStyle}>
+          <hr style={{backgroundColor:"white", marginTop: "3%", width:"100%"}}/>
             <Col sm={12}>
               <h5 style={{marginTop: "2%"}}>Projects</h5>
             </Col>
