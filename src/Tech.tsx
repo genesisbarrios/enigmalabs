@@ -63,7 +63,7 @@ const videoStyle = {
             <ul>
                 <li>Pay Up Front</li>
                   <ul>  
-                    <li>$3000 for a 5 page website</li>
+                    <li>$2500 for a 5 page website</li>
                     <li>$25 a month: hosting and general maintenance</li>
                     <li>$50 a month: unlimited edits and 24/7 support </li>
                     <li>$100 one time fee per page after 5</li>
