@@ -244,7 +244,7 @@ const Music = () => {
             </Row>
             <Row style={rowStyle}>
             <Col sm={6}>
-            <iframe width="100%" height="315" src="https://www.youtube.com/embed/nJSuynNjiiU?si=NAkOGoXBr1YUtYrR" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
+            <iframe width="100%" height="315" src="https://www.youtube.com/embed/dGg3WreeDT0?si=174CwO_G6vyth7HK" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
             </Col>
             <Col sm={6}>
             <iframe width="100%" height="315" src="https://www.youtube.com/embed/Zge6XKlx9UI?si=kJBbzc1u6DvHQukO" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
