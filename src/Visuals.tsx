@@ -85,15 +85,16 @@ const videoStyle = {
           </Row>
           <Row style={rowStyle}>
             <Col sm={6}>
-              <iframe width="100%" height="315" src="https://www.youtube.com/embed/MZSFGwk9UaY?si=LBx4zXErLhPZDrQ9" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" frameBorder="0"  allowFullScreen></iframe>
+              <iframe width="100%" height="315" src="https://www.youtube.com/embed/FQyi0U0Hkrg?si=UMRNAqCKERphTPTi" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" frameBorder="0" allowFullScreen></iframe>
             </Col>
             <Col sm={6}>
-              <iframe width="100%" height="315" src="https://www.youtube.com/embed/FQyi0U0Hkrg?si=UMRNAqCKERphTPTi" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" frameBorder="0" allowFullScreen></iframe>
+            <iframe width="100%" height="315" src="https://www.youtube.com/embed/Ie1KfxLpxeY?si=j7Zn6Qya0mYAimVf" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" frameBorder="0" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen></iframe>
             </Col>
           </Row>
           <Row style={rowStyle}>
+            
             <Col sm={6}>
-            <iframe width="100%" height="315" src="https://www.youtube.com/embed/Ie1KfxLpxeY?si=j7Zn6Qya0mYAimVf" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" frameBorder="0" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen></iframe>
+              <iframe width="100%" height="315" src="https://www.youtube.com/embed/MZSFGwk9UaY?si=LBx4zXErLhPZDrQ9" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" frameBorder="0"  allowFullScreen></iframe>
             </Col>
             <Col sm={6}>
             <iframe width="100%" height="315" src="https://www.youtube.com/embed/3wBxgLcn4-M?si=ZOhmNWgQ2QJ8cfxp" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" frameBorder="0" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen></iframe>
@@ -107,10 +108,10 @@ const videoStyle = {
           </Row>
           <Row style={rowStyle}>
             <Col sm={4}>
-              <img style={imgStyle} className="servicesImg" src="/bts1.JPG" />
+              <img style={imgStyle} className="servicesImg" src="/bts1.jpg" />
             </Col>
             <Col sm={4}>
-            <img style={imgStyle} className="servicesImg" src="/bts2.JPG" />
+            <img style={imgStyle} className="servicesImg" src="/bts2.png" />
             </Col>
             <Col sm={4}>
             <img style={imgStyle} className="servicesImg" src="/bts3.JPG" />
