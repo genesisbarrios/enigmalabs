@@ -239,7 +239,7 @@ const Music = () => {
             <iframe width="100%" height="315" src="https://www.youtube.com/embed/nJSuynNjiiU?si=NAkOGoXBr1YUtYrR" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
             </Col>
             <Col sm={6}>
-            <iframe width="100%" height="315" src="https://www.youtube.com/embed/eVe4O5FVi5k?si=NL5BhVlahREhZTF6" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
+            <iframe width="100%" height="315" src="https://www.youtube.com/embed/Zge6XKlx9UI?si=kJBbzc1u6DvHQukO" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
             </Col>
           </Row>
           
