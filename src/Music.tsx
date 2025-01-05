@@ -228,7 +228,15 @@ const Music = () => {
           </Row>
           <Row style={rowStyle}>
             <Col sm={6}>
-              <iframe width="100%" height="315" src="https://www.youtube.com/embed/videoseries?si=9sFeSHyy-OoKtPGU&amp;list=PLcGBMxEyx5p8sfg853csGDXChKZo2ZNNi" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
+            <iframe 
+              width="560" 
+              height="315" 
+              src="https://www.youtube.com/embed/videoseries?list=PLcGBMxEyx5p8sfg853csGDXChKZo2ZNNi" 
+              frameBorder="0" 
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+              allowFullScreen>
+            </iframe>
+
             </Col>
             <Col sm={6}>
               <iframe width="100%" height="315" src="https://www.youtube.com/embed/PwVHzjcfxpg?si=Wo9jyBVZXng-Tu5u" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
