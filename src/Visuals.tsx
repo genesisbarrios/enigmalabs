@@ -108,7 +108,7 @@ const videoStyle = {
           </Row>
           <Row style={rowStyle}>
             <Col sm={4}>
-              <img style={imgStyle} className="servicesImg" src="/bts1.jpg" />
+              <img style={imgStyle} className="servicesImg" src="/IGOR.JPG" />
             </Col>
             <Col sm={4}>
             <img style={imgStyle} className="servicesImg" src="/bts2.png" />
