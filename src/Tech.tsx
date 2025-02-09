@@ -66,7 +66,7 @@ const videoStyle = {
                     <li>$500 for a 1-3 page website</li>
                     <li>$20 a month: hosting and general maintenance</li>
                     <li>$40 a month: unlimited edits and 24/7 support </li>
-                    <li>$100 one time fee per page after 5</li>
+                    <li>$100 one time fee per page after 3</li>
                     <li>$500 for a custom blog that you can edit yourself</li>
                     <li>$500 for a E-commerce Store</li>
                   </ul>
