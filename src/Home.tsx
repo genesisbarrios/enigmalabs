@@ -326,7 +326,7 @@ const Home = () => {
         <Row style={rowStyle} id="servicesContainerRow" className="d-flex align-items-center">
             <Col xs={12} md={4} >
               <Card style={{ height: "auto" }} className="servicesCards">
-              <a href="panamia.club" target="_blank"><img style={imgStyle} className="servicesImg" alt="khris joao artist website0" src="https://www.dropbox.com/s/mz9pd4bgaa0id5bqonjfu/khrisjoao.png?rlkey=cxibhdsi3ofsc6hg9s608iu59&st=7pic0dax&dl=0" /></a>
+              <a href="khrisjoao.com" target="_blank"><img style={imgStyle} className="servicesImg" alt="khris joao artist website0" src="/khrisjoao.png" /></a>
                 <Card.Body>
                   <h5>Website Development and Maintenance</h5>
                   <Card.Text>
@@ -340,7 +340,7 @@ const Home = () => {
             </Col>
             <Col xs={12} md={4} >
               <Card style={{ height: "auto"  }} className="servicesCards">
-                <a href="#" target="_blank"><img style={imgStyle} className="servicesImg"  alt="Audio Engineering Services" src="/audio.JPG" /></a>
+                <a href="#" target="_blank"><img style={imgStyle} className="servicesImg"  alt="Audio Engineering Services" src="/colombia camp 22025.jpg" /></a>
                 <Card.Body>
                 <h5>Music</h5>
                   <Card.Text>
