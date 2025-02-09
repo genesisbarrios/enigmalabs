@@ -61,7 +61,7 @@ const videoStyle = {
             </Col>
             <Col sm={4}>
             <ul>
-                <li>Pay Up Front - Basic</li>
+                <li>Pay Up Front - Basic Website</li>
                 <ul>  
                   <li>$500 for a 1-3 page website</li>
                 </ul>
@@ -69,7 +69,7 @@ const videoStyle = {
               </Col>
               <Col sm={4}>
               <ul>
-                <li>Pay Up Front - Premium</li>
+                <li>Pay Up Front - Premium Website</li>
                 <ul>  
                   <li>$2000 for a 10 page website</li>
                 </ul>
