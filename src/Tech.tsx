@@ -71,7 +71,7 @@ const videoStyle = {
                     <li>$500 for a E-commerce Store</li>
                   </ul>
 
-                <li>Pay Up Front - Standard</li>
+                <li>Pay Up Front - Premium</li>
                   <ul>  
                     <li>$2000 for a 10 page website</li>
                     <li>$20 a month: hosting and general maintenance</li>
