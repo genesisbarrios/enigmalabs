@@ -64,11 +64,6 @@ const videoStyle = {
                 <li>Pay Up Front - Basic</li>
                 <ul>  
                   <li>$500 for a 1-3 page website</li>
-                  <li>$20 a month: hosting and general maintenance</li>
-                  <li>$40 a month: unlimited edits and 24/7 support </li>
-                  <li>$100 one time fee per page after 3</li>
-                  <li>$500 for a custom blog that you can edit yourself</li>
-                  <li>$500 for a E-commerce Store</li>
                 </ul>
               </ul>
               </Col>
@@ -77,20 +72,26 @@ const videoStyle = {
                 <li>Pay Up Front - Premium</li>
                 <ul>  
                   <li>$2000 for a 10 page website</li>
-                  <li>$20 a month: hosting and general maintenance</li>
-                  <li>$40 a month: unlimited edits and 24/7 support </li>
-                  <li>$100 one time fee per page after 5</li>
-                  <li>$500 for a custom blog that you can edit yourself</li>
-                  <li>$500 for a E-commerce Store</li>
                 </ul>
               </ul>
           </Col>
-            <Col sm={4}>
+          <Col sm={4}>
               <ul>
                   <li>Monthly Subscription</li>
                   <ul>  
-                    <li>$200 a month for a 5+ Page Website</li>
+                    <li>$200/mo for a 5+ Page Website</li>
                     <li>Includes unlimited Edits, 24/7 Support, Hosting, Maintenance, etc.</li>
+                  </ul>
+                </ul>
+              </Col>
+            <Col sm={4}>
+              <ul>
+                  <li>Extras</li>
+                  <ul>  
+                    <li>$20/mo: Hosting and general maintenance</li>
+                    <li>$40/mo: Unlimited edits and 24/7 support </li>
+                    <li>$100 Per Extra Page</li>
+                    <li>$500 for a Custom Blog / E-commerce Store</li>
                   </ul>
                 </ul>
               </Col>
