@@ -79,7 +79,7 @@ const videoStyle = {
               <ul>
                   <li>Monthly Subscription</li>
                   <ul>  
-                    <li>$200/mo for a 5+ Page Website</li>
+                    <li>$200/mo for a 5-10 Page Website</li>
                     <li>Includes unlimited Edits, 24/7 Support, Hosting, Maintenance, etc.</li>
                   </ul>
                 </ul>
