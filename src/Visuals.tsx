@@ -8,7 +8,7 @@ const Visuals = () => {
   };
 
   const imgStyle = {
-    maxHeight: "400px",
+    height: "400px",
     width: "100%"
 };
 
