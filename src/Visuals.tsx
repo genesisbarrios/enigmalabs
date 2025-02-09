@@ -8,7 +8,7 @@ const Visuals = () => {
   };
 
   const imgStyle = {
-    height: "250px",
+    height: "200px",
     width: "100%"
 };
 
