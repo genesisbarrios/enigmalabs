@@ -108,9 +108,8 @@ const Music = () => {
               </ul>
             </Col>
               <Col sm={6}>
-              <h5 style={{marginTop: "5%"}}>Pricing</h5>
               <ul>
-                <li>Beat Licenses</li>
+                <li>Beat Licenses (BUY 2 GET 1 FREE)</li>
                 <ul>  
                   <li>Non-Exclusive License: $20</li>
                   <li>Unlimited Streams License: $100</li>
