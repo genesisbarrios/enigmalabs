@@ -344,9 +344,8 @@ const Home = () => {
                 <Card.Body>
                 <h5>Music</h5>
                   <Card.Text>
-                    Music Production, Composition, Vocal Production <br></br>
-                    Editing, Mixing + Mastering  <br></br>
-                    Recording
+                    Music Production, Songwriting, Vocal Production <br></br>
+                    Recording, Editing, Mixing + Mastering  <br></br>
                   </Card.Text>
                   <a href="/Music" target="_blank" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>See Work</Button></a>
                 </Card.Body>
