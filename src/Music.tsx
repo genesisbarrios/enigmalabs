@@ -100,11 +100,16 @@ const Music = () => {
             </Col>
           </Row>
           <Row style={rowStyle}>
-            <Col sm={12}>
+            <Col sm={6}>
               <h5 style={{marginTop: "5%"}}>Pricing</h5>
               <ul>
-                <li>Recording: $35/hr</li>
+                <li>Recording: $35/hr($25/hr for 4+ hours)</li>
                 <li>Mixing + Mastering: $200</li>
+              </ul>
+            </Col>
+              <Col sm={6}>
+              <h5 style={{marginTop: "5%"}}>Pricing</h5>
+              <ul>
                 <li>Beat Licenses</li>
                 <ul>  
                   <li>Non-Exclusive License: $20</li>
