@@ -59,40 +59,42 @@ const videoStyle = {
               <h5 style={{marginTop: "5%"}}>Pricing</h5>
              
             </Col>
-            <Col sm={6}>
+            <Col sm={4}>
             <ul>
-                 <li>Pay Up Front - Basic</li>
-                  <ul>  
-                    <li>$500 for a 1-3 page website</li>
-                    <li>$20 a month: hosting and general maintenance</li>
-                    <li>$40 a month: unlimited edits and 24/7 support </li>
-                    <li>$100 one time fee per page after 3</li>
-                    <li>$500 for a custom blog that you can edit yourself</li>
-                    <li>$500 for a E-commerce Store</li>
-                  </ul>
-
-                <li>Pay Up Front - Premium</li>
-                  <ul>  
-                    <li>$2000 for a 10 page website</li>
-                    <li>$20 a month: hosting and general maintenance</li>
-                    <li>$40 a month: unlimited edits and 24/7 support </li>
-                    <li>$100 one time fee per page after 5</li>
-                    <li>$500 for a custom blog that you can edit yourself</li>
-                    <li>$500 for a E-commerce Store</li>
-                  </ul>
-              </ul>
-              
-            </Col>
-            <Col sm={6}>
-            <ul>
-                <li>Monthly Subscription</li>
+                <li>Pay Up Front - Basic</li>
                 <ul>  
-                  <li>$200 a month for a 5+ Page Website</li>
-                  <li>Includes unlimited Edits, 24/7 Support, Hosting, Maintenance, etc.</li>
+                  <li>$500 for a 1-3 page website</li>
+                  <li>$20 a month: hosting and general maintenance</li>
+                  <li>$40 a month: unlimited edits and 24/7 support </li>
+                  <li>$100 one time fee per page after 3</li>
+                  <li>$500 for a custom blog that you can edit yourself</li>
+                  <li>$500 for a E-commerce Store</li>
                 </ul>
               </ul>
-            </Col>
-          </Row>
+              </Col>
+              <Col sm={4}>
+              <ul>
+                <li>Pay Up Front - Premium</li>
+                <ul>  
+                  <li>$2000 for a 10 page website</li>
+                  <li>$20 a month: hosting and general maintenance</li>
+                  <li>$40 a month: unlimited edits and 24/7 support </li>
+                  <li>$100 one time fee per page after 5</li>
+                  <li>$500 for a custom blog that you can edit yourself</li>
+                  <li>$500 for a E-commerce Store</li>
+                </ul>
+              </ul>
+          </Col>
+            <Col sm={4}>
+              <ul>
+                  <li>Monthly Subscription</li>
+                  <ul>  
+                    <li>$200 a month for a 5+ Page Website</li>
+                    <li>Includes unlimited Edits, 24/7 Support, Hosting, Maintenance, etc.</li>
+                  </ul>
+                </ul>
+              </Col>
+            </Row>
 
           <Row style={rowStyle}>
 
