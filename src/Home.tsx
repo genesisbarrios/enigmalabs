@@ -326,7 +326,7 @@ const Home = () => {
         <Row style={rowStyle} id="servicesContainerRow" className="d-flex align-items-center">
             <Col xs={12} md={4} >
               <Card style={{ height: "auto" }} className="servicesCards">
-              <a href="panamia.club" target="_blank"><img style={imgStyle} className="servicesImg" alt="khris joao artist website0" src="https://www.dropbox.com/s/2o6wia5r7fap0i8gm2j9n/khrisjoaolandingpage.png?rlkey=dali8e08z8kprhn2kx10c87rf&st=mtk42ce9&dl=0" /></a>
+              <a href="panamia.club" target="_blank"><img style={imgStyle} className="servicesImg" alt="khris joao artist website0" src="https://www.dropbox.com/s/mz9pd4bgaa0id5bqonjfu/khrisjoao.png?rlkey=cxibhdsi3ofsc6hg9s608iu59&st=7pic0dax&dl=0" /></a>
                 <Card.Body>
                   <h5>Website Development and Maintenance</h5>
                   <Card.Text>
