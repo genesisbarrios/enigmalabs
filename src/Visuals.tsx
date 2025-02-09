@@ -134,7 +134,7 @@ const videoStyle = {
                 <li>Videography</li>
                 <ul>  
                   <li>2HR Run and Gun Music Video: $250 ($400 including Edit)</li>
-                  <li>1HR Run and Gun Music Video: $125 ($250 including Edit)</li>
+                  <li>1HR Run and Gun Music Video: $150 ($300 including Edit)</li>
                   <li>1HR Short Form Content Shoot + 2 Edits: $125</li>
                 </ul>
               </ul>
