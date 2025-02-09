@@ -115,13 +115,15 @@ const Music = () => {
             </Col>
           </Row>
 
-          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width:"100%" }}>
-                <a href="https://www.beatstars.com/genwav" style={{ color: "white" }}>
-                  <Button style={{ width: "100%", backgroundColor: "green", cursor: 'pointer', color: "white", borderColor: "green" }}>
-                    Book Your Session or Mix Today
-                  </Button>
-                </a>
-              </div>
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width:"100%" }}>
+              <a href="https://www.beatstars.com/genwav" style={{ color: "white" }}>
+                <Button style={{ width: "100%", backgroundColor: "green", cursor: 'pointer', color: "white", borderColor: "green" }}>
+                  Book Your Session or Mix Today
+                </Button>
+              </a>
+          </div>
+
+          <hr style={{backgroundColor:"white", marginTop: "3%", width:"100%"}}/>
 
           <Row style={rowStyle}>
            
