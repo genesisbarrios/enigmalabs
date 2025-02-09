@@ -108,6 +108,7 @@ const Music = () => {
               </ul>
             </Col>
               <Col sm={6}>
+              <h5 style={{marginTop: "5%"}}></h5>
               <ul>
                 <li>Beat Licenses (BUY 2 GET 1 FREE)</li>
                 <ul>  
