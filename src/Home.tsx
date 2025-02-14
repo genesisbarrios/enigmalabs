@@ -266,7 +266,7 @@ const Home = () => {
     };
 
     const servicesStyle = {
-      marginTop: '0%',
+      marginTop: '2%',
       width:"100%"
     };
 
