@@ -267,7 +267,7 @@ const Home = () => {
 
     const servicesStyle = {
       marginTop: '2%',
-      width:"100%"
+      width:"100%",
     };
 
   const newsletterStyle = {
@@ -302,6 +302,21 @@ const Home = () => {
       marginTop:"40%!important"
     }
 
+    const iframeStyle = {
+      display: "block",
+      marginLeft: "auto",
+      marginRight: "auto",
+      maxWidth: "100%",
+      marginTop: "1%" // Add this line to create top margin
+    };
+
+    const mobileiFrameStyle = {
+      ...iframeStyle,
+      marginTop: "25%", // Add margin only for mobile
+    };
+
+    const styleToApply = window.innerWidth <= 768 ? mobileiFrameStyle : iframeStyle;
+
 
   // let navigate = useNavigate(); 
   // const routeChange = () =>{ 
@@ -321,9 +336,9 @@ const Home = () => {
         </Row>
 
 
-        <Row style={{margin:"0 auto", marginLeft:"25%", height:"100vh"}}>
-            <div>
-              <iframe width="540" height="700px" src="https://8b7144f1.sibforms.com/serve/MUIFAHJjCbANvXSbNqPtNOOWw3Ni0pOj0791GG55dqyhe48lQtKa0M5GR25MfCEasLuIu9tgEkd8ORvkMLe7pC0GZnLhtqKZ4d6UkiGcpFt7UZ2xK_H9lFCdZhQbwLJgNLVpQ79mQMC4zfPowXrulOrMQ5-MGkFk9-zRVao5Busdb_N502Z8w3DlLXaZ4z0w6XUP98tJudjAfKb7" frameBorder="0" scrolling="auto" style={{display: "block" ,marginLeft: "auto", marginRight: "auto" ,maxWidth: "100%"}}></iframe>
+        <Row style={{margin:"0 auto", minHeight:"100vh"}}>
+            <div style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
+              <iframe style={styleToApply} width="540" height="700px" src="https://8b7144f1.sibforms.com/serve/MUIFAHJjCbANvXSbNqPtNOOWw3Ni0pOj0791GG55dqyhe48lQtKa0M5GR25MfCEasLuIu9tgEkd8ORvkMLe7pC0GZnLhtqKZ4d6UkiGcpFt7UZ2xK_H9lFCdZhQbwLJgNLVpQ79mQMC4zfPowXrulOrMQ5-MGkFk9-zRVao5Busdb_N502Z8w3DlLXaZ4z0w6XUP98tJudjAfKb7" frameBorder="0" scrolling="auto"></iframe>
             </div>
           </Row>
 
