@@ -317,16 +317,6 @@ function handleSubmit() {
               </form>
             </Col>
           </Row>
-          <style jsx global>{`
-      @media (max-width: 600px) {
-        .servicesImg {
-          height: 120px !important;
-          max-width: 100% !important;
-          width: 100% !important;
-          margin-right: 0 !important;
-        }
-      }
-    `}</style>
         </Container>
 
         
