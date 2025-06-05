@@ -20,7 +20,7 @@ const [email, setEmail] = useState("");
 
   const imgStyle = {
     height: "250px",
-    width: "100%",
+    width: "auto",
     maxWidth: "250px",
     marginRight: "20px",
     display: "block",
