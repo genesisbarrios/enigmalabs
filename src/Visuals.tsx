@@ -20,7 +20,7 @@ const [email, setEmail] = useState("");
 
   const imgStyle = {
     height: "250px",
-    width: "auto",
+    width: "100%",
     maxWidth: "100%",
     marginRight: "20px",
     display: "block",
@@ -317,6 +317,18 @@ function handleSubmit() {
               </form>
             </Col>
           </Row>
+          <style>{`
+      @media (max-width: 600px) {
+        .servicesImg {
+          width: 100% !important;
+          height: auto !important;
+          max-width: 100% !important;
+          object-fit: contain !important;
+          margin-right: 0 !important;
+          display: block !important;
+        }
+      }
+    `}</style>
         </Container>
 
         
