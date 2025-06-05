@@ -130,8 +130,6 @@ const Music = () => {
           <hr style={{backgroundColor:"white", marginTop: "3%", width:"100%"}}/>
 
           <Row style={rowStyle}>
-           
-           
             <Col xs={12} md={6} >
               <h5 style={{marginTop: "10%"}}>Why should you hire a Producer or Engineer?</h5>
               <ul>

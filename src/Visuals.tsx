@@ -1,22 +1,69 @@
 import { useEffect, useState, useLayoutEffect } from "react";
 import { Row, Col, Container, Button } from "react-bootstrap";
+import axios from "axios";
+import { Alert } from "react-bootstrap";
+
 //import image1 from "./image1.png";
 const Visuals = () => {
+const [email, setEmail] = useState("");
+  const [beats, setBeats] = useState(false);
+  const [loops, setLoops] = useState(false);
+  const [visuals, setVisuals] = useState(false);
+  const [web, setWeb] = useState(false);
+  const [message, setMessage] = useState("");
+  const [alert, setAlert] = useState("");
 
   const rowStyle = {
-    margin: '2%'
+    margin: '2%',
+    alignItems: 'center',
   };
 
   const imgStyle = {
-    height: "200px",
-    width: "100%"
+    height: "250px",
+    width: "auto",
+    marginRight: "20px",
 };
 
 const videoStyle = {
-  height: "84%",
-  width: "100%"
+  height: "250px",
+  width: "auto"
 };
 
+function handleSubmit() {
+    console.log('handle submit request to subscribe')
+  
+    // Check if data is valid
+    if (!email) {
+      console.log('No e-mail address provided');
+      setAlert('Please set an e-mail address~');
+      return;
+    }
+
+    const dataToSend = {
+      email,
+      beats,
+      loops,
+      visuals,
+      web
+    };
+  
+    // Make a POST request using Axios
+    axios.post('https://genwav-node-server.vercel.app/addUserEnigma', dataToSend, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+      .then(() => {
+        console.log('Request successful');
+        setMessage("Your e-mail has been saved!")
+        setAlert(''); // Resetting alert if necessary
+      })
+      .catch((error) => {
+        setAlert("There was an error.");
+        console.error('Error: ', error);
+        setMessage(''); // Resetting message if necessary
+      });
+  }
 
       return (
         <Container className="aboutContainer">
@@ -35,46 +82,88 @@ const videoStyle = {
               </ul>
             </Col>
           </Row>
-          
-          
+
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h2>CLIENTS</h2>
-              <h5>Mars Miami Studios + Neptune Studios</h5>
+              <h2>PORTRAITS</h2>
             </Col>
           </Row>
           <Row style={rowStyle}>
-            <Col sm={3}>
-              <a href="https://www.instagram.com/neptunemiami/" target="_blank"><img style={imgStyle} className="servicesImg"   alt="neptune studios" src="/neptune.JPG" /></a>
+            <Col sm={4}>
+              <a href="https://www.instagram.com/_enigmalabs/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/portrait1.jpg" /></a>
             </Col>
-            <Col sm={3}>
-              <a href="https://www.instagram.com/neptunemiami/" target="_blank"><img style={imgStyle} className="servicesImg"   alt="neptune studios" src="/pyramid.jpg" /></a>
+            <Col sm={4}>
+              <a href="https://www.instagram.com/_enigmalabs/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/portrait2.jpg" /></a>
             </Col>
-            <Col sm={3}>
-              <a href="https://www.instagram.com/marsmiamistudios/" target="_blank"><video style={videoStyle} src="https://www.dropbox.com/scl/fi/nb3ku50e4oinc8yq4ywuf/edit2.mov?rlkey=9gruidxre3giutoigxpyugqyx&st=b8f41ypx&raw=1" autoPlay loop muted/></a>
-            </Col>
-            <Col sm={3}>
-              <a href="https://www.instagram.com/neptunemiami/" target="_blank"><img style={imgStyle} className="servicesImg"  alt="neptune studios" src="/micc.jpg" /></a>
+            <Col sm={4}>
+              <a href="https://www.instagram.com/_enigmalabs/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/portrait3.jpg" /></a>
             </Col>
           </Row>
+            <Row style={rowStyle}>
+            <Col sm={4}>
+              <a href="https://www.instagram.com/_enigmalabs/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/portrait5.jpg" /></a>
+            </Col>
+            <Col sm={4}>
+              <a href="https://www.instagram.com/_enigmalabs/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/portrait4.jpg" /></a>
+            </Col>
+            <Col sm={4}>
+              <a href="https://www.instagram.com/_enigmalabs/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/portrait6.jpg" /></a>
+            </Col>
+          </Row>
+
+
           <Row style={rowStyle}>
             <Col sm={12}>
-              <hr style={{backgroundColor:"white"}}/>
-              <h5>Hands On Builders</h5>
+              <h2>EVENTS</h2>
             </Col>
           </Row>
           <Row style={rowStyle}>
             <Col sm={3}>
-              <a href="https://www.instagram.com/hob._construction/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/hob1.png" /></a>
+              <a href="https://www.instagram.com/igorcentrism/" target="_blank"><img style={imgStyle} className="servicesImg"   src="/IGOR.JPG" /></a>
             </Col>
             <Col sm={3}>
-              <a href="https://www.instagram.com/hob._construction/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/hob2.png" /></a>
+              <a href="https://www.instagram.com/soyhaky/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/haky1.jpg" /></a>
             </Col>
             <Col sm={3}>
-              <a href="https://www.instagram.com/hob._construction/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/hob3.png" /></a>
+              <a href="https://www.instagram.com/gen.wav/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/hakygen2.jpg" /></a>
+            </Col>
+             <Col sm={3}>
+              <a href="https://www.instagram.com/soyhaky/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/haky3.jpg" /></a>
+            </Col>
+          </Row>
+
+          <Row style={rowStyle}>
+            <Col sm={3}>
+              <a href="https://www.instagram.com/_enigmalabs/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/DANIMAKO EDIT.jpg" /></a>
             </Col>
             <Col sm={3}>
-              <a href="https://www.instagram.com/hob._construction/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/hob4.png" /></a>
+              <a href="https://www.instagram.com/nickgarcia305/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/NICKGARCIA.jpg" /></a>
+            </Col>
+             <Col sm={3}>
+              <a href="https://www.instagram.com/_enigmalabs/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/JAZZ.jpg" /></a>
+            </Col>
+              <Col sm={3}>
+              <a href="https://www.instagram.com/_enigmalabs/" target="_blank"><img style={imgStyle} className="servicesImg"   src="/ptaenigma.JPG" /></a>
+            </Col>
+          </Row>
+
+          <Row style={rowStyle}>
+            <Col sm={12}>
+              <h2>STUDIO SESSIONS</h2>
+            </Col>
+          </Row>
+          <Row style={rowStyle}>
+            <Col sm={3}>
+              <a href="https://www.instagram.com/marsmiamistudios/" target="_blank"><img style={imgStyle} className="servicesImg"   alt="mars studios" src="/MARS.JPG" /></a>
+            </Col>
+            <Col sm={3}>
+              <a href="https://www.instagram.com/neptunemiami/" target="_blank"><img style={imgStyle} className="servicesImg"   alt="mars studios" src="/ETHINWAVE.jpg" /></a>
+            </Col>
+            <Col sm={3}>
+              <a href="https://www.instagram.com/marsmiamistudios/" target="_blank"><img style={imgStyle} className="servicesImg"   alt="mars studios" src="/ZICARIA.jpg" /></a>
+            </Col>
+            <Col sm={3}>
+              <a href="https://www.instagram.com/neptunemiami/" target="_blank"><img style={imgStyle} className="servicesImg"  alt="neptune studios" src="/ETHINWAVE2.jpg" /></a>
             </Col>
           </Row>
 
@@ -88,7 +177,7 @@ const videoStyle = {
               <iframe width="100%" height="315" src="https://www.youtube.com/embed/FQyi0U0Hkrg?si=UMRNAqCKERphTPTi" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" frameBorder="0" allowFullScreen></iframe>
             </Col>
             <Col sm={6}>
-            <iframe width="100%" height="315" src="https://www.youtube.com/embed/Ie1KfxLpxeY?si=j7Zn6Qya0mYAimVf" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" frameBorder="0" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen></iframe>
+            <iframe width="100%" height="315" src="https://www.youtube.com/embed/8td_ueaxld0?si=qSTF2jbTl7GwmKIX" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" frameBorder="0" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen></iframe>
             </Col>
           </Row>
           <Row style={rowStyle}>
@@ -98,23 +187,6 @@ const videoStyle = {
             </Col>
             <Col sm={6}>
             <iframe width="100%" height="315" src="https://www.youtube.com/embed/3wBxgLcn4-M?si=ZOhmNWgQ2QJ8cfxp" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" frameBorder="0" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen></iframe>
-            </Col>
-          </Row>
-
-          <Row style={rowStyle}>
-            <Col sm={12}>
-              <h2>Gallery</h2>
-            </Col>
-          </Row>
-          <Row style={rowStyle}>
-            <Col sm={4}>
-              <img style={imgStyle} className="servicesImg" src="/IGOR.JPG" />
-            </Col>
-            <Col sm={4}>
-            <img style={imgStyle} className="servicesImg" src="/bts2.png" />
-            </Col>
-            <Col sm={4}>
-            <img style={imgStyle} className="servicesImg" src="/bts3.JPG" />
             </Col>
           </Row>
 
@@ -154,13 +226,93 @@ const videoStyle = {
 
           <hr style={{backgroundColor:"white", marginTop: "3%"}}/>
 
+         
           <Row style={rowStyle}>
-
-          <hr style={{backgroundColor:"white", marginTop: "3%"}}/>
-            <Col sm={12}>
-              <h4 className="mt-5">Reach out to us</h4>
+            <Col xs={12} md={6} >
+              <h4 className="mt-5">Reach Out to Us</h4>
               <a href="mailto:info@enigma-labs.com" className="text-white">info@enigma-labs.com</a>
-              <div style={{marginBottom:"3%"}}></div>
+             <div style={{marginBottom:"3%"}}></div>
+            </Col>
+            <Col xs={12} md={6}  style={{ margin:"5% auto" }}>
+                <form style={{textAlign:"center", margin:"0 auto"}}>
+                  <h3 style={{color:"green"}}>Sign Up For our Newsletter</h3>  
+                  <input type="text" name="e-mail" placeholder="e-mail" style={{display:"inline-block", marginBottom:"20px", width:"60%"}}  
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                    }}
+                  ></input>
+                  <label style={{display:"block"}}>What are you interested in?</label>
+                  <div style={{display:'inline'}}>
+                    <input
+                      style={{borderRadius:"10px", backgroundColor:"#CBD5E1", display:'inline'}}
+                      type="checkbox"
+                      name="beats"
+                      value="0"
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setBeats(true);
+                        } else {
+                          setBeats(false);
+                        }
+                      }}
+                    />
+                    <p style={{display:'inline',  margin:"0 5px"}}>Beats & Audio Engineering</p>
+                    <br></br>
+                    <input
+                      style={{borderRadius:"10px", backgroundColor:"#CBD5E1", display:'inline'}}
+                      type="checkbox"
+                      name="loops"
+                      value="0"
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setLoops(true);
+                        } else {
+                          setLoops(false);
+                        }
+                      }}
+                    />
+                    <p style={{display:'inline',  margin:"0 5px"}}>Loop Packs</p>
+                    <br></br>
+                    <input
+                      style={{borderRadius:"10px", backgroundColor:"#CBD5E1", display:'inline'}}
+                      type="checkbox"
+                      name="visuals"
+                      value="0"
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setVisuals(true);
+                        } else {
+                          setVisuals(false);
+                        }
+                      }}
+                    />
+                    <p style={{display:'inline', margin:"0 5px"}}>visuals</p>
+                    <br></br>
+                    <input
+                    style={{borderRadius:"10px", backgroundColor:"#CBD5E1", display:'inline'}}
+                    type="checkbox"
+                    name="web"
+                    value="0"
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setWeb(true);
+                      } else {
+                        setWeb(false);
+                      }
+                    }}
+                  />
+                  <p style={{display:'inline', margin:"0 5px"}}>web development</p>
+                  <br></br>
+                  <button onClick={(e) => {
+                    e.preventDefault();
+                    handleSubmit();
+                  }} style={{marginTop:"20px", padding:"2px 5px", width:"40%", backgroundColor:"green"}} type="submit">
+                    Submit
+                  </button>
+                  {message && <Alert style={{marginTop:"5%", marginBottom:"5%", backgroundColor:"green", borderColor:"green", color:"white"}}>{message.toString()}</Alert>}
+                  {alert && <Alert style={{marginTop:"5%", marginBottom:"5%", backgroundColor:"red", borderColor:"red", color:"white"}} >{alert.toString()}</Alert>}
+                </div>
+              </form>
             </Col>
           </Row>
         </Container>
