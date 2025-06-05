@@ -20,8 +20,11 @@ const [email, setEmail] = useState("");
 
   const imgStyle = {
     height: "250px",
-    width: "auto",
+    width: "100%",
+    maxWidth: "250px",
+    objectFit: "cover",
     marginRight: "20px",
+    display: "block",
 };
 
 const videoStyle = {
@@ -315,6 +318,16 @@ function handleSubmit() {
               </form>
             </Col>
           </Row>
+          <style jsx global>{`
+      @media (max-width: 600px) {
+        .servicesImg {
+          height: 120px !important;
+          max-width: 100% !important;
+          width: 100% !important;
+          margin-right: 0 !important;
+        }
+      }
+    `}</style>
         </Container>
 
         
