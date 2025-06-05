@@ -156,13 +156,13 @@ function handleSubmit() {
           </Row>
           <Row style={rowStyle}>
             <Col sm={3}>
-              <a href="https://www.instagram.com/marsmiamistudios/" target="_blank"><img style={imgStyle} className="servicesImg"   alt="mars studios" src="/MARS.JPG" /></a>
-            </Col>
-            <Col sm={3}>
               <a href="https://www.instagram.com/neptunemiami/" target="_blank"><img style={imgStyle} className="servicesImg"   alt="mars studios" src="/ETHINWAVE.JPG" /></a>
             </Col>
             <Col sm={3}>
               <a href="https://www.instagram.com/marsmiamistudios/" target="_blank"><img style={imgStyle} className="servicesImg"   alt="mars studios" src="/ZICARIA.JPG" /></a>
+            </Col>
+              <Col sm={3}>
+              <a href="https://www.instagram.com/marsmiamistudios/" target="_blank"><img style={imgStyle} className="servicesImg"   alt="mars studios" src="/MARS.JPG" /></a>
             </Col>
             <Col sm={3}>
               <a href="https://www.instagram.com/neptunemiami/" target="_blank"><img style={imgStyle} className="servicesImg"  alt="neptune studios" src="/ETHINWAVE2.jpg" /></a>
