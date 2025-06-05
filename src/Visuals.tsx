@@ -134,13 +134,13 @@ function handleSubmit() {
 
           <Row style={rowStyle}>
             <Col sm={3}>
-              <a href="https://www.instagram.com/_enigmalabs/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/DANIMAKO EDIT.jpg" /></a>
+              <a href="https://www.instagram.com/_enigmalabs/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/DANIMAKO EDIT.JPG" /></a>
             </Col>
             <Col sm={3}>
-              <a href="https://www.instagram.com/nickgarcia305/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/NICKGARCIA.jpg" /></a>
+              <a href="https://www.instagram.com/nickgarcia305/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/NICKGARCIA.JPG" /></a>
             </Col>
              <Col sm={3}>
-              <a href="https://www.instagram.com/_enigmalabs/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/JAZZ.jpg" /></a>
+              <a href="https://www.instagram.com/_enigmalabs/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/JAZZ.JPG" /></a>
             </Col>
               <Col sm={3}>
               <a href="https://www.instagram.com/_enigmalabs/" target="_blank"><img style={imgStyle} className="servicesImg"   src="/ptaenigma.JPG" /></a>
@@ -157,10 +157,10 @@ function handleSubmit() {
               <a href="https://www.instagram.com/marsmiamistudios/" target="_blank"><img style={imgStyle} className="servicesImg"   alt="mars studios" src="/MARS.JPG" /></a>
             </Col>
             <Col sm={3}>
-              <a href="https://www.instagram.com/neptunemiami/" target="_blank"><img style={imgStyle} className="servicesImg"   alt="mars studios" src="/ETHINWAVE.jpg" /></a>
+              <a href="https://www.instagram.com/neptunemiami/" target="_blank"><img style={imgStyle} className="servicesImg"   alt="mars studios" src="/ETHINWAVE.JPG" /></a>
             </Col>
             <Col sm={3}>
-              <a href="https://www.instagram.com/marsmiamistudios/" target="_blank"><img style={imgStyle} className="servicesImg"   alt="mars studios" src="/ZICARIA.jpg" /></a>
+              <a href="https://www.instagram.com/marsmiamistudios/" target="_blank"><img style={imgStyle} className="servicesImg"   alt="mars studios" src="/ZICARIA.JPG" /></a>
             </Col>
             <Col sm={3}>
               <a href="https://www.instagram.com/neptunemiami/" target="_blank"><img style={imgStyle} className="servicesImg"  alt="neptune studios" src="/ETHINWAVE2.jpg" /></a>
