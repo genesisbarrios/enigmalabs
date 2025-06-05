@@ -22,7 +22,6 @@ const [email, setEmail] = useState("");
     height: "250px",
     width: "100%",
     maxWidth: "250px",
-    objectFit: "cover",
     marginRight: "20px",
     display: "block",
 };
