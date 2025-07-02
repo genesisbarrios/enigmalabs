@@ -45,11 +45,18 @@ const videoStyle = {
           <Row style={rowStyle}>
             <Col sm={12}>
               <h2>WORK</h2>
-              <h5><a href="https://www.marsmusicstudios.com/" style={{color:'white'}} target="_blank">Mars Miami Studios</a></h5>
             </Col>
           </Row>
+           <Row style={rowStyle}>
+            <Col sm={12}>
+              <h5><a href="https://www.cinemautographer.com/" style={{color:'white'}} target="_blank">Cinemautographer | Portfolio Website</a></h5>
+              <a href="https://www.cinemautographer.com/" target="_blank"><img style={imgStyle} className="servicesImg"   alt="Maury Ramos Peña Portfolio Website" src="https://dl.dropboxusercontent.com/s/1jm89lj35tqm1qk0hp1yr/maury.gif?rlkey=tlzw5eq3vkz77q3vx5ol3hpt0&st=vhxcy8fv&dl=0" /></a>
+            </Col>
+          </Row>
+        
           <Row style={rowStyle}>
             <Col sm={12}>
+              <h5><a href="https://www.marsmusicstudios.com/" style={{color:'white'}} target="_blank">Mars Miami Studios</a></h5>
               <a href="https://www.marsmusicstudios.com/" target="_blank"><img style={imgStyle} className="servicesImg"   alt="neptune studios" src="https://www.dropbox.com/scl/fi/hc1svqnn21ddd4wjjedpk/mars.png?rlkey=034jieiuwha3jtp43i3k7vt4t&st=7y8zgfqm&raw=1" /></a>
             </Col>
           </Row>
