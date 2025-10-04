@@ -156,6 +156,8 @@ const Music = () => {
             </Col>
           </Row>
 
+         <br></br>
+
             <Row style={rowStyle}>
               <Col sm={6}>
                 <h5 style={{marginTop: "5%"}}>Pricing</h5>
