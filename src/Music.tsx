@@ -6,6 +6,8 @@ import axios from 'axios';
 
 const Music = () => {
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [instagram, setInstagram] = useState("");
   const [beats, setBeats] = useState(false);
   const [loops, setLoops] = useState(false);
   const [visuals, setVisuals] = useState(false);
@@ -99,6 +101,61 @@ const Music = () => {
           </iframe>
             </Col>
           </Row>
+
+          <Row style={rowStyle}>
+            <Col sm={12}>
+              <h5 style={{marginTop: "5%"}}>Productions</h5>
+            </Col>
+          </Row>
+            <Row style={rowStyle}>
+           
+            <Col sm={6}>
+            <iframe width="100%" height="315" src="https://www.youtube.com/embed/0qUe5yHrXME?si=9_69oglkzU8Ko0bC" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
+            </Col>
+            <Col sm={6}>
+            <iframe width="100%" height="315" src="https://www.youtube.com/embed/GN2xNbORvi8?si=POjqdPrWmx33gBb6" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
+            </Col>
+            <Col sm={6}>
+            <iframe width="100%" height="315" src="https://www.youtube.com/embed/NaCDjNypPgk?si=hH5k1cJ5QmFyney2" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
+            </Col>
+            <Col sm={6}>
+            <iframe width="100%" height="315" src="https://www.youtube.com/embed/W70uVdpZBxY?si=-gz8f2_oDLBXlWHW" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
+            </Col>
+          </Row>
+           <Row style={rowStyle}>
+            <Col sm={6}>
+            <iframe width="100%" height="315" src="https://www.youtube.com/embed/videoseries?list=PLcGBMxEyx5p8sfg853csGDXChKZo2ZNNi" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+
+            </Col>
+            <Col sm={6}>
+               <iframe width="100%" height="315" src="https://www.youtube.com/embed/933mrl_VLyE?si=qJC69mbuK5hqtvcR" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+            </Col>
+            </Row>
+
+           <Row style={rowStyle}>
+            <Col sm={12}>
+              <h5 style={{marginTop: "5%"}}>Mixes</h5>
+            </Col>
+          </Row>
+          <Row style={rowStyle}>
+            <Col sm={6}>
+            <iframe width="100%" height="315" src="https://www.youtube.com/embed/VrSGomwNju0?si=4chE9-l5uA_aG-T0" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen>
+            </iframe>
+
+            </Col>
+            <Col sm={6}>
+            <iframe width="100%" height="315" src="https://www.youtube.com/embed/dGg3WreeDT0?si=174CwO_G6vyth7HK" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
+            </Col>
+            </Row>
+            <Row style={rowStyle}>
+            <Col sm={6}>
+            <iframe data-testid="embed-iframe" src="https://open.spotify.com/embed/track/6VZhwsrNbN6btKsyYMgCUc?utm_source=generator" width="100%" height="352" frameBorder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+            </Col>
+            <Col sm={6}>
+            <iframe data-testid="embed-iframe" src="https://open.spotify.com/embed/track/4QEP1OT5vinUwP1o7EYBV6?utm_source=generator" width="100%" height="352" frameBorder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" loading="lazy"></iframe>
+            </Col>
+          </Row>
+
           <Row style={rowStyle}>
             <Col sm={6}>
               <h5 style={{marginTop: "5%"}}>Pricing</h5>
@@ -127,8 +184,6 @@ const Music = () => {
               </a>
           </div>
 
-          <hr style={{backgroundColor:"white", marginTop: "3%", width:"100%"}}/>
-
           <Row style={rowStyle}>
             <Col xs={12} md={6} >
               <h5 style={{marginTop: "10%"}}>Why should you hire a Producer or Engineer?</h5>
@@ -149,6 +204,16 @@ const Music = () => {
                       setEmail(e.target.value);
                     }}
                   ></input>
+                   {/* <input type="text" name="name" placeholder="Name" style={{display:"inline-block", marginBottom:"20px", width:"60%"}}  
+                    onChange={(e) => {
+                      setName(e.target.value);
+                    }}
+                  ></input>
+                   <input type="text" name="instagram" placeholder="Instagram" style={{display:"inline-block", marginBottom:"20px", width:"60%"}}  
+                    onChange={(e) => {
+                      setInstagram(e.target.value);
+                    }}
+                  ></input> */}
                   <label style={{display:"block"}}>What are you interested in?</label>
                   <div style={{display:'inline'}}>
                     <input
@@ -224,36 +289,6 @@ const Music = () => {
             </Col>
           </Row>
 
-          <Row style={rowStyle}>
-          <hr style={{backgroundColor:"white", marginTop: "3%", width:"100%"}}/>
-            <Col sm={12}>
-              <h5 style={{marginTop: "2%"}}>Projects</h5>
-            </Col>
-          </Row>
-          <Row style={rowStyle}>
-            <Col sm={6}>
-            <iframe 
-              width="560" 
-              height="315" 
-              src="https://www.youtube.com/embed/videoseries?list=PLcGBMxEyx5p8sfg853csGDXChKZo2ZNNi" 
-              frameBorder="0" 
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-              allowFullScreen>
-            </iframe>
-
-            </Col>
-            <Col sm={6}>
-              <iframe width="100%" height="315" src="https://www.youtube.com/embed/PwVHzjcfxpg?si=Wo9jyBVZXng-Tu5u" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
-            </Col>
-            </Row>
-            <Row style={rowStyle}>
-            <Col sm={6}>
-            <iframe width="100%" height="315" src="https://www.youtube.com/embed/dGg3WreeDT0?si=174CwO_G6vyth7HK" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
-            </Col>
-            <Col sm={6}>
-            <iframe width="100%" height="315" src="https://www.youtube.com/embed/Zge6XKlx9UI?si=kJBbzc1u6DvHQukO" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
-            </Col>
-          </Row>
           
         </Container>
         
