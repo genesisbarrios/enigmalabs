@@ -131,14 +131,6 @@ const Music = () => {
                   <iframe width="100%" height="315" src="https://www.youtube.com/embed/rA59UKIzpgo?si=ycJ388eF3ULM1IxE" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
                 </Col>
               </Row>
-              <Row style={rowStyle}>
-                <Col sm={6}>
-                  <iframe width="100%" height="315" src="https://www.youtube.com/embed/0qUe5yHrXME?si=9_69oglkzU8Ko0bC" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
-                </Col>
-                <Col sm={6}>
-                  <iframe width="100%" height="315" src="https://www.youtube.com/embed/GN2xNbORvi8?si=POjqdPrWmx33gBb6" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
-                </Col>
-              </Row>
             <Row style={rowStyle}>
               <Col sm={6}>
                 <iframe width="100%" height="315" src="https://www.youtube.com/embed/videoseries?list=PLcGBMxEyx5p8sfg853csGDXChKZo2ZNNi" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
@@ -146,6 +138,14 @@ const Music = () => {
               <Col sm={6}>
                 <iframe width="100%" height="315" src="https://www.youtube.com/embed/videoseries?list=PLcGBMxEyx5p9cfbXNscaNm6tjNaOoWGBP" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
               </Col>
+            </Row>
+              <Row style={rowStyle}>
+                <Col sm={6}>
+                  <iframe width="100%" height="315" src="https://www.youtube.com/embed/0qUe5yHrXME?si=9_69oglkzU8Ko0bC" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
+                </Col>
+                <Col sm={6}>
+                  <iframe width="100%" height="315" src="https://www.youtube.com/embed/GN2xNbORvi8?si=POjqdPrWmx33gBb6" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
+                </Col>
               </Row>
 
            <Row style={rowStyle}>
