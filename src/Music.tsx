@@ -120,7 +120,7 @@ const Music = () => {
                   <iframe width="100%" height="315" src="https://www.youtube.com/embed/LJwhyKUX7SI?si=obJ4UiI4FysglOGY" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
                 </Col>
                 <Col sm={6}>
-                  <iframe width="100%" height="315" src="https://www.youtube.com/embed/7Le0hh4i7qA?si=zaca-Wkspr4ENPLM" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
+                  <iframe width="100%" height="315" src="https://www.youtube.com/embed/o5__bvpQ2TE?si=D_b6ni-SrcayntgQ" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
                 </Col>
               </Row>
               <Row style={rowStyle}>
