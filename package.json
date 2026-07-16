@@ -50,6 +50,7 @@
     "url": "https://github.com/genesisbarrios/EnigmaSoftwareConsulting.crypto/issues"
   },
   "devDependencies": {
+    "@types/react": "^19.2.15",
     "hardhat": "^2.8.3"
   }
 }
