@@ -1,0 +1,172 @@
+import { useEffect, useState } from 'react';
+import { Alert, Button, Card, Container, ListGroup } from 'react-bootstrap';
+import axios from 'axios';
+
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://genwav-node-server-main.vercel.app';
+
+type Attachment = {
+  _id: string;
+  filename: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
+  uploadedAt: string;
+};
+
+type Client = {
+  _id: string;
+  clientName: string;
+  businessName: string;
+  email: string;
+  phone: string;
+  website: string;
+  businessType: string;
+  location: string;
+  bio: string;
+  servicesOffered: string[];
+  audience: string;
+  goals: string;
+  offers: string;
+  references: string;
+  notes: string;
+  attachments: Attachment[];
+  createdAt: string;
+};
+
+const AdminOnboarding = () => {
+  const [clients, setClients] = useState<Client[]>([]);
+  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+
+  const fetchClients = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/onboarding/clients`);
+      if (response.data?.ok) {
+        setClients(response.data.clients || []);
+      }
+    } catch (fetchError) {
+      console.error(fetchError);
+      setError('Could not load onboarding clients.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchClients();
+  }, []);
+
+  const handleDownloadAll = (clientId: string) => {
+    window.open(`${API_BASE_URL}/api/onboarding/clients/${clientId}/download-all`, '_blank');
+  };
+
+  const handleDeleteAttachment = async (clientId: string, attachmentId: string) => {
+    const confirmDelete = window.confirm('Delete this uploaded file?');
+    if (!confirmDelete) return;
+
+    try {
+      await axios.delete(`${API_BASE_URL}/api/onboarding/clients/${clientId}/files/${attachmentId}`);
+      setMessage('Attachment deleted.');
+      fetchClients();
+    } catch (deleteError) {
+      console.error(deleteError);
+      setError('Could not delete the attachment.');
+    }
+  };
+
+  const handleDeleteClient = async (clientId: string) => {
+    const confirmDelete = window.confirm('Delete this client onboarding record and its files?');
+    if (!confirmDelete) return;
+
+    try {
+      await axios.delete(`${API_BASE_URL}/api/onboarding/clients/${clientId}`);
+      setMessage('Client record deleted.');
+      fetchClients();
+    } catch (deleteError) {
+      console.error(deleteError);
+      setError('Could not delete the client record.');
+    }
+  };
+
+  return (
+    <Container style={{ paddingTop: '6rem', paddingBottom: '3rem' }}>
+      <h1 style={{ color: '#68FF00', marginBottom: '1rem' }}>Client Onboarding Admin</h1>
+      <p style={{ color: '#d4d4d4', marginBottom: '1.5rem' }}>
+        Review onboarding responses, download uploaded brand assets, and remove files once you are done with them.
+      </p>
+
+      {message ? <Alert variant="success">{message}</Alert> : null}
+      {error ? <Alert variant="danger">{error}</Alert> : null}
+
+      {loading ? <p>Loading clients...</p> : null}
+
+      {!loading && clients.length === 0 ? <Alert variant="secondary">No onboarding clients have been saved yet.</Alert> : null}
+
+      {clients.map((client) => (
+        <Card key={client._id} style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', marginBottom: '1.25rem' }}>
+          <Card.Body>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <div>
+                <h4 style={{ marginBottom: '0.25rem' }}>{client.businessName || client.clientName}</h4>
+                <p style={{ marginBottom: '0.25rem' }}>{client.clientName} • {client.email}</p>
+                <small>{new Date(client.createdAt).toLocaleString()}</small>
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <Button size="sm" variant="outline-success" onClick={() => handleDownloadAll(client._id)}>
+                  Download All Files
+                </Button>
+                <Button size="sm" variant="outline-danger" onClick={() => handleDeleteClient(client._id)}>
+                  Delete Client
+                </Button>
+              </div>
+            </div>
+
+            <div style={{ marginTop: '1rem' }}>
+              <h6>Answers</h6>
+              <ListGroup variant="flush" style={{ background: 'transparent' }}>
+                <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Business Type:</strong> {client.businessType || '—'}</ListGroup.Item>
+                <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Location:</strong> {client.location || '—'}</ListGroup.Item>
+                <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Bio:</strong> {client.bio || '—'}</ListGroup.Item>
+                <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Services:</strong> {client.servicesOffered.join(', ') || '—'}</ListGroup.Item>
+                <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Audience:</strong> {client.audience || '—'}</ListGroup.Item>
+                <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Goals:</strong> {client.goals || '—'}</ListGroup.Item>
+                <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Offers:</strong> {client.offers || '—'}</ListGroup.Item>
+                <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>References:</strong> {client.references || '—'}</ListGroup.Item>
+                <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Notes:</strong> {client.notes || '—'}</ListGroup.Item>
+              </ListGroup>
+            </div>
+
+            <div style={{ marginTop: '1rem' }}>
+              <h6>Files</h6>
+              {client.attachments.length === 0 ? (
+                <p>No files uploaded.</p>
+              ) : (
+                <ListGroup>
+                  {client.attachments.map((attachment) => (
+                    <ListGroup.Item key={attachment._id} style={{ background: '#1a1a1a', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                      <div>
+                        <strong>{attachment.originalName || attachment.filename}</strong>
+                        <div><small>{attachment.mimeType} • {Math.round(attachment.size / 1024)} KB</small></div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <Button size="sm" variant="outline-light" onClick={() => window.open(`${API_BASE_URL}/api/onboarding/clients/${client._id}/files/${attachment._id}`, '_blank')}>
+                          Download
+                        </Button>
+                        <Button size="sm" variant="outline-danger" onClick={() => handleDeleteAttachment(client._id, attachment._id)}>
+                          Delete
+                        </Button>
+                      </div>
+                    </ListGroup.Item>
+                  ))}
+                </ListGroup>
+              )}
+            </div>
+          </Card.Body>
+        </Card>
+      ))}
+    </Container>
+  );
+};
+
+export default AdminOnboarding;

@@ -4,6 +4,8 @@ import { Row, Col, Container, Button } from "react-bootstrap";
 import { Alert } from "react-bootstrap";
 import axios from 'axios';
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://genwav-node-server.vercel.app';
+
 const Music = () => {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
@@ -49,7 +51,7 @@ const Music = () => {
     };
   
     // Make a POST request using Axios
-    axios.post('https://genwav-node-server.vercel.app/addUserEnigma', dataToSend, {
+    axios.post(`${API_BASE_URL}/api/newsletter/subscribe`, dataToSend, {
       headers: {
         'Content-Type': 'application/json'
       }

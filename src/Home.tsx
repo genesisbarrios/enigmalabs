@@ -13,6 +13,8 @@ import ButtonMailTo from "./ButtonMailTo";
 import "./app.css";
 import { Alert } from "react-bootstrap";
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://genwav-node-server-main.vercel.app';
+
 const Home = () => {
   // 2019 (c) Diego Albini CMD Srl 
   // https://www.linkedin.com/in/diego-albini-8842b133/
@@ -238,7 +240,7 @@ const Home = () => {
     };
   
     // Make a POST request using Axios
-    axios.post('https://genwav-node-server.vercel.app/addUserEnigma', dataToSend, {
+    axios.post(`${API_BASE_URL}/api/newsletter/subscribe`, dataToSend, {
       headers: {
         'Content-Type': 'application/json'
       }
@@ -315,8 +317,14 @@ const Home = () => {
       marginTop: "25%", // Add margin only for mobile
     };
 
-    const styleToApply = window.innerWidth <= 768 ? mobileiFrameStyle : iframeStyle;
-
+    const styleToApply = {
+      
+      ...window.innerWidth <= 768 ? mobileiFrameStyle : iframeStyle,
+      borderRadius: "10px",
+      scrolling: "none",
+      border: "none",
+      overflow: "hidden",
+    }
 
   // let navigate = useNavigate(); 
   // const routeChange = () =>{ 
@@ -334,14 +342,6 @@ const Home = () => {
             <h1 id="title" style={{textAlign:"center", marginTop:'5%'}}>no rules. no formula. just art.</h1>
           </Col>
         </Row>
-
-
-        <Row style={{margin:"0 auto", minHeight:"100vh"}}>
-            <div style={{display: "flex", justifyContent: "center", alignItems: "center"}}>
-              <iframe style={styleToApply} width="540" height="700px" src="https://8b7144f1.sibforms.com/serve/MUIFAHKwSF06YCmUJ_Ly5Cn4lmRW5OLN3RmyFLbx3xEZcEjQI1wqYz58quGFHRt39logCGe8SAZi3i4tb3MoLRW51OL7Z7mhv2aHlM-WEB4Y0x09o4xPiDbdNQ3WFbuhOchjZHXCAVQCW26ITG3iAYZLWEmaKaU2KjEDnG5ZlBdBwWmfcJ_JUqvahPegcY31IEFJgft1L_5jxrNx" frameBorder="0" scrolling="auto"></iframe>
-            </div>
-          </Row>
-
         <Row style={servicesStyle}>
          
           <h1 className="centerText" id="services">Services</h1>
@@ -391,23 +391,32 @@ const Home = () => {
             </Col>
         </Row>
 
+
+        <Row style={{margin:"0 auto", minHeight:"100vh"}}>
+            <div style={{margin:"0 auto", display: "flex", justifyContent: "center", alignItems: "center"}}>
+              <iframe style={styleToApply} width="540" height="650px" src="https://8b7144f1.sibforms.com/serve/MUIFAHKwSF06YCmUJ_Ly5Cn4lmRW5OLN3RmyFLbx3xEZcEjQI1wqYz58quGFHRt39logCGe8SAZi3i4tb3MoLRW51OL7Z7mhv2aHlM-WEB4Y0x09o4xPiDbdNQ3WFbuhOchjZHXCAVQCW26ITG3iAYZLWEmaKaU2KjEDnG5ZlBdBwWmfcJ_JUqvahPegcY31IEFJgft1L_5jxrNx" ></iframe>
+            </div>
+          </Row>
+
+
         <Row style={servicesStyle}>
           <h1 className="centerText" id="services">NEWSLETTER</h1>
         </Row>
         <Row style={newsletterStyle}>
           <Col  xs={12} md={6} style={{width:"50%"}}>
-            <img style={{ width: '100%', height: '100%', objectFit: 'cover', padding:"0"}} src="Aliens.png" alt="Aliens" />
+            <img style={{ width: '100%', height: '95%', objectFit: 'cover', padding:"0"}} src="Aliens.png" alt="Aliens" />
           </Col>
-          <Col xs={12} md={6}  style={{ margin:"5% auto" }}>
-              <form style={{textAlign:"center", margin:"0 auto"}}>
-                <h3 style={{color:"green"}}>Sign Up For our Newsletter</h3>  
-                <input type="text" name="e-mail" placeholder="e-mail" style={{display:"inline-block", marginBottom:"20px", width:"60%"}}  
+          <Col xs={12} md={6} style={{ display:"flex", justifyContent:"center", alignItems:"center", minHeight:"100%", padding:"2rem 1rem" }}>
+             <div style={{backgroundColor:"green", borderRadius:"10px", width:"100%", height:"100%", padding:"2rem 1rem" }}>
+              <form style={{ textAlign:"center", width:"100%", maxWidth:"420px", margin:"0 auto" }}>
+                <h3 style={{color:"black"}}>Sign Up For our Newsletter</h3>  
+                <input type="text" name="e-mail" placeholder="e-mail" style={{display:"block", margin:"0 auto 20px", width:"100%", maxWidth:"320px", padding:"0.75rem"}}  
                   onChange={(e) => {
                     setEmail(e.target.value);
                   }}
                 ></input>
                 <label style={{display:"block"}}>What are you interested in?</label>
-                <div style={{display:'inline'}}>
+                <div style={{display:'inline-block', textAlign:'left', marginTop:'0.5rem'}}>
                   <input
                     style={{borderRadius:"10px", backgroundColor:"#CBD5E1", display:'inline'}}
                     type="checkbox"
@@ -471,13 +480,14 @@ const Home = () => {
                 <button onClick={(e) => {
                   e.preventDefault();
                   handleSubmit();
-                }} style={{marginTop:"20px", padding:"2px 5px", width:"40%", backgroundColor:"green"}} type="submit">
+                }} style={{marginTop:"20px", padding:"5px 10px", width:"40%", backgroundColor:"black"}} type="submit">
                   Submit
                 </button>
                 {message && <Alert style={{marginTop:"5%", marginBottom:"5%", backgroundColor:"green", borderColor:"green", color:"white"}}>{message.toString()}</Alert>}
                 {alert && <Alert style={{marginTop:"5%", marginBottom:"5%", backgroundColor:"red", borderColor:"red", color:"white"}} >{alert.toString()}</Alert>}
               </div>
             </form>
+            </div>
           </Col>
 
         </Row>

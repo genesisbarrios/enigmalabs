@@ -7,6 +7,8 @@ import Visuals from "./Visuals";
 import Blog from "./Blog";
 import BlogEntry from './BlogEntry';
 import Navigation from './Navigation';
+import Onboarding from './Onboarding';
+import AdminOnboarding from './AdminOnboarding';
 import {Route, Routes} from 'react-router-dom';
 import {BrowserRouter as Router} from 'react-router-dom';
 const App = () => {
@@ -27,6 +29,8 @@ const App = () => {
          <Route path="/Tech" element={<Tech/>}/>
          <Route path="/Music" element={<Music/>}/>
          <Route path="/Visuals" element={<Visuals/>}/>
+         <Route path="/onboard" element={<Onboarding/>}/>
+         <Route path="/admin-onboarding" element={<AdminOnboarding/>}/>
 
       </Routes>
       </div>

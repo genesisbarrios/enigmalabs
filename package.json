@@ -7,8 +7,16 @@
     "node": ">=16.0.0"
   },
   "dependencies": {
+    "adm-zip": "^0.6.0",
+    "archiver": "^8.0.0",
     "axios": "^1.7.7",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
     "firebase": "^9.6.11",
+    "mongodb-memory-server": "^9.0.0",
+    "mongoose": "^7.4.5",
+    "multer": "^2.2.0",
     "react": "^17.0.2",
     "react-bootstrap": "^2.1.1",
     "react-dom": "^17.0.2",
@@ -21,10 +29,12 @@
   },
   "scripts": {
     "start": "NODE_OPTIONS=--openssl-legacy-provider react-scripts start",
+    "start:server": "node server.js",
     "build": "NODE_OPTIONS=--openssl-legacy-provider react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
+  "proxy": "http://localhost:5001",
   "eslintConfig": {
     "extends": [
       "react-app"

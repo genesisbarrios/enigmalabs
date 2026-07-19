@@ -3,6 +3,8 @@ import { Row, Col, Container, Button } from "react-bootstrap";
 import axios from "axios";
 import { Alert } from "react-bootstrap";
 
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://genwav-node-server.vercel.app';
+
 //import image1 from "./image1.png";
 const Visuals = () => {
 const [email, setEmail] = useState("");
@@ -50,7 +52,7 @@ function handleSubmit() {
     };
   
     // Make a POST request using Axios
-    axios.post('https://genwav-node-server.vercel.app/addUserEnigma', dataToSend, {
+    axios.post(`${API_BASE_URL}/api/newsletter/subscribe`, dataToSend, {
       headers: {
         'Content-Type': 'application/json'
       }
