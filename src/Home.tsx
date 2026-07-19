@@ -13,7 +13,7 @@ import ButtonMailTo from "./ButtonMailTo";
 import "./app.css";
 import { Alert } from "react-bootstrap";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://genwav-node-server-main.vercel.app';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/.netlify/functions/api';
 
 const Home = () => {
   // 2019 (c) Diego Albini CMD Srl 
@@ -240,7 +240,7 @@ const Home = () => {
     };
   
     // Make a POST request using Axios
-    axios.post(`${API_BASE_URL}/api/newsletter/subscribe`, dataToSend, {
+    axios.post(`${API_BASE_URL}/newsletter/subscribe`, dataToSend, {
       headers: {
         'Content-Type': 'application/json'
       }

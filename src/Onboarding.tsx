@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://genwav-node-server-main.vercel.app';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/.netlify/functions/api';
 
 const serviceOptions = [
   'Website Design',
@@ -82,7 +82,7 @@ const Onboarding = () => {
     }
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/api/onboarding/submit`, submitData, {
+      const response = await axios.post(`${API_BASE_URL}/onboarding/submit`, submitData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 

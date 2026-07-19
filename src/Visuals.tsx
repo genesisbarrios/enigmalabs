@@ -3,7 +3,7 @@ import { Row, Col, Container, Button } from "react-bootstrap";
 import axios from "axios";
 import { Alert } from "react-bootstrap";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://genwav-node-server.vercel.app';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/.netlify/functions/api';
 
 //import image1 from "./image1.png";
 const Visuals = () => {
@@ -52,7 +52,7 @@ function handleSubmit() {
     };
   
     // Make a POST request using Axios
-    axios.post(`${API_BASE_URL}/api/newsletter/subscribe`, dataToSend, {
+    axios.post(`${API_BASE_URL}/newsletter/subscribe`, dataToSend, {
       headers: {
         'Content-Type': 'application/json'
       }

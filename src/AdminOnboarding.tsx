@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Alert, Button, Card, Container, Form, ListGroup } from 'react-bootstrap';
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://genwav-node-server.vercel.app';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/.netlify/functions/api';
 const ADMIN_PASSWORD = process.env.REACT_APP_ONBOARD_PW || 'onboardinglocura';
 
 type Attachment = {
@@ -44,7 +44,7 @@ const AdminOnboarding = () => {
 
   const fetchClients = async () => {
     try {
-      const response = await axios.get(`${API_BASE_URL}/api/onboarding/clients`);
+      const response = await axios.get(`${API_BASE_URL}/onboarding/clients`);
       if (response.data?.ok) {
         setClients(response.data.clients || []);
       }
@@ -74,7 +74,7 @@ const AdminOnboarding = () => {
   };
 
   const handleDownloadAll = (clientId: string) => {
-    window.open(`${API_BASE_URL}/api/onboarding/clients/${clientId}/download-all`, '_blank');
+    window.open(`${API_BASE_URL}/onboarding/clients/${clientId}/download-all`, '_blank');
   };
 
   const handleDeleteAttachment = async (clientId: string, attachmentId: string) => {
@@ -82,7 +82,7 @@ const AdminOnboarding = () => {
     if (!confirmDelete) return;
 
     try {
-      await axios.delete(`${API_BASE_URL}/api/onboarding/clients/${clientId}/files/${attachmentId}`);
+      await axios.delete(`${API_BASE_URL}/onboarding/clients/${clientId}/files/${attachmentId}`);
       setMessage('Attachment deleted.');
       fetchClients();
     } catch (deleteError) {
@@ -96,7 +96,7 @@ const AdminOnboarding = () => {
     if (!confirmDelete) return;
 
     try {
-      await axios.delete(`${API_BASE_URL}/api/onboarding/clients/${clientId}`);
+      await axios.delete(`${API_BASE_URL}/onboarding/clients/${clientId}`);
       setMessage('Client record deleted.');
       fetchClients();
     } catch (deleteError) {
@@ -189,7 +189,7 @@ const AdminOnboarding = () => {
                         <div><small>{attachment.mimeType} • {Math.round(attachment.size / 1024)} KB</small></div>
                       </div>
                       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                        <Button size="sm" variant="outline-light" onClick={() => window.open(`${API_BASE_URL}/api/onboarding/clients/${client._id}/files/${attachment._id}`, '_blank')}>
+                        <Button size="sm" variant="outline-light" onClick={() => window.open(`${API_BASE_URL}/onboarding/clients/${client._id}/files/${attachment._id}`, '_blank')}>
                           Download
                         </Button>
                         <Button size="sm" variant="outline-danger" onClick={() => handleDeleteAttachment(client._id, attachment._id)}>

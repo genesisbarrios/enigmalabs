@@ -4,7 +4,7 @@ import { Row, Col, Container, Button } from "react-bootstrap";
 import { Alert } from "react-bootstrap";
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://genwav-node-server.vercel.app';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/.netlify/functions/api';
 
 const Music = () => {
   const [email, setEmail] = useState("");
@@ -51,7 +51,7 @@ const Music = () => {
     };
   
     // Make a POST request using Axios
-    axios.post(`${API_BASE_URL}/api/newsletter/subscribe`, dataToSend, {
+    axios.post(`${API_BASE_URL}/newsletter/subscribe`, dataToSend, {
       headers: {
         'Content-Type': 'application/json'
       }
