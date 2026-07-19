@@ -1,5 +1,6 @@
 import { useEffect, useState, useLayoutEffect } from "react";
 import { Row, Col, Container, Button } from "react-bootstrap";
+import { Link } from "react-router-dom";
 //import image1 from "./image1.png";
 const Tech = () => {
 
@@ -107,6 +108,21 @@ const videoStyle = {
           <Row style={rowStyle}>
 
           <hr style={{backgroundColor:"white", marginTop: "3%"}}/>
+            <Col sm={12}>
+              <h4 className="mt-5">Already made up your mind?</h4>
+              <p style={{ maxWidth: "700px", lineHeight: 1.7 }}>
+                If you already know you want a polished, high-performing website for your brand, we’d love to help you bring it to life.
+                Share a few details through our onboarding form and we’ll take it from there.
+              </p>
+              <p>
+                <Link to="/onboard" style={{ color: "#68FF00", fontWeight: 600 }}>
+                  Start your onboarding journey
+                </Link>
+              </p>
+            </Col>
+          </Row>
+
+          <Row style={rowStyle}>
             <Col sm={12}>
               <h4 className="mt-5">Reach out to us</h4>
               <a href="mailto:info@enigma-labs.com" className="text-white">info@enigma-labs.com</a>
