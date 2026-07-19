@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Alert, Button, Card, Container, ListGroup } from 'react-bootstrap';
+import { Alert, Button, Card, Container, Form, ListGroup } from 'react-bootstrap';
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://genwav-node-server-main.vercel.app';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'https://genwav-node-server.vercel.app';
+const ADMIN_PASSWORD = process.env.REACT_APP_ONBOARD_PW || 'onboardinglocura';
 
 type Attachment = {
   _id: string;
@@ -38,6 +39,8 @@ const AdminOnboarding = () => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [password, setPassword] = useState('');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const fetchClients = async () => {
     try {
@@ -54,8 +57,21 @@ const AdminOnboarding = () => {
   };
 
   useEffect(() => {
-    fetchClients();
-  }, []);
+    if (isAuthenticated) {
+      fetchClients();
+    }
+  }, [isAuthenticated]);
+
+  const handleLogin = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (password === ADMIN_PASSWORD) {
+      setIsAuthenticated(true);
+      setError('');
+    } else {
+      setError('Incorrect password.');
+      setPassword('');
+    }
+  };
 
   const handleDownloadAll = (clientId: string) => {
     window.open(`${API_BASE_URL}/api/onboarding/clients/${clientId}/download-all`, '_blank');
@@ -88,6 +104,29 @@ const AdminOnboarding = () => {
       setError('Could not delete the client record.');
     }
   };
+
+  if (!isAuthenticated) {
+    return (
+      <Container style={{ paddingTop: '6rem', paddingBottom: '3rem', maxWidth: '500px' }}>
+        <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b' }}>
+          <Card.Body>
+            <h1 style={{ color: '#68FF00', marginBottom: '0.75rem' }}>Client Onboarding Admin</h1>
+            <p style={{ color: '#d4d4d4', marginBottom: '1.25rem' }}>
+              Enter the admin password to view onboarding submissions.
+            </p>
+            {error ? <Alert variant="danger">{error}</Alert> : null}
+            <Form onSubmit={handleLogin}>
+              <Form.Group className="mb-3">
+                <Form.Label>Password</Form.Label>
+                <Form.Control type="password" value={password} onChange={(event) => setPassword(event.target.value)} placeholder="Enter password" />
+              </Form.Group>
+              <Button type="submit" variant="success">Unlock</Button>
+            </Form>
+          </Card.Body>
+        </Card>
+      </Container>
+    );
+  }
 
   return (
     <Container style={{ paddingTop: '6rem', paddingBottom: '3rem' }}>
