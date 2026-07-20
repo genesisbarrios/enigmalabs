@@ -9,6 +9,7 @@ import BlogEntry from './BlogEntry';
 import Navigation from './Navigation';
 import Onboarding from './Onboarding';
 import AdminOnboarding from './AdminOnboarding';
+import AdminNewsletter from './AdminNewsletter';
 import {Route, Routes} from 'react-router-dom';
 import {BrowserRouter as Router} from 'react-router-dom';
 const App = () => {
@@ -31,6 +32,7 @@ const App = () => {
          <Route path="/Visuals" element={<Visuals/>}/>
          <Route path="/onboard" element={<Onboarding/>}/>
          <Route path="/admin-onboarding" element={<AdminOnboarding/>}/>
+         <Route path="/admin" element={<AdminNewsletter/>}/>
 
       </Routes>
       </div>

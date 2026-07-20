@@ -101,6 +101,16 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
   }
 });
 
+app.get('/api/newsletter/subscribers', async (_req, res) => {
+  try {
+    const subscribers = await NewsletterSubscriber.find().sort({ createdAt: -1 });
+    res.json({ ok: true, subscribers });
+  } catch (error) {
+    console.error('Could not fetch newsletter subscribers', error);
+    res.status(500).json({ ok: false, message: 'Could not fetch newsletter subscribers.' });
+  }
+});
+
 app.post('/api/onboarding/submit', upload.array('files', 10), async (req, res) => {
   try {
     const payload = {
@@ -251,7 +261,7 @@ app.delete('/api/onboarding/clients/:id', async (req, res) => {
 });
 
 async function startServer() {
-  const mongoUri = process.env.MONGO_URI || process.env.REACT_APP_MONGO_URI || 'mongodb://127.0.0.1:27017/enigma';
+  const mongoUri = process.env.MONGO_URI || process.env.ENIGMA_MONGODB_URI || process.env.REACT_APP_MONGO_URI || 'mongodb://127.0.0.1:27017/enigma';
 
   try {
     await mongoose.connect(mongoUri, {

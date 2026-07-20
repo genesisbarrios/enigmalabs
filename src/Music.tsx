@@ -304,7 +304,7 @@ const Music = () => {
                       }
                     }}
                   />
-                  <p style={{display:'inline', margin:"0 5px"}}>web development</p>
+                  <p style={{display:'inline', margin:"0 5px"}}>web development & marketing</p>
                   <br></br>
                   <button onClick={(e) => {
                     e.preventDefault();
