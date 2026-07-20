@@ -175,6 +175,24 @@ app.get('/api/onboarding/clients', async (_req, res) => {
   }
 });
 
+app.get('/api/onboarding/clients/lookup', async (req, res) => {
+  try {
+    const email = (req.query.email || '').toString().trim();
+    if (!email) {
+      return res.status(400).json({ ok: false, message: 'Email is required.' });
+    }
+    const escapedEmail = email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const client = await OnboardingClient.findOne({ email: new RegExp(`^${escapedEmail}$`, 'i') }).sort({ createdAt: -1 });
+    if (!client) {
+      return res.status(404).json({ ok: false, message: 'No submission found for that email.' });
+    }
+    res.json({ ok: true, client });
+  } catch (error) {
+    console.error('Could not look up client', error);
+    res.status(500).json({ ok: false, message: 'Could not look up onboarding submission.' });
+  }
+});
+
 app.get('/api/onboarding/clients/:id', async (req, res) => {
   try {
     const client = await OnboardingClient.findById(req.params.id);
@@ -185,6 +203,51 @@ app.get('/api/onboarding/clients/:id', async (req, res) => {
   } catch (error) {
     console.error('Could not fetch client', error);
     res.status(500).json({ ok: false, message: 'Could not fetch client details.' });
+  }
+});
+
+app.put('/api/onboarding/clients/:id', upload.array('files', 10), async (req, res) => {
+  try {
+    const client = await OnboardingClient.findById(req.params.id);
+    if (!client) {
+      return res.status(404).json({ ok: false, message: 'Client not found.' });
+    }
+
+    const fields = [
+      'clientName', 'businessName', 'email', 'phone', 'website', 'businessType',
+      'location', 'address', 'city', 'state', 'zipCode', 'country', 'businessHours',
+      'servicesArea', 'businessDescription', 'bio', 'audience', 'goals', 'offers',
+      'budget', 'timeline', 'references', 'notes', 'googleBusinessCategory',
+      'googleBusinessKeywords', 'googleBusinessServices', 'googleBusinessPhotos',
+      'googleBusinessReviews', 'googleBusinessQuestions', 'googleBusinessVerification'
+    ];
+    fields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        client[field] = req.body[field];
+      }
+    });
+
+    if (req.body.servicesOffered !== undefined) {
+      client.servicesOffered = req.body.servicesOffered
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+
+    const newAttachments = (req.files || []).map((file) => ({
+      filename: `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`,
+      originalName: file.originalname,
+      mimeType: file.mimetype,
+      size: file.size,
+      data: file.buffer
+    }));
+    client.attachments.push(...newAttachments);
+
+    await client.save();
+    res.json({ ok: true, client });
+  } catch (error) {
+    console.error('Could not update client', error);
+    res.status(500).json({ ok: false, message: 'Could not update onboarding submission.' });
   }
 });
 
@@ -260,34 +323,42 @@ app.delete('/api/onboarding/clients/:id', async (req, res) => {
   }
 });
 
-async function startServer() {
-  const mongoUri = process.env.MONGO_URI || process.env.ENIGMA_MONGODB_URI || process.env.REACT_APP_MONGO_URI || 'mongodb://127.0.0.1:27017/enigma';
+let connectPromise = null;
 
-  try {
-    await mongoose.connect(mongoUri, {
-      dbName: 'enigma',
-      useNewUrlParser: true,
-      useUnifiedTopology: true
-    });
-    console.log('MongoDB connected to the enigma database.');
-  } catch (error) {
-    console.warn('Primary MongoDB connection failed. Trying in-memory fallback.', error.message);
-    try {
-      mongoServer = await MongoMemoryServer.create();
-      await mongoose.connect(mongoServer.getUri(), {
-        dbName: 'enigma',
-        useNewUrlParser: true,
-        useUnifiedTopology: true
-      });
-      console.log('Connected to in-memory MongoDB fallback.');
-    } catch (fallbackError) {
-      console.error('MongoDB connection failed. Please set MONGO_URI.', fallbackError.message);
-    }
+function connectDatabase() {
+  if (mongoose.connection.readyState === 1) {
+    return Promise.resolve();
+  }
+  if (connectPromise) {
+    return connectPromise;
   }
 
-  app.listen(port, () => {
-    console.log(`Onboarding server listening on port ${port}`);
+  const mongoUri = process.env.MONGO_URI || process.env.ENIGMA_MONGODB_URI || process.env.REACT_APP_MONGO_URI || 'mongodb://127.0.0.1:27017/enigma';
+
+  connectPromise = mongoose.connect(mongoUri, { dbName: 'enigma' })
+    .then(() => {
+      console.log('MongoDB connected to the enigma database.');
+    })
+    .catch(async (error) => {
+      console.warn('Primary MongoDB connection failed. Trying in-memory fallback.', error.message);
+      mongoServer = await MongoMemoryServer.create();
+      await mongoose.connect(mongoServer.getUri(), { dbName: 'enigma' });
+      console.log('Connected to in-memory MongoDB fallback.');
+    })
+    .catch((fallbackError) => {
+      console.error('MongoDB connection failed. Please set MONGO_URI.', fallbackError.message);
+      connectPromise = null;
+    });
+
+  return connectPromise;
+}
+
+if (require.main === module) {
+  connectDatabase().then(() => {
+    app.listen(port, () => {
+      console.log(`Onboarding server listening on port ${port}`);
+    });
   });
 }
 
-startServer();
+module.exports = { app, connectDatabase };

@@ -1,5 +1,5 @@
 import { Card, Col, Container, Row } from 'react-bootstrap';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 const ContractIcon = () => (
   <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#68FF00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -78,6 +78,11 @@ const OnboardingLanding = () => {
               </div>
             </Card.Body>
           </Card>
+          <div style={{ textAlign: 'right', marginTop: '1rem' }}>
+            <Link to="/onboard/edit" style={{ color: '#68FF00', fontWeight: 600 }}>
+              Edit Submitted Form
+            </Link>
+          </div>
         </Col>
       </Row>
     </Container>

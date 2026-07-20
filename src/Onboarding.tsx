@@ -1,8 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
+import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
+const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 
 const serviceOptions = [
   'Website Design',
@@ -44,15 +45,56 @@ const initialState = {
   googleBusinessVerification: ''
 };
 
+type Attachment = {
+  _id: string;
+  filename: string;
+  originalName: string;
+  mimeType: string;
+  size: number;
+};
+
 const Onboarding = () => {
+  const [searchParams] = useSearchParams();
+  const editId = searchParams.get('id');
+
   const [formData, setFormData] = useState(initialState);
   const [services, setServices] = useState<string[]>([]);
   const [files, setFiles] = useState<FileList | null>(null);
+  const [existingAttachments, setExistingAttachments] = useState<Attachment[]>([]);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [loadingClient, setLoadingClient] = useState(!!editId);
 
   const selectedServices = useMemo(() => services.join(','), [services]);
+
+  useEffect(() => {
+    if (!editId) return;
+
+    const fetchClient = async () => {
+      try {
+        const response = await axios.get(`${API_BASE_URL}/onboarding/clients/${editId}`);
+        if (response.data?.ok) {
+          const client = response.data.client;
+          setFormData((prev) => ({
+            ...prev,
+            ...Object.fromEntries(Object.keys(prev).map((key) => [key, client[key] ?? '']))
+          }));
+          setServices(client.servicesOffered || []);
+          setExistingAttachments(client.attachments || []);
+        } else {
+          setError('Could not find that submission.');
+        }
+      } catch (fetchError) {
+        console.error(fetchError);
+        setError('Could not load your submission for editing.');
+      } finally {
+        setLoadingClient(false);
+      }
+    };
+
+    fetchClient();
+  }, [editId]);
 
   const handleChange = (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = event.target;
@@ -63,6 +105,20 @@ const Onboarding = () => {
     setServices((prev) =>
       prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]
     );
+  };
+
+  const handleDeleteAttachment = async (attachmentId: string) => {
+    if (!editId) return;
+    const confirmDelete = window.confirm('Remove this uploaded file?');
+    if (!confirmDelete) return;
+
+    try {
+      await axios.delete(`${API_BASE_URL}/onboarding/clients/${editId}/files/${attachmentId}`);
+      setExistingAttachments((prev) => prev.filter((attachment) => attachment._id !== attachmentId));
+    } catch (deleteError) {
+      console.error(deleteError);
+      setError('Could not remove that file.');
+    }
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -82,15 +138,25 @@ const Onboarding = () => {
     }
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/onboarding/submit`, submitData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
-      });
+      const response = editId
+        ? await axios.put(`${API_BASE_URL}/onboarding/clients/${editId}`, submitData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          })
+        : await axios.post(`${API_BASE_URL}/onboarding/submit`, submitData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+          });
 
       if (response.data?.ok) {
-        setMessage('Onboarding details saved successfully.');
-        setFormData(initialState);
-        setServices([]);
-        setFiles(null);
+        if (editId) {
+          setMessage('Onboarding details updated successfully.');
+          setExistingAttachments(response.data.client.attachments || []);
+          setFiles(null);
+        } else {
+          setMessage('Onboarding details saved successfully.');
+          setFormData(initialState);
+          setServices([]);
+          setFiles(null);
+        }
       } else {
         setError('Something went wrong while saving the onboarding package.');
       }
@@ -106,12 +172,18 @@ const Onboarding = () => {
     <Container style={{ paddingTop: '6rem', paddingBottom: '3rem', maxWidth: '1000px' }}>
       <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b' }}>
         <Card.Body style={{ padding: '2rem' }}>
-          <h1 style={{ color: '#68FF00', marginBottom: '0.5rem' }}>Web Development Client Onboarding</h1>
+          <h1 style={{ color: '#68FF00', marginBottom: '0.5rem' }}>
+            {editId ? 'Edit Your Onboarding Submission' : 'Web Development Client Onboarding'}
+          </h1>
           <p style={{ color: '#d4d4d4', marginBottom: '2rem' }}>
-            Welcome. This form helps capture the essentials for a new web development engagement, including business context, scope, visuals, and any offers or discounts you want to share.
+            {editId
+              ? 'Update your details below and save your changes.'
+              : 'Welcome. This form helps capture the essentials for a new web development engagement, including business context, scope, visuals, and any offers or discounts you want to share.'}
           </p>
 
-          <Form onSubmit={handleSubmit}>
+          {loadingClient ? <p style={{ color: '#d4d4d4' }}>Loading your submission...</p> : null}
+
+          <Form onSubmit={handleSubmit} style={loadingClient ? { display: 'none' } : undefined}>
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
@@ -303,8 +375,43 @@ const Onboarding = () => {
               <Form.Control as="textarea" rows={3} name="notes" value={formData.notes} onChange={handleChange} placeholder="Anything else you would like us to know?" />
             </Form.Group>
 
+            {editId && existingAttachments.length > 0 ? (
+              <Form.Group className="mb-3">
+                <Form.Label>Previously Uploaded Files</Form.Label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {existingAttachments.map((attachment) => (
+                    <div
+                      key={attachment._id}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        background: '#1a1a1a',
+                        borderRadius: '8px',
+                        padding: '0.5rem 0.75rem'
+                      }}
+                    >
+                      <span>{attachment.originalName || attachment.filename}</span>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <Button
+                          size="sm"
+                          variant="outline-light"
+                          onClick={() => window.open(`${API_BASE_URL}/onboarding/clients/${editId}/files/${attachment._id}`, '_blank')}
+                        >
+                          Download
+                        </Button>
+                        <Button size="sm" variant="outline-danger" onClick={() => handleDeleteAttachment(attachment._id)}>
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Form.Group>
+            ) : null}
+
             <Form.Group className="mb-3">
-              <Form.Label>Upload Brand Photos / Screenshots / Videos</Form.Label>
+              <Form.Label>{editId ? 'Add More Photos / Screenshots / Videos' : 'Upload Brand Photos / Screenshots / Videos'}</Form.Label>
               <Form.Control
                 type="file"
                 multiple
@@ -313,7 +420,7 @@ const Onboarding = () => {
             </Form.Group>
 
             <Button type="submit" style={{ backgroundColor: 'green', borderColor: 'green' }} disabled={loading}>
-              {loading ? 'Saving...' : 'Save Onboarding Package'}
+              {loading ? 'Saving...' : editId ? 'Save Changes' : 'Save Onboarding Package'}
             </Button>
           </Form>
 

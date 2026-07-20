@@ -364,7 +364,7 @@ const Home = () => {
     };
 
     const imgStyle = {
-        height: "60%",
+        height: "220px",
         width: "100%",
         objectFit: "cover" as const
     };
@@ -417,19 +417,20 @@ const Home = () => {
       <canvas style={canvasStyle} id="canv"></canvas>
 
       <div style={homeContainer} className="HomeContainer">
-        <Row style={rowStyle} >
+        <Row style={{ ...rowStyle, position: 'relative' }} className="hero-row">
           <Col sm={12}>
             <h1 id="title" style={{textAlign:"center", marginTop:'5%'}}>no rules. no formula. just art.</h1>
           </Col>
         </Row>
         <Row style={servicesStyle}>
-         
-          <h1 className="centerText" id="services">Services</h1>
+          <Col xs={12}>
+            <h1 className="centerText" id="services">Services</h1>
+          </Col>
         </Row>
         <Row style={rowStyle} id="servicesContainerRow" className="d-flex align-items-center">
             <Col xs={12} md={4} >
               <Card style={serviceCardStyle} className="servicesCards">
-              <a href="khrisjoao.com" target="_blank"><img style={imgStyle} className="servicesImg" alt="khris joao artist website0" src="/khrisjoao.png" /></a>
+              <a href="influanto.com" target="_blank"><img style={imgStyle} className="servicesImg" alt="influanto the all in one music marketing platform" src="https://dl.dropboxusercontent.com/s/a7lf48b7uht3dnyl59tc1/influantoHomepageLaptop.png?rlkey=pzp4yi2ns6ppjfmwb9m84t4tz&st=gjpea3z3&dl=0" /></a>
                 <Card.Body>
                   <h5>Website Development and Maintenance</h5>
                   <Card.Text>
@@ -443,12 +444,13 @@ const Home = () => {
             </Col>
             <Col xs={12} md={4} >
               <Card style={serviceCardStyle} className="servicesCards">
-                <a href="#" target="_blank"><img style={imgStyle} className="servicesImg"  alt="Audio Engineering Services" src="/colombia camp 22025.jpg" /></a>
+                <a href="#" target="_blank"><img style={imgStyle} className="servicesImg"  alt="Audio Engineering Services" src="/JAIAXGEN.jpg" /></a>
                 <Card.Body>
                 <h5>Music</h5>
                   <Card.Text>
-                    Music Production, Songwriting, Vocal Production <br></br>
-                    Recording, Editing, Mixing + Mastering  <br></br>
+                    Music Production, Mixing + Mastering <br></br>
+                    Songwriting, Vocal Production <br></br>
+                    Recording, Editing  <br></br>
                   </Card.Text>
                   <a href="/Music" target="_blank" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>See Work</Button></a>
                 </Card.Body>
@@ -456,7 +458,7 @@ const Home = () => {
             </Col>
             <Col xs={12} md={4}>
               <Card style={serviceCardStyle} className="servicesCards">
-                <img style={imgStyle} className="servicesImg" alt="video services" src="/video.png" />
+                <img style={imgStyle} className="servicesImg" alt="video services" src="/BTSOBEASTXGEN.png" />
                 <Card.Body>
                   <h5>Visuals</h5>
                   <Card.Text>
@@ -472,13 +474,12 @@ const Home = () => {
         </Row>
 
         <Row style={servicesStyle}>
-          <h1 className="centerText" id="services">NEWSLETTER</h1>
+          <Col xs={12}>
+            <h1 className="centerText" id="newsletter-heading">NEWSLETTER</h1>
+          </Col>
         </Row>
         <Row style={newsletterSectionStyle}>
-          <Col xs={12} md={6} style={{ marginBottom: "1.5rem" }}>
-            <img style={newsletterImageStyle} src="Aliens.png" alt="Aliens" />
-          </Col>
-          <Col xs={12} md={6} style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+          <Col xs={12} md={6} style={{ display: "flex", justifyContent: "center", alignItems: "center", order: 1 }}>
             <div style={newsletterCardStyle}>
               <form style={{ textAlign: "center", width: "100%", maxWidth: "420px", margin: "0 auto" }}>
                 <h3 style={{ color: "#68FF00", marginBottom: "0.25rem" }}>Sign Up For Our Newsletter</h3>
@@ -531,6 +532,9 @@ const Home = () => {
                 {alert && <Alert style={{ marginTop: "1.5rem", backgroundColor: "#2a0000", borderColor: "#ff4d4d", color: "#ff9d9d" }}>{alert.toString()}</Alert>}
               </form>
             </div>
+          </Col>
+          <Col xs={12} md={6} style={{ marginTop: "1.5rem", order: 2 }}>
+            <img style={newsletterImageStyle} src="Aliens.png" alt="Aliens" />
           </Col>
         </Row>
 
