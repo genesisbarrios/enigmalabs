@@ -13,7 +13,7 @@ import ButtonMailTo from "./ButtonMailTo";
 import "./app.css";
 import { Alert } from "react-bootstrap";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/.netlify/functions/api';
+const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 
 const Home = () => {
   // 2019 (c) Diego Albini CMD Srl 

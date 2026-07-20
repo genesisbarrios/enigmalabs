@@ -4,7 +4,7 @@ import { Row, Col, Container, Button } from "react-bootstrap";
 import { Alert } from "react-bootstrap";
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/.netlify/functions/api';
+const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 
 const Music = () => {
   const [email, setEmail] = useState("");

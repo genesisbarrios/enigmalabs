@@ -3,7 +3,7 @@ import { Row, Col, Container, Button } from "react-bootstrap";
 import axios from "axios";
 import { Alert } from "react-bootstrap";
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/.netlify/functions/api';
+const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 
 //import image1 from "./image1.png";
 const Visuals = () => {

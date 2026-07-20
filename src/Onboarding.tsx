@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/.netlify/functions/api';
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 
 const serviceOptions = [
   'Website Design',
