@@ -8,6 +8,8 @@ import Blog from "./Blog";
 import BlogEntry from './BlogEntry';
 import Navigation from './Navigation';
 import Onboarding from './Onboarding';
+import OnboardingLanding from './OnboardingLanding';
+import OnboardingAgreement from './OnboardingAgreement';
 import AdminOnboarding from './AdminOnboarding';
 import AdminNewsletter from './AdminNewsletter';
 import {Route, Routes} from 'react-router-dom';
@@ -30,7 +32,9 @@ const App = () => {
          <Route path="/Tech" element={<Tech/>}/>
          <Route path="/Music" element={<Music/>}/>
          <Route path="/Visuals" element={<Visuals/>}/>
-         <Route path="/onboard" element={<Onboarding/>}/>
+         <Route path="/onboard" element={<OnboardingLanding/>}/>
+         <Route path="/onboard/agreement" element={<OnboardingAgreement/>}/>
+         <Route path="/onboard/form" element={<Onboarding/>}/>
          <Route path="/admin-onboarding" element={<AdminOnboarding/>}/>
          <Route path="/admin" element={<AdminNewsletter/>}/>
 

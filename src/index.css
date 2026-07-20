@@ -95,6 +95,10 @@ button:disabled {
   padding-bottom:0px!important; 
 }
 
+.onboarding-option-card:hover{
+  box-shadow: 0 0 35px rgba(104, 255, 0, 0.3);
+}
+
 .socialLinks{
   color: #68FF00;
   display: block;

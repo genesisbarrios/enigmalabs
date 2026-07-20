@@ -155,7 +155,7 @@ const AdminNewsletter = () => {
 
   return (
     <Container style={{ paddingTop: '6rem', paddingBottom: '3rem' }}>
-      <h1 style={{ color: '#68FF00', marginBottom: '1rem' }}>Newsletter Admin</h1>
+      <h1 style={{ color: '#68FF00', marginBottom: '1rem' }}>Admin</h1>
       <p style={{ color: '#d4d4d4', marginBottom: '1.5rem' }}>
         {subscribers.length} subscriber{subscribers.length === 1 ? '' : 's'}.
       </p>
@@ -207,7 +207,7 @@ const AdminNewsletter = () => {
           </Alert>
         ) : null}
         <Link to="/admin-onboarding" style={{ color: '#68FF00', fontWeight: 600 }}>
-          Go to Onboarding Admin →
+          Go to WebDev Onboarding Admin →
         </Link>
       </div>
     </Container>

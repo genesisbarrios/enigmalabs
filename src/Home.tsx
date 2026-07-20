@@ -365,7 +365,18 @@ const Home = () => {
 
     const imgStyle = {
         height: "60%",
-        width: "100%"
+        width: "100%",
+        objectFit: "cover" as const
+    };
+
+    const serviceCardStyle = {
+      height: "auto",
+      backgroundColor: "#111",
+      color: "white",
+      border: "1px solid #68FF00",
+      borderRadius: "20px",
+      boxShadow: "0 0 30px rgba(104, 255, 0, 0.12)",
+      overflow: "hidden" as const
     };
 
     const buttonContactStyle = {
@@ -417,7 +428,7 @@ const Home = () => {
         </Row>
         <Row style={rowStyle} id="servicesContainerRow" className="d-flex align-items-center">
             <Col xs={12} md={4} >
-              <Card style={{ height: "auto" }} className="servicesCards">
+              <Card style={serviceCardStyle} className="servicesCards">
               <a href="khrisjoao.com" target="_blank"><img style={imgStyle} className="servicesImg" alt="khris joao artist website0" src="/khrisjoao.png" /></a>
                 <Card.Body>
                   <h5>Website Development and Maintenance</h5>
@@ -431,7 +442,7 @@ const Home = () => {
               </Card>
             </Col>
             <Col xs={12} md={4} >
-              <Card style={{ height: "auto"  }} className="servicesCards">
+              <Card style={serviceCardStyle} className="servicesCards">
                 <a href="#" target="_blank"><img style={imgStyle} className="servicesImg"  alt="Audio Engineering Services" src="/colombia camp 22025.jpg" /></a>
                 <Card.Body>
                 <h5>Music</h5>
@@ -444,7 +455,7 @@ const Home = () => {
               </Card>
             </Col>
             <Col xs={12} md={4}>
-              <Card style={{ height: "auto"  }} className="servicesCards">
+              <Card style={serviceCardStyle} className="servicesCards">
                 <img style={imgStyle} className="servicesImg" alt="video services" src="/video.png" />
                 <Card.Body>
                   <h5>Visuals</h5>
@@ -460,14 +471,6 @@ const Home = () => {
             </Col>
         </Row>
 
-
-        <Row style={{margin:"0 auto", minHeight:"100vh"}}>
-            <div style={{margin:"0 auto", display: "flex", justifyContent: "center", alignItems: "center"}}>
-              <iframe style={styleToApply} width="540" height="650px" src="https://8b7144f1.sibforms.com/serve/MUIFAHKwSF06YCmUJ_Ly5Cn4lmRW5OLN3RmyFLbx3xEZcEjQI1wqYz58quGFHRt39logCGe8SAZi3i4tb3MoLRW51OL7Z7mhv2aHlM-WEB4Y0x09o4xPiDbdNQ3WFbuhOchjZHXCAVQCW26ITG3iAYZLWEmaKaU2KjEDnG5ZlBdBwWmfcJ_JUqvahPegcY31IEFJgft1L_5jxrNx" ></iframe>
-            </div>
-          </Row>
-
-
         <Row style={servicesStyle}>
           <h1 className="centerText" id="services">NEWSLETTER</h1>
         </Row>
@@ -480,7 +483,7 @@ const Home = () => {
               <form style={{ textAlign: "center", width: "100%", maxWidth: "420px", margin: "0 auto" }}>
                 <h3 style={{ color: "#68FF00", marginBottom: "0.25rem" }}>Sign Up For Our Newsletter</h3>
                 <p style={{ color: "#aaa", fontSize: "0.9rem", marginBottom: "1.5rem" }}>
-                  Drops, releases, and behind-the-scenes updates. No spam.
+                  Loops, Beats, and discounts. No spam.
                 </p>
                 <input
                   type="email"
@@ -530,6 +533,13 @@ const Home = () => {
             </div>
           </Col>
         </Row>
+
+          <Row style={{margin:"0 auto", minHeight:"100vh"}}>
+            <div style={{margin:"0 auto", display: "flex", justifyContent: "center", alignItems: "center"}}>
+              <iframe style={styleToApply} width="540" height="650px" src="https://8b7144f1.sibforms.com/serve/MUIFAHKwSF06YCmUJ_Ly5Cn4lmRW5OLN3RmyFLbx3xEZcEjQI1wqYz58quGFHRt39logCGe8SAZi3i4tb3MoLRW51OL7Z7mhv2aHlM-WEB4Y0x09o4xPiDbdNQ3WFbuhOchjZHXCAVQCW26ITG3iAYZLWEmaKaU2KjEDnG5ZlBdBwWmfcJ_JUqvahPegcY31IEFJgft1L_5jxrNx" ></iframe>
+            </div>
+          </Row>
+
 
       </div>
      
