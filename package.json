@@ -7,6 +7,7 @@
     "node": ">=16.0.0"
   },
   "dependencies": {
+    "@fontsource/dancing-script": "^5.3.0",
     "adm-zip": "^0.6.0",
     "archiver": "^8.0.0",
     "axios": "^1.7.7",
@@ -17,6 +18,7 @@
     "mongodb-memory-server": "^9.0.0",
     "mongoose": "^7.4.5",
     "multer": "^2.2.0",
+    "pdfkit": "^0.19.1",
     "react": "^17.0.2",
     "react-bootstrap": "^2.1.1",
     "react-dom": "^17.0.2",
@@ -24,6 +26,7 @@
     "react-geolocated": "^3.2.0",
     "react-router-dom": "^6.2.1",
     "react-scripts": "^4.0.0",
+    "react-signature-canvas": "^1.0.7",
     "three": "^0.137.5",
     "typescript": "^4.5.5",
     "xlsx": "^0.18.5"
@@ -62,6 +65,7 @@
   },
   "devDependencies": {
     "@types/react": "^19.2.15",
+    "@types/react-signature-canvas": "^1.0.7",
     "hardhat": "^2.8.3"
   }
 }

@@ -5,6 +5,7 @@ const multer = require('multer');
 const AdmZip = require('adm-zip');
 const dotenv = require('dotenv');
 const { MongoMemoryServer } = require('mongodb-memory-server');
+const { buildAgreementPdf } = require('./agreementPdf');
 
 dotenv.config();
 
@@ -13,7 +14,7 @@ const port = process.env.PORT || 5001;
 let mongoServer = null;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -74,6 +75,22 @@ const onboardingClientSchema = new mongoose.Schema({
 
 const OnboardingClient = mongoose.model('OnboardingClient', onboardingClientSchema, 'onboard');
 
+const webDevAgreementSchema = new mongoose.Schema({
+  planType: { type: String, enum: ['one_time', 'monthly', 'custom'], required: true },
+  amount: { type: Number, required: true },
+  clientName: { type: String, required: true },
+  clientAddress: { type: String, required: true },
+  clientEmail: { type: String, required: true },
+  scopeDetails: { type: String, required: true },
+  jurisdiction: { type: String, required: true },
+  effectiveDate: { type: Date, default: Date.now },
+  signature: Buffer,
+  pdf: Buffer,
+  createdAt: { type: Date, default: Date.now }
+});
+
+const WebDevAgreement = mongoose.model('WebDevAgreement', webDevAgreementSchema, 'webdev_agreements');
+
 app.get('/api/onboarding/health', (_req, res) => {
   res.json({ ok: true, message: 'Onboarding API is running.' });
 });
@@ -108,6 +125,75 @@ app.get('/api/newsletter/subscribers', async (_req, res) => {
   } catch (error) {
     console.error('Could not fetch newsletter subscribers', error);
     res.status(500).json({ ok: false, message: 'Could not fetch newsletter subscribers.' });
+  }
+});
+
+app.post('/api/agreements/submit', async (req, res) => {
+  try {
+    const { planType, amount, clientName, clientAddress, clientEmail, scopeDetails, jurisdiction, signatureDataUrl } = req.body;
+
+    if (!['one_time', 'monthly', 'custom'].includes(planType)) {
+      return res.status(400).json({ ok: false, message: 'Invalid plan type.' });
+    }
+    const numericAmount = Number(amount);
+    if (!numericAmount || numericAmount <= 0) {
+      return res.status(400).json({ ok: false, message: 'A valid amount is required.' });
+    }
+    if (!clientName || !clientAddress || !clientEmail || !scopeDetails || !jurisdiction) {
+      return res.status(400).json({ ok: false, message: 'All fields are required.' });
+    }
+    if (!signatureDataUrl || !signatureDataUrl.startsWith('data:image/png;base64,')) {
+      return res.status(400).json({ ok: false, message: 'A signature is required.' });
+    }
+
+    const signatureBuffer = Buffer.from(signatureDataUrl.split(',')[1], 'base64');
+    const effectiveDate = new Date();
+
+    const pdfBuffer = await buildAgreementPdf({
+      planType,
+      amount: numericAmount,
+      clientName,
+      clientAddress,
+      scopeDetails,
+      jurisdiction,
+      effectiveDate,
+      signaturePngBuffer: signatureBuffer
+    });
+
+    const agreement = await WebDevAgreement.create({
+      planType,
+      amount: numericAmount,
+      clientName,
+      clientAddress,
+      clientEmail,
+      scopeDetails,
+      jurisdiction,
+      effectiveDate,
+      signature: signatureBuffer,
+      pdf: pdfBuffer
+    });
+
+    // TODO: email the signed PDF to info@enigma-labs.com and clientEmail once email delivery is set up.
+
+    res.status(201).json({ ok: true, agreementId: agreement._id });
+  } catch (error) {
+    console.error('Agreement submission failed', error);
+    res.status(500).json({ ok: false, message: 'Could not save the agreement.' });
+  }
+});
+
+app.get('/api/agreements/:id/download', async (req, res) => {
+  try {
+    const agreement = await WebDevAgreement.findById(req.params.id);
+    if (!agreement) {
+      return res.status(404).json({ ok: false, message: 'Agreement not found.' });
+    }
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="web-development-agreement-${agreement._id}.pdf"`);
+    res.send(agreement.pdf);
+  } catch (error) {
+    console.error('Could not download agreement', error);
+    res.status(500).json({ ok: false, message: 'Could not download agreement.' });
   }
 });
 
