@@ -51,8 +51,9 @@ const OnboardingAgreement = () => {
   const [clientName, setClientName] = useState(searchParams.get('clientName') || '');
   const [clientAddress, setClientAddress] = useState('');
   const [clientEmail, setClientEmail] = useState(searchParams.get('clientEmail') || '');
-  const [scopeDetails, setScopeDetails] = useState(searchParams.get('scope') || '');
   const [jurisdiction, setJurisdiction] = useState('');
+
+  const visiblePlans: PlanType[] = ['one_time', 'monthly'];
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -84,7 +85,7 @@ const OnboardingAgreement = () => {
       setError('Please enter a valid amount.');
       return;
     }
-    if (!clientName || !clientAddress || !clientEmail || !scopeDetails || !jurisdiction) {
+    if (!clientName || !clientAddress || !clientEmail || !jurisdiction) {
       setError('Please fill in every field before signing.');
       return;
     }
@@ -102,7 +103,6 @@ const OnboardingAgreement = () => {
         clientName,
         clientAddress,
         clientEmail,
-        scopeDetails,
         jurisdiction,
         signatureDataUrl
       });
@@ -154,14 +154,13 @@ const OnboardingAgreement = () => {
       </p>
 
       <Row className="g-3 mb-4">
-        {(Object.keys(PLAN_LABELS) as PlanType[]).map((plan) => (
-          <Col xs={12} md={4} key={plan}>
+        {visiblePlans.map((plan) => (
+          <Col xs={12} md={6} key={plan}>
             <div style={planCardStyle(planType === plan)} onClick={() => setPlanType(plan)}>
               <h5 style={{ color: '#68FF00' }}>{PLAN_LABELS[plan]}</h5>
               <p style={{ color: '#d4d4d4', marginBottom: 0 }}>
                 {plan === 'one_time' && '$2,000 due once'}
                 {plan === 'monthly' && '$200 billed monthly'}
-                {plan === 'custom' && 'You enter the agreed amount'}
               </p>
             </div>
           </Col>
@@ -204,24 +203,12 @@ const OnboardingAgreement = () => {
             <Form.Control value={clientAddress} onChange={(event) => setClientAddress(event.target.value)} placeholder="Street, City, State" required />
           </Form.Group>
 
-          <Form.Group className="mb-3" controlId="agreement-scopeDetails">
-            <Form.Label>Scope of Work</Form.Label>
-            <Form.Control
-              as="textarea"
-              rows={3}
-              value={scopeDetails}
-              onChange={(event) => setScopeDetails(event.target.value)}
-              placeholder="e.g. Homepage, 10+ subpages, contact form, SEO"
-              required
-            />
-          </Form.Group>
-
           <Form.Group className="mb-4" controlId="agreement-jurisdiction">
             <Form.Label>Governing Jurisdiction</Form.Label>
             <Form.Control
               value={jurisdiction}
               onChange={(event) => setJurisdiction(event.target.value)}
-              placeholder="e.g. State of Florida"
+              placeholder="e.g. State of Florida, USA"
               required
             />
           </Form.Group>
@@ -243,7 +230,7 @@ const OnboardingAgreement = () => {
               <p>
                 Developer agrees to provide the following services (the &quot;Services&quot;) and deliverables (the &quot;Deliverables&quot;) to Client:
                 <br />
-                Design and development of a website / web application including: {scopeDetails || '[SCOPE OF WORK]'}
+                Design and development of a website / web application as scoped and agreed upon between Developer and Client.
                 <br />
                 Google Business Setup
                 <br />

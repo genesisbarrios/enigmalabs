@@ -11,7 +11,7 @@ function formatFee(planType, amount) {
   return `$${formatted} (negotiated fee)`;
 }
 
-function buildAgreementPdf({ planType, amount, clientName, clientAddress, scopeDetails, jurisdiction, effectiveDate, signaturePngBuffer }) {
+function buildAgreementPdf({ planType, amount, clientName, clientAddress, jurisdiction, effectiveDate, signaturePngBuffer }) {
   return new Promise((resolve, reject) => {
     const doc = new PDFDocument({ size: 'LETTER', margin: 54 });
     const chunks = [];
@@ -45,7 +45,7 @@ function buildAgreementPdf({ planType, amount, clientName, clientAddress, scopeD
     section(
       '1. Scope of Work',
       'Developer agrees to provide the following services (the "Services") and deliverables (the "Deliverables") to Client:\n\n' +
-      `Design and development of a website / web application including: ${scopeDetails}\n` +
+      'Design and development of a website / web application as scoped and agreed upon between Developer and Client.\n' +
       'Google Business Setup\n\n' +
       'Any work not explicitly described above is considered out of scope and will be handled under Section 4 (Change Requests).'
     );

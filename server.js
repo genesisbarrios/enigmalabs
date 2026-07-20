@@ -81,7 +81,6 @@ const webDevAgreementSchema = new mongoose.Schema({
   clientName: { type: String, required: true },
   clientAddress: { type: String, required: true },
   clientEmail: { type: String, required: true },
-  scopeDetails: { type: String, required: true },
   jurisdiction: { type: String, required: true },
   effectiveDate: { type: Date, default: Date.now },
   signature: Buffer,
@@ -130,7 +129,7 @@ app.get('/api/newsletter/subscribers', async (_req, res) => {
 
 app.post('/api/agreements/submit', async (req, res) => {
   try {
-    const { planType, amount, clientName, clientAddress, clientEmail, scopeDetails, jurisdiction, signatureDataUrl } = req.body;
+    const { planType, amount, clientName, clientAddress, clientEmail, jurisdiction, signatureDataUrl } = req.body;
 
     if (!['one_time', 'monthly', 'custom'].includes(planType)) {
       return res.status(400).json({ ok: false, message: 'Invalid plan type.' });
@@ -139,7 +138,7 @@ app.post('/api/agreements/submit', async (req, res) => {
     if (!numericAmount || numericAmount <= 0) {
       return res.status(400).json({ ok: false, message: 'A valid amount is required.' });
     }
-    if (!clientName || !clientAddress || !clientEmail || !scopeDetails || !jurisdiction) {
+    if (!clientName || !clientAddress || !clientEmail || !jurisdiction) {
       return res.status(400).json({ ok: false, message: 'All fields are required.' });
     }
     if (!signatureDataUrl || !signatureDataUrl.startsWith('data:image/png;base64,')) {
@@ -154,7 +153,6 @@ app.post('/api/agreements/submit', async (req, res) => {
       amount: numericAmount,
       clientName,
       clientAddress,
-      scopeDetails,
       jurisdiction,
       effectiveDate,
       signaturePngBuffer: signatureBuffer
@@ -166,7 +164,6 @@ app.post('/api/agreements/submit', async (req, res) => {
       clientName,
       clientAddress,
       clientEmail,
-      scopeDetails,
       jurisdiction,
       effectiveDate,
       signature: signatureBuffer,
