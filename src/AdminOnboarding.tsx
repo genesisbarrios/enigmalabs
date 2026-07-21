@@ -32,6 +32,13 @@ type Client = {
   domainName: string;
   domainStatus: string;
   domainDetails: string;
+  pageNames: string;
+  socialInstagram: string;
+  socialTiktok: string;
+  socialYoutube: string;
+  socialFacebook: string;
+  socialTwitter: string;
+  socialOther: string;
   references: string;
   notes: string;
   attachments: Attachment[];
@@ -180,6 +187,13 @@ const AdminOnboarding = () => {
                 <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Domain Name:</strong> {client.domainName || '—'}</ListGroup.Item>
                 <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Domain Status:</strong> {client.domainStatus || '—'}</ListGroup.Item>
                 <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Domain Details:</strong> {client.domainDetails || '—'}</ListGroup.Item>
+                <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Page Names / Nav Structure:</strong> {client.pageNames || '—'}</ListGroup.Item>
+                <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Instagram:</strong> {client.socialInstagram || '—'}</ListGroup.Item>
+                <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>TikTok:</strong> {client.socialTiktok || '—'}</ListGroup.Item>
+                <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>YouTube:</strong> {client.socialYoutube || '—'}</ListGroup.Item>
+                <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Facebook:</strong> {client.socialFacebook || '—'}</ListGroup.Item>
+                <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>X / Twitter:</strong> {client.socialTwitter || '—'}</ListGroup.Item>
+                <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Other Social Links:</strong> {client.socialOther || '—'}</ListGroup.Item>
                 <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>References:</strong> {client.references || '—'}</ListGroup.Item>
                 <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Notes:</strong> {client.notes || '—'}</ListGroup.Item>
               </ListGroup>

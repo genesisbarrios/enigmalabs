@@ -38,6 +38,13 @@ const initialState = {
   domainName: '',
   domainStatus: '',
   domainDetails: '',
+  pageNames: '',
+  socialInstagram: '',
+  socialTiktok: '',
+  socialYoutube: '',
+  socialFacebook: '',
+  socialTwitter: '',
+  socialOther: '',
   references: '',
   notes: '',
   googleBusinessCategory: '',
@@ -412,6 +419,58 @@ const Onboarding = () => {
                 value={formData.domainDetails}
                 onChange={handleChange}
                 placeholder="If already purchased: which registrar, and do you have login access to share? If not purchased: any alternate names you'd consider if your first choice is taken?"
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Page Names / Nav Bar Menu Structure</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                name="pageNames"
+                value={formData.pageNames}
+                onChange={handleChange}
+                placeholder="List the pages you want and how they should appear in the nav menu, e.g. Home, About, Services, Gallery, Contact"
+              />
+            </Form.Group>
+
+            <Form.Label>Social Media Links</Form.Label>
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Control name="socialInstagram" value={formData.socialInstagram} onChange={handleChange} placeholder="Instagram URL" />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Control name="socialTiktok" value={formData.socialTiktok} onChange={handleChange} placeholder="TikTok URL" />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Control name="socialYoutube" value={formData.socialYoutube} onChange={handleChange} placeholder="YouTube URL" />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Control name="socialFacebook" value={formData.socialFacebook} onChange={handleChange} placeholder="Facebook URL" />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Control name="socialTwitter" value={formData.socialTwitter} onChange={handleChange} placeholder="X / Twitter URL" />
+                </Form.Group>
+              </Col>
+            </Row>
+            <Form.Group className="mb-3">
+              <Form.Label>Other Social Links</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={2}
+                name="socialOther"
+                value={formData.socialOther}
+                onChange={handleChange}
+                placeholder="Any other platforms — Pinterest, LinkedIn, Threads, Spotify, etc."
               />
             </Form.Group>
 
