@@ -453,7 +453,7 @@ const Home = () => {
                   <Card.Text>
                     Music Production, Mixing + Mastering <br></br>
                     Songwriting, Vocal Production <br></br>
-                    Recording, Editing  <br></br>
+                    Recording, Editing, Pitch Correction <br></br>
                   </Card.Text>
                   <a href="/Music" target="_blank" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>See Work</Button></a>
                 </Card.Body>
