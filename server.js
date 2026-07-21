@@ -15,7 +15,7 @@ const port = process.env.PORT || 5001;
 let mongoServer = null;
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
-const AGREEMENT_FROM_EMAIL = process.env.AGREEMENT_FROM_EMAIL || 'onboarding@resend.dev';
+const AGREEMENT_FROM_EMAIL = process.env.AGREEMENT_FROM_EMAIL || 'agreements@enigma-labs.com';
 const AGREEMENT_ADMIN_EMAIL = 'info@enigma-labs.com';
 
 async function sendAgreementEmails({ agreementId, clientName, clientEmail, pdfBuffer }) {
