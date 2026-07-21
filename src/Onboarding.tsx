@@ -34,6 +34,10 @@ const initialState = {
   audience: '',
   goals: '',
   offers: '',
+  colorScheme: '',
+  domainName: '',
+  domainStatus: '',
+  domainDetails: '',
   references: '',
   notes: '',
   googleBusinessCategory: '',
@@ -60,7 +64,9 @@ const Onboarding = () => {
   const [formData, setFormData] = useState(initialState);
   const [services, setServices] = useState<string[]>([]);
   const [files, setFiles] = useState<FileList | null>(null);
+  const [logoFiles, setLogoFiles] = useState<FileList | null>(null);
   const [existingAttachments, setExistingAttachments] = useState<Attachment[]>([]);
+  const [existingLogoAttachments, setExistingLogoAttachments] = useState<Attachment[]>([]);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -82,6 +88,7 @@ const Onboarding = () => {
           }));
           setServices(client.servicesOffered || []);
           setExistingAttachments(client.attachments || []);
+          setExistingLogoAttachments(client.logoAttachments || []);
         } else {
           setError('Could not find that submission.');
         }
@@ -115,6 +122,7 @@ const Onboarding = () => {
     try {
       await axios.delete(`${API_BASE_URL}/onboarding/clients/${editId}/files/${attachmentId}`);
       setExistingAttachments((prev) => prev.filter((attachment) => attachment._id !== attachmentId));
+      setExistingLogoAttachments((prev) => prev.filter((attachment) => attachment._id !== attachmentId));
     } catch (deleteError) {
       console.error(deleteError);
       setError('Could not remove that file.');
@@ -136,6 +144,9 @@ const Onboarding = () => {
     if (files) {
       Array.from(files).forEach((file) => submitData.append('files', file));
     }
+    if (logoFiles) {
+      Array.from(logoFiles).forEach((file) => submitData.append('logoFiles', file));
+    }
 
     try {
       const response = editId
@@ -150,12 +161,15 @@ const Onboarding = () => {
         if (editId) {
           setMessage('Onboarding details updated successfully.');
           setExistingAttachments(response.data.client.attachments || []);
+          setExistingLogoAttachments(response.data.client.logoAttachments || []);
           setFiles(null);
+          setLogoFiles(null);
         } else {
           setMessage('Onboarding details saved successfully.');
           setFormData(initialState);
           setServices([]);
           setFiles(null);
+          setLogoFiles(null);
         }
       } else {
         setError('Something went wrong while saving the onboarding package.');
@@ -366,6 +380,42 @@ const Onboarding = () => {
             </Form.Group>
 
             <Form.Group className="mb-3">
+              <Form.Label>Color Scheme</Form.Label>
+              <Form.Control name="colorScheme" value={formData.colorScheme} onChange={handleChange} placeholder="e.g. black & neon green, pastel blues, or specific brand hex codes" />
+            </Form.Group>
+
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Domain Name</Form.Label>
+                  <Form.Control name="domainName" value={formData.domainName} onChange={handleChange} placeholder="e.g. yourbusiness.com" />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Domain Status</Form.Label>
+                  <Form.Select name="domainStatus" value={formData.domainStatus} onChange={handleChange}>
+                    <option value="">Select one</option>
+                    <option value="Need to purchase">I need to purchase this domain</option>
+                    <option value="Already purchased">I already own this domain</option>
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+            </Row>
+
+            <Form.Group className="mb-3">
+              <Form.Label>Domain Details</Form.Label>
+              <Form.Control
+                as="textarea"
+                rows={3}
+                name="domainDetails"
+                value={formData.domainDetails}
+                onChange={handleChange}
+                placeholder="If already purchased: which registrar, and do you have login access to share? If not purchased: any alternate names you'd consider if your first choice is taken?"
+              />
+            </Form.Group>
+
+            <Form.Group className="mb-3">
               <Form.Label>References / Inspiration</Form.Label>
               <Form.Control as="textarea" rows={3} name="references" value={formData.references} onChange={handleChange} placeholder="Share links, examples, or visual direction." />
             </Form.Group>
@@ -417,6 +467,52 @@ const Onboarding = () => {
                 multiple
                 onChange={(event) => setFiles((event.target as HTMLInputElement).files)}
               />
+              <Form.Text style={{ color: '#999' }}>You can select multiple photos or videos at once.</Form.Text>
+            </Form.Group>
+
+            {editId && existingLogoAttachments.length > 0 ? (
+              <Form.Group className="mb-3">
+                <Form.Label>Previously Uploaded Logo Files</Form.Label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {existingLogoAttachments.map((attachment) => (
+                    <div
+                      key={attachment._id}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        background: '#1a1a1a',
+                        borderRadius: '8px',
+                        padding: '0.5rem 0.75rem'
+                      }}
+                    >
+                      <span>{attachment.originalName || attachment.filename}</span>
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <Button
+                          size="sm"
+                          variant="outline-light"
+                          onClick={() => window.open(`${API_BASE_URL}/onboarding/clients/${editId}/files/${attachment._id}`, '_blank')}
+                        >
+                          Download
+                        </Button>
+                        <Button size="sm" variant="outline-danger" onClick={() => handleDeleteAttachment(attachment._id)}>
+                          Remove
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </Form.Group>
+            ) : null}
+
+            <Form.Group className="mb-3">
+              <Form.Label>Brand Logo</Form.Label>
+              <Form.Control
+                type="file"
+                multiple
+                onChange={(event) => setLogoFiles((event.target as HTMLInputElement).files)}
+              />
+              <Form.Text style={{ color: '#999' }}>Upload your logo file(s) — you can select multiple (e.g. different formats or color variants).</Form.Text>
             </Form.Group>
 
             <Button type="submit" style={{ backgroundColor: 'green', borderColor: 'green' }} disabled={loading}>

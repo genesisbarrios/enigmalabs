@@ -28,9 +28,14 @@ type Client = {
   audience: string;
   goals: string;
   offers: string;
+  colorScheme: string;
+  domainName: string;
+  domainStatus: string;
+  domainDetails: string;
   references: string;
   notes: string;
   attachments: Attachment[];
+  logoAttachments: Attachment[];
   createdAt: string;
 };
 
@@ -171,9 +176,39 @@ const AdminOnboarding = () => {
                 <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Audience:</strong> {client.audience || '—'}</ListGroup.Item>
                 <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Goals:</strong> {client.goals || '—'}</ListGroup.Item>
                 <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Offers:</strong> {client.offers || '—'}</ListGroup.Item>
+                <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Color Scheme:</strong> {client.colorScheme || '—'}</ListGroup.Item>
+                <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Domain Name:</strong> {client.domainName || '—'}</ListGroup.Item>
+                <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Domain Status:</strong> {client.domainStatus || '—'}</ListGroup.Item>
+                <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Domain Details:</strong> {client.domainDetails || '—'}</ListGroup.Item>
                 <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>References:</strong> {client.references || '—'}</ListGroup.Item>
                 <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Notes:</strong> {client.notes || '—'}</ListGroup.Item>
               </ListGroup>
+            </div>
+
+            <div style={{ marginTop: '1rem' }}>
+              <h6>Brand Logo</h6>
+              {client.logoAttachments.length === 0 ? (
+                <p>No logo files uploaded.</p>
+              ) : (
+                <ListGroup>
+                  {client.logoAttachments.map((attachment) => (
+                    <ListGroup.Item key={attachment._id} style={{ background: '#1a1a1a', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                      <div>
+                        <strong>{attachment.originalName || attachment.filename}</strong>
+                        <div><small>{attachment.mimeType} • {Math.round(attachment.size / 1024)} KB</small></div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <Button size="sm" variant="outline-light" onClick={() => window.open(`${API_BASE_URL}/onboarding/clients/${client._id}/files/${attachment._id}`, '_blank')}>
+                          Download
+                        </Button>
+                        <Button size="sm" variant="outline-danger" onClick={() => handleDeleteAttachment(client._id, attachment._id)}>
+                          Delete
+                        </Button>
+                      </div>
+                    </ListGroup.Item>
+                  ))}
+                </ListGroup>
+              )}
             </div>
 
             <div style={{ marginTop: '1rem' }}>

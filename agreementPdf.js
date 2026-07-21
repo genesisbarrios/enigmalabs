@@ -64,7 +64,7 @@ function buildAgreementPdf({ planType, amount, clientName, clientAddress, jurisd
     section(
       '4. Change Requests',
       'Work outside the original Scope of Work (Section 1) is considered a change request. Developer will provide a written estimate of additional cost and time impact before proceeding. Client approval (email is sufficient) is required before out-of-scope work begins.\n\n' +
-      'Included revision rounds: Additional revisions are billed at $35/hr.'
+      'Included revision rounds: Additional revisions are billed at $45/hr.'
     );
 
     section(

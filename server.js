@@ -63,6 +63,19 @@ app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 const upload = multer({ storage: multer.memoryStorage() });
+const uploadOnboardingFiles = upload.fields([
+  { name: 'files', maxCount: 10 },
+  { name: 'logoFiles', maxCount: 5 }
+]);
+
+const toAttachments = (files) =>
+  (files || []).map((file) => ({
+    filename: `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`,
+    originalName: file.originalname,
+    mimeType: file.mimetype,
+    size: file.size,
+    data: file.buffer
+  }));
 
 const newsletterSubscriberSchema = new mongoose.Schema({
   email: String,
@@ -98,6 +111,10 @@ const onboardingClientSchema = new mongoose.Schema({
   offers: String,
   budget: String,
   timeline: String,
+  colorScheme: String,
+  domainName: String,
+  domainStatus: String,
+  domainDetails: String,
   references: String,
   notes: String,
   googleBusinessCategory: String,
@@ -109,6 +126,14 @@ const onboardingClientSchema = new mongoose.Schema({
   googleBusinessVerification: String,
   createdAt: { type: Date, default: Date.now },
   attachments: [{
+    filename: String,
+    originalName: String,
+    mimeType: String,
+    size: Number,
+    data: Buffer,
+    uploadedAt: { type: Date, default: Date.now }
+  }],
+  logoAttachments: [{
     filename: String,
     originalName: String,
     mimeType: String,
@@ -244,7 +269,7 @@ app.get('/api/agreements/:id/download', async (req, res) => {
   }
 });
 
-app.post('/api/onboarding/submit', upload.array('files', 10), async (req, res) => {
+app.post('/api/onboarding/submit', uploadOnboardingFiles, async (req, res) => {
   try {
     const payload = {
       clientName: req.body.clientName || '',
@@ -272,6 +297,10 @@ app.post('/api/onboarding/submit', upload.array('files', 10), async (req, res) =
       offers: req.body.offers || '',
       budget: req.body.budget || '',
       timeline: req.body.timeline || '',
+      colorScheme: req.body.colorScheme || '',
+      domainName: req.body.domainName || '',
+      domainStatus: req.body.domainStatus || '',
+      domainDetails: req.body.domainDetails || '',
       references: req.body.references || '',
       notes: req.body.notes || '',
       googleBusinessCategory: req.body.googleBusinessCategory || '',
@@ -281,13 +310,8 @@ app.post('/api/onboarding/submit', upload.array('files', 10), async (req, res) =
       googleBusinessReviews: req.body.googleBusinessReviews || '',
       googleBusinessQuestions: req.body.googleBusinessQuestions || '',
       googleBusinessVerification: req.body.googleBusinessVerification || '',
-      attachments: (req.files || []).map((file) => ({
-        filename: `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`,
-        originalName: file.originalname,
-        mimeType: file.mimetype,
-        size: file.size,
-        data: file.buffer
-      }))
+      attachments: toAttachments(req.files?.files),
+      logoAttachments: toAttachments(req.files?.logoFiles)
     };
 
     const client = await OnboardingClient.create(payload);
@@ -339,7 +363,7 @@ app.get('/api/onboarding/clients/:id', async (req, res) => {
   }
 });
 
-app.put('/api/onboarding/clients/:id', upload.array('files', 10), async (req, res) => {
+app.put('/api/onboarding/clients/:id', uploadOnboardingFiles, async (req, res) => {
   try {
     const client = await OnboardingClient.findById(req.params.id);
     if (!client) {
@@ -350,7 +374,8 @@ app.put('/api/onboarding/clients/:id', upload.array('files', 10), async (req, re
       'clientName', 'businessName', 'email', 'phone', 'website', 'businessType',
       'location', 'address', 'city', 'state', 'zipCode', 'country', 'businessHours',
       'servicesArea', 'businessDescription', 'bio', 'audience', 'goals', 'offers',
-      'budget', 'timeline', 'references', 'notes', 'googleBusinessCategory',
+      'budget', 'timeline', 'colorScheme', 'domainName', 'domainStatus', 'domainDetails',
+      'references', 'notes', 'googleBusinessCategory',
       'googleBusinessKeywords', 'googleBusinessServices', 'googleBusinessPhotos',
       'googleBusinessReviews', 'googleBusinessQuestions', 'googleBusinessVerification'
     ];
@@ -367,14 +392,8 @@ app.put('/api/onboarding/clients/:id', upload.array('files', 10), async (req, re
         .filter(Boolean);
     }
 
-    const newAttachments = (req.files || []).map((file) => ({
-      filename: `${Date.now()}-${file.originalname.replace(/\s+/g, '-')}`,
-      originalName: file.originalname,
-      mimeType: file.mimetype,
-      size: file.size,
-      data: file.buffer
-    }));
-    client.attachments.push(...newAttachments);
+    client.attachments.push(...toAttachments(req.files?.files));
+    client.logoAttachments.push(...toAttachments(req.files?.logoFiles));
 
     await client.save();
     res.json({ ok: true, client });
@@ -395,6 +414,9 @@ app.get('/api/onboarding/clients/:id/download-all', async (req, res) => {
     client.attachments.forEach((attachment) => {
       zip.addFile(attachment.originalName || attachment.filename, Buffer.from(attachment.data));
     });
+    client.logoAttachments.forEach((attachment) => {
+      zip.addFile(`logo-${attachment.originalName || attachment.filename}`, Buffer.from(attachment.data));
+    });
 
     const zipBuffer = zip.toBuffer();
     res.setHeader('Content-Type', 'application/zip');
@@ -413,7 +435,7 @@ app.get('/api/onboarding/clients/:clientId/files/:attachmentId', async (req, res
       return res.status(404).json({ ok: false, message: 'Client not found.' });
     }
 
-    const attachment = client.attachments.id(req.params.attachmentId);
+    const attachment = client.attachments.id(req.params.attachmentId) || client.logoAttachments.id(req.params.attachmentId);
     if (!attachment) {
       return res.status(404).json({ ok: false, message: 'Attachment not found.' });
     }
@@ -435,6 +457,7 @@ app.delete('/api/onboarding/clients/:clientId/files/:attachmentId', async (req, 
     }
 
     client.attachments = client.attachments.filter((attachment) => attachment._id.toString() !== req.params.attachmentId);
+    client.logoAttachments = client.logoAttachments.filter((attachment) => attachment._id.toString() !== req.params.attachmentId);
     await client.save();
     res.json({ ok: true, client });
   } catch (error) {
