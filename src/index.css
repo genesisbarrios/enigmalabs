@@ -99,6 +99,16 @@ button:disabled {
   box-shadow: 0 0 35px rgba(104, 255, 0, 0.3);
 }
 
+.onboarding-option-title{
+  font-size: 1.75rem;
+}
+
+@media only screen and (max-width: 600px) {
+  .onboarding-option-title{
+    font-size: 1.3rem;
+  }
+}
+
 .socialLinks{
   color: #68FF00;
   display: block;

@@ -49,8 +49,8 @@ const OnboardingLanding = () => {
             className="onboarding-option-card"
             onClick={() => navigate('/onboard/agreement')}
           >
-            <Card.Body className="text-center">
-              <h3 style={{ color: '#68FF00', marginBottom: '1rem' }}>Sign Web Development Agreement</h3>
+            <Card.Body>
+              <h3 className="onboarding-option-title" style={{ color: '#68FF00', marginBottom: '1rem' }}>Sign Web Development Agreement</h3>
               <p style={{ color: '#d4d4d4' }}>
                 This is a contract both parties sign before work begins &mdash; it protects you and Enigma Labs
                 legally by laying out scope, terms, and expectations up front.
@@ -68,8 +68,8 @@ const OnboardingLanding = () => {
             className="onboarding-option-card"
             onClick={() => navigate('/onboard/form')}
           >
-            <Card.Body className="text-center">
-              <h3 style={{ color: '#68FF00', marginBottom: '1rem' }}>Start Onboarding Form</h3>
+            <Card.Body>
+              <h3 className="onboarding-option-title" style={{ color: '#68FF00', marginBottom: '1rem' }}>Start Onboarding Form</h3>
               <p style={{ color: '#d4d4d4' }}>
                 Tell us about your business, goals, and brand so we can kick off your web development project.
               </p>

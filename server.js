@@ -5,6 +5,7 @@ const multer = require('multer');
 const AdmZip = require('adm-zip');
 const dotenv = require('dotenv');
 const { MongoMemoryServer } = require('mongodb-memory-server');
+const { Resend } = require('resend');
 const { buildAgreementPdf } = require('./agreementPdf');
 
 dotenv.config();
@@ -12,6 +13,50 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 5001;
 let mongoServer = null;
+
+const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
+const AGREEMENT_FROM_EMAIL = process.env.AGREEMENT_FROM_EMAIL || 'onboarding@resend.dev';
+const AGREEMENT_ADMIN_EMAIL = 'info@enigma-labs.com';
+
+async function sendAgreementEmails({ agreementId, clientName, clientEmail, pdfBuffer }) {
+  if (!resend) {
+    console.warn('RESEND_API_KEY not set — skipping agreement email delivery.');
+    return;
+  }
+
+  const attachments = [
+    {
+      filename: `web-development-agreement-${agreementId}.pdf`,
+      content: pdfBuffer.toString('base64')
+    }
+  ];
+
+  try {
+    const { error } = await resend.emails.send({
+      from: AGREEMENT_FROM_EMAIL,
+      to: AGREEMENT_ADMIN_EMAIL,
+      subject: `New signed agreement: ${clientName}`,
+      text: `${clientName} (${clientEmail}) just signed the web development agreement. The signed PDF is attached.`,
+      attachments
+    });
+    if (error) console.error('Could not email agreement to admin', error);
+  } catch (error) {
+    console.error('Could not email agreement to admin', error);
+  }
+
+  try {
+    const { error } = await resend.emails.send({
+      from: AGREEMENT_FROM_EMAIL,
+      to: clientEmail,
+      subject: 'Your Web Development Agreement with Enigma Labs',
+      text: `Hi ${clientName},\n\nThanks for signing the web development agreement. A copy is attached for your records.\n\n- Gen Barrios, Enigma Labs`,
+      attachments
+    });
+    if (error) console.error('Could not email agreement to client', error);
+  } catch (error) {
+    console.error('Could not email agreement to client', error);
+  }
+}
 
 app.use(cors());
 app.use(express.json({ limit: '2mb' }));
@@ -170,7 +215,12 @@ app.post('/api/agreements/submit', async (req, res) => {
       pdf: pdfBuffer
     });
 
-    // TODO: email the signed PDF to info@enigma-labs.com and clientEmail once email delivery is set up.
+    await sendAgreementEmails({
+      agreementId: agreement._id,
+      clientName,
+      clientEmail,
+      pdfBuffer
+    });
 
     res.status(201).json({ ok: true, agreementId: agreement._id });
   } catch (error) {

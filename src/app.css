@@ -42,6 +42,10 @@ body {
     transform: rotate(360deg);
   }
 }
+#title-mobile-overlay {
+  display: none;
+}
+
 @media (max-width: 1170px) {
   .hero-row {
     height: 100vh !important;
@@ -49,6 +53,11 @@ body {
   }
 
   #title {
+    display: none;
+  }
+
+  #title-mobile-overlay {
+    display: block;
     font-size: 0.9em;
     position: absolute;
     top: 50%;
@@ -56,6 +65,8 @@ body {
     width: 90vw;
     transform: translate(-50%, -50%);
     text-align: center;
+    margin: 0;
+    z-index: 1;
   }
 
   .servicesCards{
