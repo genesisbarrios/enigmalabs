@@ -7,11 +7,30 @@ const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 
 const serviceOptions = [
   'Website Design',
-  'E-commerce',
+  'E-commerce / Online Store',
   'Custom Web App',
   'SEO',
   'Maintenance & Support',
-  'Branding & Content'
+  'Branding & Content',
+  'Portfolio Website',
+  'Landing Page / Single Page',
+  'Blog / Content Site',
+  'Booking / Appointment System',
+  'Restaurant / Food & Beverage',
+  'Real Estate',
+  'Photography / Videography',
+  'Music / Artist / Label',
+  'Fitness / Gym / Wellness',
+  'Salon / Spa / Beauty',
+  'Medical / Dental / Healthcare',
+  'Legal / Law Firm',
+  'Nonprofit / Community Organization',
+  'Event Planning',
+  'Education / Online Courses',
+  'Podcast / Media',
+  'Hospitality / Travel',
+  'Construction / Home Services',
+  'Retail / Boutique'
 ];
 
 const initialState = {
@@ -115,10 +134,8 @@ const Onboarding = () => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const toggleService = (value: string) => {
-    setServices((prev) =>
-      prev.includes(value) ? prev.filter((item) => item !== value) : [...prev, value]
-    );
+  const handleServicesChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setServices(Array.from(event.target.selectedOptions, (option) => option.value));
   };
 
   const handleDeleteAttachment = async (attachmentId: string) => {
@@ -313,17 +330,12 @@ const Onboarding = () => {
 
             <Form.Group className="mb-3">
               <Form.Label>Services Offered</Form.Label>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginTop: '0.5rem' }}>
+              <Form.Select id="services-select" multiple value={services} onChange={handleServicesChange} style={{ height: '220px' }}>
                 {serviceOptions.map((service) => (
-                  <Form.Check
-                    key={service}
-                    type="checkbox"
-                    label={service}
-                    checked={services.includes(service)}
-                    onChange={() => toggleService(service)}
-                  />
+                  <option key={service} value={service}>{service}</option>
                 ))}
-              </div>
+              </Form.Select>
+              <Form.Text style={{ color: '#999' }}>Hold Cmd (Mac) or Ctrl (Windows) to select multiple.</Form.Text>
             </Form.Group>
 
             <Row>
