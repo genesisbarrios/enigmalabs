@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Alert, Button, Card, Container, Form, Table } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
 
@@ -28,6 +28,7 @@ const interestLabel = (subscriber: Subscriber) => {
 };
 
 const AdminNewsletter = () => {
+  const navigate = useNavigate();
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [pendingOnboardingCount, setPendingOnboardingCount] = useState(0);
   const [message, setMessage] = useState('');
@@ -206,9 +207,14 @@ const AdminNewsletter = () => {
             {pendingOnboardingCount} onboarding submission{pendingOnboardingCount === 1 ? '' : 's'} awaiting review.
           </Alert>
         ) : null}
-        <Link to="/admin-onboarding" style={{ color: '#68FF00', fontWeight: 600 }}>
-          Go to WebDev Onboarding Admin →
-        </Link>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <Button variant="success" onClick={() => navigate('/admin-onboarding')}>
+            Go to WebDev Onboarding Admin →
+          </Button>
+          <Button variant="success" onClick={() => navigate('/admin/leads')}>
+            Lead Scraper →
+          </Button>
+        </div>
       </div>
     </Container>
   );

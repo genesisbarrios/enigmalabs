@@ -62,6 +62,8 @@ app.use(cors());
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+app.use('/api/leads', require('./leads'));
+
 const upload = multer({ storage: multer.memoryStorage() });
 const uploadOnboardingFiles = upload.fields([
   { name: 'files', maxCount: 10 },

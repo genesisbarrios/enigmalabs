@@ -14,6 +14,7 @@ import OnboardingEditLookup from './OnboardingEditLookup';
 import Payment from './Payment';
 import AdminOnboarding from './AdminOnboarding';
 import AdminNewsletter from './AdminNewsletter';
+import LeadScraper from './LeadScraper';
 import {Route, Routes} from 'react-router-dom';
 import {BrowserRouter as Router} from 'react-router-dom';
 const App = () => {
@@ -41,6 +42,7 @@ const App = () => {
          <Route path="/payment" element={<Payment/>}/>
          <Route path="/admin-onboarding" element={<AdminOnboarding/>}/>
          <Route path="/admin" element={<AdminNewsletter/>}/>
+         <Route path="/admin/leads" element={<LeadScraper/>}/>
 
       </Routes>
       </div>
