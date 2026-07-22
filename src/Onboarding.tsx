@@ -6,16 +6,11 @@ import axios from 'axios';
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 
 const serviceOptions = [
-  'Website Design',
-  'E-commerce / Online Store',
-  'Custom Web App',
-  'SEO',
-  'Maintenance & Support',
-  'Branding & Content',
-  'Portfolio Website',
-  'Landing Page / Single Page',
-  'Blog / Content Site',
-  'Booking / Appointment System',
+  
+  'Landscaping / Gardening',
+  'Plumbing',
+  'Electrician',
+  'HVAC',
   'Restaurant / Food & Beverage',
   'Real Estate',
   'Photography / Videography',
