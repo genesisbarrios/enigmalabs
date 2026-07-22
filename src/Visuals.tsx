@@ -102,17 +102,7 @@ function handleSubmit() {
               <h2 className="subsection-title">PORTRAITS</h2>
             </Col>
           </Row>
-          <Row style={rowStyle}>
-            <Col sm={4}>
-              <a href="https://www.instagram.com/_enigmalabs/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/portrait1.jpg" /></a>
-            </Col>
-            <Col sm={4}>
-              <a href="https://www.instagram.com/_enigmalabs/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/portrait2.jpg" /></a>
-            </Col>
-            <Col sm={4}>
-              <a href="https://www.instagram.com/_enigmalabs/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/portrait3.jpg" /></a>
-            </Col>
-          </Row>
+         
             <Row style={rowStyle}>
             <Col sm={4}>
               <a href="https://www.instagram.com/_enigmalabs/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/portrait5.jpg" /></a>
@@ -124,7 +114,17 @@ function handleSubmit() {
               <a href="https://www.instagram.com/_enigmalabs/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/portrait6.jpg" /></a>
             </Col>
           </Row>
-
+          <Row style={rowStyle}>
+            <Col sm={4}>
+              <a href="https://www.instagram.com/_enigmalabs/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/portrait1.jpg" /></a>
+            </Col>
+            <Col sm={4}>
+              <a href="https://www.instagram.com/_enigmalabs/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/portrait2.jpg" /></a>
+            </Col>
+            <Col sm={4}>
+              <a href="https://www.instagram.com/_enigmalabs/" target="_blank"><img style={imgStyle} className="servicesImg"  src="/portrait3.jpg" /></a>
+            </Col>
+          </Row>
 
           <Row style={rowStyle}>
             <Col sm={12}>
