@@ -74,7 +74,7 @@ const Music = () => {
           <Row style={rowStyle}>
             <Col sm={2}></Col>
             <Col sm={8}>
-              <h5 className="centerText">Music Production | Audio Engineering</h5>
+              <h1 className="centerText aboutTitle">Music Production | Audio Engineering</h1>
             </Col>
             <Col sm={2}></Col>
           </Row>

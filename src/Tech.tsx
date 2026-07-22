@@ -43,7 +43,7 @@ const workPlaceholderStyle = {
 
 const workProjects = [
   {
-    name: "Cinemautographer | Portfolio Website",
+    name: "Photographer | Portfolio Website",
     url: "https://www.cinemautographer.com/",
     image: "https://dl.dropboxusercontent.com/s/1jm89lj35tqm1qk0hp1yr/maury.gif?rlkey=tlzw5eq3vkz77q3vx5ol3hpt0&st=vhxcy8fv&dl=0",
     alt: "Maury Ramos Peña Portfolio Website"
@@ -75,7 +75,7 @@ const workProjects = [
           <Row style={rowStyle}>
             <Col sm={2}></Col>
             <Col sm={8}>
-              <h5 className="centerText">Web Development | Web Design</h5>
+              <h1 className="centerText aboutTitle">Web Development | Web Design</h1>
             </Col>
             <Col sm={2}></Col>
           </Row>
@@ -84,7 +84,7 @@ const workProjects = [
               <h5 style={{marginTop: "5%"}}>Services</h5>
               <ul>
                 <li>Web Design, and Web Development</li>
-                <li>Website Maintenance: Hosting, Updating Design, Functionality, Content, Links, Posts, etc. on a recurring basis</li>
+                <li>Support & Maintenance: Hosting, Updating Design, Content, etc. </li>
                 <li>Graphic Design: Logos, Branding, Posters, Stickers and more.</li>
               </ul>
             </Col>
@@ -98,9 +98,9 @@ const workProjects = [
               <h2>WORK</h2>
             </Col>
           </Row>
-          <Row style={rowStyle} className="g-3">
+          <Row style={rowStyle}>
             {workProjects.map((project) => (
-              <Col xs={12} sm={6} key={project.name}>
+              <Col xs={12} sm={6} key={project.name} style={{ marginBottom: '1.5rem' }}>
                 <Card style={workCardStyle}>
                   <a href={project.url} target="_blank" rel="noreferrer">
                     {project.image ? (
@@ -162,15 +162,7 @@ const workProjects = [
               </Col>
             </Row>
 
-          <Row style={rowStyle}>
-            <Col sm={12}>
-              <p style={{ marginTop: "3%" }}>
-                <Link to="/payment" style={{ color: "#68FF00", fontWeight: 600 }}>
-                  Ready to pay for your website? →
-                </Link>
-              </p>
-            </Col>
-          </Row>
+        
 
           <Row style={rowStyle}>
 
@@ -182,6 +174,11 @@ const workProjects = [
                 Share a few details through our onboarding form and we’ll take it from there.
               </p>
               <p>
+                  <p style={{ marginBottom: "3%" }}>
+                  <Link to="/payment" style={{ color: "#68FF00", fontWeight: 600 }}>
+                    Ready to pay for your website? →
+                  </Link>
+                </p>
                 <Link to="/onboard" style={{ color: "#68FF00", fontWeight: 600 }}>
                   Start your onboarding journey
                 </Link>

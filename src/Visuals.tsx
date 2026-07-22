@@ -26,6 +26,7 @@ const [email, setEmail] = useState("");
     maxWidth: "100%",
     marginRight: "20px",
     display: "block",
+    objectFit: "cover" as const,
 };
 
 const videoStyle = {
@@ -74,7 +75,7 @@ function handleSubmit() {
           
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h5 className="centerText aboutTitle">Photography | Videography | Graphic Design</h5>
+              <h1 className="centerText aboutTitle">Photography | Videography | Graphic Design</h1>
             </Col>
           </Row>
           <Row style={rowStyle}>

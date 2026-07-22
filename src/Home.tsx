@@ -430,7 +430,7 @@ const Home = () => {
             <h1 className="section-title-left" id="services">Services</h1>
           </Col>
         </Row>
-        <Row style={rowStyle} id="servicesContainerRow" className="d-flex align-items-center">
+        <Row style={{ ...rowStyle, height: 'auto' }} id="servicesContainerRow" className="d-flex align-items-center">
             <Col xs={12} md={4} >
               <Card style={serviceCardStyle} className="servicesCards">
               <a href="influanto.com" target="_blank"><img style={imgStyle} className="servicesImg" alt="influanto the all in one music marketing platform" src="https://dl.dropboxusercontent.com/s/a7lf48b7uht3dnyl59tc1/influantoHomepageLaptop.png?rlkey=pzp4yi2ns6ppjfmwb9m84t4tz&st=gjpea3z3&dl=0" /></a>
