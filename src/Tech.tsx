@@ -155,7 +155,6 @@ const workProjects = [
                   <ul>  
                     <li>$15/mo: Hosting and general support</li>
                     <li>$40/mo: Unlimited edits and 24/7 support </li>
-                    <li>$100 Per Extra Page</li>
                     <li>$500 for a Custom Blog / E-commerce Store</li>
                   </ul>
                 </ul>
