@@ -74,13 +74,13 @@ const Music = () => {
           <Row style={rowStyle}>
             <Col sm={2}></Col>
             <Col sm={8}>
-              <h1 className="centerText aboutTitle">Music Production | Audio Engineering</h1>
+              <h1 className="subpage-title aboutTitle">Music Production | Audio Engineering</h1>
             </Col>
             <Col sm={2}></Col>
           </Row>
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h5 style={{marginTop: "2%"}}>Services</h5>
+              <h5 className="subsection-title" style={{marginTop: "2%"}}>Services</h5>
               <ul>
                 <li>Recording, Music Production, Composition, and Vocal Production</li>
                 <li>Audio Engineering (Mixing, Mastering, Editing)</li>
@@ -91,7 +91,7 @@ const Music = () => {
          
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h5 style={{marginTop: "5%"}}>Beats <span style={{color:"#DF0000"}}>(BUY 2 GET 1 FREE)</span></h5>
+              <h5 className="subsection-title" style={{marginTop: "5%"}}>Beats <span style={{color:"#DF0000"}}>(BUY 2 GET 1 FREE)</span></h5>
             </Col>
           </Row>
           <Row style={rowStyle}>
@@ -106,7 +106,7 @@ const Music = () => {
 
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h5 style={{marginTop: "5%"}}>Productions</h5>
+              <h5 className="subsection-title" style={{marginTop: "5%"}}>Productions</h5>
             </Col>
           </Row>
             <Row style={rowStyle}>
@@ -161,7 +161,7 @@ const Music = () => {
 
            <Row style={rowStyle}>
             <Col sm={12}>
-              <h5 style={{marginTop: "5%"}}>Mixes</h5>
+              <h5 className="subsection-title" style={{marginTop: "5%"}}>Mixes</h5>
             </Col>
           </Row>
           <Row style={rowStyle}>
@@ -186,14 +186,14 @@ const Music = () => {
 
             <Row style={rowStyle}>
               <Col sm={6}>
-                <h5 style={{marginTop: "5%"}}>Pricing</h5>
+                <h5 className="subsection-title" style={{marginTop: "5%"}}>Pricing</h5>
                 <ul>
                   <li>Recording: $35/hr ($25/hr for 4+ hours)</li>
                   <li>Mixing + Mastering: $200</li>
                 </ul>
               </Col>
                 <Col sm={6}>
-                <h5 style={{marginTop: "5%"}}>Beat Licenses (BUY 2 GET 1 FREE)</h5>
+                <h5 className="subsection-title" style={{marginTop: "5%"}}>Beat Licenses (BUY 2 GET 1 FREE)</h5>
                 <ul>
                   <ul>  
                     <li>Non-Exclusive License: $20</li>
@@ -216,7 +216,7 @@ const Music = () => {
 
           <Row style={rowStyle}>
             <Col xs={12} md={6} >
-              <h5 style={{marginTop: "12%"}}>Why should you hire a Producer or Engineer?</h5>
+              <h5 className="subsection-title" style={{marginTop: "12%"}}>Why should you hire a Producer or Engineer?</h5>
               <ul>
                 <li>Prioritize your singing and songwriting</li>
                 <li>Have an experienced Music Producer personally craft your sound</li>

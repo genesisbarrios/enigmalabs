@@ -75,13 +75,13 @@ const workProjects = [
           <Row style={rowStyle}>
             <Col sm={2}></Col>
             <Col sm={8}>
-              <h1 className="centerText aboutTitle">Web Development | Web Design</h1>
+              <h1 className="subpage-title aboutTitle">Web Development | Web Design</h1>
             </Col>
             <Col sm={2}></Col>
           </Row>
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h5 style={{marginTop: "5%"}}>Services</h5>
+              <h5 className="subsection-title" style={{marginTop: "5%"}}>Services</h5>
               <ul>
                 <li>Web Design, and Web Development</li>
                 <li>Support & Maintenance: Hosting, Updating Design, Content, etc. </li>
@@ -95,7 +95,7 @@ const workProjects = [
           
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h2>WORK</h2>
+              <h2 className="subsection-title">WORK</h2>
             </Col>
           </Row>
           <Row style={rowStyle}>
@@ -121,7 +121,7 @@ const workProjects = [
 
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h5 style={{marginTop: "5%"}}>Pricing</h5>
+              <h5 className="subsection-title" style={{marginTop: "5%"}}>Pricing</h5>
              
             </Col>
             <Col sm={4}>
@@ -176,11 +176,11 @@ const workProjects = [
               <p>
                   <p style={{ marginBottom: "3%" }}>
                   <Link to="/payment" style={{ color: "#68FF00", fontWeight: 600 }}>
-                    Ready to pay for your website? →
+                    Ready to pay for your website? 
                   </Link>
                 </p>
                 <Link to="/onboard" style={{ color: "#68FF00", fontWeight: 600 }}>
-                  Start your onboarding journey
+                  Start your onboarding journey →
                 </Link>
               </p>
             </Col>

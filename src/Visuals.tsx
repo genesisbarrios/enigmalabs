@@ -75,12 +75,12 @@ function handleSubmit() {
           
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h1 className="centerText aboutTitle">Photography | Videography | Graphic Design</h1>
+              <h1 className="subpage-title aboutTitle">Photography | Videography | Graphic Design</h1>
             </Col>
           </Row>
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h5 style={{marginTop: "5%"}}>Services</h5>
+              <h5 className="subsection-title" style={{marginTop: "5%"}}>Services</h5>
               <ul>
                 <li>Photography, Videography, Music Videos, Short Form Content</li>
                 <li>Graphic Design: Logos, Branding, Album Covers, Stickers, Posters and more.</li>
@@ -90,7 +90,7 @@ function handleSubmit() {
 
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h2>PORTRAITS</h2>
+              <h2 className="subsection-title">PORTRAITS</h2>
             </Col>
           </Row>
           <Row style={rowStyle}>
@@ -119,7 +119,7 @@ function handleSubmit() {
 
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h2>EVENTS</h2>
+              <h2 className="subsection-title">EVENTS</h2>
             </Col>
           </Row>
           <Row style={rowStyle}>
@@ -154,7 +154,7 @@ function handleSubmit() {
 
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h2>STUDIO SESSIONS</h2>
+              <h2 className="subsection-title">STUDIO SESSIONS</h2>
             </Col>
           </Row>
           <Row style={rowStyle}>
@@ -174,7 +174,7 @@ function handleSubmit() {
 
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h2>MUSIC VIDEOS</h2>
+              <h2 className="subsection-title">MUSIC VIDEOS</h2>
             </Col>
           </Row>
           <Row style={rowStyle}>
@@ -197,7 +197,7 @@ function handleSubmit() {
 
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h5 style={{marginTop: "5%"}}>Pricing</h5>
+              <h5 className="subsection-title" style={{marginTop: "5%"}}>Pricing</h5>
              
             </Col>
             <Col sm={6}>
