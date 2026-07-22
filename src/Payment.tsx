@@ -27,7 +27,13 @@ const disabledCardStyle: React.CSSProperties = {
   boxShadow: 'none'
 };
 
-const plans = [
+type Plan = {
+  title: string;
+  description: string;
+  url: string | null;
+};
+
+const websitePlans: Plan[] = [
   {
     title: '5-Page Website',
     description: '$1,000 one-time payment',
@@ -42,7 +48,10 @@ const plans = [
     title: 'Monthly Subscription',
     description: '$200/mo',
     url: 'https://buy.stripe.com/5kQ6oA5vF8c6g6v8gF33W00'
-  },
+  }
+];
+
+const supportPlans: Plan[] = [
   {
     title: 'Hosting & Support',
     description: '$15/mo',
@@ -55,6 +64,28 @@ const plans = [
   }
 ];
 
+const PlanCard = ({ plan }: { plan: Plan }) => {
+  const body = (
+    <Card style={plan.url ? optionCardStyle : disabledCardStyle} className={plan.url ? 'onboarding-option-card' : undefined}>
+      <Card.Body>
+        <h3 className="onboarding-option-title" style={{ color: '#68FF00', marginBottom: '1rem' }}>{plan.title}</h3>
+        <p style={{ color: '#d4d4d4' }}>{plan.description}</p>
+        <div style={{ marginTop: '1.5rem' }}>
+          <PaymentIcon />
+        </div>
+      </Card.Body>
+    </Card>
+  );
+
+  if (!plan.url) return body;
+
+  return (
+    <a href={plan.url} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
+      {body}
+    </a>
+  );
+};
+
 const Payment = () => {
   return (
     <Container style={{ paddingTop: '6rem', paddingBottom: '3rem', maxWidth: '1000px' }}>
@@ -64,31 +95,21 @@ const Payment = () => {
       </p>
 
       <Row>
-        {plans.map((plan) => (
+        {websitePlans.map((plan) => (
           <Col xs={12} md={4} key={plan.title} style={{ marginBottom: '1.5rem' }}>
-            {plan.url ? (
-              <a href={plan.url} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
-                <Card style={optionCardStyle} className="onboarding-option-card">
-                  <Card.Body>
-                    <h3 className="onboarding-option-title" style={{ color: '#68FF00', marginBottom: '1rem' }}>{plan.title}</h3>
-                    <p style={{ color: '#d4d4d4' }}>{plan.description}</p>
-                    <div style={{ marginTop: '1.5rem' }}>
-                      <PaymentIcon />
-                    </div>
-                  </Card.Body>
-                </Card>
-              </a>
-            ) : (
-              <Card style={disabledCardStyle}>
-                <Card.Body>
-                  <h3 className="onboarding-option-title" style={{ color: '#68FF00', marginBottom: '1rem' }}>{plan.title}</h3>
-                  <p style={{ color: '#d4d4d4' }}>{plan.description}</p>
-                  <div style={{ marginTop: '1.5rem' }}>
-                    <PaymentIcon />
-                  </div>
-                </Card.Body>
-              </Card>
-            )}
+            <PlanCard plan={plan} />
+          </Col>
+        ))}
+      </Row>
+
+      <h2 className="subsection-title" style={{ color: '#68FF00', marginTop: '1.5rem', marginBottom: '1.5rem' }}>
+        Hosting &amp; Support
+      </h2>
+
+      <Row>
+        {supportPlans.map((plan) => (
+          <Col xs={12} md={4} key={plan.title} style={{ marginBottom: '1.5rem' }}>
+            <PlanCard plan={plan} />
           </Col>
         ))}
       </Row>
