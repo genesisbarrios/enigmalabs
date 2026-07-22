@@ -63,7 +63,7 @@ const workProjects = [
   {
     name: "Nuralume",
     url: "https://nuralume.xyz",
-    image: null,
+    image: "https://dl.dropboxusercontent.com/s/11xwqvyuioco1etjdeu27/nuralume.png?rlkey=xuiz2krmjop7kegb099q4jocg&st=xs0f6rkn&dl=0",
     alt: "Nuralume"
   }
 ];
@@ -161,6 +161,16 @@ const workProjects = [
                 </ul>
               </Col>
             </Row>
+
+          <Row style={rowStyle}>
+            <Col sm={12}>
+              <p style={{ marginTop: "3%" }}>
+                <Link to="/payment" style={{ color: "#68FF00", fontWeight: 600 }}>
+                  Ready to pay for your website? →
+                </Link>
+              </p>
+            </Col>
+          </Row>
 
           <Row style={rowStyle}>
 
