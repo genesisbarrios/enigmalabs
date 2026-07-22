@@ -27,6 +27,7 @@ const LeadScraper = () => {
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [searchText, setSearchText] = useState('');
   const [minRating, setMinRating] = useState('');
+  const [maxRating, setMaxRating] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -71,13 +72,14 @@ const LeadScraper = () => {
 
   const filteredLeads = useMemo(() => {
     const minRatingNum = Number(minRating) || 0;
+    const maxRatingNum = maxRating === '' ? 5 : Number(maxRating);
     const text = searchText.trim().toLowerCase();
     return leads.filter((lead) => {
       const matchesText = !text || lead.name.toLowerCase().includes(text) || lead.address.toLowerCase().includes(text);
-      const matchesRating = lead.rating >= minRatingNum;
+      const matchesRating = lead.rating >= minRatingNum && lead.rating <= maxRatingNum;
       return matchesText && matchesRating;
     });
-  }, [leads, searchText, minRating]);
+  }, [leads, searchText, minRating, maxRating]);
 
   const toggleSelected = (index: number) => {
     setSelected((prev) => {
@@ -205,14 +207,14 @@ const LeadScraper = () => {
       {leads.length > 0 ? (
         <>
           <Row className="mb-3">
-            <Col md={7}>
+            <Col md={5}>
               <Form.Control
                 value={searchText}
                 onChange={(event) => setSearchText(event.target.value)}
                 placeholder="Filter by name or address"
               />
             </Col>
-            <Col md={3}>
+            <Col md={2}>
               <Form.Control
                 type="number"
                 min="0"
@@ -224,6 +226,17 @@ const LeadScraper = () => {
               />
             </Col>
             <Col md={2}>
+              <Form.Control
+                type="number"
+                min="0"
+                max="5"
+                step="0.1"
+                value={maxRating}
+                onChange={(event) => setMaxRating(event.target.value)}
+                placeholder="Max rating"
+              />
+            </Col>
+            <Col md={3}>
               <Button variant="outline-light" onClick={toggleSelectAll} style={{ width: '100%' }}>
                 {selected.size === filteredLeads.length && filteredLeads.length > 0 ? 'Deselect All' : 'Select All'}
               </Button>
