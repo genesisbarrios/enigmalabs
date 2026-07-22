@@ -43,6 +43,65 @@ const infoCardStyle = {
   height: "100%"
 };
 
+const newsletterCardStyle = {
+  backgroundColor: "#111",
+  border: "1px solid #68FF00",
+  borderRadius: "20px",
+  boxShadow: "0 0 30px rgba(104, 255, 0, 0.15)",
+  width: "100%",
+  padding: "2.75rem 2rem"
+};
+
+const newsletterInputStyle = {
+  display: "block",
+  margin: "0 auto 1.5rem",
+  width: "100%",
+  maxWidth: "360px",
+  padding: "0.85rem 1.15rem",
+  borderRadius: "2rem",
+  border: "1px solid #333",
+  backgroundColor: "#1a1a1a",
+  color: "#fff",
+  fontSize: "1rem",
+  outline: "none"
+};
+
+const newsletterButtonStyle = {
+  marginTop: "1.75rem",
+  padding: "0.85rem 2.75rem",
+  backgroundColor: "#68FF00",
+  color: "#000",
+  border: "none",
+  borderRadius: "2rem",
+  fontWeight: 700,
+  textTransform: "uppercase" as const,
+  letterSpacing: "0.05em",
+  fontSize: "1rem",
+  cursor: "pointer"
+};
+
+const newsletterChipStyle = (active: boolean) => ({
+  display: "inline-block",
+  padding: "0.55rem 1.1rem",
+  margin: "0.3rem",
+  borderRadius: "2rem",
+  border: "1px solid #68FF00",
+  backgroundColor: active ? "#68FF00" : "transparent",
+  color: active ? "#000" : "#68FF00",
+  fontWeight: 600,
+  fontSize: "0.85rem",
+  cursor: "pointer",
+  userSelect: "none" as const,
+  transition: "all 0.15s ease"
+});
+
+const interestOptions: { key: string; label: string; active: boolean; toggle: () => void }[] = [
+  { key: "beats", label: "Beats & Mixing", active: beats, toggle: () => setBeats(!beats) },
+  { key: "loops", label: "Loop Packs", active: loops, toggle: () => setLoops(!loops) },
+  { key: "visuals", label: "Visuals", active: visuals, toggle: () => setVisuals(!visuals) },
+  { key: "web", label: "Web Development & Marketing", active: web, toggle: () => setWeb(!web) }
+];
+
 function handleSubmit() {
     console.log('handle submit request to subscribe')
   
@@ -256,92 +315,65 @@ function handleSubmit() {
           <hr style={{backgroundColor:"white", marginTop: "3%"}}/>
 
          
-          <Row style={rowStyle}>
+          <Row style={{ ...rowStyle, marginTop: "6%", marginBottom: "6%" }}>
             <Col xs={12} md={6} >
               <h4 className="mt-5">Reach Out to Us</h4>
               <a href="mailto:info@enigma-labs.com" className="text-white">info@enigma-labs.com</a>
              <div style={{marginBottom:"3%"}}></div>
             </Col>
-            <Col xs={12} md={6}  style={{ margin:"5% auto" }}>
-                <form style={{textAlign:"center", margin:"0 auto"}}>
-                  <h3 style={{color:"green"}}>Sign Up For our Newsletter</h3>  
-                  <input type="text" name="e-mail" placeholder="e-mail" style={{display:"inline-block", marginBottom:"20px", width:"60%"}}  
+            <Col xs={12} md={6} style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+              <div style={newsletterCardStyle}>
+                <form style={{ textAlign: "center", width: "100%", maxWidth: "420px", margin: "0 auto" }}>
+                  <h3 style={{ color: "#68FF00", marginBottom: "0.25rem" }}>Sign Up For Our Newsletter</h3>
+                  <p style={{ color: "#aaa", fontSize: "0.9rem", marginBottom: "1.5rem" }}>
+                    Loops, Beats, and discounts. No spam.
+                  </p>
+                  <input
+                    type="email"
+                    name="e-mail"
+                    placeholder="your@email.com"
+                    style={newsletterInputStyle}
                     onChange={(e) => {
                       setEmail(e.target.value);
                     }}
                   ></input>
-                  <label style={{display:"block"}}>What are you interested in?</label>
-                  <div style={{display:'inline'}}>
-                    <input
-                      style={{borderRadius:"10px", backgroundColor:"#CBD5E1", display:'inline'}}
-                      type="checkbox"
-                      name="beats"
-                      value="0"
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setBeats(true);
-                        } else {
-                          setBeats(false);
-                        }
-                      }}
-                    />
-                    <p style={{display:'inline',  margin:"0 5px"}}>Beats & Audio Engineering</p>
-                    <br></br>
-                    <input
-                      style={{borderRadius:"10px", backgroundColor:"#CBD5E1", display:'inline'}}
-                      type="checkbox"
-                      name="loops"
-                      value="0"
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setLoops(true);
-                        } else {
-                          setLoops(false);
-                        }
-                      }}
-                    />
-                    <p style={{display:'inline',  margin:"0 5px"}}>Loop Packs</p>
-                    <br></br>
-                    <input
-                      style={{borderRadius:"10px", backgroundColor:"#CBD5E1", display:'inline'}}
-                      type="checkbox"
-                      name="visuals"
-                      value="0"
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setVisuals(true);
-                        } else {
-                          setVisuals(false);
-                        }
-                      }}
-                    />
-                    <p style={{display:'inline', margin:"0 5px"}}>visuals</p>
-                    <br></br>
-                    <input
-                    style={{borderRadius:"10px", backgroundColor:"#CBD5E1", display:'inline'}}
-                    type="checkbox"
-                    name="web"
-                    value="0"
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setWeb(true);
-                      } else {
-                        setWeb(false);
-                      }
+                  <label style={{ display: "block", color: "#d4d4d4", marginBottom: "0.5rem" }}>
+                    What are you interested in?
+                  </label>
+                  <div style={{ textAlign: "center" }}>
+                    {interestOptions.map((option) => (
+                      <span
+                        key={option.key}
+                        role="checkbox"
+                        aria-checked={option.active}
+                        tabIndex={0}
+                        style={newsletterChipStyle(option.active)}
+                        onClick={option.toggle}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            option.toggle();
+                          }
+                        }}
+                      >
+                        {option.label}
+                      </span>
+                    ))}
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleSubmit();
                     }}
-                  />
-                  <p style={{display:'inline', margin:"0 5px"}}>web development & marketing</p>
-                  <br></br>
-                  <button onClick={(e) => {
-                    e.preventDefault();
-                    handleSubmit();
-                  }} style={{marginTop:"20px", padding:"2px 5px", width:"40%", backgroundColor:"green"}} type="submit">
+                    style={newsletterButtonStyle}
+                    type="submit"
+                  >
                     Submit
                   </button>
-                  {message && <Alert style={{marginTop:"5%", marginBottom:"5%", backgroundColor:"green", borderColor:"green", color:"white"}}>{message.toString()}</Alert>}
-                  {alert && <Alert style={{marginTop:"5%", marginBottom:"5%", backgroundColor:"red", borderColor:"red", color:"white"}} >{alert.toString()}</Alert>}
-                </div>
-              </form>
+                  {message && <Alert style={{ marginTop: "1.5rem", backgroundColor: "#111", borderColor: "#68FF00", color: "#68FF00" }}>{message.toString()}</Alert>}
+                  {alert && <Alert style={{ marginTop: "1.5rem", backgroundColor: "#2a0000", borderColor: "#ff4d4d", color: "#ff9d9d" }}>{alert.toString()}</Alert>}
+                </form>
+              </div>
             </Col>
           </Row>
           <style>{`
