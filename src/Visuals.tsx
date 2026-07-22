@@ -215,6 +215,7 @@ function handleSubmit() {
                 <ul style={{ marginBottom: 0 }}>
                   <li>1 HR Shoot 10 Edits: $100</li>
                   <li>2 HR Shoot 20 Edits: $200</li>
+                  <li>Wedding Full Day Shoot: $1000</li>
                 </ul>
               </div>
             </Col>
@@ -222,8 +223,8 @@ function handleSubmit() {
               <div style={infoCardStyle}>
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Videography</h6>
                 <ul style={{ marginBottom: 0 }}>
-                  <li>1HR Run and Gun Music Video: $150 ($300 including Edit)</li>
-                  <li>2HR Run and Gun Music Video: $250 ($400 including Edit)</li>
+                  <li>1HR Run and Gun Music Video: $250</li>
+                  <li>2HR Run and Gun Music Video: $400</li>
                   <li>1HR Short Form Content Shoot + 2 Edits: $150</li>
                 </ul>
               </div>
@@ -234,7 +235,7 @@ function handleSubmit() {
                 <ul style={{ marginBottom: 0 }}>
                   <li>Logos: $50</li>
                   <li>Album Covers: $50</li>
-                  <li>1 Hr Photo Shoot(10 Edits) + Album Cover: $150</li>
+                  <li>1 Hr Photo Shoot + Album Cover: $150</li>
                 </ul>
               </div>
             </Col>
