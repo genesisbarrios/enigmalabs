@@ -135,7 +135,7 @@ const AdminNewsletter = () => {
       <Container style={{ paddingTop: '6rem', paddingBottom: '3rem', maxWidth: '500px' }}>
         <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b' }}>
           <Card.Body>
-            <h1 style={{ color: '#68FF00', marginBottom: '0.75rem' }}>Newsletter Admin</h1>
+            <h1 style={{ color: '#68FF00', marginBottom: '0.75rem' }}>Admin</h1>
             <p style={{ color: '#d4d4d4', marginBottom: '1.25rem' }}>
               Enter the admin password to view newsletter subscribers.
             </p>
