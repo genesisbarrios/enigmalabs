@@ -213,13 +213,14 @@ function handleSubmit() {
               <div style={infoCardStyle}>
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Photography</h6>
                 <ul style={{ marginBottom: "1.25rem" }}>
+                  <li>1 HR Shoot 10 Edits: $100</li>
                   <li>2 HR Shoot 20 Edits: $200</li>
                 </ul>
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Videography</h6>
                 <ul style={{ marginBottom: 0 }}>
-                  <li>2HR Run and Gun Music Video: $250 ($400 including Edit)</li>
                   <li>1HR Run and Gun Music Video: $150 ($300 including Edit)</li>
-                  <li>1HR Short Form Content Shoot + 2 Edits: $125</li>
+                  <li>2HR Run and Gun Music Video: $250 ($400 including Edit)</li>
+                  <li>1HR Short Form Content Shoot + 2 Edits: $150</li>
                 </ul>
               </div>
             </Col>
