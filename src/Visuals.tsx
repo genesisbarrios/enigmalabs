@@ -204,6 +204,14 @@ function handleSubmit() {
             </Col>
           </Row>
 
+           <Row style={rowStyle}>
+            
+            <Col sm={6}>
+              <iframe width="100%" height="315" src="https://www.youtube.com/embed/kS3E9BEktBs?si=YG3nEIj1vwLGEuKU" title="YouTube video player" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" frameBorder="0"  allowFullScreen></iframe>
+            </Col>
+          </Row>
+
+
           <Row style={rowStyle}>
             <Col sm={12}>
               <h5 className="subsection-title" style={{marginTop: "5%"}}>Pricing</h5>
@@ -224,8 +232,8 @@ function handleSubmit() {
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Videography</h6>
                 <ul style={{ marginBottom: 0 }}>
                   <li>1HR Run and Gun Music Video: $250</li>
-                  <li>2HR Run and Gun Music Video: $400</li>
-                  <li>1HR Short Form Content Shoot + 2 Edits: $150</li>
+                  <li>2HR Run and Gun Music Video: $500</li>
+                  <li>1HR Short Form Content Shoot + 2 Edits: $250</li>
                 </ul>
               </div>
             </Col>
