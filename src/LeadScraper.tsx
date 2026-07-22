@@ -6,6 +6,18 @@ import * as XLSX from 'xlsx';
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 const ADMIN_PASSWORD = process.env.REACT_APP_ONBOARD_PW || 'onboardinglocura';
 
+const columnToggleBtnStyle: React.CSSProperties = {
+  marginLeft: '8px',
+  border: 'none',
+  background: 'transparent',
+  color: '#ff9d9d',
+  fontWeight: 700,
+  fontSize: '0.95rem',
+  lineHeight: 1,
+  cursor: 'pointer',
+  padding: 0
+};
+
 type Lead = {
   name: string;
   phone: string;
@@ -28,6 +40,9 @@ const LeadScraper = () => {
   const [searchText, setSearchText] = useState('');
   const [minReviews, setMinReviews] = useState('');
   const [maxReviews, setMaxReviews] = useState('');
+  const [showAddress, setShowAddress] = useState(true);
+  const [showRating, setShowRating] = useState(true);
+  const [showReviews, setShowReviews] = useState(true);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -102,7 +117,13 @@ const LeadScraper = () => {
 
   const handleCopyList = async () => {
     const list = leadsToExport
-      .map((lead) => `${lead.name}\t${lead.phone}\t${lead.address}\t${lead.rating}\t${lead.reviews}`)
+      .map((lead) => {
+        const fields = [lead.name, lead.phone];
+        if (showAddress) fields.push(lead.address);
+        if (showRating) fields.push(String(lead.rating));
+        if (showReviews) fields.push(String(lead.reviews));
+        return fields.join('\t');
+      })
       .join('\n');
     try {
       await navigator.clipboard.writeText(list);
@@ -123,8 +144,17 @@ const LeadScraper = () => {
   };
 
   const handleExportCsv = () => {
-    const header = ['Name', 'Phone', 'Address', 'Rating', 'Reviews'];
-    const rows = leadsToExport.map((lead) => [lead.name, lead.phone, lead.address, lead.rating, lead.reviews]);
+    const header = ['Name', 'Phone'];
+    if (showAddress) header.push('Address');
+    if (showRating) header.push('Rating');
+    if (showReviews) header.push('Reviews');
+    const rows = leadsToExport.map((lead) => {
+      const row: (string | number)[] = [lead.name, lead.phone];
+      if (showAddress) row.push(lead.address);
+      if (showRating) row.push(lead.rating);
+      if (showReviews) row.push(lead.reviews);
+      return row;
+    });
     const csv = [header, ...rows]
       .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
       .join('\n');
@@ -132,13 +162,13 @@ const LeadScraper = () => {
   };
 
   const handleExportXlsx = () => {
-    const rows = leadsToExport.map((lead) => ({
-      Name: lead.name,
-      Phone: lead.phone,
-      Address: lead.address,
-      Rating: lead.rating,
-      Reviews: lead.reviews
-    }));
+    const rows = leadsToExport.map((lead) => {
+      const row: Record<string, string | number> = { Name: lead.name, Phone: lead.phone };
+      if (showAddress) row.Address = lead.address;
+      if (showRating) row.Rating = lead.rating;
+      if (showReviews) row.Reviews = lead.reviews;
+      return row;
+    });
     const worksheet = XLSX.utils.json_to_sheet(rows);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Leads');
@@ -253,15 +283,39 @@ const LeadScraper = () => {
             </Button>
           </div>
 
+          {(!showAddress || !showRating || !showReviews) ? (
+            <div style={{ marginBottom: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+              <span style={{ color: '#aaa', fontSize: '0.85rem' }}>Hidden columns:</span>
+              {!showAddress ? <Button size="sm" variant="outline-light" onClick={() => setShowAddress(true)}>+ Address</Button> : null}
+              {!showRating ? <Button size="sm" variant="outline-light" onClick={() => setShowRating(true)}>+ Rating</Button> : null}
+              {!showReviews ? <Button size="sm" variant="outline-light" onClick={() => setShowReviews(true)}>+ Reviews</Button> : null}
+            </div>
+          ) : null}
+
           <Table striped bordered hover variant="dark" responsive>
             <thead>
               <tr>
                 <th></th>
                 <th>Name</th>
                 <th>Phone</th>
-                <th>Address</th>
-                <th>Rating</th>
-                <th>Reviews</th>
+                {showAddress ? (
+                  <th>
+                    Address
+                    <button type="button" onClick={() => setShowAddress(false)} title="Hide Address column" style={columnToggleBtnStyle}>−</button>
+                  </th>
+                ) : null}
+                {showRating ? (
+                  <th>
+                    Rating
+                    <button type="button" onClick={() => setShowRating(false)} title="Hide Rating column" style={columnToggleBtnStyle}>−</button>
+                  </th>
+                ) : null}
+                {showReviews ? (
+                  <th>
+                    Reviews
+                    <button type="button" onClick={() => setShowReviews(false)} title="Hide Reviews column" style={columnToggleBtnStyle}>−</button>
+                  </th>
+                ) : null}
               </tr>
             </thead>
             <tbody>
@@ -276,9 +330,9 @@ const LeadScraper = () => {
                   </td>
                   <td>{lead.name}</td>
                   <td>{lead.phone || '—'}</td>
-                  <td>{lead.address || '—'}</td>
-                  <td>{lead.rating || '—'}</td>
-                  <td>{lead.reviews || '—'}</td>
+                  {showAddress ? <td>{lead.address || '—'}</td> : null}
+                  {showRating ? <td>{lead.rating || '—'}</td> : null}
+                  {showReviews ? <td>{lead.reviews || '—'}</td> : null}
                 </tr>
               ))}
             </tbody>
