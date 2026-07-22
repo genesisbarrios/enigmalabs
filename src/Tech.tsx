@@ -1,5 +1,5 @@
 import { useEffect, useState, useLayoutEffect } from "react";
-import { Row, Col, Container, Card, Button, Alert } from "react-bootstrap";
+import { Row, Col, Container, Card, Alert } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import axios from "axios";
 //import image1 from "./image1.png";
@@ -144,7 +144,7 @@ const interestOptions: { key: string; label: string; active: boolean; toggle: ()
   { key: "beats", label: "Beats & Mixing", active: beats, toggle: () => setBeats(!beats) },
   { key: "loops", label: "Loop Packs", active: loops, toggle: () => setLoops(!loops) },
   { key: "visuals", label: "Visuals", active: visuals, toggle: () => setVisuals(!visuals) },
-  { key: "web", label: "Web Development & Marketing", active: web, toggle: () => setWeb(!web) }
+  { key: "web", label: "Web Development", active: web, toggle: () => setWeb(!web) }
 ];
 
 function handleSubmit() {
@@ -280,16 +280,14 @@ function handleSubmit() {
                 If you already know you want a polished, high-performing website for your brand, we’d love to help you bring it to life.
                 Share a few details through our onboarding form and we’ll take it from there.
               </p>
-              <p>
-                  <p style={{ marginBottom: "10px" }}>
-                  <Link to="/payment" style={{ color: "#68FF00", fontWeight: 600 }}>
-                    Ready to pay for your website?
-                  </Link>
-                </p>
-                <Link to="/onboard" style={{ color: "#68FF00", fontWeight: 600 }}>
+              <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginTop: "1rem" }}>
+                <Link to="/payment" style={{ display: "inline-block", backgroundColor: "#68FF00", color: "#000", border: "none", borderRadius: "2rem", fontWeight: 700, padding: "0.6rem 1.5rem", textDecoration: "none" }}>
+                  Ready to pay for your website?
+                </Link>
+                <Link to="/onboard" style={{ display: "inline-block", backgroundColor: "transparent", color: "#68FF00", border: "1px solid #68FF00", borderRadius: "2rem", fontWeight: 700, padding: "0.6rem 1.5rem", textDecoration: "none" }}>
                   Start your onboarding journey →
                 </Link>
-              </p>
+              </div>
             </Col>
             <Col xs={12} md={6} style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
               <div style={newsletterCardStyle}>
