@@ -170,8 +170,7 @@ const workProjects = [
             <Col sm={12}>
               <h4 className="mt-5">Already made up your mind?</h4>
               <p style={{ maxWidth: "700px", lineHeight: 1.7 }}>
-                If you already know you want a polished, high-performing website for your brand, we’d love to help you bring it to life.
-                Share a few details through our onboarding form and we’ll take it from there.
+                If you already know you want a polished, high-performing website for your brand, we’d love to help you bring it to life. Share a few details through our onboarding form and we’ll take it from there.
               </p>
               <p>
                   <p style={{ marginBottom: "10px" }}>
