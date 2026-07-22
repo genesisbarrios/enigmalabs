@@ -209,13 +209,17 @@ function handleSubmit() {
               <h5 className="subsection-title" style={{marginTop: "5%"}}>Pricing</h5>
              
             </Col>
-            <Col sm={6} style={{ marginBottom: '1.5rem' }}>
+            <Col sm={4} style={{ marginBottom: '1.5rem' }}>
               <div style={infoCardStyle}>
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Photography</h6>
-                <ul style={{ marginBottom: "1.25rem" }}>
+                <ul style={{ marginBottom: 0 }}>
                   <li>1 HR Shoot 10 Edits: $100</li>
                   <li>2 HR Shoot 20 Edits: $200</li>
                 </ul>
+              </div>
+            </Col>
+            <Col sm={4} style={{ marginBottom: '1.5rem' }}>
+              <div style={infoCardStyle}>
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Videography</h6>
                 <ul style={{ marginBottom: 0 }}>
                   <li>1HR Run and Gun Music Video: $150 ($300 including Edit)</li>
@@ -224,7 +228,7 @@ function handleSubmit() {
                 </ul>
               </div>
             </Col>
-            <Col sm={6} style={{ marginBottom: '1.5rem' }}>
+            <Col sm={4} style={{ marginBottom: '1.5rem' }}>
               <div style={infoCardStyle}>
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Graphic Design</h6>
                 <ul style={{ marginBottom: 0 }}>
