@@ -478,7 +478,7 @@ const Home = () => {
 
         <Row style={servicesStyle}>
           <Col xs={12}>
-            <h1 className="section-title-left" id="newsletter-heading">NEWSLETTER</h1>
+            <h1 className="section-title-left" id="newsletter-heading" style={{marginTop:"2%"}}>NEWSLETTER</h1>
           </Col>
         </Row>
         <Row style={newsletterSectionStyle}>
