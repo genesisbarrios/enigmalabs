@@ -26,8 +26,8 @@ const LeadScraper = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [searchText, setSearchText] = useState('');
-  const [minRating, setMinRating] = useState('');
-  const [maxRating, setMaxRating] = useState('');
+  const [minReviews, setMinReviews] = useState('');
+  const [maxReviews, setMaxReviews] = useState('');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -71,15 +71,15 @@ const LeadScraper = () => {
   };
 
   const filteredLeads = useMemo(() => {
-    const minRatingNum = Number(minRating) || 0;
-    const maxRatingNum = maxRating === '' ? 5 : Number(maxRating);
+    const minReviewsNum = Number(minReviews) || 0;
+    const maxReviewsNum = maxReviews === '' ? Infinity : Number(maxReviews);
     const text = searchText.trim().toLowerCase();
     return leads.filter((lead) => {
       const matchesText = !text || lead.name.toLowerCase().includes(text) || lead.address.toLowerCase().includes(text);
-      const matchesRating = lead.rating >= minRatingNum && lead.rating <= maxRatingNum;
-      return matchesText && matchesRating;
+      const matchesReviews = lead.reviews >= minReviewsNum && lead.reviews <= maxReviewsNum;
+      return matchesText && matchesReviews;
     });
-  }, [leads, searchText, minRating, maxRating]);
+  }, [leads, searchText, minReviews, maxReviews]);
 
   const toggleSelected = (index: number) => {
     setSelected((prev) => {
@@ -218,22 +218,20 @@ const LeadScraper = () => {
               <Form.Control
                 type="number"
                 min="0"
-                max="5"
-                step="0.1"
-                value={minRating}
-                onChange={(event) => setMinRating(event.target.value)}
-                placeholder="Min rating"
+                step="1"
+                value={minReviews}
+                onChange={(event) => setMinReviews(event.target.value)}
+                placeholder="Min reviews"
               />
             </Col>
             <Col md={2}>
               <Form.Control
                 type="number"
                 min="0"
-                max="5"
-                step="0.1"
-                value={maxRating}
-                onChange={(event) => setMaxRating(event.target.value)}
-                placeholder="Max rating"
+                step="1"
+                value={maxReviews}
+                onChange={(event) => setMaxReviews(event.target.value)}
+                placeholder="Max reviews"
               />
             </Col>
             <Col md={3}>
