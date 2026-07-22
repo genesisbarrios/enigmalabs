@@ -11,10 +11,11 @@ const serviceOptions = [
   'Plumbing',
   'Electrician',
   'HVAC',
+  'Construction',
+  'Property Maintenance',
+  'Roofing',
   'Restaurant / Food & Beverage',
   'Real Estate',
-  'Photography / Videography',
-  'Music / Artist / Label',
   'Fitness / Gym / Wellness',
   'Salon / Spa / Beauty',
   'Medical / Dental / Healthcare',
@@ -24,8 +25,9 @@ const serviceOptions = [
   'Education / Online Courses',
   'Podcast / Media',
   'Hospitality / Travel',
-  'Construction / Home Services',
-  'Retail / Boutique'
+  'Retail / Boutique',
+  'Photography / Videography',
+  'Music / Artist / Label',
 ];
 
 const initialState = {
