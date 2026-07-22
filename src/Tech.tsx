@@ -1,5 +1,5 @@
 import { useEffect, useState, useLayoutEffect } from "react";
-import { Row, Col, Container, Card, Alert } from "react-bootstrap";
+import { Row, Col, Container, Alert } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import axios from "axios";
 //import image1 from "./image1.png";
@@ -24,19 +24,17 @@ const videoStyle = {
   width: "100%"
 };
 
-const workCardStyle = {
-  backgroundColor: "#111",
-  border: "1px solid #68FF00",
-  borderRadius: "16px",
-  boxShadow: "0 0 20px rgba(104, 255, 0, 0.1)",
-  overflow: "hidden",
-  height: "100%"
+const workImgWrapStyle = {
+  width: "100%",
+  maxHeight: "320px",
+  overflow: "hidden" as const,
+  borderRadius: "12px"
 };
 
 const workImgStyle = {
   width: "100%",
-  height: "220px",
-  objectFit: "cover" as const
+  height: "auto",
+  display: "block" as const
 };
 
 const infoCardStyle = {
@@ -87,6 +85,8 @@ const newsletterButtonStyle = {
 
 const workPlaceholderStyle = {
   ...workImgStyle,
+  height: "220px",
+  borderRadius: "12px",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
@@ -100,7 +100,7 @@ const workPlaceholderStyle = {
 
 const workProjects = [
   {
-    name: "Photographer | Portfolio Website",
+    name: "Photographer Portfolio Website",
     url: "https://www.cinemautographer.com/",
     image: "https://dl.dropboxusercontent.com/s/1jm89lj35tqm1qk0hp1yr/maury.gif?rlkey=tlzw5eq3vkz77q3vx5ol3hpt0&st=vhxcy8fv&dl=0",
     alt: "Maury Ramos Peña Portfolio Website"
@@ -209,20 +209,16 @@ function handleSubmit() {
           <Row style={rowStyle}>
             {workProjects.map((project) => (
               <Col xs={12} sm={6} key={project.name} style={{ marginBottom: '1.5rem' }}>
-                <Card style={workCardStyle}>
-                  <a href={project.url} target="_blank" rel="noreferrer">
-                    {project.image ? (
+                <a href={project.url} target="_blank" rel="noreferrer" style={{ display: 'block', color: 'white', textDecoration: 'none' }}>
+                  {project.image ? (
+                    <div style={workImgWrapStyle}>
                       <img style={workImgStyle} alt={project.alt} src={project.image} />
-                    ) : (
-                      <div style={workPlaceholderStyle}>{project.name}</div>
-                    )}
-                  </a>
-                  <Card.Body>
-                    <h5 style={{ margin: 0 }}>
-                      <a href={project.url} target="_blank" rel="noreferrer" style={{ color: 'white' }}>{project.name}</a>
-                    </h5>
-                  </Card.Body>
-                </Card>
+                    </div>
+                  ) : (
+                    <div style={workPlaceholderStyle}>{project.name}</div>
+                  )}
+                  <h5 style={{ margin: '0.75rem 0 0' }}>{project.name}</h5>
+                </a>
               </Col>
             ))}
           </Row>
@@ -282,7 +278,7 @@ function handleSubmit() {
               </p>
               <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginTop: "1rem" }}>
                 <Link to="/payment" style={{ display: "inline-block", backgroundColor: "#68FF00", color: "#000", border: "none", borderRadius: "2rem", fontWeight: 700, padding: "0.6rem 1.5rem", textDecoration: "none" }}>
-                  Ready to pay for your website?
+                  Pay for your website
                 </Link>
                 <Link to="/onboard" style={{ display: "inline-block", backgroundColor: "transparent", color: "#68FF00", border: "1px solid #68FF00", borderRadius: "2rem", fontWeight: 700, padding: "0.6rem 1.5rem", textDecoration: "none" }}>
                   Start your onboarding journey →
