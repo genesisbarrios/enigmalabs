@@ -8,8 +8,6 @@ const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 
 const Music = () => {
   const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
-  const [instagram, setInstagram] = useState("");
   const [beats, setBeats] = useState(false);
   const [loops, setLoops] = useState(false);
   const [visuals, setVisuals] = useState(false);
@@ -31,6 +29,65 @@ const Music = () => {
       width:"100%",
       padding:"13% 0"
   }
+
+  const newsletterCardStyle = {
+    backgroundColor: "#111",
+    border: "1px solid #68FF00",
+    borderRadius: "20px",
+    boxShadow: "0 0 30px rgba(104, 255, 0, 0.15)",
+    width: "100%",
+    padding: "2.75rem 2rem"
+  };
+
+  const newsletterInputStyle = {
+    display: "block",
+    margin: "0 auto 1.5rem",
+    width: "100%",
+    maxWidth: "360px",
+    padding: "0.85rem 1.15rem",
+    borderRadius: "2rem",
+    border: "1px solid #333",
+    backgroundColor: "#1a1a1a",
+    color: "#fff",
+    fontSize: "1rem",
+    outline: "none"
+  };
+
+  const newsletterButtonStyle = {
+    marginTop: "1.75rem",
+    padding: "0.85rem 2.75rem",
+    backgroundColor: "#68FF00",
+    color: "#000",
+    border: "none",
+    borderRadius: "2rem",
+    fontWeight: 700,
+    textTransform: "uppercase" as const,
+    letterSpacing: "0.05em",
+    fontSize: "1rem",
+    cursor: "pointer"
+  };
+
+  const newsletterChipStyle = (active: boolean) => ({
+    display: "inline-block",
+    padding: "0.55rem 1.1rem",
+    margin: "0.3rem",
+    borderRadius: "2rem",
+    border: "1px solid #68FF00",
+    backgroundColor: active ? "#68FF00" : "transparent",
+    color: active ? "#000" : "#68FF00",
+    fontWeight: 600,
+    fontSize: "0.85rem",
+    cursor: "pointer",
+    userSelect: "none" as const,
+    transition: "all 0.15s ease"
+  });
+
+  const interestOptions: { key: string; label: string; active: boolean; toggle: () => void }[] = [
+    { key: "beats", label: "Beats & Audio Engineering", active: beats, toggle: () => setBeats(!beats) },
+    { key: "loops", label: "Loop Packs", active: loops, toggle: () => setLoops(!loops) },
+    { key: "visuals", label: "Visuals", active: visuals, toggle: () => setVisuals(!visuals) },
+    { key: "web", label: "Web Development & Marketing", active: web, toggle: () => setWeb(!web) }
+  ];
 
   function handleSubmit() {
     console.log('handle submit request to subscribe')
@@ -82,8 +139,8 @@ const Music = () => {
             <Col sm={12}>
               <h5 className="subsection-title" style={{marginTop: "2%"}}>Services</h5>
               <ul>
-                <li>Recording, Music Production, Composition, and Vocal Production</li>
-                <li>Audio Engineering (Mixing, Mastering, Editing)</li>
+                <li>Music Production & Audio Engineering (Mixing, Mastering)</li>
+                <li>Vocal Production, Editing & Tuning</li>
               </ul>
             </Col>
           </Row>
