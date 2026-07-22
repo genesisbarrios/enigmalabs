@@ -26,9 +26,10 @@ const videoStyle = {
 
 const workImgWrapStyle = {
   width: "100%",
-  maxHeight: "320px",
+  height: "280px",
   overflow: "hidden" as const,
-  borderRadius: "12px"
+  borderRadius: "12px",
+  backgroundColor: "#1a1a1a"
 };
 
 const workImgStyle = {
