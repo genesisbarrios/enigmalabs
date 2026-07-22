@@ -40,8 +40,18 @@ const plans = [
   },
   {
     title: 'Monthly Subscription',
-    description: '$200/mo — payment link coming soon',
-    url: null
+    description: '$200/mo',
+    url: 'https://buy.stripe.com/5kQ6oA5vF8c6g6v8gF33W00'
+  },
+  {
+    title: 'Hosting & Support',
+    description: '$15/mo',
+    url: 'https://buy.stripe.com/eVqaEQgaj9ga7zZ1Sh33W02'
+  },
+  {
+    title: '24/7 Support & Unlimited Edits',
+    description: '$40/mo',
+    url: 'https://buy.stripe.com/dRm14g9LV9gadYn68x33W03'
   }
 ];
 
@@ -50,12 +60,12 @@ const Payment = () => {
     <Container style={{ paddingTop: '6rem', paddingBottom: '3rem', maxWidth: '1000px' }}>
       <h1 style={{ color: '#68FF00', marginBottom: '0.5rem' }}>Make a Payment</h1>
       <p style={{ color: '#d4d4d4', marginBottom: '2.5rem' }}>
-        Choose the option that matches your project to complete payment securely through Square.
+        Choose the option that matches your project to complete payment securely.
       </p>
 
-      <Row className="g-4">
+      <Row>
         {plans.map((plan) => (
-          <Col xs={12} md={4} key={plan.title}>
+          <Col xs={12} md={4} key={plan.title} style={{ marginBottom: '1.5rem' }}>
             {plan.url ? (
               <a href={plan.url} target="_blank" rel="noreferrer" style={{ textDecoration: 'none', display: 'block', height: '100%' }}>
                 <Card style={optionCardStyle} className="onboarding-option-card">
