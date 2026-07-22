@@ -236,7 +236,7 @@ function handleSubmit() {
                 <ul style={{ marginBottom: 0 }}>
                   <li>1HR Run and Gun Music Video: $250</li>
                   <li>2HR Run and Gun Music Video: $500</li>
-                  <li>1HR Short Form Content Shoot + 2 Edits: $250</li>
+                  <li>1HR Shortform Shoot + 2 Edits: $250</li>
                 </ul>
               </div>
             </Col>
