@@ -128,7 +128,7 @@ const workProjects = [
             <ul>
                 <li>Pay Up Front - Basic Website</li>
                 <ul>  
-                  <li>$1000 for a 3-5 page website</li>
+                  <li>$1000 for a 5 page website</li>
                 </ul>
               </ul>
               </Col>
