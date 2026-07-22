@@ -46,11 +46,30 @@ type Client = {
   createdAt: string;
 };
 
+type Agreement = {
+  _id: string;
+  planType: 'one_time' | 'monthly' | 'custom';
+  amount: number;
+  clientName: string;
+  clientAddress: string;
+  clientEmail: string;
+  jurisdiction: string;
+  effectiveDate: string;
+};
+
+const PLAN_LABELS: Record<Agreement['planType'], string> = {
+  one_time: 'One-Time Payment',
+  monthly: 'Monthly Subscription',
+  custom: 'Custom / Negotiated'
+};
+
 const AdminOnboarding = () => {
   const [clients, setClients] = useState<Client[]>([]);
+  const [agreements, setAgreements] = useState<Agreement[]>([]);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [loadingAgreements, setLoadingAgreements] = useState(true);
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -68,9 +87,24 @@ const AdminOnboarding = () => {
     }
   };
 
+  const fetchAgreements = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/agreements`);
+      if (response.data?.ok) {
+        setAgreements(response.data.agreements || []);
+      }
+    } catch (fetchError) {
+      console.error(fetchError);
+      setError('Could not load signed agreements.');
+    } finally {
+      setLoadingAgreements(false);
+    }
+  };
+
   useEffect(() => {
     if (isAuthenticated) {
       fetchClients();
+      fetchAgreements();
     }
   }, [isAuthenticated]);
 
@@ -117,12 +151,30 @@ const AdminOnboarding = () => {
     }
   };
 
+  const handleDownloadAgreement = (agreementId: string) => {
+    window.open(`${API_BASE_URL}/agreements/${agreementId}/download`, '_blank');
+  };
+
+  const handleDeleteAgreement = async (agreementId: string) => {
+    const confirmDelete = window.confirm('Delete this signed agreement?');
+    if (!confirmDelete) return;
+
+    try {
+      await axios.delete(`${API_BASE_URL}/agreements/${agreementId}`);
+      setMessage('Agreement deleted.');
+      fetchAgreements();
+    } catch (deleteError) {
+      console.error(deleteError);
+      setError('Could not delete the agreement.');
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <Container style={{ paddingTop: '6rem', paddingBottom: '3rem', maxWidth: '500px' }}>
         <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b' }}>
           <Card.Body>
-            <h1 style={{ color: '#68FF00', marginBottom: '0.75rem' }}>Client Onboarding Admin</h1>
+            <h1 style={{ color: '#68FF00', marginBottom: '0.75rem' }}>Onboarding Admin</h1>
             <p style={{ color: '#d4d4d4', marginBottom: '1.25rem' }}>
               Enter the admin password to view onboarding submissions.
             </p>
@@ -142,7 +194,7 @@ const AdminOnboarding = () => {
 
   return (
     <Container style={{ paddingTop: '6rem', paddingBottom: '3rem' }}>
-      <h1 style={{ color: '#68FF00', marginBottom: '1rem' }}>Client Onboarding Admin</h1>
+      <h1 style={{ color: '#68FF00', marginBottom: '1rem' }}>Onboarding Admin</h1>
       <p style={{ color: '#d4d4d4', marginBottom: '1.5rem' }}>
         Review onboarding responses, download uploaded brand assets, and remove files once you are done with them.
       </p>
@@ -250,6 +302,40 @@ const AdminOnboarding = () => {
                 </ListGroup>
               )}
             </div>
+          </Card.Body>
+        </Card>
+      ))}
+
+      <h2 style={{ color: '#68FF00', marginTop: '2rem', marginBottom: '1rem' }}>Signed Web Development Agreements</h2>
+
+      {loadingAgreements ? <p>Loading agreements...</p> : null}
+
+      {!loadingAgreements && agreements.length === 0 ? <Alert variant="secondary">No agreements have been signed yet.</Alert> : null}
+
+      {agreements.map((agreement) => (
+        <Card key={agreement._id} style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', marginBottom: '1.25rem' }}>
+          <Card.Body>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <div>
+                <h4 style={{ marginBottom: '0.25rem' }}>{agreement.clientName}</h4>
+                <p style={{ marginBottom: '0.25rem' }}>{agreement.clientEmail} • {agreement.clientAddress}</p>
+                <small>Signed {new Date(agreement.effectiveDate).toLocaleString()}</small>
+              </div>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <Button size="sm" variant="outline-success" onClick={() => handleDownloadAgreement(agreement._id)}>
+                  Download PDF
+                </Button>
+                <Button size="sm" variant="outline-danger" onClick={() => handleDeleteAgreement(agreement._id)}>
+                  Delete
+                </Button>
+              </div>
+            </div>
+
+            <ListGroup variant="flush" style={{ background: 'transparent', marginTop: '1rem' }}>
+              <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Plan:</strong> {PLAN_LABELS[agreement.planType]}</ListGroup.Item>
+              <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Amount:</strong> ${agreement.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</ListGroup.Item>
+              <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Jurisdiction:</strong> {agreement.jurisdiction}</ListGroup.Item>
+            </ListGroup>
           </Card.Body>
         </Card>
       ))}

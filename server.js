@@ -261,6 +261,31 @@ app.post('/api/agreements/submit', async (req, res) => {
   }
 });
 
+app.get('/api/agreements', async (_req, res) => {
+  try {
+    const agreements = await WebDevAgreement.find()
+      .select('-pdf -signature')
+      .sort({ effectiveDate: -1 });
+    res.json({ ok: true, agreements });
+  } catch (error) {
+    console.error('Could not fetch agreements', error);
+    res.status(500).json({ ok: false, message: 'Could not fetch agreements.' });
+  }
+});
+
+app.delete('/api/agreements/:id', async (req, res) => {
+  try {
+    const deleted = await WebDevAgreement.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ ok: false, message: 'Agreement not found.' });
+    }
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Could not delete agreement', error);
+    res.status(500).json({ ok: false, message: 'Could not delete agreement.' });
+  }
+});
+
 app.get('/api/agreements/:id/download', async (req, res) => {
   try {
     const agreement = await WebDevAgreement.findById(req.params.id);
