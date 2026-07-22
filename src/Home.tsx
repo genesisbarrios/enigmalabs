@@ -427,7 +427,7 @@ const Home = () => {
         </Row>
         <Row style={servicesStyle}>
           <Col xs={12}>
-            <h1 className="centerText" id="services">Services</h1>
+            <h1 className="section-title-left" id="services">Services</h1>
           </Col>
         </Row>
         <Row style={rowStyle} id="servicesContainerRow" className="d-flex align-items-center">
@@ -478,7 +478,7 @@ const Home = () => {
 
         <Row style={servicesStyle}>
           <Col xs={12}>
-            <h1 className="centerText" id="newsletter-heading">NEWSLETTER</h1>
+            <h1 className="section-title-left" id="newsletter-heading">NEWSLETTER</h1>
           </Col>
         </Row>
         <Row style={newsletterSectionStyle}>

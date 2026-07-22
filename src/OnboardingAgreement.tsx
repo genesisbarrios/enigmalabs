@@ -6,12 +6,34 @@ import axios from 'axios';
 
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 
-type PlanType = 'one_time' | 'monthly' | 'custom';
+type BackendPlanType = 'one_time' | 'monthly' | 'custom';
+type PlanType = 'one_time_5' | 'one_time_10' | 'monthly' | 'custom';
 
 const PLAN_LABELS: Record<PlanType, string> = {
-  one_time: 'One-Time Payment',
+  one_time_5: '5-Page Website (One-Time)',
+  one_time_10: '10-Page Website (One-Time)',
   monthly: 'Monthly Subscription',
   custom: 'Custom / Negotiated'
+};
+
+const PLAN_DESCRIPTIONS: Record<PlanType, string> = {
+  one_time_5: '$1,000 due once',
+  one_time_10: '$2,000 due once',
+  monthly: '$200 billed monthly',
+  custom: 'You enter the agreed amount'
+};
+
+const FIXED_PLAN_AMOUNTS: Partial<Record<PlanType, number>> = {
+  one_time_5: 1000,
+  one_time_10: 2000,
+  monthly: 200
+};
+
+const BACKEND_PLAN_TYPE: Record<PlanType, BackendPlanType> = {
+  one_time_5: 'one_time',
+  one_time_10: 'one_time',
+  monthly: 'monthly',
+  custom: 'custom'
 };
 
 const cardStyle: React.CSSProperties = {
@@ -32,10 +54,14 @@ const planCardStyle = (active: boolean): React.CSSProperties => ({
   boxShadow: active ? '0 0 25px rgba(104, 255, 0, 0.15)' : 'none'
 });
 
-const formatFee = (planType: PlanType, amount: number) => {
+const formatFee = (backendPlanType: BackendPlanType, amount: number) => {
   const formatted = amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  if (planType === 'monthly') return `$${formatted} per month (recurring monthly subscription)`;
-  if (planType === 'one_time') return `$${formatted} (one-time payment)`;
+  if (backendPlanType === 'monthly') return `$${formatted} per month (recurring monthly subscription)`;
+  if (backendPlanType === 'one_time') {
+    if (amount === 1000) return `$${formatted} (one-time payment — 5-page website)`;
+    if (amount === 2000) return `$${formatted} (one-time payment — 10-page website)`;
+    return `$${formatted} (one-time payment)`;
+  }
   return `$${formatted} (negotiated fee)`;
 };
 
@@ -43,7 +69,7 @@ const OnboardingAgreement = () => {
   const [searchParams] = useSearchParams();
 
   const [planType, setPlanType] = useState<PlanType | null>(
-    (searchParams.get('plan') as PlanType) && ['one_time', 'monthly', 'custom'].includes(searchParams.get('plan') || '')
+    (searchParams.get('plan') as PlanType) && Object.keys(PLAN_LABELS).includes(searchParams.get('plan') || '')
       ? (searchParams.get('plan') as PlanType)
       : null
   );
@@ -53,7 +79,7 @@ const OnboardingAgreement = () => {
   const [clientEmail, setClientEmail] = useState(searchParams.get('clientEmail') || '');
   const [jurisdiction, setJurisdiction] = useState('');
 
-  const visiblePlans: PlanType[] = ['one_time', 'monthly'];
+  const visiblePlans: PlanType[] = ['one_time_5', 'one_time_10', 'monthly'];
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -62,9 +88,9 @@ const OnboardingAgreement = () => {
   const signatureRef = useRef<SignatureCanvas>(null);
 
   const amount = useMemo(() => {
-    if (planType === 'one_time') return 2000;
-    if (planType === 'monthly') return 200;
-    return Number(customAmount) || 0;
+    if (!planType) return 0;
+    if (planType === 'custom') return Number(customAmount) || 0;
+    return FIXED_PLAN_AMOUNTS[planType] ?? 0;
   }, [planType, customAmount]);
 
   const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
@@ -98,7 +124,7 @@ const OnboardingAgreement = () => {
     try {
       const signatureDataUrl = signatureRef.current.getTrimmedCanvas().toDataURL('image/png');
       const response = await axios.post(`${API_BASE_URL}/agreements/submit`, {
-        planType,
+        planType: BACKEND_PLAN_TYPE[planType],
         amount,
         clientName,
         clientAddress,
@@ -155,13 +181,10 @@ const OnboardingAgreement = () => {
 
       <Row className="g-3 mb-4">
         {visiblePlans.map((plan) => (
-          <Col xs={12} md={6} key={plan}>
+          <Col xs={12} md={4} key={plan}>
             <div style={planCardStyle(planType === plan)} onClick={() => setPlanType(plan)}>
               <h5 style={{ color: '#68FF00' }}>{PLAN_LABELS[plan]}</h5>
-              <p style={{ color: '#d4d4d4', marginBottom: 0 }}>
-                {plan === 'one_time' && '$2,000 due once'}
-                {plan === 'monthly' && '$200 billed monthly'}
-              </p>
+              <p style={{ color: '#d4d4d4', marginBottom: 0 }}>{PLAN_DESCRIPTIONS[plan]}</p>
             </div>
           </Col>
         ))}
@@ -245,7 +268,7 @@ const OnboardingAgreement = () => {
 
               <h6 style={{ color: 'white' }}>3. Payment Terms</h6>
               <p>
-                Total Project Fee: {planType ? formatFee(planType, amount) : '—'}
+                Total Project Fee: {planType ? formatFee(BACKEND_PLAN_TYPE[planType], amount) : '—'}
                 <br />
                 The Total Project Fee does not include third-party costs such as hosting, domain registration, premium plugins/themes,
                 stock photography, or paid API/service subscriptions. These are billed separately or paid directly by Client.

@@ -162,6 +162,10 @@ button:disabled {
   width:100%!important;
 }
 
+.section-title-left{
+  text-align: left;
+}
+
 @media only screen and (max-width: 1500px) {
   #author{
     margin-top:170%;
@@ -177,10 +181,13 @@ button:disabled {
 
   #services{
     margin-top:10%;
-    margin-left:2%;
   }
 
   .centerText{
+    font-size:4rem;
+  }
+
+  .section-title-left{
     font-size:4rem;
   }
 
@@ -197,7 +204,6 @@ button:disabled {
 
   #services{
     margin-top:30%;
-    margin-left:2%;
   }
 
 
@@ -227,10 +233,6 @@ button:disabled {
     margin-left:10%;
     height:90% !important;
     max-width: 300px;
-  }
-
-  #services{
-    margin-left:-8%;
   }
 
   h1{

@@ -1,5 +1,5 @@
 import { useEffect, useState, useLayoutEffect } from "react";
-import { Row, Col, Container, Button } from "react-bootstrap";
+import { Row, Col, Container, Card, Button } from "react-bootstrap";
 import { Link } from "react-router-dom";
 //import image1 from "./image1.png";
 const Tech = () => {
@@ -8,15 +8,65 @@ const Tech = () => {
     margin: '1%'
   };
 
-  const imgStyle = {
-    height: "auto",
-    width: "100%"
-};
-
 const videoStyle = {
   height: "84%",
   width: "100%"
 };
+
+const workCardStyle = {
+  backgroundColor: "#111",
+  border: "1px solid #68FF00",
+  borderRadius: "16px",
+  boxShadow: "0 0 20px rgba(104, 255, 0, 0.1)",
+  overflow: "hidden",
+  height: "100%"
+};
+
+const workImgStyle = {
+  width: "100%",
+  height: "220px",
+  objectFit: "cover" as const
+};
+
+const workPlaceholderStyle = {
+  ...workImgStyle,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  backgroundColor: "#1a1a1a",
+  color: "#68FF00",
+  fontSize: "1.5rem",
+  fontWeight: 700,
+  textAlign: "center" as const,
+  padding: "1rem"
+};
+
+const workProjects = [
+  {
+    name: "Cinemautographer | Portfolio Website",
+    url: "https://www.cinemautographer.com/",
+    image: "https://dl.dropboxusercontent.com/s/1jm89lj35tqm1qk0hp1yr/maury.gif?rlkey=tlzw5eq3vkz77q3vx5ol3hpt0&st=vhxcy8fv&dl=0",
+    alt: "Maury Ramos Peña Portfolio Website"
+  },
+  {
+    name: "Mars Miami Studios",
+    url: "https://www.marsmusicstudios.com/",
+    image: "https://www.dropbox.com/scl/fi/hc1svqnn21ddd4wjjedpk/mars.png?rlkey=034jieiuwha3jtp43i3k7vt4t&st=7y8zgfqm&raw=1",
+    alt: "Mars Miami Studios"
+  },
+  {
+    name: "Influanto | Music Marketing Platform",
+    url: "https://influanto.com",
+    image: "https://dl.dropboxusercontent.com/s/a7lf48b7uht3dnyl59tc1/influantoHomepageLaptop.png?rlkey=pzp4yi2ns6ppjfmwb9m84t4tz&st=gjpea3z3&dl=0",
+    alt: "Influanto the all in one music marketing platform"
+  },
+  {
+    name: "Nuralume",
+    url: "https://nuralume.xyz",
+    image: null,
+    alt: "Nuralume"
+  }
+];
 
 
       return (
@@ -33,8 +83,8 @@ const videoStyle = {
             <Col sm={12}>
               <h5 style={{marginTop: "5%"}}>Services</h5>
               <ul>
-                <li>Custom Web Design, and Web Development</li>
-                <li>Website Maintenance: Updating Design, Functionality, Content, Links, Posts, etc. on a recurring basis</li>
+                <li>Web Design, and Web Development</li>
+                <li>Website Maintenance: Hosting, Updating Design, Functionality, Content, Links, Posts, etc. on a recurring basis</li>
                 <li>Graphic Design: Logos, Branding, Posters, Stickers and more.</li>
               </ul>
             </Col>
@@ -48,20 +98,27 @@ const videoStyle = {
               <h2>WORK</h2>
             </Col>
           </Row>
-           <Row style={rowStyle}>
-            <Col sm={12}>
-              <h5><a href="https://www.cinemautographer.com/" style={{color:'white'}} target="_blank">Cinemautographer | Portfolio Website</a></h5>
-              <a href="https://www.cinemautographer.com/" target="_blank"><img style={imgStyle} className="servicesImg"   alt="Maury Ramos Peña Portfolio Website" src="https://dl.dropboxusercontent.com/s/1jm89lj35tqm1qk0hp1yr/maury.gif?rlkey=tlzw5eq3vkz77q3vx5ol3hpt0&st=vhxcy8fv&dl=0" /></a>
-            </Col>
+          <Row style={rowStyle} className="g-3">
+            {workProjects.map((project) => (
+              <Col xs={12} sm={6} key={project.name}>
+                <Card style={workCardStyle}>
+                  <a href={project.url} target="_blank" rel="noreferrer">
+                    {project.image ? (
+                      <img style={workImgStyle} alt={project.alt} src={project.image} />
+                    ) : (
+                      <div style={workPlaceholderStyle}>{project.name}</div>
+                    )}
+                  </a>
+                  <Card.Body>
+                    <h5 style={{ margin: 0 }}>
+                      <a href={project.url} target="_blank" rel="noreferrer" style={{ color: 'white' }}>{project.name}</a>
+                    </h5>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
           </Row>
-        
-          <Row style={rowStyle}>
-            <Col sm={12}>
-              <h5><a href="https://www.marsmusicstudios.com/" style={{color:'white'}} target="_blank">Mars Miami Studios</a></h5>
-              <a href="https://www.marsmusicstudios.com/" target="_blank"><img style={imgStyle} className="servicesImg"   alt="neptune studios" src="https://www.dropbox.com/scl/fi/hc1svqnn21ddd4wjjedpk/mars.png?rlkey=034jieiuwha3jtp43i3k7vt4t&st=7y8zgfqm&raw=1" /></a>
-            </Col>
-          </Row>
-        
+
           <Row style={rowStyle}>
             <Col sm={12}>
               <h5 style={{marginTop: "5%"}}>Pricing</h5>
@@ -71,7 +128,7 @@ const videoStyle = {
             <ul>
                 <li>Pay Up Front - Basic Website</li>
                 <ul>  
-                  <li>$500 for a 1-3 page website</li>
+                  <li>$1000 for a 3-5 page website</li>
                 </ul>
               </ul>
               </Col>

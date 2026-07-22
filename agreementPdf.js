@@ -7,7 +7,11 @@ const cursiveFontBuffer = fs.readFileSync(cursiveFontPath);
 function formatFee(planType, amount) {
   const formatted = Number(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   if (planType === 'monthly') return `$${formatted} per month (recurring monthly subscription)`;
-  if (planType === 'one_time') return `$${formatted} (one-time payment)`;
+  if (planType === 'one_time') {
+    if (Number(amount) === 1000) return `$${formatted} (one-time payment — 5-page website)`;
+    if (Number(amount) === 2000) return `$${formatted} (one-time payment — 10-page website)`;
+    return `$${formatted} (one-time payment)`;
+  }
   return `$${formatted} (negotiated fee)`;
 }
 
