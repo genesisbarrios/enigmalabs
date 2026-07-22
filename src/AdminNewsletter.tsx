@@ -158,7 +158,7 @@ const AdminNewsletter = () => {
     <Container style={{ paddingTop: '6rem', paddingBottom: '3rem' }}>
       <h1 style={{ color: '#68FF00', marginBottom: '1rem' }}>Admin</h1>
       <p style={{ color: '#d4d4d4', marginBottom: '1.5rem' }}>
-        {subscribers.length} subscriber{subscribers.length === 1 ? '' : 's'}.
+        {subscribers.length} newsletter subscriber{subscribers.length === 1 ? '' : 's'}.
       </p>
 
       {message ? <Alert variant="success">{message}</Alert> : null}
