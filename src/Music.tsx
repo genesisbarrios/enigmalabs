@@ -238,12 +238,17 @@ const Music = () => {
 
          <br></br>
 
+            <Row style={rowStyle}>
+              <Col sm={12}>
+                <h5 className="subsection-title" style={{marginTop: "5%"}}>Pricing</h5>
+              </Col>
+            </Row>
             <Row style={{ ...rowStyle, marginBottom: "1.5rem" }}>
               <Col sm={6} style={{ marginBottom: "1.5rem" }}>
                 <div style={infoCardStyle}>
-                  <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Pricing</h5>
+                  <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Recording + Mixing</h5>
                   <ul style={{ marginBottom: 0 }}>
-                    <li>Recording: $35/hr ($25/hr for 4+ hours)</li>
+                    <li>Recording: $40/hr ($35/hr for 4+ hours)</li>
                     <li>Mixing + Mastering: $200</li>
                   </ul>
                 </div>
@@ -254,7 +259,7 @@ const Music = () => {
                   <ul style={{ marginBottom: 0 }}>
                     <li>Non-Exclusive License: $20</li>
                     <li>Unlimited Streams License: $100</li>
-                    <li>Exclusive License: NEGOTIATE</li>
+                    <li>Exclusive License: NEGOTIABLE</li>
                   </ul>
                 </div>
               </Col>
