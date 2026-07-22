@@ -21,6 +21,7 @@ const LeadScraper = () => {
   const [loginError, setLoginError] = useState('');
 
   const [niche, setNiche] = useState('');
+  const [keyword, setKeyword] = useState('');
   const [city, setCity] = useState('');
   const [leads, setLeads] = useState<Lead[]>([]);
   const [selected, setSelected] = useState<Set<number>>(new Set());
@@ -45,11 +46,17 @@ const LeadScraper = () => {
     event.preventDefault();
     setError('');
     setMessage('');
+
+    if (!niche.trim() && !keyword.trim()) {
+      setError('Enter a niche and/or a keyword to search.');
+      return;
+    }
+
     setLoading(true);
     setSelected(new Set());
 
     try {
-      const response = await axios.post(`${API_BASE_URL}/leads`, { niche, city });
+      const response = await axios.post(`${API_BASE_URL}/leads`, { niche, keyword, city });
       const results: Lead[] = response.data?.leads || [];
       setLeads(results);
       setMessage(`Found ${results.length} business${results.length === 1 ? '' : 'es'} without a website.`);
@@ -168,24 +175,28 @@ const LeadScraper = () => {
 
       <Form onSubmit={handleSearch} className="mb-4">
         <Row>
-          <Col md={5}>
+          <Col md={4}>
             <Form.Group className="mb-3" controlId="lead-niche">
               <Form.Label>Niche</Form.Label>
-              <Form.Control value={niche} onChange={(event) => setNiche(event.target.value)} placeholder="e.g. hair salon, plumber, dentist" required />
+              <Form.Control value={niche} onChange={(event) => setNiche(event.target.value)} placeholder="e.g. hair salon, plumber, dentist" />
             </Form.Group>
           </Col>
-          <Col md={5}>
+          <Col md={4}>
+            <Form.Group className="mb-3" controlId="lead-keyword">
+              <Form.Label>Keyword</Form.Label>
+              <Form.Control value={keyword} onChange={(event) => setKeyword(event.target.value)} placeholder="e.g. vegan, 24 hour, family owned" />
+            </Form.Group>
+          </Col>
+          <Col md={4}>
             <Form.Group className="mb-3" controlId="lead-city">
               <Form.Label>City</Form.Label>
               <Form.Control value={city} onChange={(event) => setCity(event.target.value)} placeholder="e.g. Miami, FL" required />
             </Form.Group>
           </Col>
-          <Col md={2} className="d-flex align-items-end">
-            <Button type="submit" variant="success" style={{ marginBottom: '1rem', width: '100%' }} disabled={loading}>
-              {loading ? 'Searching...' : 'Search'}
-            </Button>
-          </Col>
         </Row>
+        <Button type="submit" variant="success" disabled={loading}>
+          {loading ? 'Searching...' : 'Search'}
+        </Button>
       </Form>
 
       {message ? <Alert variant="success">{message}</Alert> : null}

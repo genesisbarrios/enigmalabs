@@ -22,21 +22,36 @@ async function geocode(city) {
   return location;
 }
 
-// Search businesses
-async function searchPlaces(keyword, location) {
-  const response = await axios.get(
-    "https://maps.googleapis.com/maps/api/place/nearbysearch/json",
-    {
-      params: {
-        location: `${location.lat},${location.lng}`,
-        radius: 50000,
-        keyword,
-        key: API_KEY
-      }
-    }
-  );
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-  return response.data.results;
+// Search businesses (paginates through Google's max of 3 pages / 60 results)
+async function searchPlaces(keyword, location) {
+  const url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json";
+  let results = [];
+  let pageToken = null;
+  let page = 0;
+
+  do {
+    const params = {
+      location: `${location.lat},${location.lng}`,
+      radius: 50000,
+      keyword,
+      key: API_KEY
+    };
+    if (pageToken) params.pagetoken = pageToken;
+
+    const response = await axios.get(url, { params });
+    results = results.concat(response.data.results);
+    pageToken = response.data.next_page_token || null;
+    page += 1;
+
+    // Google requires a short delay before a next_page_token becomes valid
+    if (pageToken && page < 3) {
+      await sleep(2000);
+    }
+  } while (pageToken && page < 3);
+
+  return results;
 }
 
 // Get details
@@ -59,15 +74,16 @@ async function getDetails(placeId) {
 // POST /api/leads
 router.post("/", async (req, res) => {
   try {
-    const { niche, city } = req.body;
+    const { niche, keyword, city } = req.body;
+    const searchTerm = [niche, keyword].filter(Boolean).join(" ").trim();
 
-    if (!niche || !city) {
-      return res.status(400).json({ error: "niche and city are required" });
+    if (!searchTerm || !city) {
+      return res.status(400).json({ error: "A niche or keyword, and a city, are required" });
     }
 
     const location = await geocode(city);
 
-    const places = await searchPlaces(niche, location);
+    const places = await searchPlaces(searchTerm, location);
 
     let leads = [];
 
