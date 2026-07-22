@@ -174,7 +174,7 @@ const workProjects = [
                 Share a few details through our onboarding form and we’ll take it from there.
               </p>
               <p>
-                  <p style={{ marginBottom: "3%" }}>
+                  <p style={{ marginBottom: "10px" }}>
                   <Link to="/payment" style={{ color: "#68FF00", fontWeight: 600 }}>
                     Ready to pay for your website? 
                   </Link>
