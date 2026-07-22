@@ -1,8 +1,19 @@
 import { useEffect, useState, useLayoutEffect } from "react";
-import { Row, Col, Container, Card, Button } from "react-bootstrap";
+import { Row, Col, Container, Card, Button, Alert } from "react-bootstrap";
 import { Link } from "react-router-dom";
+import axios from "axios";
 //import image1 from "./image1.png";
+
+const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
+
 const Tech = () => {
+  const [email, setEmail] = useState("");
+  const [beats, setBeats] = useState(false);
+  const [loops, setLoops] = useState(false);
+  const [visuals, setVisuals] = useState(false);
+  const [web, setWeb] = useState(false);
+  const [message, setMessage] = useState("");
+  const [alert, setAlert] = useState("");
 
   const rowStyle = {
     margin: '1%'
@@ -35,6 +46,43 @@ const infoCardStyle = {
   boxShadow: "0 0 20px rgba(104, 255, 0, 0.12)",
   padding: "2rem 1.75rem",
   height: "100%"
+};
+
+const newsletterCardStyle = {
+  backgroundColor: "#111",
+  border: "1px solid #68FF00",
+  borderRadius: "20px",
+  boxShadow: "0 0 30px rgba(104, 255, 0, 0.15)",
+  width: "100%",
+  padding: "2.75rem 2rem"
+};
+
+const newsletterInputStyle = {
+  display: "block",
+  margin: "0 auto 1.5rem",
+  width: "100%",
+  maxWidth: "360px",
+  padding: "0.85rem 1.15rem",
+  borderRadius: "2rem",
+  border: "1px solid #333",
+  backgroundColor: "#1a1a1a",
+  color: "#fff",
+  fontSize: "1rem",
+  outline: "none"
+};
+
+const newsletterButtonStyle = {
+  marginTop: "1.75rem",
+  padding: "0.85rem 2.75rem",
+  backgroundColor: "#68FF00",
+  color: "#000",
+  border: "none",
+  borderRadius: "2rem",
+  fontWeight: 700,
+  textTransform: "uppercase" as const,
+  letterSpacing: "0.05em",
+  fontSize: "1rem",
+  cursor: "pointer"
 };
 
 const workPlaceholderStyle = {
@@ -77,6 +125,57 @@ const workProjects = [
   }
 ];
 
+const newsletterChipStyle = (active: boolean) => ({
+  display: "inline-block",
+  padding: "0.55rem 1.1rem",
+  margin: "0.3rem",
+  borderRadius: "2rem",
+  border: "1px solid #68FF00",
+  backgroundColor: active ? "#68FF00" : "transparent",
+  color: active ? "#000" : "#68FF00",
+  fontWeight: 600,
+  fontSize: "0.85rem",
+  cursor: "pointer",
+  userSelect: "none" as const,
+  transition: "all 0.15s ease"
+});
+
+const interestOptions: { key: string; label: string; active: boolean; toggle: () => void }[] = [
+  { key: "beats", label: "Beats & Mixing", active: beats, toggle: () => setBeats(!beats) },
+  { key: "loops", label: "Loop Packs", active: loops, toggle: () => setLoops(!loops) },
+  { key: "visuals", label: "Visuals", active: visuals, toggle: () => setVisuals(!visuals) },
+  { key: "web", label: "Web Development & Marketing", active: web, toggle: () => setWeb(!web) }
+];
+
+function handleSubmit() {
+  if (!email) {
+    setAlert('Please set an e-mail address~');
+    return;
+  }
+
+  const dataToSend = {
+    email,
+    beats,
+    loops,
+    visuals,
+    web
+  };
+
+  axios.post(`${API_BASE_URL}/newsletter/subscribe`, dataToSend, {
+    headers: {
+      'Content-Type': 'application/json'
+    }
+  })
+    .then(() => {
+      setMessage("Your e-mail has been saved!");
+      setAlert('');
+    })
+    .catch((error) => {
+      setAlert("There was an error.");
+      console.error('Error: ', error);
+      setMessage('');
+    });
+}
 
       return (
         <Container className="aboutContainer">
@@ -172,10 +271,10 @@ const workProjects = [
 
         
 
-          <Row style={rowStyle}>
-
           <hr style={{backgroundColor:"white", marginTop: "3%"}}/>
-            <Col sm={12}>
+
+          <Row style={{ ...rowStyle, marginTop: "6%", marginBottom: "6%" }}>
+            <Col xs={12} md={6}>
               <h4 className="mt-5">Already made up your mind?</h4>
               <p style={{ maxWidth: "700px", lineHeight: 1.7 }}>
                 If you already know you want a polished, high-performing website for your brand, we’d love to help you bring it to life.
@@ -184,13 +283,67 @@ const workProjects = [
               <p>
                   <p style={{ marginBottom: "10px" }}>
                   <Link to="/payment" style={{ color: "#68FF00", fontWeight: 600 }}>
-                    Ready to pay for your website? 
+                    Ready to pay for your website?
                   </Link>
                 </p>
                 <Link to="/onboard" style={{ color: "#68FF00", fontWeight: 600 }}>
                   Start your onboarding journey →
                 </Link>
               </p>
+            </Col>
+            <Col xs={12} md={6} style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+              <div style={newsletterCardStyle}>
+                <form style={{ textAlign: "center", width: "100%", maxWidth: "420px", margin: "0 auto" }}>
+                  <h3 style={{ color: "#68FF00", marginBottom: "0.25rem" }}>Sign Up For Our Newsletter</h3>
+                  <p style={{ color: "#aaa", fontSize: "0.9rem", marginBottom: "1.5rem" }}>
+                    Loops, Beats, and discounts. No spam.
+                  </p>
+                  <input
+                    type="email"
+                    name="e-mail"
+                    placeholder="your@email.com"
+                    style={newsletterInputStyle}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                    }}
+                  ></input>
+                  <label style={{ display: "block", color: "#d4d4d4", marginBottom: "0.5rem" }}>
+                    What are you interested in?
+                  </label>
+                  <div style={{ textAlign: "center" }}>
+                    {interestOptions.map((option) => (
+                      <span
+                        key={option.key}
+                        role="checkbox"
+                        aria-checked={option.active}
+                        tabIndex={0}
+                        style={newsletterChipStyle(option.active)}
+                        onClick={option.toggle}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            option.toggle();
+                          }
+                        }}
+                      >
+                        {option.label}
+                      </span>
+                    ))}
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      handleSubmit();
+                    }}
+                    style={newsletterButtonStyle}
+                    type="submit"
+                  >
+                    Submit
+                  </button>
+                  {message && <Alert style={{ marginTop: "1.5rem", backgroundColor: "#111", borderColor: "#68FF00", color: "#68FF00" }}>{message.toString()}</Alert>}
+                  {alert && <Alert style={{ marginTop: "1.5rem", backgroundColor: "#2a0000", borderColor: "#ff4d4d", color: "#ff9d9d" }}>{alert.toString()}</Alert>}
+                </form>
+              </div>
             </Col>
           </Row>
 
