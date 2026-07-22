@@ -34,6 +34,15 @@ const videoStyle = {
   width: "auto"
 };
 
+const infoCardStyle = {
+  backgroundColor: "#111",
+  border: "1px solid #68FF00",
+  borderRadius: "20px",
+  boxShadow: "0 0 20px rgba(104, 255, 0, 0.12)",
+  padding: "2rem 1.75rem",
+  height: "100%"
+};
+
 function handleSubmit() {
     console.log('handle submit request to subscribe')
   
@@ -200,32 +209,28 @@ function handleSubmit() {
               <h5 className="subsection-title" style={{marginTop: "5%"}}>Pricing</h5>
              
             </Col>
-            <Col sm={6}>
-            <ul>
-                <li>Photography</li>
-                  <ul>  
-                    <li>2 HR Shoot 20 Edits: $200</li>
-                  </ul>
-              </ul>
-              <ul>
-                <li>Videography</li>
-                <ul>  
+            <Col sm={6} style={{ marginBottom: '1.5rem' }}>
+              <div style={infoCardStyle}>
+                <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Photography</h6>
+                <ul style={{ marginBottom: "1.25rem" }}>
+                  <li>2 HR Shoot 20 Edits: $200</li>
+                </ul>
+                <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Videography</h6>
+                <ul style={{ marginBottom: 0 }}>
                   <li>2HR Run and Gun Music Video: $250 ($400 including Edit)</li>
                   <li>1HR Run and Gun Music Video: $150 ($300 including Edit)</li>
                   <li>1HR Short Form Content Shoot + 2 Edits: $125</li>
                 </ul>
-              </ul>
+              </div>
             </Col>
-            <Col sm={6}>
-            <ul>
-                <li>GRAPHIC DESIGN</li>
-                  <ul>  
-                    <li>Logos and Album Covers: $50</li>
-                    <li>1 Hr Photo Shoot + Album Cover: $100</li>
-                  </ul>
-              </ul>
-              
-            
+            <Col sm={6} style={{ marginBottom: '1.5rem' }}>
+              <div style={infoCardStyle}>
+                <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Graphic Design</h6>
+                <ul style={{ marginBottom: 0 }}>
+                  <li>Logos and Album Covers: $50</li>
+                  <li>1 Hr Photo Shoot + Album Cover: $100</li>
+                </ul>
+              </div>
             </Col>
           </Row>
 

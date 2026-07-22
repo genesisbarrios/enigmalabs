@@ -67,6 +67,15 @@ const Music = () => {
     cursor: "pointer"
   };
 
+  const infoCardStyle = {
+    backgroundColor: "#111",
+    border: "1px solid #68FF00",
+    borderRadius: "20px",
+    boxShadow: "0 0 20px rgba(104, 255, 0, 0.12)",
+    padding: "2rem 1.75rem",
+    height: "100%"
+  };
+
   const newsletterChipStyle = (active: boolean) => ({
     display: "inline-block",
     padding: "0.55rem 1.1rem",
@@ -229,29 +238,31 @@ const Music = () => {
 
          <br></br>
 
-            <Row style={rowStyle}>
-              <Col sm={6}>
-                <h5 className="subsection-title" style={{marginTop: "5%"}}>Pricing</h5>
-                <ul>
-                  <li>Recording: $35/hr ($25/hr for 4+ hours)</li>
-                  <li>Mixing + Mastering: $200</li>
-                </ul>
+            <Row style={{ ...rowStyle, marginBottom: "1.5rem" }}>
+              <Col sm={6} style={{ marginBottom: "1.5rem" }}>
+                <div style={infoCardStyle}>
+                  <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Pricing</h5>
+                  <ul style={{ marginBottom: 0 }}>
+                    <li>Recording: $35/hr ($25/hr for 4+ hours)</li>
+                    <li>Mixing + Mastering: $200</li>
+                  </ul>
+                </div>
               </Col>
-                <Col sm={6}>
-                <h5 className="subsection-title" style={{marginTop: "5%"}}>Beat Licenses (BUY 2 GET 1 FREE)</h5>
-                <ul>
-                  <ul>  
+                <Col sm={6} style={{ marginBottom: "1.5rem" }}>
+                <div style={infoCardStyle}>
+                  <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Beat Licenses (BUY 2 GET 1 FREE)</h5>
+                  <ul style={{ marginBottom: 0 }}>
                     <li>Non-Exclusive License: $20</li>
                     <li>Unlimited Streams License: $100</li>
                     <li>Exclusive License: NEGOTIATE</li>
                   </ul>
-                </ul>
+                </div>
               </Col>
             </Row>
 
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width:"100%" }}>
-              <a href="https://www.beatstars.com/genwa/services" style={{ color: "white" }}>
-                <Button style={{ width: "100%", backgroundColor: "green", cursor: 'pointer', color: "white", borderColor: "green" }}>
+              <a href="https://www.beatstars.com/genwa/services" style={{ color: "#000" }}>
+                <Button style={{ backgroundColor: "#68FF00", cursor: 'pointer', color: "#000", borderColor: "#68FF00", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", padding: "0.85rem 2.75rem", borderRadius: "2rem" }}>
                   Book Your Session or Mix Today
                 </Button>
               </a>

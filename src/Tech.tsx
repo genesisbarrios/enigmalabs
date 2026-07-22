@@ -28,6 +28,15 @@ const workImgStyle = {
   objectFit: "cover" as const
 };
 
+const infoCardStyle = {
+  backgroundColor: "#111",
+  border: "1px solid #68FF00",
+  borderRadius: "20px",
+  boxShadow: "0 0 20px rgba(104, 255, 0, 0.12)",
+  padding: "2rem 1.75rem",
+  height: "100%"
+};
+
 const workPlaceholderStyle = {
   ...workImgStyle,
   display: "flex",
@@ -122,43 +131,43 @@ const workProjects = [
           <Row style={rowStyle}>
             <Col sm={12}>
               <h5 className="subsection-title" style={{marginTop: "5%"}}>Pricing</h5>
-             
+
             </Col>
-            <Col sm={4}>
-            <ul>
-                <li>Pay Up Front - Basic Website</li>
-                <ul>  
+            <Col sm={6} style={{ marginBottom: '1.5rem' }}>
+              <div style={infoCardStyle}>
+                <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Pay Up Front - Basic Website</h6>
+                <ul style={{ marginBottom: 0 }}>
                   <li>$1000 for a 5 page website</li>
                 </ul>
-              </ul>
-              </Col>
-              <Col sm={4}>
-              <ul>
-                <li>Pay Up Front - Premium Website</li>
-                <ul>  
+              </div>
+            </Col>
+            <Col sm={6} style={{ marginBottom: '1.5rem' }}>
+              <div style={infoCardStyle}>
+                <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Pay Up Front - Premium Website</h6>
+                <ul style={{ marginBottom: 0 }}>
                   <li>$2000 for a 10 page website</li>
                 </ul>
-              </ul>
-          </Col>
-          <Col sm={4}>
-              <ul>
-                  <li>Monthly Subscription</li>
-                  <ul>  
-                    <li>$200/mo for a 10 Page Website</li>
-                    <li>Includes unlimited Edits, 24/7 Support, Hosting, Maintenance, etc.</li>
-                  </ul>
+              </div>
+            </Col>
+            <Col sm={6} style={{ marginBottom: '1.5rem' }}>
+              <div style={infoCardStyle}>
+                <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Monthly Subscription</h6>
+                <ul style={{ marginBottom: 0 }}>
+                  <li>$200/mo for a 10 Page Website</li>
+                  <li>Includes unlimited Edits, 24/7 Support, Hosting, Maintenance, etc.</li>
                 </ul>
-              </Col>
-            <Col sm={4}>
-              <ul>
-                  <li>Hosting & Support</li>
-                  <ul>  
-                    <li>$15/mo: Hosting, and general support</li>
-                    <li>$40/mo: Unlimited edits and 24/7 support </li>
-                    <li>$500 for a Custom Blog / E-commerce Store</li>
-                  </ul>
+              </div>
+            </Col>
+            <Col sm={6} style={{ marginBottom: '1.5rem' }}>
+              <div style={infoCardStyle}>
+                <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Hosting & Support</h6>
+                <ul style={{ marginBottom: 0 }}>
+                  <li>$15/mo: Hosting, and general support</li>
+                  <li>$40/mo: Unlimited edits and 24/7 support </li>
+                  <li>$500 for a Custom Blog / E-commerce Store</li>
                 </ul>
-              </Col>
+              </div>
+            </Col>
             </Row>
 
         
