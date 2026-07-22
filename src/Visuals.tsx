@@ -226,7 +226,7 @@ function handleSubmit() {
                 <ul style={{ marginBottom: 0 }}>
                   <li>1 HR Shoot 10 Edits: $100</li>
                   <li>2 HR Shoot 20 Edits: $200</li>
-                  <li>Wedding Photo + Video: $1000</li>
+                  <li>Wedding 100 Edits + Recap Video: $1000</li>
                 </ul>
               </div>
             </Col>
