@@ -151,7 +151,7 @@ const Wallpapers = () => {
 
       <div style={{ width: "100%" }}>
         {wallpapers.map((wallpaper) => (
-          <div key={wallpaper.name} style={{ position: "relative", width: "100%" }}>
+          <div key={wallpaper.name} style={{ position: "relative", width: "75%", margin: "0 auto 2.5rem" }}>
             <img src={wallpaper.src} alt={wallpaper.name} style={{ width: "100%", height: "auto", display: "block" }} />
             <a href={wallpaper.src} download={wallpaper.download} style={downloadButtonStyle}>
               Download

@@ -24,18 +24,12 @@ const videoStyle = {
   width: "100%"
 };
 
-const workImgWrapStyle = {
-  width: "100%",
-  height: "280px",
-  overflow: "hidden" as const,
-  borderRadius: "12px",
-  backgroundColor: "#1a1a1a"
-};
-
 const workImgStyle = {
   width: "100%",
-  height: "auto",
-  display: "block" as const
+  height: "100%",
+  display: "block" as const,
+  objectFit: "cover" as const,
+  objectPosition: "top" as const
 };
 
 const infoCardStyle = {
@@ -212,7 +206,7 @@ function handleSubmit() {
               <Col xs={12} sm={6} key={project.name} style={{ marginBottom: '1.5rem' }}>
                 <a href={project.url} target="_blank" rel="noreferrer" style={{ display: 'block', color: 'white', textDecoration: 'none' }}>
                   {project.image ? (
-                    <div style={workImgWrapStyle}>
+                    <div className="work-img-wrap">
                       <img style={workImgStyle} alt={project.alt} src={project.image} />
                     </div>
                   ) : (
