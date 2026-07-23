@@ -15,6 +15,7 @@ import Payment from './Payment';
 import AdminOnboarding from './AdminOnboarding';
 import AdminNewsletter from './AdminNewsletter';
 import LeadScraper from './LeadScraper';
+import Wallpapers from './Wallpapers';
 import {Route, Routes} from 'react-router-dom';
 import {BrowserRouter as Router} from 'react-router-dom';
 const App = () => {
@@ -35,6 +36,7 @@ const App = () => {
          <Route path="/Tech" element={<Tech/>}/>
          <Route path="/Music" element={<Music/>}/>
          <Route path="/Visuals" element={<Visuals/>}/>
+         <Route path="/Wallpapers" element={<Wallpapers/>}/>
          <Route path="/onboard" element={<OnboardingLanding/>}/>
          <Route path="/onboard/agreement" element={<OnboardingAgreement/>}/>
          <Route path="/onboard/form" element={<Onboarding/>}/>
