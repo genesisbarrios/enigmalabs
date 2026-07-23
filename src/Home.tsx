@@ -435,11 +435,11 @@ const Home = () => {
               <Card style={serviceCardStyle} className="servicesCards">
               <a href="influanto.com" target="_blank"><img style={imgStyle} className="servicesImg" alt="influanto the all in one music marketing platform" src="https://dl.dropboxusercontent.com/s/a7lf48b7uht3dnyl59tc1/influantoHomepageLaptop.png?rlkey=pzp4yi2ns6ppjfmwb9m84t4tz&st=gjpea3z3&dl=0" /></a>
                 <Card.Body>
-                  <h5>Website Development and Maintenance</h5>
+                  <h5>Web Development</h5>
                   <Card.Text>
-                  Web Design and Development <br></br>
-                  Website Maintenance <br></br>
-                  NFT Collections and Decentralized Apps <br></br>
+                    Web Design + Web Development <br></br>
+                    Hosting & Google Business Setup <br></br>
+                   <br></br>
                   </Card.Text>
                   <a href="/Tech" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>See Work</Button></a>
                 </Card.Body>
@@ -467,7 +467,7 @@ const Home = () => {
                   <Card.Text>
                     Photography, Videography, Music Videos <br></br>
                     Short Form Content,  Social Media Management <br></br>
-                    Graphic Design, Branding  <br></br>
+                    Logos & Graphic Design <br></br>
                   </Card.Text>
                     
                   <a href="/Visuals" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>See Work</Button></a>
