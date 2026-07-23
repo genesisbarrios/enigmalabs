@@ -439,6 +439,7 @@ const Home = () => {
                   <Card.Text>
                     Web Design + Web Development <br></br>
                     Hosting & Google Business Setup <br></br>
+                    Digital Marketing & Ads <br></br>
                    <br></br>
                   </Card.Text>
                   <a href="/Tech" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>See Work</Button></a>
