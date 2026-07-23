@@ -26,7 +26,7 @@ const Wallpapers = () => {
   const downloadButtonStyle = {
     position: "absolute" as const,
     bottom: "1.25rem",
-    right: "1.25rem",
+    left: "1.25rem",
     backgroundColor: "#68FF00",
     color: "#000",
     border: "none",
