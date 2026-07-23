@@ -155,6 +155,33 @@ button:disabled {
   }
 }
 
+.wallpaper-download-btn{
+  position: absolute;
+  bottom: 1.25rem;
+  left: 1.25rem;
+  background-color: #68FF00;
+  color: #000;
+  border: none;
+  border-radius: 2rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.9rem;
+  padding: 0.6rem 1.5rem;
+  text-decoration: none;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+
+@media only screen and (max-width: 600px) {
+  .wallpaper-download-btn{
+    bottom: 0.75rem;
+    left: 0.75rem;
+    padding: 0.35rem 0.9rem;
+    font-size: 0.7rem;
+  }
+}
+
 .blogimage{
   max-height:50px;
   width: 100%;

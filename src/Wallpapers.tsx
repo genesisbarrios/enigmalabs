@@ -23,24 +23,6 @@ const Wallpapers = () => {
     margin: '1%'
   };
 
-  const downloadButtonStyle = {
-    position: "absolute" as const,
-    bottom: "1.25rem",
-    left: "1.25rem",
-    backgroundColor: "#68FF00",
-    color: "#000",
-    border: "none",
-    borderRadius: "2rem",
-    fontWeight: 700,
-    textTransform: "uppercase" as const,
-    letterSpacing: "0.05em",
-    fontSize: "0.9rem",
-    padding: "0.6rem 1.5rem",
-    textDecoration: "none",
-    boxShadow: "0 0 20px rgba(0, 0, 0, 0.5)",
-    cursor: "pointer"
-  };
-
   const newsletterCardStyle = {
     backgroundColor: "#111",
     border: "1px solid #68FF00",
@@ -153,7 +135,7 @@ const Wallpapers = () => {
         {wallpapers.map((wallpaper) => (
           <div key={wallpaper.name} style={{ position: "relative", width: "75%", margin: "0 auto 2.5rem" }}>
             <img src={wallpaper.src} alt={wallpaper.name} style={{ width: "100%", height: "auto", display: "block" }} />
-            <a href={wallpaper.src} download={wallpaper.download} style={downloadButtonStyle}>
+            <a href={wallpaper.src} download={wallpaper.download} className="wallpaper-download-btn">
               Download
             </a>
           </div>
