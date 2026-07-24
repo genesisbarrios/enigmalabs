@@ -26,7 +26,7 @@ async function sendAgreementEmails({ agreementId, clientName, clientEmail, pdfBu
 
   const attachments = [
     {
-      filename: `web-development-agreement-${agreementId}.pdf`,
+      filename: `WebDev_Agreement_EnigmaLabs.pdf`,
       content: pdfBuffer.toString('base64')
     }
   ];
@@ -174,7 +174,12 @@ const websiteClientSchema = new mongoose.Schema({
   email: String,
   address: String,
   socialMediaLinks: String,
+  businessType: String,
   website: String,
+  logo: {
+    data: Buffer,
+    mimeType: String
+  },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -192,20 +197,60 @@ async function ensureNewsletterSubscriber(email) {
   }
 }
 
-async function upsertWebsiteClient({ name, email, address }) {
+function buildSocialMediaLinks(fields) {
+  const pairs = [
+    ['Instagram', fields.socialInstagram],
+    ['TikTok', fields.socialTiktok],
+    ['YouTube', fields.socialYoutube],
+    ['Facebook', fields.socialFacebook],
+    ['X/Twitter', fields.socialTwitter],
+    ['Other', fields.socialOther]
+  ];
+  return pairs
+    .filter(([, value]) => value)
+    .map(([label, value]) => `${label}: ${value}`)
+    .join(' | ');
+}
+
+async function upsertWebsiteClient({ name, email, address, socialMediaLinks, businessType, website, logo }) {
   if (!email) return;
   try {
     const existing = await WebsiteClient.findOne({ email });
     if (existing) {
       if (name) existing.name = name;
       if (address) existing.address = address;
+      if (socialMediaLinks) existing.socialMediaLinks = socialMediaLinks;
+      if (businessType) existing.businessType = businessType;
+      if (website) existing.website = website;
+      if (logo) existing.logo = logo;
       await existing.save();
     } else {
-      await WebsiteClient.create({ name, email, address, socialMediaLinks: '', website: '' });
+      await WebsiteClient.create({
+        name: name || '',
+        email,
+        address: address || '',
+        socialMediaLinks: socialMediaLinks || '',
+        businessType: businessType || '',
+        website: website || '',
+        logo: logo || undefined
+      });
     }
   } catch (error) {
     console.error('Could not save website client record', error);
   }
+}
+
+async function syncWebsiteClientFromOnboarding(source) {
+  const logoAttachment = (source.logoAttachments || [])[0];
+  await upsertWebsiteClient({
+    name: source.clientName,
+    email: source.email,
+    address: source.address,
+    socialMediaLinks: buildSocialMediaLinks(source),
+    businessType: source.businessType,
+    website: source.website,
+    logo: logoAttachment ? { data: logoAttachment.data, mimeType: logoAttachment.mimeType } : null
+  });
 }
 
 app.get('/api/onboarding/health', (_req, res) => {
@@ -337,7 +382,7 @@ app.get('/api/agreements/:id/download', async (req, res) => {
       return res.status(404).json({ ok: false, message: 'Agreement not found.' });
     }
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="web-development-agreement-${agreement._id}.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename="WebDev_Agreement_EnigmaLabs.pdf"`);
     res.send(agreement.pdf);
   } catch (error) {
     console.error('Could not download agreement', error);

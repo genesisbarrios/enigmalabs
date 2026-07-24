@@ -299,7 +299,7 @@ const AdminOnboarding = () => {
 
       {loading ? <p>Loading clients...</p> : null}
 
-      {!loading && clients.length === 0 ? <Alert variant="secondary">No onboarding clients have been saved yet.</Alert> : null}
+      {!loading && clients.length === 0 ? <Alert variant="secondary">No onboarding forms yet.</Alert> : null}
 
       {clients.map((client) => (
         <Card key={client._id} style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', marginBottom: '1.25rem' }}>
