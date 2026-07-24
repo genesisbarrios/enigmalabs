@@ -63,15 +63,34 @@ const PLAN_LABELS: Record<Agreement['planType'], string> = {
   custom: 'Custom / Negotiated'
 };
 
+type WebsiteClient = {
+  _id: string;
+  name: string;
+  email: string;
+  address: string;
+  socialMediaLinks: string;
+  website: string;
+  createdAt: string;
+};
+
+const emptyWebsiteClientForm = { name: '', email: '', address: '', socialMediaLinks: '', website: '' };
+
 const AdminOnboarding = () => {
   const [clients, setClients] = useState<Client[]>([]);
   const [agreements, setAgreements] = useState<Agreement[]>([]);
+  const [websiteClients, setWebsiteClients] = useState<WebsiteClient[]>([]);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [loadingAgreements, setLoadingAgreements] = useState(true);
+  const [loadingWebsiteClients, setLoadingWebsiteClients] = useState(true);
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  const [editingWebsiteClientId, setEditingWebsiteClientId] = useState<string | null>(null);
+  const [websiteClientEditForm, setWebsiteClientEditForm] = useState(emptyWebsiteClientForm);
+  const [showAddWebsiteClient, setShowAddWebsiteClient] = useState(false);
+  const [newWebsiteClient, setNewWebsiteClient] = useState(emptyWebsiteClientForm);
 
   const fetchClients = async () => {
     try {
@@ -101,10 +120,25 @@ const AdminOnboarding = () => {
     }
   };
 
+  const fetchWebsiteClients = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/website-clients`);
+      if (response.data?.ok) {
+        setWebsiteClients(response.data.clients || []);
+      }
+    } catch (fetchError) {
+      console.error(fetchError);
+      setError('Could not load website clients.');
+    } finally {
+      setLoadingWebsiteClients(false);
+    }
+  };
+
   useEffect(() => {
     if (isAuthenticated) {
       fetchClients();
       fetchAgreements();
+      fetchWebsiteClients();
     }
   }, [isAuthenticated]);
 
@@ -166,6 +200,67 @@ const AdminOnboarding = () => {
     } catch (deleteError) {
       console.error(deleteError);
       setError('Could not delete the agreement.');
+    }
+  };
+
+  const handleStartEditWebsiteClient = (client: WebsiteClient) => {
+    setEditingWebsiteClientId(client._id);
+    setWebsiteClientEditForm({
+      name: client.name || '',
+      email: client.email || '',
+      address: client.address || '',
+      socialMediaLinks: client.socialMediaLinks || '',
+      website: client.website || ''
+    });
+  };
+
+  const handleCancelEditWebsiteClient = () => {
+    setEditingWebsiteClientId(null);
+    setWebsiteClientEditForm(emptyWebsiteClientForm);
+  };
+
+  const handleSaveWebsiteClient = async (clientId: string) => {
+    try {
+      await axios.put(`${API_BASE_URL}/website-clients/${clientId}`, websiteClientEditForm);
+      setMessage('Website client updated.');
+      setEditingWebsiteClientId(null);
+      fetchWebsiteClients();
+    } catch (saveError) {
+      console.error(saveError);
+      setError('Could not update the website client.');
+    }
+  };
+
+  const handleDeleteWebsiteClient = async (clientId: string) => {
+    const confirmDelete = window.confirm('Delete this website client record?');
+    if (!confirmDelete) return;
+
+    try {
+      await axios.delete(`${API_BASE_URL}/website-clients/${clientId}`);
+      setMessage('Website client deleted.');
+      fetchWebsiteClients();
+    } catch (deleteError) {
+      console.error(deleteError);
+      setError('Could not delete the website client.');
+    }
+  };
+
+  const handleAddWebsiteClient = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!newWebsiteClient.name || !newWebsiteClient.email) {
+      setError('Name and email are required to add a website client.');
+      return;
+    }
+
+    try {
+      await axios.post(`${API_BASE_URL}/website-clients`, newWebsiteClient);
+      setMessage('Website client added.');
+      setNewWebsiteClient(emptyWebsiteClientForm);
+      setShowAddWebsiteClient(false);
+      fetchWebsiteClients();
+    } catch (addError) {
+      console.error(addError);
+      setError('Could not add the website client.');
     }
   };
 
@@ -339,6 +434,104 @@ const AdminOnboarding = () => {
           </Card.Body>
         </Card>
       ))}
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginTop: '2rem', marginBottom: '1rem' }}>
+        <h2 style={{ color: '#68FF00', margin: 0 }}>Website Clients</h2>
+        <Button size="sm" variant="success" onClick={() => setShowAddWebsiteClient((prev) => !prev)}>
+          {showAddWebsiteClient ? 'Cancel' : '+ Add Website Client'}
+        </Button>
+      </div>
+
+      {showAddWebsiteClient ? (
+        <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', marginBottom: '1.25rem' }}>
+          <Card.Body>
+            <Form onSubmit={handleAddWebsiteClient}>
+              <Form.Group className="mb-3">
+                <Form.Label>Name</Form.Label>
+                <Form.Control value={newWebsiteClient.name} onChange={(e) => setNewWebsiteClient({ ...newWebsiteClient, name: e.target.value })} required />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Email</Form.Label>
+                <Form.Control type="email" value={newWebsiteClient.email} onChange={(e) => setNewWebsiteClient({ ...newWebsiteClient, email: e.target.value })} required />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Address</Form.Label>
+                <Form.Control value={newWebsiteClient.address} onChange={(e) => setNewWebsiteClient({ ...newWebsiteClient, address: e.target.value })} />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Social Media Links</Form.Label>
+                <Form.Control value={newWebsiteClient.socialMediaLinks} onChange={(e) => setNewWebsiteClient({ ...newWebsiteClient, socialMediaLinks: e.target.value })} placeholder="Instagram, TikTok, etc." />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Website</Form.Label>
+                <Form.Control value={newWebsiteClient.website} onChange={(e) => setNewWebsiteClient({ ...newWebsiteClient, website: e.target.value })} placeholder="https://..." />
+              </Form.Group>
+              <Button type="submit" variant="success">Save Client</Button>
+            </Form>
+          </Card.Body>
+        </Card>
+      ) : null}
+
+      {loadingWebsiteClients ? <p>Loading website clients...</p> : null}
+
+      {!loadingWebsiteClients && websiteClients.length === 0 ? <Alert variant="secondary">No website clients saved yet.</Alert> : null}
+
+      {websiteClients.map((client) => {
+        const isEditing = editingWebsiteClientId === client._id;
+        return (
+          <Card key={client._id} style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', marginBottom: '1.25rem' }}>
+            <Card.Body>
+              {isEditing ? (
+                <>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Name</Form.Label>
+                    <Form.Control value={websiteClientEditForm.name} onChange={(e) => setWebsiteClientEditForm({ ...websiteClientEditForm, name: e.target.value })} />
+                  </Form.Group>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Email</Form.Label>
+                    <Form.Control type="email" value={websiteClientEditForm.email} onChange={(e) => setWebsiteClientEditForm({ ...websiteClientEditForm, email: e.target.value })} />
+                  </Form.Group>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Address</Form.Label>
+                    <Form.Control value={websiteClientEditForm.address} onChange={(e) => setWebsiteClientEditForm({ ...websiteClientEditForm, address: e.target.value })} />
+                  </Form.Group>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Social Media Links</Form.Label>
+                    <Form.Control value={websiteClientEditForm.socialMediaLinks} onChange={(e) => setWebsiteClientEditForm({ ...websiteClientEditForm, socialMediaLinks: e.target.value })} placeholder="Instagram, TikTok, etc." />
+                  </Form.Group>
+                  <Form.Group className="mb-3">
+                    <Form.Label>Website</Form.Label>
+                    <Form.Control value={websiteClientEditForm.website} onChange={(e) => setWebsiteClientEditForm({ ...websiteClientEditForm, website: e.target.value })} placeholder="https://..." />
+                  </Form.Group>
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <Button size="sm" variant="success" onClick={() => handleSaveWebsiteClient(client._id)}>Save</Button>
+                    <Button size="sm" variant="outline-light" onClick={handleCancelEditWebsiteClient}>Cancel</Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+                    <div>
+                      <h4 style={{ marginBottom: '0.25rem' }}>{client.name}</h4>
+                      <p style={{ marginBottom: '0.25rem' }}>{client.email}</p>
+                      <small>Added {new Date(client.createdAt).toLocaleString()}</small>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                      <Button size="sm" variant="outline-light" onClick={() => handleStartEditWebsiteClient(client)}>Edit</Button>
+                      <Button size="sm" variant="outline-danger" onClick={() => handleDeleteWebsiteClient(client._id)}>Delete</Button>
+                    </div>
+                  </div>
+                  <ListGroup variant="flush" style={{ background: 'transparent', marginTop: '1rem' }}>
+                    <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Address:</strong> {client.address || '—'}</ListGroup.Item>
+                    <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Social Media Links:</strong> {client.socialMediaLinks || '—'}</ListGroup.Item>
+                    <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Website:</strong> {client.website || '—'}</ListGroup.Item>
+                  </ListGroup>
+                </>
+              )}
+            </Card.Body>
+          </Card>
+        );
+      })}
     </Container>
   );
 };

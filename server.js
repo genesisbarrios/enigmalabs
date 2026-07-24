@@ -169,6 +169,45 @@ const webDevAgreementSchema = new mongoose.Schema({
 
 const WebDevAgreement = mongoose.model('WebDevAgreement', webDevAgreementSchema, 'webdev_agreements');
 
+const websiteClientSchema = new mongoose.Schema({
+  name: String,
+  email: String,
+  address: String,
+  socialMediaLinks: String,
+  website: String,
+  createdAt: { type: Date, default: Date.now }
+});
+
+const WebsiteClient = mongoose.model('WebsiteClient', websiteClientSchema, 'websiteClients');
+
+async function ensureNewsletterSubscriber(email) {
+  if (!email) return;
+  try {
+    const existing = await NewsletterSubscriber.findOne({ email });
+    if (!existing) {
+      await NewsletterSubscriber.create({ email, beats: false, loops: false, visuals: false, web: true });
+    }
+  } catch (error) {
+    console.error('Could not add signer to newsletter list', error);
+  }
+}
+
+async function upsertWebsiteClient({ name, email, address }) {
+  if (!email) return;
+  try {
+    const existing = await WebsiteClient.findOne({ email });
+    if (existing) {
+      if (name) existing.name = name;
+      if (address) existing.address = address;
+      await existing.save();
+    } else {
+      await WebsiteClient.create({ name, email, address, socialMediaLinks: '', website: '' });
+    }
+  } catch (error) {
+    console.error('Could not save website client record', error);
+  }
+}
+
 app.get('/api/onboarding/health', (_req, res) => {
   res.json({ ok: true, message: 'Onboarding API is running.' });
 });
@@ -256,6 +295,9 @@ app.post('/api/agreements/submit', async (req, res) => {
       pdfBuffer
     });
 
+    await ensureNewsletterSubscriber(clientEmail);
+    await upsertWebsiteClient({ name: clientName, email: clientEmail, address: clientAddress });
+
     res.status(201).json({ ok: true, agreementId: agreement._id });
   } catch (error) {
     console.error('Agreement submission failed', error);
@@ -300,6 +342,71 @@ app.get('/api/agreements/:id/download', async (req, res) => {
   } catch (error) {
     console.error('Could not download agreement', error);
     res.status(500).json({ ok: false, message: 'Could not download agreement.' });
+  }
+});
+
+app.get('/api/website-clients', async (_req, res) => {
+  try {
+    const clients = await WebsiteClient.find().sort({ createdAt: -1 });
+    res.json({ ok: true, clients });
+  } catch (error) {
+    console.error('Could not fetch website clients', error);
+    res.status(500).json({ ok: false, message: 'Could not fetch website clients.' });
+  }
+});
+
+app.post('/api/website-clients', async (req, res) => {
+  try {
+    const { name, email, address, socialMediaLinks, website } = req.body;
+    if (!name || !email) {
+      return res.status(400).json({ ok: false, message: 'Name and email are required.' });
+    }
+    const client = await WebsiteClient.create({
+      name,
+      email,
+      address: address || '',
+      socialMediaLinks: socialMediaLinks || '',
+      website: website || ''
+    });
+    res.status(201).json({ ok: true, client });
+  } catch (error) {
+    console.error('Could not create website client', error);
+    res.status(500).json({ ok: false, message: 'Could not create website client.' });
+  }
+});
+
+app.put('/api/website-clients/:id', async (req, res) => {
+  try {
+    const client = await WebsiteClient.findById(req.params.id);
+    if (!client) {
+      return res.status(404).json({ ok: false, message: 'Website client not found.' });
+    }
+
+    const fields = ['name', 'email', 'address', 'socialMediaLinks', 'website'];
+    fields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        client[field] = req.body[field];
+      }
+    });
+
+    await client.save();
+    res.json({ ok: true, client });
+  } catch (error) {
+    console.error('Could not update website client', error);
+    res.status(500).json({ ok: false, message: 'Could not update website client.' });
+  }
+});
+
+app.delete('/api/website-clients/:id', async (req, res) => {
+  try {
+    const deleted = await WebsiteClient.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ ok: false, message: 'Website client not found.' });
+    }
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Could not delete website client', error);
+    res.status(500).json({ ok: false, message: 'Could not delete website client.' });
   }
 });
 
