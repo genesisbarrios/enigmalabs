@@ -13,7 +13,6 @@ import OnboardingAgreement from './OnboardingAgreement';
 import OnboardingEditLookup from './OnboardingEditLookup';
 import Payment from './Payment';
 import AdminOnboarding from './AdminOnboarding';
-import AdminNewsletter from './AdminNewsletter';
 import LeadScraper from './LeadScraper';
 import Wallpapers from './Wallpapers';
 import {Route, Routes} from 'react-router-dom';
@@ -43,7 +42,6 @@ const App = () => {
          <Route path="/onboard/edit" element={<OnboardingEditLookup/>}/>
          <Route path="/payment" element={<Payment/>}/>
          <Route path="/admin" element={<AdminOnboarding/>}/>
-         <Route path="/admin-onboarding" element={<AdminOnboarding/>}/>
          <Route path="/admin/leads" element={<LeadScraper/>}/>
 
       </Routes>
