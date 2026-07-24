@@ -99,6 +99,7 @@ const interestOptions: { key: string; label: string; active: boolean; toggle: ()
   { key: "visuals", label: "Visuals", active: visuals, toggle: () => setVisuals(!visuals) },
   { key: "web", label: "Web Development", active: web, toggle: () => setWeb(!web) },
   { key: "beats", label: "Beats & Mixing", active: beats, toggle: () => setBeats(!beats) },
+  { key: "ads", label: "Ads", active: ads, toggle: () => setAds(!ads) },
 ];
 
 function handleSubmit() {
