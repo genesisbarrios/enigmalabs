@@ -86,6 +86,7 @@ type Subscriber = {
   loops: boolean;
   visuals: boolean;
   web: boolean;
+  ads: boolean;
   createdAt: string;
 };
 
@@ -94,7 +95,8 @@ const subscriberInterestLabel = (subscriber: Subscriber) => {
     subscriber.beats ? 'Beats' : null,
     subscriber.loops ? 'Loops' : null,
     subscriber.visuals ? 'Visuals' : null,
-    subscriber.web ? 'Web' : null
+    subscriber.web ? 'Web' : null,
+    subscriber.ads ? 'Ads' : null
   ].filter(Boolean);
   return interests.length ? interests.join(', ') : '—';
 };
@@ -351,13 +353,14 @@ const Admin = () => {
   };
 
   const handleExportSubscribersCsv = () => {
-    const header = ['Email', 'Beats', 'Loops', 'Visuals', 'Web', 'Subscribed At'];
+    const header = ['Email', 'Beats', 'Loops', 'Visuals', 'Web', 'Ads', 'Subscribed At'];
     const rows = subscribers.map((subscriber) => [
       subscriber.email,
       subscriber.beats ? 'Yes' : 'No',
       subscriber.loops ? 'Yes' : 'No',
       subscriber.visuals ? 'Yes' : 'No',
       subscriber.web ? 'Yes' : 'No',
+      subscriber.ads ? 'Yes' : 'No',
       new Date(subscriber.createdAt).toLocaleString()
     ]);
     const csv = [header, ...rows]
@@ -373,6 +376,7 @@ const Admin = () => {
       Loops: subscriber.loops ? 'Yes' : 'No',
       Visuals: subscriber.visuals ? 'Yes' : 'No',
       Web: subscriber.web ? 'Yes' : 'No',
+      Ads: subscriber.ads ? 'Yes' : 'No',
       'Subscribed At': new Date(subscriber.createdAt).toLocaleString()
     }));
     const worksheet = XLSX.utils.json_to_sheet(rows);

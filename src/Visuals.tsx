@@ -115,9 +115,9 @@ function handleSubmit() {
     const dataToSend = {
       email,
       beats,
-      loops,
       visuals,
-      web
+      web,
+      ads
     };
   
     // Make a POST request using Axios

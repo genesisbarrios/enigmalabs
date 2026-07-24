@@ -85,6 +85,7 @@ const newsletterSubscriberSchema = new mongoose.Schema({
   loops: Boolean,
   visuals: Boolean,
   web: Boolean,
+  ads: Boolean,
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -264,7 +265,8 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       beats: Boolean(req.body.beats),
       loops: Boolean(req.body.loops),
       visuals: Boolean(req.body.visuals),
-      web: Boolean(req.body.web)
+      web: Boolean(req.body.web),
+      ads: Boolean(req.body.ads)
     };
 
     const existing = await NewsletterSubscriber.findOne({ email: payload.email });
