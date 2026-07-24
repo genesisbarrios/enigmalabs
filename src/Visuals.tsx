@@ -97,7 +97,6 @@ const newsletterChipStyle = (active: boolean) => ({
 
 const interestOptions: { key: string; label: string; active: boolean; toggle: () => void }[] = [
   { key: "beats", label: "Beats & Mixing", active: beats, toggle: () => setBeats(!beats) },
-  { key: "loops", label: "Loop Packs", active: loops, toggle: () => setLoops(!loops) },
   { key: "visuals", label: "Visuals", active: visuals, toggle: () => setVisuals(!visuals) },
   { key: "web", label: "Web Development", active: web, toggle: () => setWeb(!web) }
 ];
