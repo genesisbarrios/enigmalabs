@@ -25,6 +25,14 @@ const Home = () => {
 
   // canvas vars  
 
+  useEffect(() => {
+    document.title = "Enigma Labs | Music Production, Web Development & Visuals";
+    document.querySelector('meta[name="description"]')?.setAttribute(
+      "content",
+      "Enigma Labs offers music production & audio engineering, web development, and photo/video production. Based in Miami, FL."
+    );
+  }, []);
+
   const [email, setEmail] = useState("");
   const [beats, setBeats] = useState(false);
   const [visuals, setVisuals] = useState(false);

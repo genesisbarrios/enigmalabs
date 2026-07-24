@@ -2,6 +2,13 @@ import { useEffect, useState, useLayoutEffect } from "react";
 import { Row, Col, Container, Button } from "react-bootstrap";
 //import image1 from "./image1.png";
 const About = () => {
+  useEffect(() => {
+    document.title = "Enigma Labs | About";
+    document.querySelector('meta[name="description"]')?.setAttribute(
+      "content",
+      "Learn about Enigma Labs — a Miami-based creative studio for music production, web development, and visual production."
+    );
+  }, []);
 
   const rowStyle = {
     margin: '5%'

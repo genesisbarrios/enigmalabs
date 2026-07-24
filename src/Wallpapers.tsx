@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Row, Col, Container, Alert } from "react-bootstrap";
 import axios from "axios";
 
@@ -11,6 +11,14 @@ const wallpapers = [
 ];
 
 const Wallpapers = () => {
+  useEffect(() => {
+    document.title = "Enigma Labs | Wallpapers";
+    document.querySelector('meta[name="description"]')?.setAttribute(
+      "content",
+      "Download free Enigma Labs wallpapers for your phone or desktop."
+    );
+  }, []);
+
   const [email, setEmail] = useState("");
   const [beats, setBeats] = useState(false);
   const [loops, setLoops] = useState(false);

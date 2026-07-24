@@ -7,6 +7,14 @@ import axios from "axios";
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 
 const Tech = () => {
+  useEffect(() => {
+    document.title = "Enigma Labs | Web Development & Web Design";
+    document.querySelector('meta[name="description"]')?.setAttribute(
+      "content",
+      "Web design and web development services from Enigma Labs — custom websites, hosting, and ongoing support."
+    );
+  }, []);
+
   const [email, setEmail] = useState("");
   const [beats, setBeats] = useState(false);
   const [visuals, setVisuals] = useState(false);

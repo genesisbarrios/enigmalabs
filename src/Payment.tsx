@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Card, Col, Container, Row } from 'react-bootstrap';
 
 const PaymentIcon = () => (
@@ -87,6 +88,14 @@ const PlanCard = ({ plan }: { plan: Plan }) => {
 };
 
 const Payment = () => {
+  useEffect(() => {
+    document.title = "Enigma Labs | Make a Payment";
+    document.querySelector('meta[name="description"]')?.setAttribute(
+      "content",
+      "Securely pay for your Enigma Labs website, hosting, or support plan."
+    );
+  }, []);
+
   return (
     <Container style={{ paddingTop: '6rem', paddingBottom: '3rem', maxWidth: '1000px' }}>
       <h1 style={{ color: '#68FF00', marginBottom: '0.5rem' }}>Make a Payment</h1>

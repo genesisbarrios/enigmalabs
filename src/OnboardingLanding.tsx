@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Card, Col, Container, Row } from 'react-bootstrap';
 import { Link, useNavigate } from 'react-router-dom';
 
@@ -34,6 +35,14 @@ const optionCardStyle: React.CSSProperties = {
 
 const OnboardingLanding = () => {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "Enigma Labs | Client Onboarding";
+    document.querySelector('meta[name="description"]')?.setAttribute(
+      "content",
+      "Start your web development project with Enigma Labs — sign the agreement or fill out the onboarding form."
+    );
+  }, []);
 
   return (
     <Container style={{ paddingTop: '6rem', paddingBottom: '3rem', maxWidth: '1000px' }}>

@@ -7,6 +7,14 @@ import axios from 'axios';
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 
 const Music = () => {
+  useEffect(() => {
+    document.title = "Enigma Labs | Music Production & Audio Engineering";
+    document.querySelector('meta[name="description"]')?.setAttribute(
+      "content",
+      "Professional music production, mixing, mastering, and audio engineering services from Enigma Labs."
+    );
+  }, []);
+
   const [email, setEmail] = useState("");
   const [beats, setBeats] = useState(false);
   const [visuals, setVisuals] = useState(false);
