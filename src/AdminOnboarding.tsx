@@ -409,7 +409,6 @@ const AdminOnboarding = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
         <h1 style={{ color: '#68FF00', margin: 0 }}>Admin</h1>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <Button variant="outline-success" onClick={() => navigate('/admin/newsletter')}>Newsletter Admin →</Button>
           <Button variant="outline-success" onClick={() => navigate('/admin/leads')}>Lead Scraper →</Button>
         </div>
       </div>
