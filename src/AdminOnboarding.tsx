@@ -1,6 +1,8 @@
-import { useEffect, useState } from 'react';
-import { Alert, Button, Card, Container, Form, ListGroup } from 'react-bootstrap';
+import { useEffect, useMemo, useState } from 'react';
+import { Alert, Button, Card, Container, Form, ListGroup, Table } from 'react-bootstrap';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import * as XLSX from 'xlsx';
 
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 const ADMIN_PASSWORD = process.env.REACT_APP_ONBOARD_PW || 'onboardinglocura';
@@ -69,13 +71,36 @@ type WebsiteClient = {
   email: string;
   address: string;
   socialMediaLinks: string;
+  businessType: string;
   website: string;
+  logo?: { mimeType?: string } | null;
   createdAt: string;
 };
 
-const emptyWebsiteClientForm = { name: '', email: '', address: '', socialMediaLinks: '', website: '' };
+const emptyWebsiteClientForm = { name: '', email: '', address: '', socialMediaLinks: '', businessType: '', website: '' };
+
+type Subscriber = {
+  _id: string;
+  email: string;
+  beats: boolean;
+  loops: boolean;
+  visuals: boolean;
+  web: boolean;
+  createdAt: string;
+};
+
+const subscriberInterestLabel = (subscriber: Subscriber) => {
+  const interests = [
+    subscriber.beats ? 'Beats' : null,
+    subscriber.loops ? 'Loops' : null,
+    subscriber.visuals ? 'Visuals' : null,
+    subscriber.web ? 'Web' : null
+  ].filter(Boolean);
+  return interests.length ? interests.join(', ') : '—';
+};
 
 const AdminOnboarding = () => {
+  const navigate = useNavigate();
   const [clients, setClients] = useState<Client[]>([]);
   const [agreements, setAgreements] = useState<Agreement[]>([]);
   const [websiteClients, setWebsiteClients] = useState<WebsiteClient[]>([]);
@@ -84,6 +109,8 @@ const AdminOnboarding = () => {
   const [loading, setLoading] = useState(true);
   const [loadingAgreements, setLoadingAgreements] = useState(true);
   const [loadingWebsiteClients, setLoadingWebsiteClients] = useState(true);
+  const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
+  const [loadingSubscribers, setLoadingSubscribers] = useState(true);
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -91,6 +118,9 @@ const AdminOnboarding = () => {
   const [websiteClientEditForm, setWebsiteClientEditForm] = useState(emptyWebsiteClientForm);
   const [showAddWebsiteClient, setShowAddWebsiteClient] = useState(false);
   const [newWebsiteClient, setNewWebsiteClient] = useState(emptyWebsiteClientForm);
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [planFilter, setPlanFilter] = useState<'all' | Agreement['planType']>('all');
 
   const fetchClients = async () => {
     try {
@@ -134,13 +164,48 @@ const AdminOnboarding = () => {
     }
   };
 
+  const fetchSubscribers = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/newsletter/subscribers`);
+      if (response.data?.ok) {
+        setSubscribers(response.data.subscribers || []);
+      }
+    } catch (fetchError) {
+      console.error(fetchError);
+      setError('Could not load newsletter subscribers.');
+    } finally {
+      setLoadingSubscribers(false);
+    }
+  };
+
   useEffect(() => {
     if (isAuthenticated) {
       fetchClients();
       fetchAgreements();
       fetchWebsiteClients();
+      fetchSubscribers();
     }
   }, [isAuthenticated]);
+
+  const filteredWebsiteClients = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return websiteClients;
+    return websiteClients.filter((client) =>
+      (client.name || '').toLowerCase().includes(q) ||
+      (client.email || '').toLowerCase().includes(q) ||
+      (client.businessType || '').toLowerCase().includes(q) ||
+      (client.address || '').toLowerCase().includes(q)
+    );
+  }, [websiteClients, searchQuery]);
+
+  const filteredAgreements = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    return agreements.filter((agreement) => {
+      const matchesQuery = !q || agreement.clientName.toLowerCase().includes(q) || agreement.clientEmail.toLowerCase().includes(q);
+      const matchesPlan = planFilter === 'all' || agreement.planType === planFilter;
+      return matchesQuery && matchesPlan;
+    });
+  }, [agreements, searchQuery, planFilter]);
 
   const handleLogin = (event: React.FormEvent) => {
     event.preventDefault();
@@ -210,6 +275,7 @@ const AdminOnboarding = () => {
       email: client.email || '',
       address: client.address || '',
       socialMediaLinks: client.socialMediaLinks || '',
+      businessType: client.businessType || '',
       website: client.website || ''
     });
   };
@@ -264,12 +330,63 @@ const AdminOnboarding = () => {
     }
   };
 
+  const handleCopySubscribers = async () => {
+    const list = subscribers.map((subscriber) => subscriber.email).join('\n');
+    try {
+      await navigator.clipboard.writeText(list);
+      setMessage('Subscriber list copied to clipboard.');
+    } catch (copyError) {
+      console.error(copyError);
+      setError('Could not copy to clipboard.');
+    }
+  };
+
+  const downloadBlob = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportSubscribersCsv = () => {
+    const header = ['Email', 'Beats', 'Loops', 'Visuals', 'Web', 'Subscribed At'];
+    const rows = subscribers.map((subscriber) => [
+      subscriber.email,
+      subscriber.beats ? 'Yes' : 'No',
+      subscriber.loops ? 'Yes' : 'No',
+      subscriber.visuals ? 'Yes' : 'No',
+      subscriber.web ? 'Yes' : 'No',
+      new Date(subscriber.createdAt).toLocaleString()
+    ]);
+    const csv = [header, ...rows]
+      .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    downloadBlob(new Blob([csv], { type: 'text/csv' }), 'newsletter-subscribers.csv');
+  };
+
+  const handleExportSubscribersXlsx = () => {
+    const rows = subscribers.map((subscriber) => ({
+      Email: subscriber.email,
+      Beats: subscriber.beats ? 'Yes' : 'No',
+      Loops: subscriber.loops ? 'Yes' : 'No',
+      Visuals: subscriber.visuals ? 'Yes' : 'No',
+      Web: subscriber.web ? 'Yes' : 'No',
+      'Subscribed At': new Date(subscriber.createdAt).toLocaleString()
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Subscribers');
+    XLSX.writeFile(workbook, 'newsletter-subscribers.xlsx');
+  };
+
   if (!isAuthenticated) {
     return (
       <Container style={{ paddingTop: '6rem', paddingBottom: '3rem', maxWidth: '500px' }}>
         <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b' }}>
           <Card.Body>
-            <h1 style={{ color: '#68FF00', marginBottom: '0.75rem' }}>Onboarding Admin</h1>
+            <h1 style={{ color: '#68FF00', marginBottom: '0.75rem' }}>Admin</h1>
             <p style={{ color: '#d4d4d4', marginBottom: '1.25rem' }}>
               Enter the admin password to view onboarding submissions.
             </p>
@@ -289,7 +406,13 @@ const AdminOnboarding = () => {
 
   return (
     <Container style={{ paddingTop: '6rem', paddingBottom: '3rem' }}>
-      <h1 style={{ color: '#68FF00', marginBottom: '1rem' }}>Onboarding Admin</h1>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
+        <h1 style={{ color: '#68FF00', margin: 0 }}>Admin</h1>
+        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+          <Button variant="outline-success" onClick={() => navigate('/admin/newsletter')}>Newsletter Admin →</Button>
+          <Button variant="outline-success" onClick={() => navigate('/admin/leads')}>Lead Scraper →</Button>
+        </div>
+      </div>
       <p style={{ color: '#d4d4d4', marginBottom: '1.5rem' }}>
         Review onboarding responses, download uploaded brand assets, and remove files once you are done with them.
       </p>
@@ -401,41 +524,15 @@ const AdminOnboarding = () => {
         </Card>
       ))}
 
-      <h2 style={{ color: '#68FF00', marginTop: '2rem', marginBottom: '1rem' }}>Signed Web Development Agreements</h2>
+      <div style={{ marginTop: '2.5rem', marginBottom: '1.25rem' }}>
+        <Form.Control
+          placeholder="Search website clients & agreements by name or email..."
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+        />
+      </div>
 
-      {loadingAgreements ? <p>Loading agreements...</p> : null}
-
-      {!loadingAgreements && agreements.length === 0 ? <Alert variant="secondary">No agreements have been signed yet.</Alert> : null}
-
-      {agreements.map((agreement) => (
-        <Card key={agreement._id} style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', marginBottom: '1.25rem' }}>
-          <Card.Body>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-              <div>
-                <h4 style={{ marginBottom: '0.25rem' }}>{agreement.clientName}</h4>
-                <p style={{ marginBottom: '0.25rem' }}>{agreement.clientEmail} • {agreement.clientAddress}</p>
-                <small>Signed {new Date(agreement.effectiveDate).toLocaleString()}</small>
-              </div>
-              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                <Button size="sm" variant="outline-success" onClick={() => handleDownloadAgreement(agreement._id)}>
-                  Download PDF
-                </Button>
-                <Button size="sm" variant="outline-danger" onClick={() => handleDeleteAgreement(agreement._id)}>
-                  Delete
-                </Button>
-              </div>
-            </div>
-
-            <ListGroup variant="flush" style={{ background: 'transparent', marginTop: '1rem' }}>
-              <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Plan:</strong> {PLAN_LABELS[agreement.planType]}</ListGroup.Item>
-              <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Amount:</strong> ${agreement.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</ListGroup.Item>
-              <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Jurisdiction:</strong> {agreement.jurisdiction}</ListGroup.Item>
-            </ListGroup>
-          </Card.Body>
-        </Card>
-      ))}
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginTop: '2rem', marginBottom: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
         <h2 style={{ color: '#68FF00', margin: 0 }}>Website Clients</h2>
         <Button size="sm" variant="success" onClick={() => setShowAddWebsiteClient((prev) => !prev)}>
           {showAddWebsiteClient ? 'Cancel' : '+ Add Website Client'}
@@ -459,6 +556,10 @@ const AdminOnboarding = () => {
                 <Form.Control value={newWebsiteClient.address} onChange={(e) => setNewWebsiteClient({ ...newWebsiteClient, address: e.target.value })} />
               </Form.Group>
               <Form.Group className="mb-3">
+                <Form.Label>Business Type</Form.Label>
+                <Form.Control value={newWebsiteClient.businessType} onChange={(e) => setNewWebsiteClient({ ...newWebsiteClient, businessType: e.target.value })} placeholder="e.g. Restaurant, Photographer" />
+              </Form.Group>
+              <Form.Group className="mb-3">
                 <Form.Label>Social Media Links</Form.Label>
                 <Form.Control value={newWebsiteClient.socialMediaLinks} onChange={(e) => setNewWebsiteClient({ ...newWebsiteClient, socialMediaLinks: e.target.value })} placeholder="Instagram, TikTok, etc." />
               </Form.Group>
@@ -474,64 +575,176 @@ const AdminOnboarding = () => {
 
       {loadingWebsiteClients ? <p>Loading website clients...</p> : null}
 
-      {!loadingWebsiteClients && websiteClients.length === 0 ? <Alert variant="secondary">No website clients saved yet.</Alert> : null}
+      {!loadingWebsiteClients && filteredWebsiteClients.length === 0 ? <Alert variant="secondary">No website clients match.</Alert> : null}
 
-      {websiteClients.map((client) => {
+      {filteredWebsiteClients.map((client) => {
         const isEditing = editingWebsiteClientId === client._id;
+
+        if (isEditing) {
+          return (
+            <Card key={client._id} style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', marginBottom: '0.75rem' }}>
+              <Card.Body>
+                <Form.Group className="mb-3">
+                  <Form.Label>Name</Form.Label>
+                  <Form.Control value={websiteClientEditForm.name} onChange={(e) => setWebsiteClientEditForm({ ...websiteClientEditForm, name: e.target.value })} />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Email</Form.Label>
+                  <Form.Control type="email" value={websiteClientEditForm.email} onChange={(e) => setWebsiteClientEditForm({ ...websiteClientEditForm, email: e.target.value })} />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Address</Form.Label>
+                  <Form.Control value={websiteClientEditForm.address} onChange={(e) => setWebsiteClientEditForm({ ...websiteClientEditForm, address: e.target.value })} />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Business Type</Form.Label>
+                  <Form.Control value={websiteClientEditForm.businessType} onChange={(e) => setWebsiteClientEditForm({ ...websiteClientEditForm, businessType: e.target.value })} placeholder="e.g. Restaurant, Photographer" />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Social Media Links</Form.Label>
+                  <Form.Control value={websiteClientEditForm.socialMediaLinks} onChange={(e) => setWebsiteClientEditForm({ ...websiteClientEditForm, socialMediaLinks: e.target.value })} placeholder="Instagram, TikTok, etc." />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Website</Form.Label>
+                  <Form.Control value={websiteClientEditForm.website} onChange={(e) => setWebsiteClientEditForm({ ...websiteClientEditForm, website: e.target.value })} placeholder="https://..." />
+                </Form.Group>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <Button size="sm" variant="success" onClick={() => handleSaveWebsiteClient(client._id)}>Save</Button>
+                  <Button size="sm" variant="outline-light" onClick={handleCancelEditWebsiteClient}>Cancel</Button>
+                </div>
+              </Card.Body>
+            </Card>
+          );
+        }
+
         return (
-          <Card key={client._id} style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', marginBottom: '1.25rem' }}>
-            <Card.Body>
-              {isEditing ? (
-                <>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Name</Form.Label>
-                    <Form.Control value={websiteClientEditForm.name} onChange={(e) => setWebsiteClientEditForm({ ...websiteClientEditForm, name: e.target.value })} />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Email</Form.Label>
-                    <Form.Control type="email" value={websiteClientEditForm.email} onChange={(e) => setWebsiteClientEditForm({ ...websiteClientEditForm, email: e.target.value })} />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Address</Form.Label>
-                    <Form.Control value={websiteClientEditForm.address} onChange={(e) => setWebsiteClientEditForm({ ...websiteClientEditForm, address: e.target.value })} />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Social Media Links</Form.Label>
-                    <Form.Control value={websiteClientEditForm.socialMediaLinks} onChange={(e) => setWebsiteClientEditForm({ ...websiteClientEditForm, socialMediaLinks: e.target.value })} placeholder="Instagram, TikTok, etc." />
-                  </Form.Group>
-                  <Form.Group className="mb-3">
-                    <Form.Label>Website</Form.Label>
-                    <Form.Control value={websiteClientEditForm.website} onChange={(e) => setWebsiteClientEditForm({ ...websiteClientEditForm, website: e.target.value })} placeholder="https://..." />
-                  </Form.Group>
-                  <div style={{ display: 'flex', gap: '0.5rem' }}>
-                    <Button size="sm" variant="success" onClick={() => handleSaveWebsiteClient(client._id)}>Save</Button>
-                    <Button size="sm" variant="outline-light" onClick={handleCancelEditWebsiteClient}>Cancel</Button>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
-                    <div>
-                      <h4 style={{ marginBottom: '0.25rem' }}>{client.name}</h4>
-                      <p style={{ marginBottom: '0.25rem' }}>{client.email}</p>
-                      <small>Added {new Date(client.createdAt).toLocaleString()}</small>
-                    </div>
-                    <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                      <Button size="sm" variant="outline-light" onClick={() => handleStartEditWebsiteClient(client)}>Edit</Button>
-                      <Button size="sm" variant="outline-danger" onClick={() => handleDeleteWebsiteClient(client._id)}>Delete</Button>
-                    </div>
-                  </div>
-                  <ListGroup variant="flush" style={{ background: 'transparent', marginTop: '1rem' }}>
-                    <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Address:</strong> {client.address || '—'}</ListGroup.Item>
-                    <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Social Media Links:</strong> {client.socialMediaLinks || '—'}</ListGroup.Item>
-                    <ListGroup.Item style={{ background: 'transparent', color: 'white' }}><strong>Website:</strong> {client.website || '—'}</ListGroup.Item>
-                  </ListGroup>
-                </>
-              )}
-            </Card.Body>
-          </Card>
+          <div
+            key={client._id}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+              padding: '0.5rem 0.75rem',
+              background: '#111',
+              border: '1px solid #2b2b2b',
+              borderRadius: '8px',
+              marginBottom: '0.5rem',
+              flexWrap: 'wrap'
+            }}
+          >
+            {client.logo?.mimeType ? (
+              <img
+                src={`${API_BASE_URL}/website-clients/${client._id}/logo`}
+                alt=""
+                style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+              />
+            ) : (
+              <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#1a1a1a', color: '#68FF00', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, flexShrink: 0 }}>
+                {(client.name || '?').charAt(0).toUpperCase()}
+              </div>
+            )}
+            <div style={{ flex: '2 1 200px', minWidth: 0 }}>
+              <strong style={{ display: 'block' }}>{client.name || '—'}</strong>
+              <small style={{ color: '#aaa' }}>{client.email}</small>
+            </div>
+            <div style={{ flex: '1 1 130px', fontSize: '0.85rem', color: '#ccc' }}>{client.businessType || '—'}</div>
+            <div style={{ flex: '1 1 160px', fontSize: '0.85rem', color: '#ccc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{client.website || '—'}</div>
+            <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+              <Button size="sm" variant="outline-light" onClick={() => handleStartEditWebsiteClient(client)}>Edit</Button>
+              <Button size="sm" variant="outline-danger" onClick={() => handleDeleteWebsiteClient(client._id)}>Delete</Button>
+            </div>
+          </div>
         );
       })}
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginTop: '2.5rem', marginBottom: '1rem' }}>
+        <h2 style={{ color: '#68FF00', margin: 0 }}>Signed Web Development Agreements</h2>
+        <Form.Select value={planFilter} onChange={(event) => setPlanFilter(event.target.value as 'all' | Agreement['planType'])} style={{ maxWidth: '220px' }}>
+          <option value="all">All Plan Types</option>
+          <option value="one_time">One-Time Payment</option>
+          <option value="monthly">Monthly Subscription</option>
+          <option value="custom">Custom / Negotiated</option>
+        </Form.Select>
+      </div>
+
+      {loadingAgreements ? <p>Loading agreements...</p> : null}
+
+      {!loadingAgreements && filteredAgreements.length === 0 ? <Alert variant="secondary">No agreements match.</Alert> : null}
+
+      {filteredAgreements.map((agreement) => (
+        <div
+          key={agreement._id}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            padding: '0.5rem 0.75rem',
+            background: '#111',
+            border: '1px solid #2b2b2b',
+            borderRadius: '8px',
+            marginBottom: '0.5rem',
+            flexWrap: 'wrap'
+          }}
+        >
+          <div style={{ flex: '2 1 200px', minWidth: 0 }}>
+            <strong style={{ display: 'block' }}>{agreement.clientName}</strong>
+            <small style={{ color: '#aaa' }}>{agreement.clientEmail}</small>
+          </div>
+          <div style={{ flex: '1 1 150px', fontSize: '0.85rem', color: '#ccc' }}>{PLAN_LABELS[agreement.planType]}</div>
+          <div style={{ flex: '1 1 100px', fontSize: '0.85rem', color: '#ccc' }}>
+            ${agreement.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+          <div style={{ flex: '1 1 130px', fontSize: '0.8rem', color: '#888' }}>
+            {new Date(agreement.effectiveDate).toLocaleDateString()}
+          </div>
+          <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+            <Button size="sm" variant="outline-success" onClick={() => handleDownloadAgreement(agreement._id)}>PDF</Button>
+            <Button size="sm" variant="outline-danger" onClick={() => handleDeleteAgreement(agreement._id)}>Delete</Button>
+          </div>
+        </div>
+      ))}
+
+      <h2 style={{ color: '#68FF00', marginTop: '2.5rem', marginBottom: '1rem' }}>Newsletter Subscribers</h2>
+      <p style={{ color: '#d4d4d4', marginBottom: '1rem' }}>
+        {subscribers.length} newsletter subscriber{subscribers.length === 1 ? '' : 's'}.
+      </p>
+
+      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+        <Button size="sm" variant="outline-light" onClick={handleCopySubscribers} disabled={!subscribers.length}>
+          Copy List
+        </Button>
+        <Button size="sm" variant="outline-success" onClick={handleExportSubscribersCsv} disabled={!subscribers.length}>
+          Export CSV
+        </Button>
+        <Button size="sm" variant="outline-success" onClick={handleExportSubscribersXlsx} disabled={!subscribers.length}>
+          Export XLSX
+        </Button>
+      </div>
+
+      {loadingSubscribers ? <p>Loading subscribers...</p> : null}
+
+      {!loadingSubscribers && subscribers.length === 0 ? <Alert variant="secondary">No newsletter subscribers yet.</Alert> : null}
+
+      {!loadingSubscribers && subscribers.length > 0 ? (
+        <Table striped bordered hover variant="dark" responsive>
+          <thead>
+            <tr>
+              <th>Email</th>
+              <th>Interests</th>
+              <th>Subscribed At</th>
+            </tr>
+          </thead>
+          <tbody>
+            {subscribers.map((subscriber) => (
+              <tr key={subscriber._id}>
+                <td>{subscriber.email}</td>
+                <td>{subscriberInterestLabel(subscriber)}</td>
+                <td>{new Date(subscriber.createdAt).toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      ) : null}
     </Container>
   );
 };

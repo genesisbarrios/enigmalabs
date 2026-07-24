@@ -30,7 +30,6 @@ const interestLabel = (subscriber: Subscriber) => {
 const AdminNewsletter = () => {
   const navigate = useNavigate();
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
-  const [pendingOnboardingCount, setPendingOnboardingCount] = useState(0);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -51,21 +50,9 @@ const AdminNewsletter = () => {
     }
   };
 
-  const fetchPendingOnboardingCount = async () => {
-    try {
-      const response = await axios.get(`${API_BASE_URL}/onboarding/clients`);
-      if (response.data?.ok) {
-        setPendingOnboardingCount((response.data.clients || []).length);
-      }
-    } catch (fetchError) {
-      console.error(fetchError);
-    }
-  };
-
   useEffect(() => {
     if (isAuthenticated) {
       fetchSubscribers();
-      fetchPendingOnboardingCount();
     }
   }, [isAuthenticated]);
 
@@ -136,7 +123,7 @@ const AdminNewsletter = () => {
       <Container style={{ paddingTop: '6rem', paddingBottom: '3rem', maxWidth: '500px' }}>
         <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b' }}>
           <Card.Body>
-            <h1 style={{ color: '#68FF00', marginBottom: '0.75rem' }}>Admin</h1>
+            <h1 style={{ color: '#68FF00', marginBottom: '0.75rem' }}>Newsletter Admin</h1>
             <p style={{ color: '#d4d4d4', marginBottom: '1.25rem' }}>
               Enter the admin password to view newsletter subscribers.
             </p>
@@ -156,7 +143,7 @@ const AdminNewsletter = () => {
 
   return (
     <Container style={{ paddingTop: '6rem', paddingBottom: '3rem' }}>
-      <h1 style={{ color: '#68FF00', marginBottom: '1rem' }}>Admin</h1>
+      <h1 style={{ color: '#68FF00', marginBottom: '1rem' }}>Newsletter Admin</h1>
       <p style={{ color: '#d4d4d4', marginBottom: '1.5rem' }}>
         {subscribers.length} newsletter subscriber{subscribers.length === 1 ? '' : 's'}.
       </p>
@@ -202,19 +189,9 @@ const AdminNewsletter = () => {
       ) : null}
 
       <div style={{ marginTop: '2rem' }}>
-        {pendingOnboardingCount > 0 ? (
-          <Alert variant="warning">
-            {pendingOnboardingCount} onboarding submission{pendingOnboardingCount === 1 ? '' : 's'} awaiting review.
-          </Alert>
-        ) : null}
-        <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <Button variant="success" onClick={() => navigate('/admin-onboarding')}>
-            Go to WebDev Onboarding Admin →
-          </Button>
-          <Button variant="success" onClick={() => navigate('/admin/leads')}>
-            Lead Scraper →
-          </Button>
-        </div>
+        <Button variant="outline-success" onClick={() => navigate('/admin')}>
+          ← Back to Admin
+        </Button>
       </div>
     </Container>
   );
