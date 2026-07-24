@@ -5,7 +5,7 @@ import axios from 'axios';
 import * as XLSX from 'xlsx';
 
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
-const ADMIN_PASSWORD = process.env.REACT_APP_ONBOARD_PW || 'onboardinglocura';
+const ADMIN_PASSWORD = process.env.REACT_APP_ONBOARD_PW;
 
 type Attachment = {
   _id: string;
@@ -99,7 +99,7 @@ const subscriberInterestLabel = (subscriber: Subscriber) => {
   return interests.length ? interests.join(', ') : '—';
 };
 
-const AdminOnboarding = () => {
+const Admin = () => {
   const navigate = useNavigate();
   const [clients, setClients] = useState<Client[]>([]);
   const [agreements, setAgreements] = useState<Agreement[]>([]);
@@ -748,4 +748,4 @@ const AdminOnboarding = () => {
   );
 };
 
-export default AdminOnboarding;
+export default Admin;

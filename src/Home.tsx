@@ -27,9 +27,9 @@ const Home = () => {
 
   const [email, setEmail] = useState("");
   const [beats, setBeats] = useState(false);
-  const [loops, setLoops] = useState(false);
   const [visuals, setVisuals] = useState(false);
   const [web, setWeb] = useState(false);
+  const [ads, setAds] = useState(false);
   const [message, setMessage] = useState("");
   const [alert, setAlert] = useState("");
 
@@ -234,11 +234,11 @@ const Home = () => {
     const dataToSend = {
       email,
       beats,
-      loops,
       visuals,
-      web
+      web,
+      ads
     };
-  
+
     // Make a POST request using Axios
     axios.post(`${API_BASE_URL}/newsletter/subscribe`, dataToSend, {
       headers: {
@@ -342,9 +342,9 @@ const Home = () => {
 
   const interestOptions: { key: string; label: string; active: boolean; toggle: () => void }[] = [
     { key: "beats", label: "Beats & Mixing", active: beats, toggle: () => setBeats(!beats) },
-    { key: "loops", label: "Loop Packs", active: loops, toggle: () => setLoops(!loops) },
     { key: "visuals", label: "Visuals", active: visuals, toggle: () => setVisuals(!visuals) },
-    { key: "web", label: "Web Development", active: web, toggle: () => setWeb(!web) }
+    { key: "web", label: "Web Development", active: web, toggle: () => setWeb(!web) },
+    { key: "ads", label: "Ads", active: ads, toggle: () => setAds(!ads) }
   ];
 
     const canvasStyle = {
