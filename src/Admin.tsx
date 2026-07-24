@@ -419,6 +419,13 @@ const Admin = () => {
       {message ? <Alert variant="success">{message}</Alert> : null}
       {error ? <Alert variant="danger">{error}</Alert> : null}
 
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
+        <h2 style={{ color: '#68FF00', margin: 0 }}>Website Clients</h2>
+        <Button size="sm" variant="success" onClick={() => setShowAddWebsiteClient((prev) => !prev)}>
+          {showAddWebsiteClient ? 'Cancel' : '+ Add Website Client'}
+        </Button>
+      </div>
+
       {loading ? <p>Loading clients...</p> : null}
 
       {!loading && clients.length === 0 ? <Alert variant="secondary">No onboarding forms yet.</Alert> : null}

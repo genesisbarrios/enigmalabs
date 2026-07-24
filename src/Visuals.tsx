@@ -9,9 +9,9 @@ const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 const Visuals = () => {
 const [email, setEmail] = useState("");
   const [beats, setBeats] = useState(false);
-  const [loops, setLoops] = useState(false);
   const [visuals, setVisuals] = useState(false);
   const [web, setWeb] = useState(false);
+  const [ads, setAds] = useState(false);
   const [message, setMessage] = useState("");
   const [alert, setAlert] = useState("");
 
