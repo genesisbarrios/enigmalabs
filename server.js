@@ -392,7 +392,7 @@ app.get('/api/agreements/:id/download', async (req, res) => {
 
 app.get('/api/website-clients', async (_req, res) => {
   try {
-    const clients = await WebsiteClient.find().sort({ createdAt: -1 });
+    const clients = await WebsiteClient.find().select('-logo.data').sort({ createdAt: -1 });
     res.json({ ok: true, clients });
   } catch (error) {
     console.error('Could not fetch website clients', error);
@@ -400,9 +400,23 @@ app.get('/api/website-clients', async (_req, res) => {
   }
 });
 
+app.get('/api/website-clients/:id/logo', async (req, res) => {
+  try {
+    const client = await WebsiteClient.findById(req.params.id);
+    if (!client || !client.logo || !client.logo.data) {
+      return res.status(404).json({ ok: false, message: 'No logo found.' });
+    }
+    res.setHeader('Content-Type', client.logo.mimeType || 'image/png');
+    res.send(Buffer.from(client.logo.data));
+  } catch (error) {
+    console.error('Could not fetch website client logo', error);
+    res.status(500).json({ ok: false, message: 'Could not fetch logo.' });
+  }
+});
+
 app.post('/api/website-clients', async (req, res) => {
   try {
-    const { name, email, address, socialMediaLinks, website } = req.body;
+    const { name, email, address, socialMediaLinks, businessType, website } = req.body;
     if (!name || !email) {
       return res.status(400).json({ ok: false, message: 'Name and email are required.' });
     }
@@ -411,6 +425,7 @@ app.post('/api/website-clients', async (req, res) => {
       email,
       address: address || '',
       socialMediaLinks: socialMediaLinks || '',
+      businessType: businessType || '',
       website: website || ''
     });
     res.status(201).json({ ok: true, client });
@@ -427,7 +442,7 @@ app.put('/api/website-clients/:id', async (req, res) => {
       return res.status(404).json({ ok: false, message: 'Website client not found.' });
     }
 
-    const fields = ['name', 'email', 'address', 'socialMediaLinks', 'website'];
+    const fields = ['name', 'email', 'address', 'socialMediaLinks', 'businessType', 'website'];
     fields.forEach((field) => {
       if (req.body[field] !== undefined) {
         client[field] = req.body[field];
@@ -508,6 +523,7 @@ app.post('/api/onboarding/submit', uploadOnboardingFiles, async (req, res) => {
     };
 
     const client = await OnboardingClient.create(payload);
+    await syncWebsiteClientFromOnboarding(payload);
     res.status(201).json({ ok: true, client });
   } catch (error) {
     console.error('Onboarding submission failed', error);
@@ -590,6 +606,7 @@ app.put('/api/onboarding/clients/:id', uploadOnboardingFiles, async (req, res) =
     client.logoAttachments.push(...toAttachments(req.files?.logoFiles));
 
     await client.save();
+    await syncWebsiteClientFromOnboarding(client);
     res.json({ ok: true, client });
   } catch (error) {
     console.error('Could not update client', error);

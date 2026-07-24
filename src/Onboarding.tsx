@@ -479,7 +479,7 @@ const Onboarding = () => {
                 name="socialOther"
                 value={formData.socialOther}
                 onChange={handleChange}
-                placeholder="Any other platforms — Pinterest, LinkedIn, Threads, Spotify, etc."
+                placeholder="Other Links — Pinterest, LinkedIn, Threads, Spotify, etc.(Separated by commas)"
               />
             </Form.Group>
 
