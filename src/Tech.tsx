@@ -251,7 +251,8 @@ function handleSubmit() {
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Monthly Subscription</h6>
                 <ul style={{ marginBottom: 0 }}>
                   <li>$200/mo for a 10 Page Website</li>
-                  <li>Includes unlimited Edits, 24/7 Support, Hosting, Maintenance, etc.</li>
+                  <li>Includes Unlimited Edits, 24/7 Support, Hosting & Maintenance</li>
+                  <li>$100/mo for a 5 Page Website(General Support & Edits)</li>
                 </ul>
               </div>
             </Col>
