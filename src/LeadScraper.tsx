@@ -27,6 +27,19 @@ type Lead = {
   website: string | null;
 };
 
+// Reduces a full Google formatted_address (e.g. "123 Main St, Springfield, IL 62704, USA")
+// down to just "City, State".
+const reduceAddress = (address: string): string => {
+  const parts = address.split(',').map((part) => part.trim()).filter(Boolean);
+  if (parts.length < 2) return address;
+
+  const city = parts.length >= 3 ? parts[parts.length - 3] : parts[0];
+  const stateZip = parts[parts.length - 2] || '';
+  const state = stateZip.match(/^[A-Za-z.\s]+/)?.[0].trim() || stateZip;
+
+  return [city, state].filter(Boolean).join(', ');
+};
+
 const LeadScraper = () => {
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -40,6 +53,7 @@ const LeadScraper = () => {
   const [searchText, setSearchText] = useState('');
   const [minReviews, setMinReviews] = useState('');
   const [maxReviews, setMaxReviews] = useState('');
+  const [addressesReduced, setAddressesReduced] = useState(false);
   const [showAddress, setShowAddress] = useState(true);
   const [showRating, setShowRating] = useState(true);
   const [showReviews, setShowReviews] = useState(true);
@@ -115,11 +129,13 @@ const LeadScraper = () => {
 
   const leadsToExport = selected.size > 0 ? filteredLeads.filter((_, index) => selected.has(index)) : filteredLeads;
 
+  const displayAddress = (lead: Lead) => (addressesReduced ? reduceAddress(lead.address) : lead.address);
+
   const handleCopyList = async () => {
     const list = leadsToExport
       .map((lead) => {
         const fields = [lead.name, lead.phone];
-        if (showAddress) fields.push(lead.address);
+        if (showAddress) fields.push(displayAddress(lead));
         if (showRating) fields.push(String(lead.rating));
         if (showReviews) fields.push(String(lead.reviews));
         return fields.join('\t');
@@ -150,7 +166,7 @@ const LeadScraper = () => {
     if (showReviews) header.push('Reviews');
     const rows = leadsToExport.map((lead) => {
       const row: (string | number)[] = [lead.name, lead.phone];
-      if (showAddress) row.push(lead.address);
+      if (showAddress) row.push(displayAddress(lead));
       if (showRating) row.push(lead.rating);
       if (showReviews) row.push(lead.reviews);
       return row;
@@ -164,7 +180,7 @@ const LeadScraper = () => {
   const handleExportXlsx = () => {
     const rows = leadsToExport.map((lead) => {
       const row: Record<string, string | number> = { Name: lead.name, Phone: lead.phone };
-      if (showAddress) row.Address = lead.address;
+      if (showAddress) row.Address = displayAddress(lead);
       if (showRating) row.Rating = lead.rating;
       if (showReviews) row.Reviews = lead.reviews;
       return row;
@@ -281,6 +297,9 @@ const LeadScraper = () => {
             <Button size="sm" variant="outline-success" onClick={handleExportXlsx} disabled={!leadsToExport.length}>
               Export XLSX{selected.size > 0 ? ` (${selected.size} selected)` : ''}
             </Button>
+            <Button size="sm" variant="outline-light" onClick={() => setAddressesReduced((prev) => !prev)}>
+              {addressesReduced ? 'Undo Reduce Addresses' : 'Reduce Addresses to City, State'}
+            </Button>
           </div>
 
           {(!showAddress || !showRating || !showReviews) ? (
@@ -330,7 +349,7 @@ const LeadScraper = () => {
                   </td>
                   <td>{lead.name}</td>
                   <td>{lead.phone || '—'}</td>
-                  {showAddress ? <td>{lead.address || '—'}</td> : null}
+                  {showAddress ? <td>{displayAddress(lead) || '—'}</td> : null}
                   {showRating ? <td>{lead.rating || '—'}</td> : null}
                   {showReviews ? <td>{lead.reviews || '—'}</td> : null}
                 </tr>
