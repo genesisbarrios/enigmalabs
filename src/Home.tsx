@@ -349,10 +349,10 @@ const Home = () => {
   });
 
   const interestOptions: { key: string; label: string; active: boolean; toggle: () => void }[] = [
-    { key: "beats", label: "Beats & Mixing", active: beats, toggle: () => setBeats(!beats) },
     { key: "visuals", label: "Visuals", active: visuals, toggle: () => setVisuals(!visuals) },
     { key: "web", label: "Web Development", active: web, toggle: () => setWeb(!web) },
-    { key: "ads", label: "Ads", active: ads, toggle: () => setAds(!ads) }
+    { key: "ads", label: "Ads", active: ads, toggle: () => setAds(!ads) },
+    { key: "beats", label: "Beats & Mixing", active: beats, toggle: () => setBeats(!beats) },
   ];
 
     const canvasStyle = {
