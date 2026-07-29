@@ -454,20 +454,6 @@ const Home = () => {
                 </Card.Body>
               </Card>
             </Col>
-            <Col xs={12} md={4} >
-              <Card style={serviceCardStyle} className="servicesCards">
-                <a href="#" target="_blank"><img style={imgStyle} className="servicesImg"  alt="Audio Engineering Services" src="/JAIAXGEN.jpg" /></a>
-                <Card.Body>
-                <h5>Music</h5>
-                  <Card.Text>
-                    Music Production, Mixing + Mastering <br></br>
-                    Songwriting, Vocal Production <br></br>
-                    Recording, Editing, Pitch Correction <br></br>
-                  </Card.Text>
-                  <a href="/Music" target="_blank" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>See Work</Button></a>
-                </Card.Body>
-              </Card>
-            </Col>
             <Col xs={12} md={4}>
               <Card style={serviceCardStyle} className="servicesCards">
                 <img style={imgStyle} className="servicesImg" alt="video services" src="/ZICARIA.JPG" />
@@ -480,6 +466,20 @@ const Home = () => {
                   </Card.Text>
                     
                   <a href="/Visuals" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>See Work</Button></a>
+                </Card.Body>
+              </Card>
+            </Col>
+            <Col xs={12} md={4} >
+              <Card style={serviceCardStyle} className="servicesCards">
+                <a href="#" target="_blank"><img style={imgStyle} className="servicesImg"  alt="Audio Engineering Services" src="/JAIAXGEN.jpg" /></a>
+                <Card.Body>
+                <h5>Music</h5>
+                  <Card.Text>
+                    Music Production, Mixing + Mastering <br></br>
+                    Songwriting, Vocal Production <br></br>
+                    Recording, Editing, Pitch Correction <br></br>
+                  </Card.Text>
+                  <a href="/Music" target="_blank" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>See Work</Button></a>
                 </Card.Body>
               </Card>
             </Col>
