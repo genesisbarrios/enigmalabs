@@ -589,7 +589,7 @@ const Home = () => {
           <Col xs={12} md={6} style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
             <div style={newsletterCardStyle}>
               <form style={{ textAlign: "center", width: "100%", maxWidth: "420px", margin: "0 auto" }}>
-                <h3 style={{ color: "#68FF00", marginBottom: "0.25rem" }}>Get a Free Website Mockup</h3>
+                <h3 style={{ color: "#68FF00", marginBottom: "0.25rem" }}>Get a Free Website Mockup 🖥️</h3>
                 <p style={{ color: "#aaa", fontSize: "0.9rem", marginBottom: "1.5rem" }}>
                   No commitment. We'll design a free mockup for your business.
                 </p>
