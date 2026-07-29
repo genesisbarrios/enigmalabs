@@ -652,7 +652,7 @@ const Home = () => {
                 <input
                   type="text"
                   name="google-business-url"
-                  placeholder="Google Business URL"
+                  placeholder="Google Business Profile RL"
                   value={mockupGoogleBusinessUrl}
                   style={newsletterInputStyle}
                   onChange={(e) => {
