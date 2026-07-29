@@ -424,13 +424,13 @@ const Home = () => {
     <Container id="top">
       <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
         <canvas style={canvasStyle} id="canv"></canvas>
-        <h1 id="title-mobile-overlay" style={{textAlign:"center"}}>no rules. no formula. just art.</h1>
+        <h1 id="title-mobile-overlay" style={{textAlign:"center"}}>the right formula.</h1>
       </div>
 
       <div style={homeContainer} className="HomeContainer">
         <Row style={{ ...rowStyle, position: 'relative' }} className="hero-row">
           <Col sm={12}>
-            <h1 id="title" style={{textAlign:"center", marginTop:'5%'}}>no rules. no formula. just art.</h1>
+            <h1 id="title" style={{textAlign:"center", marginTop:'5%'}}>the right formula.</h1>
           </Col>
         </Row>
         <Row style={servicesStyle}>
