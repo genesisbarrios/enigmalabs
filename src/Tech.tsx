@@ -348,7 +348,7 @@ function handleSubmit() {
             <Col sm={12}>
               <h4 className="subsection-title mt-5">Reach out to us</h4>
               <a href="mailto:info@enigma-labs.com" className="text-white">info@enigma-labs.com</a>
-              <div style={{marginBottom:"3%"}}></div>
+              <div style={{marginBottom:"8%"}}></div>
             </Col>
           </Row>
         </Container>
