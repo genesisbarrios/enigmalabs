@@ -82,11 +82,17 @@ const emptyWebsiteClientForm = { name: '', email: '', address: '', socialMediaLi
 type Subscriber = {
   _id: string;
   email: string;
+  name?: string;
+  phone?: string;
+  businessName?: string;
+  socialUrl?: string;
+  googleBusinessUrl?: string;
   beats: boolean;
   loops: boolean;
   visuals: boolean;
   web: boolean;
   ads: boolean;
+  freemockups?: boolean;
   createdAt: string;
 };
 
@@ -199,6 +205,8 @@ const Admin = () => {
       (client.address || '').toLowerCase().includes(q)
     );
   }, [websiteClients, searchQuery]);
+
+  const mockupSignups = useMemo(() => subscribers.filter((subscriber) => subscriber.freemockups), [subscribers]);
 
   const filteredAgreements = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -749,6 +757,52 @@ const Admin = () => {
               <tr key={subscriber._id}>
                 <td>{subscriber.email}</td>
                 <td>{subscriberInterestLabel(subscriber)}</td>
+                <td>{new Date(subscriber.createdAt).toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      ) : null}
+
+      <h2 style={{ color: '#68FF00', marginTop: '2.5rem', marginBottom: '1rem' }}>Free Mockup Signups</h2>
+      <p style={{ color: '#d4d4d4', marginBottom: '1rem' }}>
+        {mockupSignups.length} free mockup signup{mockupSignups.length === 1 ? '' : 's'}.
+      </p>
+
+      {loadingSubscribers ? <p>Loading signups...</p> : null}
+
+      {!loadingSubscribers && mockupSignups.length === 0 ? <Alert variant="secondary">No free mockup signups yet.</Alert> : null}
+
+      {!loadingSubscribers && mockupSignups.length > 0 ? (
+        <Table striped bordered hover variant="dark" responsive>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Phone</th>
+              <th>Business Name</th>
+              <th>Instagram/Facebook</th>
+              <th>Google Business</th>
+              <th>Signed Up At</th>
+            </tr>
+          </thead>
+          <tbody>
+            {mockupSignups.map((subscriber) => (
+              <tr key={subscriber._id}>
+                <td>{subscriber.name || '—'}</td>
+                <td>{subscriber.email}</td>
+                <td>{subscriber.phone || '—'}</td>
+                <td>{subscriber.businessName || '—'}</td>
+                <td>
+                  {subscriber.socialUrl ? (
+                    <a href={subscriber.socialUrl} target="_blank" rel="noreferrer" className="text-white">{subscriber.socialUrl}</a>
+                  ) : '—'}
+                </td>
+                <td>
+                  {subscriber.googleBusinessUrl ? (
+                    <a href={subscriber.googleBusinessUrl} target="_blank" rel="noreferrer" className="text-white">{subscriber.googleBusinessUrl}</a>
+                  ) : '—'}
+                </td>
                 <td>{new Date(subscriber.createdAt).toLocaleString()}</td>
               </tr>
             ))}

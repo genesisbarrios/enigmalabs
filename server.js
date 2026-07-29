@@ -16,7 +16,39 @@ let mongoServer = null;
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const AGREEMENT_FROM_EMAIL = process.env.AGREEMENT_FROM_EMAIL || 'agreements@enigma-labs.com';
-const AGREEMENT_ADMIN_EMAIL = 'info@enigma-labs.com';
+const ADMIN_NOTIFICATION_EMAIL = 'info@enigma-labs.com';
+
+async function sendAdminNotification(subject, text) {
+  if (!resend) {
+    console.warn('RESEND_API_KEY not set — skipping notification email.');
+    return;
+  }
+  try {
+    const { error } = await resend.emails.send({
+      from: AGREEMENT_FROM_EMAIL,
+      to: ADMIN_NOTIFICATION_EMAIL,
+      subject,
+      text
+    });
+    if (error) console.error('Could not send notification email', error);
+  } catch (error) {
+    console.error('Could not send notification email', error);
+  }
+}
+
+async function sendMockupSignupEmail(subscriber) {
+  await sendAdminNotification(
+    `New free mockup signup: ${subscriber.name || subscriber.email}`,
+    `New free website mockup request:\n\nName: ${subscriber.name || '—'}\nEmail: ${subscriber.email}\nPhone: ${subscriber.phone || '—'}\nBusiness Name: ${subscriber.businessName || '—'}\nInstagram/Facebook: ${subscriber.socialUrl || '—'}\nGoogle Business: ${subscriber.googleBusinessUrl || '—'}`
+  );
+}
+
+async function sendWebInterestEmail(subscriber) {
+  await sendAdminNotification(
+    `New web development newsletter signup: ${subscriber.email}`,
+    `A newsletter subscriber marked interest in Web Development:\n\nEmail: ${subscriber.email}${subscriber.name ? `\nName: ${subscriber.name}` : ''}${subscriber.phone ? `\nPhone: ${subscriber.phone}` : ''}`
+  );
+}
 
 async function sendAgreementEmails({ agreementId, clientName, clientEmail, pdfBuffer }) {
   if (!resend) {
@@ -34,7 +66,7 @@ async function sendAgreementEmails({ agreementId, clientName, clientEmail, pdfBu
   try {
     const { error } = await resend.emails.send({
       from: AGREEMENT_FROM_EMAIL,
-      to: AGREEMENT_ADMIN_EMAIL,
+      to: ADMIN_NOTIFICATION_EMAIL,
       subject: `New signed agreement: ${clientName}`,
       text: `${clientName} (${clientEmail}) just signed the web development agreement. The signed PDF is attached.`,
       attachments
@@ -83,6 +115,9 @@ const newsletterSubscriberSchema = new mongoose.Schema({
   email: String,
   name: String,
   phone: String,
+  businessName: String,
+  socialUrl: String,
+  googleBusinessUrl: String,
   beats: Boolean,
   loops: Boolean,
   visuals: Boolean,
@@ -267,6 +302,9 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       email: req.body.email || '',
       name: req.body.name || '',
       phone: req.body.phone || '',
+      businessName: req.body.businessName || '',
+      socialUrl: req.body.socialUrl || '',
+      googleBusinessUrl: req.body.googleBusinessUrl || '',
       beats: Boolean(req.body.beats),
       loops: Boolean(req.body.loops),
       visuals: Boolean(req.body.visuals),
@@ -277,8 +315,14 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
 
     const existing = await NewsletterSubscriber.findOne({ email: payload.email });
     if (existing) {
+      const isNewMockupSignup = payload.freemockups && !existing.freemockups;
+      const isNewWebInterest = payload.web && !existing.web;
+
       existing.name = payload.name || existing.name;
       existing.phone = payload.phone || existing.phone;
+      existing.businessName = payload.businessName || existing.businessName;
+      existing.socialUrl = payload.socialUrl || existing.socialUrl;
+      existing.googleBusinessUrl = payload.googleBusinessUrl || existing.googleBusinessUrl;
       existing.beats = existing.beats || payload.beats;
       existing.loops = existing.loops || payload.loops;
       existing.visuals = existing.visuals || payload.visuals;
@@ -286,10 +330,17 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       existing.ads = existing.ads || payload.ads;
       existing.freemockups = existing.freemockups || payload.freemockups;
       await existing.save();
+
+      if (isNewMockupSignup) await sendMockupSignupEmail(existing);
+      if (isNewWebInterest) await sendWebInterestEmail(existing);
+
       return res.status(200).json({ ok: true, subscriber: existing, message: 'Subscription updated.' });
     }
 
     const subscriber = await NewsletterSubscriber.create(payload);
+    if (subscriber.freemockups) await sendMockupSignupEmail(subscriber);
+    if (subscriber.web) await sendWebInterestEmail(subscriber);
+
     res.status(201).json({ ok: true, subscriber });
   } catch (error) {
     console.error('Newsletter subscription failed', error);

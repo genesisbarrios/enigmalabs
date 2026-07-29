@@ -44,6 +44,9 @@ const Home = () => {
   const [mockupName, setMockupName] = useState("");
   const [mockupEmail, setMockupEmail] = useState("");
   const [mockupPhone, setMockupPhone] = useState("");
+  const [mockupBusinessName, setMockupBusinessName] = useState("");
+  const [mockupSocialUrl, setMockupSocialUrl] = useState("");
+  const [mockupGoogleBusinessUrl, setMockupGoogleBusinessUrl] = useState("");
   const [mockupMessage, setMockupMessage] = useState("");
   const [mockupAlert, setMockupAlert] = useState("");
 
@@ -281,6 +284,9 @@ const Home = () => {
       email: mockupEmail,
       name: mockupName,
       phone: mockupPhone,
+      businessName: mockupBusinessName,
+      socialUrl: mockupSocialUrl,
+      googleBusinessUrl: mockupGoogleBusinessUrl,
       freemockups: true
     };
 
@@ -621,6 +627,36 @@ const Home = () => {
                   style={newsletterInputStyle}
                   onChange={(e) => {
                     setMockupPhone(e.target.value);
+                  }}
+                ></input>
+                <input
+                  type="text"
+                  name="business-name"
+                  placeholder="Business name"
+                  value={mockupBusinessName}
+                  style={newsletterInputStyle}
+                  onChange={(e) => {
+                    setMockupBusinessName(e.target.value);
+                  }}
+                ></input>
+                <input
+                  type="text"
+                  name="social-url"
+                  placeholder="Instagram or Facebook URL"
+                  value={mockupSocialUrl}
+                  style={newsletterInputStyle}
+                  onChange={(e) => {
+                    setMockupSocialUrl(e.target.value);
+                  }}
+                ></input>
+                <input
+                  type="text"
+                  name="google-business-url"
+                  placeholder="Google Business URL"
+                  value={mockupGoogleBusinessUrl}
+                  style={newsletterInputStyle}
+                  onChange={(e) => {
+                    setMockupGoogleBusinessUrl(e.target.value);
                   }}
                 ></input>
                 <button
