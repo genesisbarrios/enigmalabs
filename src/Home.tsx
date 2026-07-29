@@ -470,7 +470,7 @@ const Home = () => {
             </Col>
             <Col xs={12} md={4}>
               <Card style={serviceCardStyle} className="servicesCards">
-                <img style={imgStyle} className="servicesImg" alt="video services" src="/BTSOBEASTXGEN.png" />
+                <img style={imgStyle} className="servicesImg" alt="video services" src="/ZICARIA.JPG" />
                 <Card.Body>
                   <h5>Visuals</h5>
                   <Card.Text>
