@@ -274,7 +274,7 @@ function handleSubmit() {
 
           <Row style={{ ...rowStyle, marginTop: "6%", marginBottom: "6%" }}>
             <Col xs={12} md={6}>
-              <h4 className="mt-5">Already made up your mind?</h4>
+              <h4 className="subsection-title mt-5">Already made up your mind?</h4>
               <p style={{ maxWidth: "700px", lineHeight: 1.7 }}>
                 If you already know you want a polished, high-performing website for your brand, we’d love to help you bring it to life.
                 Share a few details through our onboarding form and we’ll take it from there.
@@ -287,13 +287,8 @@ function handleSubmit() {
                   Start your onboarding journey →
                 </Link>
               </div>
-
-              <div style={{ marginTop: "5rem" }}>
-                <h4>Reach out to us</h4>
-                <a href="mailto:info@enigma-labs.com" className="text-white">info@enigma-labs.com</a>
-              </div>
             </Col>
-            <Col xs={12} md={6} style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+            <Col xs={12} md={6} className="mt-4 mt-md-0" style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
               <div style={newsletterCardStyle}>
                 <form style={{ textAlign: "center", width: "100%", maxWidth: "420px", margin: "0 auto" }}>
                   <h3 style={{ color: "#68FF00", marginBottom: "0.25rem" }}>Sign Up For Our Newsletter</h3>
@@ -346,6 +341,14 @@ function handleSubmit() {
                   {alert && <Alert style={{ marginTop: "1.5rem", backgroundColor: "#2a0000", borderColor: "#ff4d4d", color: "#ff9d9d" }}>{alert.toString()}</Alert>}
                 </form>
               </div>
+            </Col>
+          </Row>
+
+          <Row style={rowStyle}>
+            <Col sm={12}>
+              <h4 className="subsection-title mt-5">Reach out to us</h4>
+              <a href="mailto:info@enigma-labs.com" className="text-white">info@enigma-labs.com</a>
+              <div style={{marginBottom:"3%"}}></div>
             </Col>
           </Row>
         </Container>
