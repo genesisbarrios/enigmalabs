@@ -550,11 +550,11 @@ const Home = () => {
           </Col>
         </Row>
 
-          <Row style={{margin:"0 auto", minHeight:"100vh"}}>
-            <div style={{margin:"0 auto", display: "flex", justifyContent: "center", alignItems: "center"}}>
-              <iframe style={styleToApply} width="540" height="650px" src="https://8b7144f1.sibforms.com/serve/MUIFAHKwSF06YCmUJ_Ly5Cn4lmRW5OLN3RmyFLbx3xEZcEjQI1wqYz58quGFHRt39logCGe8SAZi3i4tb3MoLRW51OL7Z7mhv2aHlM-WEB4Y0x09o4xPiDbdNQ3WFbuhOchjZHXCAVQCW26ITG3iAYZLWEmaKaU2KjEDnG5ZlBdBwWmfcJ_JUqvahPegcY31IEFJgft1L_5jxrNx" ></iframe>
-            </div>
-          </Row>
+        {/* <Row style={{margin:"0 auto", minHeight:"100vh"}}>
+          <div style={{margin:"0 auto", display: "flex", justifyContent: "center", alignItems: "center"}}>
+            <iframe style={styleToApply} width="540" height="650px" src="https://8b7144f1.sibforms.com/serve/MUIFAHKwSF06YCmUJ_Ly5Cn4lmRW5OLN3RmyFLbx3xEZcEjQI1wqYz58quGFHRt39logCGe8SAZi3i4tb3MoLRW51OL7Z7mhv2aHlM-WEB4Y0x09o4xPiDbdNQ3WFbuhOchjZHXCAVQCW26ITG3iAYZLWEmaKaU2KjEDnG5ZlBdBwWmfcJ_JUqvahPegcY31IEFJgft1L_5jxrNx" ></iframe>
+          </div>
+        </Row> */}
 
 
       </div>
