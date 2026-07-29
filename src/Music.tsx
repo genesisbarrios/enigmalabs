@@ -274,7 +274,7 @@ const Music = () => {
             </Row>
 
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width:"100%" }}>
-              <a href="https://www.beatstars.com/genwa/services" style={{ color: "#000" }}>
+              <a href="https://www.beatstars.com/genwav/services" style={{ color: "#000" }}>
                 <Button style={{ backgroundColor: "#68FF00", cursor: 'pointer', color: "#000", borderColor: "#68FF00", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", padding: "0.85rem 2.75rem", borderRadius: "2rem" }}>
                   Book Your Session or Mix Today
                 </Button>
