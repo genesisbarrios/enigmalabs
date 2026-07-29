@@ -287,6 +287,11 @@ function handleSubmit() {
                   Start your onboarding journey →
                 </Link>
               </div>
+
+              <div style={{ marginTop: "3rem" }}>
+                <h4>Reach out to us</h4>
+                <a href="mailto:info@enigma-labs.com" className="text-white">info@enigma-labs.com</a>
+              </div>
             </Col>
             <Col xs={12} md={6} style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
               <div style={newsletterCardStyle}>
@@ -341,14 +346,6 @@ function handleSubmit() {
                   {alert && <Alert style={{ marginTop: "1.5rem", backgroundColor: "#2a0000", borderColor: "#ff4d4d", color: "#ff9d9d" }}>{alert.toString()}</Alert>}
                 </form>
               </div>
-            </Col>
-          </Row>
-
-          <Row style={rowStyle}>
-            <Col sm={12}>
-              <h4 className="mt-5">Reach out to us</h4>
-              <a href="mailto:info@enigma-labs.com" className="text-white">info@enigma-labs.com</a>
-              <div style={{marginBottom:"3%"}}></div>
             </Col>
           </Row>
         </Container>
