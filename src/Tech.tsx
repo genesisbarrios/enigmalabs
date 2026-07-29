@@ -193,8 +193,8 @@ function handleSubmit() {
             <Col sm={12}>
               <h5 className="subsection-title" style={{marginTop: "5%"}}>Services</h5>
               <ul>
-                <li>Web Design, and Web Development</li>
-                <li>Support & Maintenance: Hosting, Updating Design, Content, etc. </li>
+                <li>Web Design & Web Development</li>
+                <li>Support & Maintenance: Hosting, Domain, Google Business Setup, Updates, etc. </li>
                 <li>Graphic Design & Marketing: Logos, Branding, & Ads</li>
               </ul>
             </Col>
