@@ -41,6 +41,12 @@ const Home = () => {
   const [message, setMessage] = useState("");
   const [alert, setAlert] = useState("");
 
+  const [mockupName, setMockupName] = useState("");
+  const [mockupEmail, setMockupEmail] = useState("");
+  const [mockupPhone, setMockupPhone] = useState("");
+  const [mockupMessage, setMockupMessage] = useState("");
+  const [mockupAlert, setMockupAlert] = useState("");
+
   window.onload = function () {
     var message = "0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1";
     var letters = message.split(" ");
@@ -262,6 +268,35 @@ const Home = () => {
         setAlert("There was an error.");
         console.error('Error: ', error);
         setMessage(''); // Resetting message if necessary
+      });
+  }
+
+  function handleMockupSubmit() {
+    if (!mockupEmail) {
+      setMockupAlert('Please set an e-mail address~');
+      return;
+    }
+
+    const dataToSend = {
+      email: mockupEmail,
+      name: mockupName,
+      phone: mockupPhone,
+      freemockups: true
+    };
+
+    axios.post(`${API_BASE_URL}/newsletter/subscribe`, dataToSend, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    })
+      .then(() => {
+        setMockupMessage("You're on the list! We'll be in touch with your free mockup.");
+        setMockupAlert('');
+      })
+      .catch((error) => {
+        setMockupAlert("There was an error.");
+        console.error('Error: ', error);
+        setMockupMessage('');
       });
   }
 
@@ -547,6 +582,61 @@ const Home = () => {
           </Col>
           <Col xs={12} md={6} style={{ marginTop: "1.5rem", order: 2 }}>
             <img style={newsletterImageStyle} src="Aliens.png" alt="Aliens" />
+          </Col>
+        </Row>
+
+        <Row style={{ ...newsletterSectionStyle, justifyContent: "center" }}>
+          <Col xs={12} md={6} style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+            <div style={newsletterCardStyle}>
+              <form style={{ textAlign: "center", width: "100%", maxWidth: "420px", margin: "0 auto" }}>
+                <h3 style={{ color: "#68FF00", marginBottom: "0.25rem" }}>Get a Free Website Mockup</h3>
+                <p style={{ color: "#aaa", fontSize: "0.9rem", marginBottom: "1.5rem" }}>
+                  No commitment. We'll design a free mockup for your business.
+                </p>
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Your name"
+                  value={mockupName}
+                  style={newsletterInputStyle}
+                  onChange={(e) => {
+                    setMockupName(e.target.value);
+                  }}
+                ></input>
+                <input
+                  type="email"
+                  name="e-mail"
+                  placeholder="your@email.com"
+                  value={mockupEmail}
+                  style={newsletterInputStyle}
+                  onChange={(e) => {
+                    setMockupEmail(e.target.value);
+                  }}
+                ></input>
+                <input
+                  type="tel"
+                  name="phone"
+                  placeholder="Phone number"
+                  value={mockupPhone}
+                  style={newsletterInputStyle}
+                  onChange={(e) => {
+                    setMockupPhone(e.target.value);
+                  }}
+                ></input>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleMockupSubmit();
+                  }}
+                  style={newsletterButtonStyle}
+                  type="submit"
+                >
+                  Submit
+                </button>
+                {mockupMessage && <Alert style={{ marginTop: "1.5rem", backgroundColor: "#111", borderColor: "#68FF00", color: "#68FF00" }}>{mockupMessage.toString()}</Alert>}
+                {mockupAlert && <Alert style={{ marginTop: "1.5rem", backgroundColor: "#2a0000", borderColor: "#ff4d4d", color: "#ff9d9d" }}>{mockupAlert.toString()}</Alert>}
+              </form>
+            </div>
           </Col>
         </Row>
 

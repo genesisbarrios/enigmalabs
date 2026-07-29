@@ -81,11 +81,14 @@ const toAttachments = (files) =>
 
 const newsletterSubscriberSchema = new mongoose.Schema({
   email: String,
+  name: String,
+  phone: String,
   beats: Boolean,
   loops: Boolean,
   visuals: Boolean,
   web: Boolean,
   ads: Boolean,
+  freemockups: Boolean,
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -262,16 +265,28 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
   try {
     const payload = {
       email: req.body.email || '',
+      name: req.body.name || '',
+      phone: req.body.phone || '',
       beats: Boolean(req.body.beats),
       loops: Boolean(req.body.loops),
       visuals: Boolean(req.body.visuals),
       web: Boolean(req.body.web),
-      ads: Boolean(req.body.ads)
+      ads: Boolean(req.body.ads),
+      freemockups: Boolean(req.body.freemockups)
     };
 
     const existing = await NewsletterSubscriber.findOne({ email: payload.email });
     if (existing) {
-      return res.status(200).json({ ok: true, message: 'Already subscribed.' });
+      existing.name = payload.name || existing.name;
+      existing.phone = payload.phone || existing.phone;
+      existing.beats = existing.beats || payload.beats;
+      existing.loops = existing.loops || payload.loops;
+      existing.visuals = existing.visuals || payload.visuals;
+      existing.web = existing.web || payload.web;
+      existing.ads = existing.ads || payload.ads;
+      existing.freemockups = existing.freemockups || payload.freemockups;
+      await existing.save();
+      return res.status(200).json({ ok: true, subscriber: existing, message: 'Subscription updated.' });
     }
 
     const subscriber = await NewsletterSubscriber.create(payload);
