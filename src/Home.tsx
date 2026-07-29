@@ -360,6 +360,18 @@ const Home = () => {
     outline: "none"
   };
 
+  const mockupFieldGridStyle: React.CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+    gap: "0 1rem"
+  };
+
+  const mockupGridInputStyle = {
+    ...newsletterInputStyle,
+    maxWidth: "none",
+    margin: "0 0 1.5rem"
+  };
+
   const newsletterButtonStyle = {
     marginTop: "1.75rem",
     padding: "0.85rem 2.75rem",
@@ -592,73 +604,77 @@ const Home = () => {
         </Row>
 
         <Row style={{ ...newsletterSectionStyle, justifyContent: "center" }}>
-          <Col xs={12} md={6} style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-            <div style={newsletterCardStyle}>
-              <form style={{ textAlign: "center", width: "100%", maxWidth: "420px", margin: "0 auto" }}>
+          <Col xs={12} md={8} style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+            <div style={{ ...newsletterCardStyle, maxWidth: "600px" }}>
+              <form style={{ textAlign: "center", width: "100%", maxWidth: "560px", margin: "0 auto" }}>
                 <h3 style={{ color: "#68FF00", marginBottom: "0.25rem" }}>Get a Free Website Mockup 🖥️</h3>
                 <p style={{ color: "#aaa", fontSize: "0.9rem", marginBottom: "1.5rem" }}>
                   No commitment. We'll design a free mockup for your business.
                 </p>
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="Your name"
-                  value={mockupName}
-                  style={newsletterInputStyle}
-                  onChange={(e) => {
-                    setMockupName(e.target.value);
-                  }}
-                ></input>
-                <input
-                  type="email"
-                  name="e-mail"
-                  placeholder="your@email.com"
-                  value={mockupEmail}
-                  style={newsletterInputStyle}
-                  onChange={(e) => {
-                    setMockupEmail(e.target.value);
-                  }}
-                ></input>
-                <input
-                  type="tel"
-                  name="phone"
-                  placeholder="Phone number"
-                  value={mockupPhone}
-                  style={newsletterInputStyle}
-                  onChange={(e) => {
-                    setMockupPhone(e.target.value);
-                  }}
-                ></input>
-                <input
-                  type="text"
-                  name="business-name"
-                  placeholder="Business name"
-                  value={mockupBusinessName}
-                  style={newsletterInputStyle}
-                  onChange={(e) => {
-                    setMockupBusinessName(e.target.value);
-                  }}
-                ></input>
-                <input
-                  type="text"
-                  name="social-url"
-                  placeholder="Instagram or Facebook URL"
-                  value={mockupSocialUrl}
-                  style={newsletterInputStyle}
-                  onChange={(e) => {
-                    setMockupSocialUrl(e.target.value);
-                  }}
-                ></input>
-                <input
-                  type="text"
-                  name="google-business-url"
-                  placeholder="Google Business Profile RL"
-                  value={mockupGoogleBusinessUrl}
-                  style={newsletterInputStyle}
-                  onChange={(e) => {
-                    setMockupGoogleBusinessUrl(e.target.value);
-                  }}
-                ></input>
+                <div style={mockupFieldGridStyle}>
+                  <input
+                    type="text"
+                    name="name"
+                    placeholder="Your name"
+                    value={mockupName}
+                    required
+                    style={mockupGridInputStyle}
+                    onChange={(e) => {
+                      setMockupName(e.target.value);
+                    }}
+                  ></input>
+                  <input
+                    type="email"
+                    name="e-mail"
+                    placeholder="your@email.com"
+                    value={mockupEmail}
+                    required
+                    style={mockupGridInputStyle}
+                    onChange={(e) => {
+                      setMockupEmail(e.target.value);
+                    }}
+                  ></input>
+                  <input
+                    type="tel"
+                    name="phone"
+                    placeholder="Phone number (optional)"
+                    value={mockupPhone}
+                    style={mockupGridInputStyle}
+                    onChange={(e) => {
+                      setMockupPhone(e.target.value);
+                    }}
+                  ></input>
+                  <input
+                    type="text"
+                    name="business-name"
+                    placeholder="Business name (optional)"
+                    value={mockupBusinessName}
+                    style={mockupGridInputStyle}
+                    onChange={(e) => {
+                      setMockupBusinessName(e.target.value);
+                    }}
+                  ></input>
+                  <input
+                    type="text"
+                    name="social-url"
+                    placeholder="Instagram/Facebook URL (optional)"
+                    value={mockupSocialUrl}
+                    style={mockupGridInputStyle}
+                    onChange={(e) => {
+                      setMockupSocialUrl(e.target.value);
+                    }}
+                  ></input>
+                  <input
+                    type="text"
+                    name="google-business-url"
+                    placeholder="Google Business URL (optional)"
+                    value={mockupGoogleBusinessUrl}
+                    style={mockupGridInputStyle}
+                    onChange={(e) => {
+                      setMockupGoogleBusinessUrl(e.target.value);
+                    }}
+                  ></input>
+                </div>
                 <button
                   onClick={(e) => {
                     e.preventDefault();
