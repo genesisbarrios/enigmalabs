@@ -195,7 +195,7 @@ function handleSubmit() {
               <ul>
                 <li>Web Design, and Web Development</li>
                 <li>Support & Maintenance: Hosting, Updating Design, Content, etc. </li>
-                <li>Graphic Design: Logos, Branding, Posters, Stickers and more.</li>
+                <li>Graphic Design & Marketing: Logos, Branding, & Ads</li>
               </ul>
             </Col>
           </Row>
