@@ -288,7 +288,7 @@ function handleSubmit() {
                 </Link>
               </div>
 
-              <div style={{ marginTop: "3rem" }}>
+              <div style={{ marginTop: "5rem" }}>
                 <h4>Reach out to us</h4>
                 <a href="mailto:info@enigma-labs.com" className="text-white">info@enigma-labs.com</a>
               </div>
