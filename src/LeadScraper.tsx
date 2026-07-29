@@ -58,7 +58,7 @@ const LeadScraper = () => {
   const [maxReviews, setMaxReviews] = useState('');
   const [addressesReduced, setAddressesReduced] = useState(false);
   const [showAddress, setShowAddress] = useState(true);
-  const [showEmail, setShowEmail] = useState(true);
+  const [showEmail, setShowEmail] = useState(false);
   const [showRating, setShowRating] = useState(true);
   const [showReviews, setShowReviews] = useState(true);
   const [enriching, setEnriching] = useState(false);
@@ -90,6 +90,7 @@ const LeadScraper = () => {
 
     setLoading(true);
     setSelected(new Set());
+    setShowEmail(false);
 
     try {
       const response = await axios.post(`${API_BASE_URL}/leads`, { niche, keyword, city });
@@ -184,6 +185,7 @@ const LeadScraper = () => {
     await Promise.all(Array.from({ length: Math.min(ENRICH_CONCURRENCY, targets.length) }, worker));
 
     setEnriching(false);
+    if (found > 0) setShowEmail(true);
     setMessage(
       quotaExceeded
         ? `Stopped early (search quota hit). Found emails for ${found} of ${done} leads checked.`
