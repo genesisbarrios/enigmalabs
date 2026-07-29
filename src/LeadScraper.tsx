@@ -25,7 +25,10 @@ type Lead = {
   rating: number;
   reviews: number;
   website: string | null;
+  email?: string | null;
 };
+
+const ENRICH_CONCURRENCY = 3;
 
 // Reduces a full Google formatted_address (e.g. "123 Main St, Springfield, IL 62704, USA")
 // down to just "City, State".
@@ -55,8 +58,11 @@ const LeadScraper = () => {
   const [maxReviews, setMaxReviews] = useState('');
   const [addressesReduced, setAddressesReduced] = useState(false);
   const [showAddress, setShowAddress] = useState(true);
+  const [showEmail, setShowEmail] = useState(true);
   const [showRating, setShowRating] = useState(true);
   const [showReviews, setShowReviews] = useState(true);
+  const [enriching, setEnriching] = useState(false);
+  const [enrichProgress, setEnrichProgress] = useState({ done: 0, total: 0 });
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
@@ -131,11 +137,66 @@ const LeadScraper = () => {
 
   const displayAddress = (lead: Lead) => (addressesReduced ? reduceAddress(lead.address) : lead.address);
 
+  const handleEnrichAll = async () => {
+    const targets = leadsToExport.filter((lead) => !lead.email);
+    if (!targets.length) {
+      setMessage('Every lead in the current list already has an email.');
+      return;
+    }
+
+    setError('');
+    setMessage('');
+    setEnriching(true);
+    setEnrichProgress({ done: 0, total: targets.length });
+
+    let cursor = 0;
+    let done = 0;
+    let found = 0;
+    let quotaExceeded = false;
+
+    const worker = async () => {
+      while (cursor < targets.length && !quotaExceeded) {
+        const target = targets[cursor];
+        cursor += 1;
+
+        try {
+          const response = await axios.post(`${API_BASE_URL}/leads/enrich-email`, {
+            name: target.name,
+            city: reduceAddress(target.address).split(',')[0]?.trim() || ''
+          });
+          const email: string | null = response.data?.email || null;
+          if (email) found += 1;
+          setLeads((prev) =>
+            prev.map((lead) => (lead.name === target.name && lead.address === target.address ? { ...lead, email } : lead))
+          );
+        } catch (enrichError: any) {
+          console.error(enrichError);
+          if (enrichError?.response?.status === 429) {
+            quotaExceeded = true;
+          }
+        } finally {
+          done += 1;
+          setEnrichProgress({ done, total: targets.length });
+        }
+      }
+    };
+
+    await Promise.all(Array.from({ length: Math.min(ENRICH_CONCURRENCY, targets.length) }, worker));
+
+    setEnriching(false);
+    setMessage(
+      quotaExceeded
+        ? `Stopped early (search quota hit). Found emails for ${found} of ${done} leads checked.`
+        : `Found emails for ${found} of ${targets.length} leads.`
+    );
+  };
+
   const handleCopyList = async () => {
     const list = leadsToExport
       .map((lead) => {
         const fields = [lead.name, lead.phone];
         if (showAddress) fields.push(displayAddress(lead));
+        if (showEmail) fields.push(lead.email || '');
         if (showRating) fields.push(String(lead.rating));
         if (showReviews) fields.push(String(lead.reviews));
         return fields.join('\t');
@@ -162,11 +223,13 @@ const LeadScraper = () => {
   const handleExportCsv = () => {
     const header = ['Name', 'Phone'];
     if (showAddress) header.push('Address');
+    if (showEmail) header.push('Email');
     if (showRating) header.push('Rating');
     if (showReviews) header.push('Reviews');
     const rows = leadsToExport.map((lead) => {
       const row: (string | number)[] = [lead.name, lead.phone];
       if (showAddress) row.push(displayAddress(lead));
+      if (showEmail) row.push(lead.email || '');
       if (showRating) row.push(lead.rating);
       if (showReviews) row.push(lead.reviews);
       return row;
@@ -181,6 +244,7 @@ const LeadScraper = () => {
     const rows = leadsToExport.map((lead) => {
       const row: Record<string, string | number> = { Name: lead.name, Phone: lead.phone };
       if (showAddress) row.Address = displayAddress(lead);
+      if (showEmail) row.Email = lead.email || '';
       if (showRating) row.Rating = lead.rating;
       if (showReviews) row.Reviews = lead.reviews;
       return row;
@@ -300,12 +364,16 @@ const LeadScraper = () => {
             <Button size="sm" variant="outline-light" onClick={() => setAddressesReduced((prev) => !prev)}>
               {addressesReduced ? 'Undo Reduce Addresses' : 'Reduce Addresses to City, State'}
             </Button>
+            <Button size="sm" variant="outline-success" onClick={handleEnrichAll} disabled={!leadsToExport.length || enriching}>
+              {enriching ? `Enriching... (${enrichProgress.done}/${enrichProgress.total})` : `Enrich All with Email${selected.size > 0 ? ` (${selected.size} selected)` : ''}`}
+            </Button>
           </div>
 
-          {(!showAddress || !showRating || !showReviews) ? (
+          {(!showAddress || !showEmail || !showRating || !showReviews) ? (
             <div style={{ marginBottom: '0.75rem', display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
               <span style={{ color: '#aaa', fontSize: '0.85rem' }}>Hidden columns:</span>
               {!showAddress ? <Button size="sm" variant="outline-light" onClick={() => setShowAddress(true)}>+ Address</Button> : null}
+              {!showEmail ? <Button size="sm" variant="outline-light" onClick={() => setShowEmail(true)}>+ Email</Button> : null}
               {!showRating ? <Button size="sm" variant="outline-light" onClick={() => setShowRating(true)}>+ Rating</Button> : null}
               {!showReviews ? <Button size="sm" variant="outline-light" onClick={() => setShowReviews(true)}>+ Reviews</Button> : null}
             </div>
@@ -321,6 +389,12 @@ const LeadScraper = () => {
                   <th>
                     Address
                     <button type="button" onClick={() => setShowAddress(false)} title="Hide Address column" style={columnToggleBtnStyle}>−</button>
+                  </th>
+                ) : null}
+                {showEmail ? (
+                  <th>
+                    Email
+                    <button type="button" onClick={() => setShowEmail(false)} title="Hide Email column" style={columnToggleBtnStyle}>−</button>
                   </th>
                 ) : null}
                 {showRating ? (
@@ -350,6 +424,11 @@ const LeadScraper = () => {
                   <td>{lead.name}</td>
                   <td>{lead.phone || '—'}</td>
                   {showAddress ? <td>{displayAddress(lead) || '—'}</td> : null}
+                  {showEmail ? (
+                    <td>
+                      {lead.email ? <a href={`mailto:${lead.email}`} className="text-white">{lead.email}</a> : '—'}
+                    </td>
+                  ) : null}
                   {showRating ? <td>{lead.rating || '—'}</td> : null}
                   {showReviews ? <td>{lead.reviews || '—'}</td> : null}
                 </tr>

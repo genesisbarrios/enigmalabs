@@ -4,6 +4,11 @@ const axios = require("axios");
 const router = express.Router();
 
 const API_KEY = process.env.GOOGLE_API_KEY;
+const CUSTOM_SEARCH_API_KEY = process.env.GOOGLE_CUSTOM_SEARCH_API_KEY || API_KEY;
+const CUSTOM_SEARCH_CX = process.env.GOOGLE_CUSTOM_SEARCH_CX;
+
+const PERSONAL_EMAIL_DOMAINS = ["gmail.com", "outlook.com", "hotmail.com", "yahoo.com", "icloud.com", "proton.me", "protonmail.com"];
+const EMAIL_REGEX = new RegExp(`[a-zA-Z0-9._%+-]+@(?:${PERSONAL_EMAIL_DOMAINS.map((d) => d.replace(".", "\\.")).join("|")})`, "i");
 
 // Get coordinates from city
 async function geocode(city) {
@@ -70,6 +75,49 @@ async function getDetails(placeId) {
 
   return response.data.result;
 }
+
+// Find a personal email for a business by searching its Instagram/Facebook bio
+async function findEmailForBusiness(name, city) {
+  const emailDomains = PERSONAL_EMAIL_DOMAINS.map((d) => `"@${d}"`).join(" OR ");
+  const q = `(site:instagram.com OR site:facebook.com) "${name}" ${city ? `"${city}"` : ""} (${emailDomains}) -"https://" -"www."`;
+
+  const response = await axios.get("https://www.googleapis.com/customsearch/v1", {
+    params: {
+      key: CUSTOM_SEARCH_API_KEY,
+      cx: CUSTOM_SEARCH_CX,
+      q,
+      num: 10
+    }
+  });
+
+  const items = response.data.items || [];
+  for (const item of items) {
+    const match = `${item.title || ""} ${item.snippet || ""}`.match(EMAIL_REGEX);
+    if (match) return match[0];
+  }
+
+  return null;
+}
+
+// POST /api/leads/enrich-email
+router.post("/enrich-email", async (req, res) => {
+  try {
+    if (!CUSTOM_SEARCH_CX) {
+      return res.status(500).json({ error: "Google Custom Search is not configured (missing GOOGLE_CUSTOM_SEARCH_CX)." });
+    }
+
+    const { name, city } = req.body;
+    if (!name) {
+      return res.status(400).json({ error: "A business name is required" });
+    }
+
+    const email = await findEmailForBusiness(name, city || "");
+    res.json({ email });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to search for an email" });
+  }
+});
 
 // POST /api/leads
 router.post("/", async (req, res) => {
