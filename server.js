@@ -17,6 +17,57 @@ let mongoServer = null;
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 const AGREEMENT_FROM_EMAIL = process.env.AGREEMENT_FROM_EMAIL || 'agreements@enigma-labs.com';
 const ADMIN_NOTIFICATION_EMAIL = 'info@enigma-labs.com';
+const SITE_URL = process.env.SITE_URL || 'https://enigma-labs.com';
+const CALENDAR_LINK = process.env.CALENDAR_LINK || '';
+if (!CALENDAR_LINK) {
+  console.warn('CALENDAR_LINK not set — mockup thank-you emails will omit the booking link.');
+}
+
+function buildMockupThankYouHtml(subscriber) {
+  const firstName = (subscriber.name || '').trim().split(' ')[0] || 'there';
+  const businessPhrase = subscriber.businessName
+    ? ` for <strong>${subscriber.businessName}</strong>`
+    : '';
+
+  return `
+    <div style="font-family: Arial, Helvetica, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #111;">
+      <h2 style="margin: 0 0 16px;">Thanks for signing up, ${firstName}!</h2>
+      <p style="line-height: 1.6;">
+        We received your request for a free website mockup${businessPhrase}. Our team is already
+        putting it together — the next step is a quick call to walk through it together.
+      </p>
+      ${CALENDAR_LINK ? `
+      <p style="text-align: center; margin: 32px 0;">
+        <a href="${CALENDAR_LINK}" style="background:#68FF00; color:#111; text-decoration:none; font-weight:bold; padding:12px 24px; border-radius:6px; display:inline-block;">
+          Book a time to review your mockup
+        </a>
+      </p>` : ''}
+      <p style="line-height: 1.6;">Talk soon,<br/>Gen Barrios<br/>Enigma Labs</p>
+      <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+        <img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" />
+      </div>
+    </div>
+  `;
+}
+
+async function sendMockupThankYouEmail(subscriber) {
+  if (!resend) {
+    console.warn('RESEND_API_KEY not set — skipping mockup thank-you email.');
+    return;
+  }
+  if (!subscriber.email) return;
+  try {
+    const { error } = await resend.emails.send({
+      from: AGREEMENT_FROM_EMAIL,
+      to: subscriber.email,
+      subject: 'Thanks for signing up — let\'s review your free mockup!',
+      html: buildMockupThankYouHtml(subscriber)
+    });
+    if (error) console.error('Could not send mockup thank-you email', error);
+  } catch (error) {
+    console.error('Could not send mockup thank-you email', error);
+  }
+}
 
 async function sendAdminNotification(subject, text) {
   if (!resend) {
@@ -331,14 +382,20 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       existing.freemockups = existing.freemockups || payload.freemockups;
       await existing.save();
 
-      if (isNewMockupSignup) await sendMockupSignupEmail(existing);
+      if (isNewMockupSignup) {
+        await sendMockupSignupEmail(existing);
+        await sendMockupThankYouEmail(existing);
+      }
       if (isNewWebInterest) await sendWebInterestEmail(existing);
 
       return res.status(200).json({ ok: true, subscriber: existing, message: 'Subscription updated.' });
     }
 
     const subscriber = await NewsletterSubscriber.create(payload);
-    if (subscriber.freemockups) await sendMockupSignupEmail(subscriber);
+    if (subscriber.freemockups) {
+      await sendMockupSignupEmail(subscriber);
+      await sendMockupThankYouEmail(subscriber);
+    }
     if (subscriber.web) await sendWebInterestEmail(subscriber);
 
     res.status(201).json({ ok: true, subscriber });
