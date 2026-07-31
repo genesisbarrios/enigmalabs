@@ -45,6 +45,7 @@ const Home = () => {
   const [mockupEmail, setMockupEmail] = useState("");
   const [mockupPhone, setMockupPhone] = useState("");
   const [mockupBusinessName, setMockupBusinessName] = useState("");
+  const [mockupCity, setMockupCity] = useState("");
   const [mockupSocialUrl, setMockupSocialUrl] = useState("");
   const [mockupGoogleBusinessUrl, setMockupGoogleBusinessUrl] = useState("");
   const [mockupMessage, setMockupMessage] = useState("");
@@ -285,6 +286,7 @@ const Home = () => {
       name: mockupName,
       phone: mockupPhone,
       businessName: mockupBusinessName,
+      city: mockupCity,
       socialUrl: mockupSocialUrl,
       googleBusinessUrl: mockupGoogleBusinessUrl,
       freemockups: true
@@ -656,8 +658,18 @@ const Home = () => {
                   ></input>
                   <input
                     type="text"
+                    name="city"
+                    placeholder="City (optional)"
+                    value={mockupCity}
+                    style={mockupGridInputStyle}
+                    onChange={(e) => {
+                      setMockupCity(e.target.value);
+                    }}
+                  ></input>
+                  <input
+                    type="text"
                     name="social-url"
-                    placeholder="Instagram/Facebook URL (optional)"
+                    placeholder="Instagram/Facebook handle (optional)"
                     value={mockupSocialUrl}
                     style={mockupGridInputStyle}
                     onChange={(e) => {

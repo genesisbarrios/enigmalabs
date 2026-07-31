@@ -1,7 +1,9 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row, Table } from 'react-bootstrap';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
+import LeadsTable, { type LeadsTableHandle } from './LeadsTable';
+import ImportLeadsForm from './ImportLeadsForm';
 
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 const ADMIN_PASSWORD = process.env.REACT_APP_ONBOARD_PW;
@@ -47,6 +49,9 @@ const LeadScraper = () => {
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginError, setLoginError] = useState('');
+
+  const leadsTableRef = useRef<LeadsTableHandle>(null);
+  const [savingLeads, setSavingLeads] = useState(false);
 
   const [niche, setNiche] = useState('');
   const [keyword, setKeyword] = useState('');
@@ -257,14 +262,42 @@ const LeadScraper = () => {
     XLSX.writeFile(workbook, 'leads.xlsx');
   };
 
+  const handleSaveAsLeads = async () => {
+    if (!leadsToExport.length) return;
+    setSavingLeads(true);
+    setError('');
+    setMessage('');
+    try {
+      const payload = leadsToExport.map((lead) => ({
+        name: lead.name,
+        phone: lead.phone,
+        email: lead.email || '',
+        website: lead.website || '',
+        city: reduceAddress(lead.address) || ''
+      }));
+      const response = await axios.post(`${API_BASE_URL}/crm/leads/save-from-scraper`, { leads: payload });
+      if (response.data?.ok) {
+        setMessage(`Saved ${response.data.created} new outbound lead${response.data.created === 1 ? '' : 's'} (${response.data.skipped} duplicate${response.data.skipped === 1 ? '' : 's'} skipped).`);
+        leadsTableRef.current?.reload();
+      } else {
+        setError(response.data?.message || 'Could not save leads.');
+      }
+    } catch (saveError) {
+      console.error(saveError);
+      setError('Could not save leads.');
+    } finally {
+      setSavingLeads(false);
+    }
+  };
+
   if (!isAuthenticated) {
     return (
       <Container style={{ paddingTop: '6rem', paddingBottom: '3rem', maxWidth: '500px' }}>
         <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b' }}>
           <Card.Body>
-            <h1 style={{ color: '#68FF00', marginBottom: '0.75rem' }}>Lead Scraper</h1>
+            <h1 style={{ color: '#68FF00', marginBottom: '0.75rem' }}>Leads</h1>
             <p style={{ color: '#d4d4d4', marginBottom: '1.25rem' }}>
-              Enter the admin password to search for leads.
+              Enter the admin password to view and search for leads.
             </p>
             {loginError ? <Alert variant="danger">{loginError}</Alert> : null}
             <Form onSubmit={handleLogin}>
@@ -282,7 +315,16 @@ const LeadScraper = () => {
 
   return (
     <Container style={{ paddingTop: '6rem', paddingBottom: '3rem', maxWidth: '1100px' }}>
-      <h1 style={{ color: '#68FF00', marginBottom: '0.5rem' }}>Lead Scraper</h1>
+      <h1 style={{ color: '#68FF00', marginBottom: '0.5rem' }}>Leads</h1>
+      <p style={{ color: '#d4d4d4', marginBottom: '1.5rem' }}>
+        Inbound leads come from the free mockup signup form. Outbound leads come from the lead scraper below or manual import.
+      </p>
+
+      <LeadsTable ref={leadsTableRef} />
+
+      <ImportLeadsForm onImported={() => leadsTableRef.current?.reload()} />
+
+      <h2 style={{ color: '#68FF00', marginTop: '2.5rem', marginBottom: '0.5rem' }}>Lead Scraper</h2>
       <p style={{ color: '#d4d4d4', marginBottom: '1.5rem' }}>
         Search Google Business listings for a niche and city. Only businesses without a website are returned.
       </p>
@@ -368,6 +410,9 @@ const LeadScraper = () => {
             </Button>
             <Button size="sm" variant="outline-success" onClick={handleEnrichAll} disabled={!leadsToExport.length || enriching}>
               {enriching ? `Enriching... (${enrichProgress.done}/${enrichProgress.total})` : `Enrich All with Email${selected.size > 0 ? ` (${selected.size} selected)` : ''}`}
+            </Button>
+            <Button size="sm" variant="success" onClick={handleSaveAsLeads} disabled={!leadsToExport.length || savingLeads}>
+              {savingLeads ? 'Saving...' : `Save as Leads${selected.size > 0 ? ` (${selected.size} selected)` : ''}`}
             </Button>
           </div>
 

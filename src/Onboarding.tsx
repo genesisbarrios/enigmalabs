@@ -447,17 +447,17 @@ const Onboarding = () => {
             <Row>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Control name="socialInstagram" value={formData.socialInstagram} onChange={handleChange} placeholder="Instagram URL" />
+                  <Form.Control name="socialInstagram" value={formData.socialInstagram} onChange={handleChange} placeholder="Instagram handle" />
                 </Form.Group>
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Control name="socialTiktok" value={formData.socialTiktok} onChange={handleChange} placeholder="TikTok URL" />
+                  <Form.Control name="socialTiktok" value={formData.socialTiktok} onChange={handleChange} placeholder="TikTok handle" />
                 </Form.Group>
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Control name="socialYoutube" value={formData.socialYoutube} onChange={handleChange} placeholder="YouTube URL" />
+                  <Form.Control name="socialYoutube" value={formData.socialYoutube} onChange={handleChange} placeholder="YouTube handle" />
                 </Form.Group>
               </Col>
               <Col md={6}>
@@ -467,7 +467,7 @@ const Onboarding = () => {
               </Col>
               <Col md={6}>
                 <Form.Group className="mb-3">
-                  <Form.Control name="socialTwitter" value={formData.socialTwitter} onChange={handleChange} placeholder="X / Twitter URL" />
+                  <Form.Control name="socialTwitter" value={formData.socialTwitter} onChange={handleChange} placeholder="X / Twitter handle" />
                 </Form.Group>
               </Col>
             </Row>

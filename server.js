@@ -23,6 +23,51 @@ if (!CALENDAR_LINK) {
   console.warn('CALENDAR_LINK not set — mockup thank-you emails will omit the booking link.');
 }
 
+// 1x1 transparent PNG used for email open tracking.
+const TRACKING_PIXEL = Buffer.from(
+  'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+  'base64'
+);
+
+function escapeRegex(value) {
+  return (value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+function trackedUrl(leadId, url) {
+  if (!url) return url;
+  return `${SITE_URL}/api/crm/leads/${leadId}/track/click?u=${encodeURIComponent(url)}`;
+}
+
+function trackingPixelTag(leadId) {
+  if (!leadId) return '';
+  return `<img src="${SITE_URL}/api/crm/leads/${leadId}/track/open" width="1" height="1" alt="" style="display:none;" />`;
+}
+
+// Shared HTML shell for lead/client outreach emails — keeps the Enigma Labs
+// logo and layout consistent across cold outreach, mockup review, onboarding,
+// and website review emails.
+function renderBrandedEmail({ greetingName, paragraphs, ctaLabel, ctaUrl, signOff, leadId }) {
+  const name = (greetingName || '').trim().split(' ')[0] || 'there';
+  const paragraphsHtml = paragraphs.map((p) => `<p style="line-height: 1.6;">${p}</p>`).join('\n');
+  return `
+    <div style="font-family: Arial, Helvetica, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #111;">
+      <h2 style="margin: 0 0 16px;">Hi ${name},</h2>
+      ${paragraphsHtml}
+      ${ctaUrl ? `
+      <p style="text-align: center; margin: 32px 0;">
+        <a href="${ctaUrl}" style="background:#68FF00; color:#111; text-decoration:none; font-weight:bold; padding:12px 24px; border-radius:6px; display:inline-block;">
+          ${ctaLabel || 'Learn more'}
+        </a>
+      </p>` : ''}
+      <p style="line-height: 1.6;">${signOff || 'Talk soon,<br/>Gen Barrios<br/>Enigma Labs'}</p>
+      <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+        <img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" />
+      </div>
+      ${trackingPixelTag(leadId)}
+    </div>
+  `;
+}
+
 function buildMockupThankYouHtml(subscriber) {
   const firstName = (subscriber.name || '').trim().split(' ')[0] || 'there';
   const businessPhrase = subscriber.businessName
@@ -101,6 +146,121 @@ async function sendWebInterestEmail(subscriber) {
   );
 }
 
+// ── Lead outreach emails ──
+
+function buildColdEmailHtml(lead) {
+  return renderBrandedEmail({
+    greetingName: lead.contactName || lead.businessName,
+    leadId: lead._id,
+    paragraphs: [
+      `I came across ${lead.businessName ? `<strong>${lead.businessName}</strong>` : 'your business'} and wanted to reach out — we're Enigma Labs, a web development studio that builds fast, modern websites for local businesses.`,
+      `If you don't have a website yet (or your current one could use an upgrade), we'd love to put together a completely free mockup so you can see exactly what's possible — no obligation at all.`,
+      `Just reply to this email, or book a quick call below and we'll get started.`
+    ],
+    ctaLabel: 'Book a quick call',
+    ctaUrl: trackedUrl(lead._id, CALENDAR_LINK)
+  });
+}
+
+function buildMockupReviewEmailHtml(lead) {
+  return renderBrandedEmail({
+    greetingName: lead.contactName || lead.businessName,
+    leadId: lead._id,
+    paragraphs: [
+      `Great news — we've finished your free website mockup${lead.businessName ? ` for <strong>${lead.businessName}</strong>` : ''}! We think you're going to love what we put together.`,
+      `Let's schedule a quick call to walk through it together and answer any questions you have.`
+    ],
+    ctaLabel: 'Schedule your mockup review',
+    ctaUrl: trackedUrl(lead._id, CALENDAR_LINK)
+  });
+}
+
+function buildOnboardingEmailHtml(lead) {
+  return renderBrandedEmail({
+    greetingName: lead.contactName || lead.businessName,
+    leadId: lead._id,
+    paragraphs: [
+      `We're excited to get started on your new website! The next step is filling out our quick onboarding form so we have everything we need — your branding, business details, and preferences.`
+    ],
+    ctaLabel: 'Start onboarding',
+    ctaUrl: trackedUrl(lead._id, `${SITE_URL}/onboard`)
+  });
+}
+
+async function sendLeadEmail(lead, { subject, buildHtml, statusField, statusAtField }) {
+  if (!resend) {
+    return { ok: false, message: 'RESEND_API_KEY not set — email delivery is not configured.' };
+  }
+  if (!lead.email) {
+    return { ok: false, message: 'This lead has no email address on file.' };
+  }
+  if (lead.declined) {
+    return { ok: false, message: 'This lead has been declined and can no longer be contacted.' };
+  }
+
+  try {
+    const { error } = await resend.emails.send({
+      from: AGREEMENT_FROM_EMAIL,
+      to: lead.email,
+      subject,
+      html: buildHtml(lead)
+    });
+    if (error) {
+      console.error('Could not send lead email', error);
+      return { ok: false, message: 'Failed to send the email.' };
+    }
+  } catch (error) {
+    console.error('Could not send lead email', error);
+    return { ok: false, message: 'Failed to send the email.' };
+  }
+
+  lead[statusField] = true;
+  lead[statusAtField] = new Date();
+  await lead.save();
+  return { ok: true, lead };
+}
+
+function buildWebsiteReviewEmailHtml(client) {
+  return renderBrandedEmail({
+    greetingName: client.name,
+    paragraphs: [
+      `Your new website${client.name ? ` for <strong>${client.name}</strong>` : ''} is complete! 🎉`,
+      `Feel free to explore it at your own pace — or if you'd like to walk through it together, schedule a quick review call below.`
+    ],
+    ctaLabel: 'Schedule a review call',
+    ctaUrl: CALENDAR_LINK
+  });
+}
+
+async function sendWebsiteReviewEmail(client) {
+  if (!resend) {
+    return { ok: false, message: 'RESEND_API_KEY not set — email delivery is not configured.' };
+  }
+  if (!client.email) {
+    return { ok: false, message: 'This client has no email address on file.' };
+  }
+
+  try {
+    const { error } = await resend.emails.send({
+      from: AGREEMENT_FROM_EMAIL,
+      to: client.email,
+      subject: 'Your new website is ready! 🎉',
+      html: buildWebsiteReviewEmailHtml(client)
+    });
+    if (error) {
+      console.error('Could not send website review email', error);
+      return { ok: false, message: 'Failed to send the email.' };
+    }
+  } catch (error) {
+    console.error('Could not send website review email', error);
+    return { ok: false, message: 'Failed to send the email.' };
+  }
+
+  client.websiteReviewSentAt = new Date();
+  await client.save();
+  return { ok: true, client };
+}
+
 async function sendAgreementEmails({ agreementId, clientName, clientEmail, pdfBuffer }) {
   if (!resend) {
     console.warn('RESEND_API_KEY not set — skipping agreement email delivery.');
@@ -169,6 +329,7 @@ const newsletterSubscriberSchema = new mongoose.Schema({
   businessName: String,
   socialUrl: String,
   googleBusinessUrl: String,
+  city: String,
   beats: Boolean,
   loops: Boolean,
   visuals: Boolean,
@@ -270,10 +431,88 @@ const websiteClientSchema = new mongoose.Schema({
     data: Buffer,
     mimeType: String
   },
+  websiteReviewSentAt: Date,
   createdAt: { type: Date, default: Date.now }
 });
 
 const WebsiteClient = mongoose.model('WebsiteClient', websiteClientSchema, 'websiteClients');
+
+const leadSchema = new mongoose.Schema({
+  businessName: String,
+  contactName: String,
+  email: String,
+  phone: String,
+  phoneNormalized: String,
+  instagram: String,
+  website: String,
+  city: String,
+  googleBusinessUrl: String,
+  // true when the lead came in through the public free-mockup signup form;
+  // false for anything sourced from the lead scraper or manual/file import.
+  inbound: { type: Boolean, default: false },
+  coldEmailSent: { type: Boolean, default: false },
+  coldEmailSentAt: Date,
+  mockupReviewSent: { type: Boolean, default: false },
+  mockupReviewSentAt: Date,
+  onboardingSent: { type: Boolean, default: false },
+  onboardingSentAt: Date,
+  opened: { type: Boolean, default: false },
+  openedAt: Date,
+  clicked: { type: Boolean, default: false },
+  clickedAt: Date,
+  responded: { type: Boolean, default: false },
+  respondedAt: Date,
+  declined: { type: Boolean, default: false },
+  declinedAt: Date,
+  createdAt: { type: Date, default: Date.now }
+});
+
+leadSchema.pre('save', function normalizePhoneBeforeSave(next) {
+  this.phoneNormalized = (this.phone || '').replace(/\D/g, '') || undefined;
+  next();
+});
+
+const Lead = mongoose.model('Lead', leadSchema, 'leads');
+
+async function findDuplicateLead({ email, phone }) {
+  const conditions = [];
+  if (email) conditions.push({ email: new RegExp(`^${escapeRegex(email.trim())}$`, 'i') });
+  const normalizedPhone = (phone || '').replace(/\D/g, '');
+  if (normalizedPhone) conditions.push({ phoneNormalized: normalizedPhone });
+  if (!conditions.length) return null;
+  return Lead.findOne({ $or: conditions });
+}
+
+async function upsertInboundLead({ businessName, contactName, email, phone, instagram, googleBusinessUrl, city }) {
+  try {
+    const existing = await findDuplicateLead({ email, phone });
+    if (existing) {
+      existing.inbound = true;
+      existing.businessName = businessName || existing.businessName;
+      existing.contactName = contactName || existing.contactName;
+      existing.instagram = instagram || existing.instagram;
+      existing.googleBusinessUrl = googleBusinessUrl || existing.googleBusinessUrl;
+      existing.city = city || existing.city;
+      existing.email = existing.email || email;
+      existing.phone = existing.phone || phone;
+      await existing.save();
+      return existing;
+    }
+    return await Lead.create({
+      businessName: businessName || '',
+      contactName: contactName || '',
+      email: email || '',
+      phone: phone || '',
+      instagram: instagram || '',
+      googleBusinessUrl: googleBusinessUrl || '',
+      city: city || '',
+      inbound: true
+    });
+  } catch (error) {
+    console.error('Could not upsert inbound lead', error);
+    return null;
+  }
+}
 
 async function ensureNewsletterSubscriber(email) {
   if (!email) return;
@@ -356,6 +595,7 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       businessName: req.body.businessName || '',
       socialUrl: req.body.socialUrl || '',
       googleBusinessUrl: req.body.googleBusinessUrl || '',
+      city: req.body.city || '',
       beats: Boolean(req.body.beats),
       loops: Boolean(req.body.loops),
       visuals: Boolean(req.body.visuals),
@@ -374,6 +614,7 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       existing.businessName = payload.businessName || existing.businessName;
       existing.socialUrl = payload.socialUrl || existing.socialUrl;
       existing.googleBusinessUrl = payload.googleBusinessUrl || existing.googleBusinessUrl;
+      existing.city = payload.city || existing.city;
       existing.beats = existing.beats || payload.beats;
       existing.loops = existing.loops || payload.loops;
       existing.visuals = existing.visuals || payload.visuals;
@@ -385,6 +626,15 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       if (isNewMockupSignup) {
         await sendMockupSignupEmail(existing);
         await sendMockupThankYouEmail(existing);
+        await upsertInboundLead({
+          businessName: existing.businessName,
+          contactName: existing.name,
+          email: existing.email,
+          phone: existing.phone,
+          instagram: existing.socialUrl,
+          googleBusinessUrl: existing.googleBusinessUrl,
+          city: existing.city
+        });
       }
       if (isNewWebInterest) await sendWebInterestEmail(existing);
 
@@ -395,6 +645,15 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
     if (subscriber.freemockups) {
       await sendMockupSignupEmail(subscriber);
       await sendMockupThankYouEmail(subscriber);
+      await upsertInboundLead({
+        businessName: subscriber.businessName,
+        contactName: subscriber.name,
+        email: subscriber.email,
+        phone: subscriber.phone,
+        instagram: subscriber.socialUrl,
+        googleBusinessUrl: subscriber.googleBusinessUrl,
+        city: subscriber.city
+      });
     }
     if (subscriber.web) await sendWebInterestEmail(subscriber);
 
@@ -593,6 +852,295 @@ app.delete('/api/website-clients/:id', async (req, res) => {
     console.error('Could not delete website client', error);
     res.status(500).json({ ok: false, message: 'Could not delete website client.' });
   }
+});
+
+app.post('/api/website-clients/send-review', async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body.ids) ? req.body.ids : [];
+    if (!ids.length) {
+      return res.status(400).json({ ok: false, message: 'At least one client id is required.' });
+    }
+
+    const clients = await WebsiteClient.find({ _id: { $in: ids } });
+    const results = [];
+    for (const client of clients) {
+      const result = await sendWebsiteReviewEmail(client);
+      results.push({ id: client._id, ok: result.ok, message: result.message });
+    }
+
+    const sentCount = results.filter((r) => r.ok).length;
+    res.json({ ok: true, sentCount, results });
+  } catch (error) {
+    console.error('Could not send website review emails', error);
+    res.status(500).json({ ok: false, message: 'Could not send website review emails.' });
+  }
+});
+
+// ── CRM Leads ──
+
+app.get('/api/crm/leads', async (_req, res) => {
+  try {
+    const leads = await Lead.find().sort({ createdAt: -1 });
+    res.json({ ok: true, leads });
+  } catch (error) {
+    console.error('Could not fetch leads', error);
+    res.status(500).json({ ok: false, message: 'Could not fetch leads.' });
+  }
+});
+
+app.post('/api/crm/leads', async (req, res) => {
+  try {
+    const { businessName, contactName, phone, instagram, email, website, city, coldEmailSent } = req.body;
+    if (!businessName && !email && !phone) {
+      return res.status(400).json({ ok: false, message: 'At least a business name, email, or phone is required.' });
+    }
+
+    const duplicate = await findDuplicateLead({ email, phone });
+    if (duplicate) {
+      return res.status(200).json({ ok: true, lead: duplicate, duplicate: true, message: 'A lead with this email or phone already exists — skipped.' });
+    }
+
+    const lead = await Lead.create({
+      businessName: businessName || '',
+      contactName: contactName || '',
+      phone: phone || '',
+      instagram: instagram || '',
+      email: email || '',
+      website: website || '',
+      city: city || '',
+      inbound: false,
+      coldEmailSent: Boolean(coldEmailSent),
+      coldEmailSentAt: coldEmailSent ? new Date() : undefined
+    });
+
+    res.status(201).json({ ok: true, lead });
+  } catch (error) {
+    console.error('Could not create lead', error);
+    res.status(500).json({ ok: false, message: 'Could not create lead.' });
+  }
+});
+
+app.post('/api/crm/leads/import-bulk', async (req, res) => {
+  try {
+    const rows = Array.isArray(req.body.leads) ? req.body.leads : [];
+    if (!rows.length) {
+      return res.status(400).json({ ok: false, message: 'No leads to import.' });
+    }
+
+    let created = 0;
+    let skipped = 0;
+    const createdLeads = [];
+
+    for (const row of rows) {
+      const businessName = row.businessName || '';
+      const email = row.email || '';
+      const phone = row.phone || '';
+      if (!businessName && !email && !phone) {
+        skipped += 1;
+        continue;
+      }
+
+      const duplicate = await findDuplicateLead({ email, phone });
+      if (duplicate) {
+        skipped += 1;
+        continue;
+      }
+
+      const lead = await Lead.create({
+        businessName,
+        contactName: row.contactName || '',
+        phone,
+        instagram: row.instagram || '',
+        email,
+        website: row.website || '',
+        city: row.city || '',
+        inbound: false,
+        coldEmailSent: Boolean(row.coldEmailSent),
+        coldEmailSentAt: row.coldEmailSent ? new Date() : undefined
+      });
+      createdLeads.push(lead);
+      created += 1;
+    }
+
+    res.status(201).json({ ok: true, created, skipped, leads: createdLeads });
+  } catch (error) {
+    console.error('Could not bulk import leads', error);
+    res.status(500).json({ ok: false, message: 'Could not import leads.' });
+  }
+});
+
+app.post('/api/crm/leads/save-from-scraper', async (req, res) => {
+  try {
+    const rows = Array.isArray(req.body.leads) ? req.body.leads : [];
+    if (!rows.length) {
+      return res.status(400).json({ ok: false, message: 'No leads to save.' });
+    }
+
+    let created = 0;
+    let skipped = 0;
+    const createdLeads = [];
+
+    for (const row of rows) {
+      const businessName = row.name || row.businessName || '';
+      const email = row.email || '';
+      const phone = row.phone || '';
+      if (!businessName && !email && !phone) {
+        skipped += 1;
+        continue;
+      }
+
+      const duplicate = await findDuplicateLead({ email, phone });
+      if (duplicate) {
+        skipped += 1;
+        continue;
+      }
+
+      const lead = await Lead.create({
+        businessName,
+        phone,
+        email,
+        website: row.website || '',
+        city: row.city || '',
+        inbound: false
+      });
+      createdLeads.push(lead);
+      created += 1;
+    }
+
+    res.status(201).json({ ok: true, created, skipped, leads: createdLeads });
+  } catch (error) {
+    console.error('Could not save scraped leads', error);
+    res.status(500).json({ ok: false, message: 'Could not save leads from the scraper.' });
+  }
+});
+
+app.patch('/api/crm/leads/:id/decline', async (req, res) => {
+  try {
+    const lead = await Lead.findById(req.params.id);
+    if (!lead) {
+      return res.status(404).json({ ok: false, message: 'Lead not found.' });
+    }
+    lead.declined = true;
+    lead.declinedAt = new Date();
+    await lead.save();
+    res.json({ ok: true, lead });
+  } catch (error) {
+    console.error('Could not decline lead', error);
+    res.status(500).json({ ok: false, message: 'Could not decline lead.' });
+  }
+});
+
+app.patch('/api/crm/leads/:id/respond', async (req, res) => {
+  try {
+    const lead = await Lead.findById(req.params.id);
+    if (!lead) {
+      return res.status(404).json({ ok: false, message: 'Lead not found.' });
+    }
+    lead.responded = Boolean(req.body.responded);
+    lead.respondedAt = lead.responded ? new Date() : null;
+    await lead.save();
+    res.json({ ok: true, lead });
+  } catch (error) {
+    console.error('Could not update lead response status', error);
+    res.status(500).json({ ok: false, message: 'Could not update lead.' });
+  }
+});
+
+app.delete('/api/crm/leads/:id', async (req, res) => {
+  try {
+    const deleted = await Lead.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ ok: false, message: 'Lead not found.' });
+    }
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Could not delete lead', error);
+    res.status(500).json({ ok: false, message: 'Could not delete lead.' });
+  }
+});
+
+app.post('/api/crm/leads/:id/send-cold-email', async (req, res) => {
+  try {
+    const lead = await Lead.findById(req.params.id);
+    if (!lead) {
+      return res.status(404).json({ ok: false, message: 'Lead not found.' });
+    }
+    if (lead.inbound) {
+      return res.status(400).json({ ok: false, message: 'Cold email is only for outbound leads.' });
+    }
+    const result = await sendLeadEmail(lead, {
+      subject: `A free website mockup for ${lead.businessName || 'your business'}`,
+      buildHtml: buildColdEmailHtml,
+      statusField: 'coldEmailSent',
+      statusAtField: 'coldEmailSentAt'
+    });
+    res.status(result.ok ? 200 : 400).json(result);
+  } catch (error) {
+    console.error('Could not send cold email', error);
+    res.status(500).json({ ok: false, message: 'Could not send cold email.' });
+  }
+});
+
+app.post('/api/crm/leads/:id/send-mockup-review', async (req, res) => {
+  try {
+    const lead = await Lead.findById(req.params.id);
+    if (!lead) {
+      return res.status(404).json({ ok: false, message: 'Lead not found.' });
+    }
+    const result = await sendLeadEmail(lead, {
+      subject: 'Your free website mockup is ready! 🎉',
+      buildHtml: buildMockupReviewEmailHtml,
+      statusField: 'mockupReviewSent',
+      statusAtField: 'mockupReviewSentAt'
+    });
+    res.status(result.ok ? 200 : 400).json(result);
+  } catch (error) {
+    console.error('Could not send mockup review email', error);
+    res.status(500).json({ ok: false, message: 'Could not send mockup review email.' });
+  }
+});
+
+app.post('/api/crm/leads/:id/send-onboarding', async (req, res) => {
+  try {
+    const lead = await Lead.findById(req.params.id);
+    if (!lead) {
+      return res.status(404).json({ ok: false, message: 'Lead not found.' });
+    }
+    const result = await sendLeadEmail(lead, {
+      subject: `Let's get started on your new website`,
+      buildHtml: buildOnboardingEmailHtml,
+      statusField: 'onboardingSent',
+      statusAtField: 'onboardingSentAt'
+    });
+    res.status(result.ok ? 200 : 400).json(result);
+  } catch (error) {
+    console.error('Could not send onboarding email', error);
+    res.status(500).json({ ok: false, message: 'Could not send onboarding email.' });
+  }
+});
+
+app.get('/api/crm/leads/:id/track/open', async (req, res) => {
+  try {
+    await Lead.findByIdAndUpdate(req.params.id, { opened: true, openedAt: new Date() });
+  } catch (error) {
+    console.error('Could not record email open', error);
+  }
+  res.setHeader('Content-Type', 'image/png');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.send(TRACKING_PIXEL);
+});
+
+app.get('/api/crm/leads/:id/track/click', async (req, res) => {
+  const target = typeof req.query.u === 'string' ? req.query.u : '';
+  try {
+    await Lead.findByIdAndUpdate(req.params.id, { clicked: true, clickedAt: new Date() });
+  } catch (error) {
+    console.error('Could not record link click', error);
+  }
+  if (!target) {
+    return res.redirect(302, SITE_URL);
+  }
+  res.redirect(302, target);
 });
 
 app.post('/api/onboarding/submit', uploadOnboardingFiles, async (req, res) => {

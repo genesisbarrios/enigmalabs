@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Button, Card, Container, Form, ListGroup, Table } from 'react-bootstrap';
+import { Alert, Badge, Button, Card, Container, Form, ListGroup, Table } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
+import LeadsTable from './LeadsTable';
 
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 const ADMIN_PASSWORD = process.env.REACT_APP_ONBOARD_PW;
@@ -74,6 +75,7 @@ type WebsiteClient = {
   businessType: string;
   website: string;
   logo?: { mimeType?: string } | null;
+  websiteReviewSentAt?: string | null;
   createdAt: string;
 };
 
@@ -126,6 +128,8 @@ const Admin = () => {
   const [websiteClientEditForm, setWebsiteClientEditForm] = useState(emptyWebsiteClientForm);
   const [showAddWebsiteClient, setShowAddWebsiteClient] = useState(false);
   const [newWebsiteClient, setNewWebsiteClient] = useState(emptyWebsiteClientForm);
+  const [selectedWebsiteClientIds, setSelectedWebsiteClientIds] = useState<Set<string>>(new Set());
+  const [sendingReview, setSendingReview] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [planFilter, setPlanFilter] = useState<'all' | Agreement['planType']>('all');
@@ -205,8 +209,6 @@ const Admin = () => {
       (client.address || '').toLowerCase().includes(q)
     );
   }, [websiteClients, searchQuery]);
-
-  const mockupSignups = useMemo(() => subscribers.filter((subscriber) => subscriber.freemockups), [subscribers]);
 
   const filteredAgreements = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -321,6 +323,45 @@ const Admin = () => {
     }
   };
 
+  const toggleWebsiteClientSelected = (clientId: string) => {
+    setSelectedWebsiteClientIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(clientId)) next.delete(clientId);
+      else next.add(clientId);
+      return next;
+    });
+  };
+
+  const toggleSelectAllWebsiteClients = () => {
+    if (selectedWebsiteClientIds.size === filteredWebsiteClients.length) {
+      setSelectedWebsiteClientIds(new Set());
+    } else {
+      setSelectedWebsiteClientIds(new Set(filteredWebsiteClients.map((client) => client._id)));
+    }
+  };
+
+  const handleSendWebsiteReview = async (clientIds: string[]) => {
+    if (!clientIds.length) return;
+    setSendingReview(true);
+    setMessage('');
+    setError('');
+    try {
+      const response = await axios.post(`${API_BASE_URL}/website-clients/send-review`, { ids: clientIds });
+      if (response.data?.ok) {
+        setMessage(`Sent website review email to ${response.data.sentCount} of ${clientIds.length} client${clientIds.length === 1 ? '' : 's'}.`);
+        setSelectedWebsiteClientIds(new Set());
+        fetchWebsiteClients();
+      } else {
+        setError(response.data?.message || 'Could not send website review emails.');
+      }
+    } catch (sendError) {
+      console.error(sendError);
+      setError('Could not send website review emails.');
+    } finally {
+      setSendingReview(false);
+    }
+  };
+
   const handleAddWebsiteClient = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!newWebsiteClient.name || !newWebsiteClient.email) {
@@ -421,7 +462,7 @@ const Admin = () => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
         <h1 style={{ color: '#68FF00', margin: 0 }}>Admin</h1>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-          <Button variant="outline-success" onClick={() => navigate('/admin/leads')}>Lead Scraper →</Button>
+          <Button variant="outline-success" onClick={() => navigate('/admin/leads')}>Leads →</Button>
         </div>
       </div>
       <p style={{ color: '#d4d4d4', marginBottom: '1.5rem' }}>
@@ -595,6 +636,22 @@ const Admin = () => {
 
       {!loadingWebsiteClients && filteredWebsiteClients.length === 0 ? <Alert variant="secondary">No website clients match.</Alert> : null}
 
+      {!loadingWebsiteClients && filteredWebsiteClients.length > 0 ? (
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem', alignItems: 'center' }}>
+          <Button size="sm" variant="outline-light" onClick={toggleSelectAllWebsiteClients}>
+            {selectedWebsiteClientIds.size === filteredWebsiteClients.length ? 'Deselect All' : 'Select All'}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline-success"
+            disabled={selectedWebsiteClientIds.size === 0 || sendingReview}
+            onClick={() => handleSendWebsiteReview(Array.from(selectedWebsiteClientIds))}
+          >
+            {sendingReview ? 'Sending...' : `Send Website Review${selectedWebsiteClientIds.size > 0 ? ` (${selectedWebsiteClientIds.size} selected)` : ''}`}
+          </Button>
+        </div>
+      ) : null}
+
       {filteredWebsiteClients.map((client) => {
         const isEditing = editingWebsiteClientId === client._id;
 
@@ -650,6 +707,12 @@ const Admin = () => {
               flexWrap: 'wrap'
             }}
           >
+            <Form.Check
+              type="checkbox"
+              checked={selectedWebsiteClientIds.has(client._id)}
+              onChange={() => toggleWebsiteClientSelected(client._id)}
+              style={{ flexShrink: 0 }}
+            />
             {client.logo?.mimeType ? (
               <img
                 src={`${API_BASE_URL}/website-clients/${client._id}/logo`}
@@ -667,7 +730,13 @@ const Admin = () => {
             </div>
             <div style={{ flex: '1 1 130px', fontSize: '0.85rem', color: '#ccc' }}>{client.businessType || '—'}</div>
             <div style={{ flex: '1 1 160px', fontSize: '0.85rem', color: '#ccc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{client.website || '—'}</div>
+            {client.websiteReviewSentAt ? (
+              <Badge bg="success" style={{ flexShrink: 0 }}>Review Sent</Badge>
+            ) : null}
             <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+              <Button size="sm" variant="outline-success" disabled={sendingReview} onClick={() => handleSendWebsiteReview([client._id])}>
+                Send Website Review
+              </Button>
               <Button size="sm" variant="outline-light" onClick={() => handleStartEditWebsiteClient(client)}>Edit</Button>
               <Button size="sm" variant="outline-danger" onClick={() => handleDeleteWebsiteClient(client._id)}>Delete</Button>
             </div>
@@ -764,51 +833,11 @@ const Admin = () => {
         </Table>
       ) : null}
 
-      <h2 style={{ color: '#68FF00', marginTop: '2.5rem', marginBottom: '1rem' }}>Free Mockup Signups</h2>
+      <h2 style={{ color: '#68FF00', marginTop: '2.5rem', marginBottom: '1rem' }}>Leads</h2>
       <p style={{ color: '#d4d4d4', marginBottom: '1rem' }}>
-        {mockupSignups.length} free mockup signup{mockupSignups.length === 1 ? '' : 's'}.
+        Inbound leads come from the free mockup signup form. Outbound leads come from the lead scraper or manual import.
       </p>
-
-      {loadingSubscribers ? <p>Loading signups...</p> : null}
-
-      {!loadingSubscribers && mockupSignups.length === 0 ? <Alert variant="secondary">No free mockup signups yet.</Alert> : null}
-
-      {!loadingSubscribers && mockupSignups.length > 0 ? (
-        <Table striped bordered hover variant="dark" responsive>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Email</th>
-              <th>Phone</th>
-              <th>Business Name</th>
-              <th>Instagram/Facebook</th>
-              <th>Google Business</th>
-              <th>Signed Up At</th>
-            </tr>
-          </thead>
-          <tbody>
-            {mockupSignups.map((subscriber) => (
-              <tr key={subscriber._id}>
-                <td>{subscriber.name || '—'}</td>
-                <td>{subscriber.email}</td>
-                <td>{subscriber.phone || '—'}</td>
-                <td>{subscriber.businessName || '—'}</td>
-                <td>
-                  {subscriber.socialUrl ? (
-                    <a href={subscriber.socialUrl} target="_blank" rel="noreferrer" className="text-white">{subscriber.socialUrl}</a>
-                  ) : '—'}
-                </td>
-                <td>
-                  {subscriber.googleBusinessUrl ? (
-                    <a href={subscriber.googleBusinessUrl} target="_blank" rel="noreferrer" className="text-white">{subscriber.googleBusinessUrl}</a>
-                  ) : '—'}
-                </td>
-                <td>{new Date(subscriber.createdAt).toLocaleString()}</td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      ) : null}
+      <LeadsTable />
     </Container>
   );
 };
