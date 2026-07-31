@@ -259,7 +259,7 @@ const Onboarding = () => {
               <Col md={6}>
                 <Form.Group className="mb-3">
                   <Form.Label>Business Type</Form.Label>
-                  <Form.Control name="businessType" value={formData.businessType} onChange={handleChange} placeholder="e.g. boutique, agency, creator, SaaS" />
+                  <Form.Control name="businessType" value={formData.businessType} onChange={handleChange} placeholder="e.g. Restaurant, Plumber, Photographer" />
                 </Form.Group>
               </Col>
             </Row>
