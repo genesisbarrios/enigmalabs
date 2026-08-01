@@ -230,7 +230,9 @@ async function parseFileLeads(file: File): Promise<ParsedLead[]> {
 }
 
 const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
-  const [showForm, setShowForm] = useState(false);
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [showPasteForm, setShowPasteForm] = useState(false);
+  const [showFileForm, setShowFileForm] = useState(false);
   const [manualForm, setManualForm] = useState<ParsedLead>(emptyManualForm);
   const [pasteText, setPasteText] = useState('');
   const [previewLeads, setPreviewLeads] = useState<ParsedLead[]>([]);
@@ -322,147 +324,144 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
   return (
     <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', marginBottom: '1.5rem' }}>
       <Card.Body>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: showForm ? '1rem' : 0 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
           <h4 style={{ margin: 0 }}>Import Contacts</h4>
-          <Button size="sm" variant={showForm ? 'outline-light' : 'success'} onClick={() => setShowForm((prev) => !prev)}>
-            {showForm ? 'Cancel' : '+ Import Contacts'}
-          </Button>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <Button size="sm" variant={showAddForm ? 'outline-light' : 'success'} onClick={() => setShowAddForm((prev) => !prev)}>
+              {showAddForm ? 'Cancel' : '+ Add Contacts'}
+            </Button>
+            <Button size="sm" variant={showPasteForm ? 'outline-light' : 'success'} onClick={() => setShowPasteForm((prev) => !prev)}>
+              {showPasteForm ? 'Cancel' : '+ Paste Contacts'}
+            </Button>
+            <Button size="sm" variant={showFileForm ? 'outline-light' : 'success'} onClick={() => setShowFileForm((prev) => !prev)}>
+              {showFileForm ? 'Cancel' : '+ Import File'}
+            </Button>
+          </div>
         </div>
 
-        {!showForm ? (
-          <>
-            {message ? <Alert variant="success" onClose={() => setMessage('')} dismissible className="mt-3">{message}</Alert> : null}
-            {error ? <Alert variant="danger" onClose={() => setError('')} dismissible className="mt-3">{error}</Alert> : null}
-          </>
+        {message ? <Alert variant="success" onClose={() => setMessage('')} dismissible className="mt-3">{message}</Alert> : null}
+        {error ? <Alert variant="danger" onClose={() => setError('')} dismissible className="mt-3">{error}</Alert> : null}
+
+        {showAddForm ? (
+          <Form onSubmit={handleAddSingle} className="mt-3 mb-4">
+            <Row>
+              <Col md={6} lg={4}>
+                <Form.Group className="mb-2">
+                  <Form.Label>Business Name</Form.Label>
+                  <Form.Control value={manualForm.businessName} onChange={(e) => setManualForm({ ...manualForm, businessName: e.target.value })} />
+                </Form.Group>
+              </Col>
+              <Col md={6} lg={3}>
+                <Form.Group className="mb-2">
+                  <Form.Label>Contact / Owner Name</Form.Label>
+                  <Form.Control value={manualForm.contactName} onChange={(e) => setManualForm({ ...manualForm, contactName: e.target.value })} />
+                </Form.Group>
+              </Col>
+              <Col md={6} lg={2}>
+                <Form.Group className="mb-2">
+                  <Form.Label>Phone</Form.Label>
+                  <Form.Control value={manualForm.phone} onChange={(e) => setManualForm({ ...manualForm, phone: e.target.value })} />
+                </Form.Group>
+              </Col>
+              <Col md={6} lg={3}>
+                <Form.Group className="mb-2">
+                  <Form.Label>Instagram</Form.Label>
+                  <Form.Control
+                    value={manualForm.instagram}
+                    onChange={(e) => setManualForm({ ...manualForm, instagram: e.target.value, instagramNotFound: false })}
+                    placeholder="@handle or URL"
+                    disabled={manualForm.instagramNotFound}
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6} lg={3}>
+                <Form.Group className="mb-2">
+                  <Form.Label>Email</Form.Label>
+                  <Form.Control type="email" value={manualForm.email} onChange={(e) => setManualForm({ ...manualForm, email: e.target.value })} />
+                </Form.Group>
+              </Col>
+              <Col md={6} lg={4}>
+                <Form.Group className="mb-2">
+                  <Form.Label>Website URL</Form.Label>
+                  <Form.Control value={manualForm.website} onChange={(e) => setManualForm({ ...manualForm, website: e.target.value })} placeholder="https://..." />
+                </Form.Group>
+              </Col>
+              <Col md={6} lg={3}>
+                <Form.Group className="mb-2">
+                  <Form.Label>City</Form.Label>
+                  <Form.Control value={manualForm.city} onChange={(e) => setManualForm({ ...manualForm, city: e.target.value })} placeholder="e.g. Miami, FL" />
+                </Form.Group>
+              </Col>
+              <Col md={6} lg={3}>
+                <Form.Group className="mb-2">
+                  <Form.Label>Industry</Form.Label>
+                  <Form.Control value={manualForm.industry} onChange={(e) => setManualForm({ ...manualForm, industry: e.target.value })} placeholder="e.g. Landscaping" />
+                </Form.Group>
+              </Col>
+              <Col md={12} lg={5}>
+                <Form.Group className="mb-2">
+                  <Form.Label>Comments</Form.Label>
+                  <Form.Control value={manualForm.notes} onChange={(e) => setManualForm({ ...manualForm, notes: e.target.value })} placeholder="e.g. left voicemail, call back Friday" />
+                </Form.Group>
+              </Col>
+            </Row>
+            <Row>
+              <Col xs={12} sm={6} lg={3}>
+                <Form.Check
+                  type="checkbox"
+                  label="Cold email already sent"
+                  checked={manualForm.coldEmailSent}
+                  onChange={(e) => setManualForm({ ...manualForm, coldEmailSent: e.target.checked })}
+                  className="mb-2"
+                  style={{ whiteSpace: 'nowrap' }}
+                />
+              </Col>
+              <Col xs={12} sm={6} lg={3}>
+                <Form.Check
+                  type="checkbox"
+                  label="Cold DM already sent"
+                  checked={manualForm.dmSent}
+                  onChange={(e) => setManualForm({ ...manualForm, dmSent: e.target.checked })}
+                  className="mb-2"
+                  style={{ whiteSpace: 'nowrap' }}
+                />
+              </Col>
+              <Col xs={12} sm={6} lg={3}>
+                <Form.Check
+                  type="checkbox"
+                  label="Already called"
+                  checked={manualForm.called}
+                  onChange={(e) => setManualForm({ ...manualForm, called: e.target.checked })}
+                  className="mb-2"
+                  style={{ whiteSpace: 'nowrap' }}
+                />
+              </Col>
+              <Col xs={12} sm={6} lg={3}>
+                <Form.Check
+                  type="checkbox"
+                  label="No Instagram found"
+                  checked={manualForm.instagramNotFound}
+                  onChange={(e) => setManualForm({ ...manualForm, instagramNotFound: e.target.checked, instagram: e.target.checked ? '' : manualForm.instagram })}
+                  className="mb-2"
+                  style={{ whiteSpace: 'nowrap' }}
+                />
+              </Col>
+            </Row>
+            <Button type="submit" variant="success" size="sm" disabled={saving}>
+              + Add Lead
+            </Button>
+          </Form>
         ) : null}
 
-        {showForm ? (
-          <>
-        {message ? <Alert variant="success" onClose={() => setMessage('')} dismissible>{message}</Alert> : null}
-        {error ? <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert> : null}
-
-        <Form onSubmit={handleAddSingle} className="mb-4">
-          <Row>
-            <Col md={6} lg={4}>
-              <Form.Group className="mb-2">
-                <Form.Label>Business Name</Form.Label>
-                <Form.Control value={manualForm.businessName} onChange={(e) => setManualForm({ ...manualForm, businessName: e.target.value })} />
-              </Form.Group>
-            </Col>
-            <Col md={6} lg={3}>
-              <Form.Group className="mb-2">
-                <Form.Label>Contact / Owner Name</Form.Label>
-                <Form.Control value={manualForm.contactName} onChange={(e) => setManualForm({ ...manualForm, contactName: e.target.value })} />
-              </Form.Group>
-            </Col>
-            <Col md={6} lg={2}>
-              <Form.Group className="mb-2">
-                <Form.Label>Phone</Form.Label>
-                <Form.Control value={manualForm.phone} onChange={(e) => setManualForm({ ...manualForm, phone: e.target.value })} />
-              </Form.Group>
-            </Col>
-            <Col md={6} lg={3}>
-              <Form.Group className="mb-2">
-                <Form.Label>Instagram</Form.Label>
-                <Form.Control
-                  value={manualForm.instagram}
-                  onChange={(e) => setManualForm({ ...manualForm, instagram: e.target.value, instagramNotFound: false })}
-                  placeholder="@handle or URL"
-                  disabled={manualForm.instagramNotFound}
-                />
-              </Form.Group>
-            </Col>
-            <Col md={6} lg={3}>
-              <Form.Group className="mb-2">
-                <Form.Label>Email</Form.Label>
-                <Form.Control type="email" value={manualForm.email} onChange={(e) => setManualForm({ ...manualForm, email: e.target.value })} />
-              </Form.Group>
-            </Col>
-            <Col md={6} lg={4}>
-              <Form.Group className="mb-2">
-                <Form.Label>Website URL</Form.Label>
-                <Form.Control value={manualForm.website} onChange={(e) => setManualForm({ ...manualForm, website: e.target.value })} placeholder="https://..." />
-              </Form.Group>
-            </Col>
-            <Col md={6} lg={3}>
-              <Form.Group className="mb-2">
-                <Form.Label>City</Form.Label>
-                <Form.Control value={manualForm.city} onChange={(e) => setManualForm({ ...manualForm, city: e.target.value })} placeholder="e.g. Miami, FL" />
-              </Form.Group>
-            </Col>
-            <Col md={6} lg={3}>
-              <Form.Group className="mb-2">
-                <Form.Label>Industry</Form.Label>
-                <Form.Control value={manualForm.industry} onChange={(e) => setManualForm({ ...manualForm, industry: e.target.value })} placeholder="e.g. Landscaping" />
-              </Form.Group>
-            </Col>
-            <Col md={12} lg={5}>
-              <Form.Group className="mb-2">
-                <Form.Label>Comments</Form.Label>
-                <Form.Control value={manualForm.notes} onChange={(e) => setManualForm({ ...manualForm, notes: e.target.value })} placeholder="e.g. left voicemail, call back Friday" />
-              </Form.Group>
-            </Col>
-          </Row>
-          <Row>
-            <Col xs={12} sm={6} lg={3}>
-              <Form.Check
-                type="checkbox"
-                label="Cold email already sent"
-                checked={manualForm.coldEmailSent}
-                onChange={(e) => setManualForm({ ...manualForm, coldEmailSent: e.target.checked })}
-                className="mb-2"
-                style={{ whiteSpace: 'nowrap' }}
-              />
-            </Col>
-            <Col xs={12} sm={6} lg={3}>
-              <Form.Check
-                type="checkbox"
-                label="Cold DM already sent"
-                checked={manualForm.dmSent}
-                onChange={(e) => setManualForm({ ...manualForm, dmSent: e.target.checked })}
-                className="mb-2"
-                style={{ whiteSpace: 'nowrap' }}
-              />
-            </Col>
-            <Col xs={12} sm={6} lg={3}>
-              <Form.Check
-                type="checkbox"
-                label="Already called"
-                checked={manualForm.called}
-                onChange={(e) => setManualForm({ ...manualForm, called: e.target.checked })}
-                className="mb-2"
-                style={{ whiteSpace: 'nowrap' }}
-              />
-            </Col>
-            <Col xs={12} sm={6} lg={3}>
-              <Form.Check
-                type="checkbox"
-                label="No Instagram found"
-                checked={manualForm.instagramNotFound}
-                onChange={(e) => setManualForm({ ...manualForm, instagramNotFound: e.target.checked, instagram: e.target.checked ? '' : manualForm.instagram })}
-                className="mb-2"
-                style={{ whiteSpace: 'nowrap' }}
-              />
-            </Col>
-          </Row>
-          <Button type="submit" variant="success" size="sm" disabled={saving}>
-            + Add Lead
-          </Button>
-        </Form>
-
-        <hr style={{ borderColor: '#2b2b2b' }} />
-
-        <p style={{ color: '#d4d4d4', marginTop: '1rem' }}>
-          Or paste rows (with a header row — one contact per line, tab or comma separated) or import a CSV/XLSX file. Recognized
-          columns: Name/Business, Name(Owner)/Contact, Phone, Instagram/IG, Email, Website/URL, City/Location, Industry/Category,
-          Comment/Notes, DM, Called, and Decline. "-" and blank cells are treated as empty; any mark in a DM/Called/Decline column
-          is read as "yes." If your file has two "Email" columns (a real address plus a sent/not-sent tracker), the one containing
-          an actual address is used as the email and the other is read as "cold email sent." Pasting without a header row falls
-          back to best-effort detection, which can't capture Industry or Comments — include the header row from your sheet to get
-          everything.
-        </p>
-        <Row>
-          <Col md={8}>
+        {showPasteForm ? (
+          <div className="mt-3 mb-4">
+            <p style={{ color: '#d4d4d4' }}>
+              Paste rows with a header row — one contact per line, tab or comma separated. Recognized columns: Name/Business,
+              Name(Owner)/Contact, Phone, Instagram/IG, Email, Website/URL, City/Location, Industry/Category, Comment/Notes, DM,
+              Called, and Decline. "-" and blank cells are treated as empty; any mark in a DM/Called/Decline column is read as
+              "yes." A bare "-" in the Instagram column means "already searched, not found." Pasting without a header row falls
+              back to best-effort detection, which can't capture Industry or Comments.
+            </p>
             <Form.Control
               as="textarea"
               rows={4}
@@ -473,12 +472,21 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
             <Button size="sm" variant="outline-light" className="mt-2" onClick={handleParsePaste} disabled={!pasteText.trim()}>
               Detect Leads From Pasted Text
             </Button>
-          </Col>
-          <Col md={4}>
-            <Form.Label>Or import a file</Form.Label>
+          </div>
+        ) : null}
+
+        {showFileForm ? (
+          <div className="mt-3 mb-4">
+            <p style={{ color: '#d4d4d4' }}>
+              Import a CSV or XLSX file. Recognized columns: Name/Business, Name(Owner)/Contact, Phone, Instagram/IG, Email,
+              Website/URL, City/Location, Industry/Category, Comment/Notes, DM, Called, and Decline. "-" and blank cells are
+              treated as empty; any mark in a DM/Called/Decline column is read as "yes." A bare "-" in the Instagram column means
+              "already searched, not found." If your file has two "Email" columns (a real address plus a sent/not-sent tracker),
+              the one containing an actual address is used as the email and the other is read as "cold email sent."
+            </p>
             <Form.Control type="file" accept=".csv,.xlsx,.xls" onChange={handleFileChange} />
-          </Col>
-        </Row>
+          </div>
+        ) : null}
 
         {previewLeads.length > 0 ? (
           <div style={{ marginTop: '1.25rem' }}>
@@ -529,8 +537,6 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
               </Button>
             </div>
           </div>
-        ) : null}
-          </>
         ) : null}
       </Card.Body>
     </Card>
