@@ -326,6 +326,13 @@ const Home = () => {
   const newsletterSectionStyle = {
     width: "100%",
     padding: "3rem 0 5rem",
+    marginBottom: "4rem",
+    alignItems: "stretch"
+  };
+
+  const mockupSectionStyle = {
+    width: "100%",
+    padding: "4rem 0",
     alignItems: "stretch"
   };
 
@@ -540,13 +547,13 @@ const Home = () => {
             </Col>
         </Row>
 
-        <Row style={{ ...newsletterSectionStyle, justifyContent: "center" }}>
+        <Row style={{ ...mockupSectionStyle, justifyContent: "center" }}>
           <Col xs={12} md={8} style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
             <div style={{ ...newsletterCardStyle, maxWidth: "600px" }}>
               <form style={{ textAlign: "center", width: "100%", maxWidth: "560px", margin: "0 auto" }}>
                 <h3 style={{ color: "#68FF00", marginBottom: "0.25rem" }}>Get a Free Website Mockup 🖥️</h3>
                 <p style={{ color: "#aaa", fontSize: "0.9rem", marginBottom: "1.5rem" }}>
-                  No commitment. We'll design a free mockup for your business.
+                 We'll design a free mockup for your business.
                 </p>
                 <div style={mockupFieldGridStyle}>
                   <input
