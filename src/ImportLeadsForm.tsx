@@ -230,6 +230,7 @@ async function parseFileLeads(file: File): Promise<ParsedLead[]> {
 }
 
 const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
+  const [showForm, setShowForm] = useState(false);
   const [manualForm, setManualForm] = useState<ParsedLead>(emptyManualForm);
   const [pasteText, setPasteText] = useState('');
   const [previewLeads, setPreviewLeads] = useState<ParsedLead[]>([]);
@@ -321,8 +322,22 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
   return (
     <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', marginBottom: '1.5rem' }}>
       <Card.Body>
-        <h4 style={{ marginBottom: '1rem' }}>Import Contacts</h4>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: showForm ? '1rem' : 0 }}>
+          <h4 style={{ margin: 0 }}>Import Contacts</h4>
+          <Button size="sm" variant={showForm ? 'outline-light' : 'success'} onClick={() => setShowForm((prev) => !prev)}>
+            {showForm ? 'Cancel' : '+ Import Contacts'}
+          </Button>
+        </div>
 
+        {!showForm ? (
+          <>
+            {message ? <Alert variant="success" onClose={() => setMessage('')} dismissible className="mt-3">{message}</Alert> : null}
+            {error ? <Alert variant="danger" onClose={() => setError('')} dismissible className="mt-3">{error}</Alert> : null}
+          </>
+        ) : null}
+
+        {showForm ? (
+          <>
         {message ? <Alert variant="success" onClose={() => setMessage('')} dismissible>{message}</Alert> : null}
         {error ? <Alert variant="danger" onClose={() => setError('')} dismissible>{error}</Alert> : null}
 
@@ -514,6 +529,8 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
               </Button>
             </div>
           </div>
+        ) : null}
+          </>
         ) : null}
       </Card.Body>
     </Card>
