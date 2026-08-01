@@ -33,20 +33,22 @@ function escapeRegex(value) {
   return (value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-function trackedUrl(leadId, url) {
+function trackedUrl(leadId, url, type) {
   if (!url) return url;
-  return `${SITE_URL}/api/crm/leads/${leadId}/track/click?u=${encodeURIComponent(url)}`;
+  const typeParam = type ? `&type=${encodeURIComponent(type)}` : '';
+  return `${SITE_URL}/api/crm/leads/${leadId}/track/click?u=${encodeURIComponent(url)}${typeParam}`;
 }
 
-function trackingPixelTag(leadId) {
+function trackingPixelTag(leadId, type) {
   if (!leadId) return '';
-  return `<img src="${SITE_URL}/api/crm/leads/${leadId}/track/open" width="1" height="1" alt="" style="display:none;" />`;
+  const typeParam = type ? `?type=${encodeURIComponent(type)}` : '';
+  return `<img src="${SITE_URL}/api/crm/leads/${leadId}/track/open${typeParam}" width="1" height="1" alt="" style="display:none;" />`;
 }
 
 // Shared HTML shell for lead/client outreach emails — keeps the Enigma Labs
 // logo and layout consistent across cold outreach, mockup review, onboarding,
 // and website review emails.
-function renderBrandedEmail({ greetingName, paragraphs, ctaLabel, ctaUrl, signOff, leadId }) {
+function renderBrandedEmail({ greetingName, paragraphs, ctaLabel, ctaUrl, signOff, leadId, type }) {
   const name = (greetingName || '').trim().split(' ')[0] || 'there';
   const paragraphsHtml = paragraphs.map((p) => `<p style="line-height: 1.6;">${p}</p>`).join('\n');
   return `
@@ -63,7 +65,7 @@ function renderBrandedEmail({ greetingName, paragraphs, ctaLabel, ctaUrl, signOf
       <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
         <img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" />
       </div>
-      ${trackingPixelTag(leadId)}
+      ${trackingPixelTag(leadId, type)}
     </div>
   `;
 }
@@ -152,13 +154,14 @@ function buildColdEmailHtml(lead) {
   return renderBrandedEmail({
     greetingName: lead.contactName || lead.businessName,
     leadId: lead._id,
+    type: 'cold',
     paragraphs: [
       `I came across ${lead.businessName ? `<strong>${lead.businessName}</strong>` : 'your business'} and wanted to reach out — we're Enigma Labs, a web development studio that builds fast, modern websites for local businesses.`,
       `If you don't have a website yet (or your current one could use an upgrade), we'd love to put together a completely free mockup so you can see exactly what's possible — no obligation at all.`,
       `Just reply to this email, or book a quick call below and we'll get started.`
     ],
     ctaLabel: 'Book a quick call',
-    ctaUrl: trackedUrl(lead._id, CALENDAR_LINK)
+    ctaUrl: trackedUrl(lead._id, CALENDAR_LINK, 'cold')
   });
 }
 
@@ -166,12 +169,13 @@ function buildMockupReviewEmailHtml(lead) {
   return renderBrandedEmail({
     greetingName: lead.contactName || lead.businessName,
     leadId: lead._id,
+    type: 'mockupReview',
     paragraphs: [
       `Great news — we've finished your free website mockup${lead.businessName ? ` for <strong>${lead.businessName}</strong>` : ''}! We think you're going to love what we put together.`,
       `Let's schedule a quick call to walk through it together and answer any questions you have.`
     ],
     ctaLabel: 'Schedule your mockup review',
-    ctaUrl: trackedUrl(lead._id, CALENDAR_LINK)
+    ctaUrl: trackedUrl(lead._id, CALENDAR_LINK, 'mockupReview')
   });
 }
 
@@ -179,15 +183,16 @@ function buildOnboardingEmailHtml(lead) {
   return renderBrandedEmail({
     greetingName: lead.contactName || lead.businessName,
     leadId: lead._id,
+    type: 'onboarding',
     paragraphs: [
       `We're excited to get started on your new website! The next step is filling out our quick onboarding form so we have everything we need — your branding, business details, and preferences.`
     ],
     ctaLabel: 'Start onboarding',
-    ctaUrl: trackedUrl(lead._id, `${SITE_URL}/onboard`)
+    ctaUrl: trackedUrl(lead._id, `${SITE_URL}/onboard`, 'onboarding')
   });
 }
 
-async function sendLeadEmail(lead, { subject, buildHtml, statusField, statusAtField }) {
+async function sendLeadEmail(lead, { subject, buildHtml, statusField, statusAtField, htmlField, subjectField, resendIdField }) {
   if (!resend) {
     return { ok: false, message: 'RESEND_API_KEY not set — email delivery is not configured.' };
   }
@@ -201,17 +206,20 @@ async function sendLeadEmail(lead, { subject, buildHtml, statusField, statusAtFi
     return { ok: false, message: 'This lead is already a client — contact them from the Website Clients table instead.' };
   }
 
+  const html = buildHtml(lead);
+  let resendId;
   try {
-    const { error } = await resend.emails.send({
+    const { data, error } = await resend.emails.send({
       from: AGREEMENT_FROM_EMAIL,
-      to: lead.email,
+      to: splitEmails(lead.email),
       subject,
-      html: buildHtml(lead)
+      html
     });
     if (error) {
       console.error('Could not send lead email', error);
       return { ok: false, message: 'Failed to send the email.' };
     }
+    resendId = data?.id;
   } catch (error) {
     console.error('Could not send lead email', error);
     return { ok: false, message: 'Failed to send the email.' };
@@ -219,6 +227,11 @@ async function sendLeadEmail(lead, { subject, buildHtml, statusField, statusAtFi
 
   lead[statusField] = true;
   lead[statusAtField] = new Date();
+  // Snapshot exactly what was sent so it can be reviewed later — the lead's
+  // own info (business name, etc.) may change after the fact.
+  lead[htmlField] = html;
+  lead[subjectField] = subject;
+  lead[resendIdField] = resendId;
   await lead.save();
   return { ok: true, lead };
 }
@@ -444,6 +457,11 @@ const leadSchema = new mongoose.Schema({
   businessName: String,
   contactName: String,
   email: String,
+  // Set when someone has already searched for this lead's email and
+  // confirmed it doesn't exist — keeps the Find Email button from being
+  // re-clicked for a search that was already done.
+  emailNotFound: { type: Boolean, default: false },
+  emailNotFoundAt: Date,
   phone: String,
   phoneNormalized: String,
   instagram: String,
@@ -462,10 +480,35 @@ const leadSchema = new mongoose.Schema({
   inbound: { type: Boolean, default: false },
   coldEmailSent: { type: Boolean, default: false },
   coldEmailSentAt: Date,
+  // Snapshot of exactly what was sent, plus per-email open/click tracking —
+  // so "See Sent Email" can show the real thing later, not a re-render.
+  coldEmailHtml: String,
+  coldEmailSubject: String,
+  coldEmailResendId: String,
+  coldEmailOpened: { type: Boolean, default: false },
+  coldEmailOpenedAt: Date,
+  coldEmailClicked: { type: Boolean, default: false },
+  coldEmailClickedAt: Date,
   mockupReviewSent: { type: Boolean, default: false },
   mockupReviewSentAt: Date,
+  mockupReviewHtml: String,
+  mockupReviewSubject: String,
+  mockupReviewResendId: String,
+  mockupReviewOpened: { type: Boolean, default: false },
+  mockupReviewOpenedAt: Date,
+  mockupReviewClicked: { type: Boolean, default: false },
+  mockupReviewClickedAt: Date,
   onboardingSent: { type: Boolean, default: false },
   onboardingSentAt: Date,
+  onboardingHtml: String,
+  onboardingSubject: String,
+  onboardingResendId: String,
+  onboardingOpened: { type: Boolean, default: false },
+  onboardingOpenedAt: Date,
+  onboardingClicked: { type: Boolean, default: false },
+  onboardingClickedAt: Date,
+  // Overall "did they engage with any outreach email" flags, kept for the
+  // leads table summary column.
   opened: { type: Boolean, default: false },
   openedAt: Date,
   clicked: { type: Boolean, default: false },
@@ -495,9 +538,20 @@ leadSchema.pre('save', function normalizePhoneBeforeSave(next) {
 
 const Lead = mongoose.model('Lead', leadSchema, 'leads');
 
+// The email field may hold multiple comma-separated addresses — match if any
+// individual address (on either side) overlaps, not just an exact full-field match.
+function splitEmails(value) {
+  return (value || '')
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
 async function findDuplicateLead({ email, phone }) {
   const conditions = [];
-  if (email) conditions.push({ email: new RegExp(`^${escapeRegex(email.trim())}$`, 'i') });
+  splitEmails(email).forEach((address) => {
+    conditions.push({ email: new RegExp(`(^|,\\s*)${escapeRegex(address)}(\\s*,|$)`, 'i') });
+  });
   const normalizedPhone = (phone || '').replace(/\D/g, '');
   if (normalizedPhone) conditions.push({ phoneNormalized: normalizedPhone });
   if (!conditions.length) return null;
@@ -642,9 +696,35 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       freemockups: Boolean(req.body.freemockups)
     };
 
+    const hasNewsletterInterest = payload.beats || payload.loops || payload.visuals || payload.web || payload.ads;
+
+    // The free-mockup form is a lead-gen flow, not a newsletter signup —
+    // keep mockup-only submissions out of the newsletter table entirely and
+    // route them straight into the leads CRM instead.
+    if (payload.freemockups && !hasNewsletterInterest) {
+      const existingLead = await findDuplicateLead({ email: payload.email, phone: payload.phone });
+      const isNewMockupRequest = !existingLead || !existingLead.inbound;
+
+      await upsertInboundLead({
+        businessName: payload.businessName,
+        contactName: payload.name,
+        email: payload.email,
+        phone: payload.phone,
+        instagram: payload.socialUrl,
+        googleBusinessUrl: payload.googleBusinessUrl,
+        city: payload.city
+      });
+
+      if (isNewMockupRequest) {
+        await sendMockupSignupEmail(payload);
+        await sendMockupThankYouEmail(payload);
+      }
+
+      return res.status(201).json({ ok: true, message: 'Mockup request received.' });
+    }
+
     const existing = await NewsletterSubscriber.findOne({ email: payload.email });
     if (existing) {
-      const isNewMockupSignup = payload.freemockups && !existing.freemockups;
       const isNewWebInterest = payload.web && !existing.web;
 
       existing.name = payload.name || existing.name;
@@ -658,41 +738,14 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       existing.visuals = existing.visuals || payload.visuals;
       existing.web = existing.web || payload.web;
       existing.ads = existing.ads || payload.ads;
-      existing.freemockups = existing.freemockups || payload.freemockups;
       await existing.save();
 
-      if (isNewMockupSignup) {
-        await sendMockupSignupEmail(existing);
-        await sendMockupThankYouEmail(existing);
-        await upsertInboundLead({
-          businessName: existing.businessName,
-          contactName: existing.name,
-          email: existing.email,
-          phone: existing.phone,
-          instagram: existing.socialUrl,
-          googleBusinessUrl: existing.googleBusinessUrl,
-          city: existing.city
-        });
-      }
       if (isNewWebInterest) await sendWebInterestEmail(existing);
 
       return res.status(200).json({ ok: true, subscriber: existing, message: 'Subscription updated.' });
     }
 
     const subscriber = await NewsletterSubscriber.create(payload);
-    if (subscriber.freemockups) {
-      await sendMockupSignupEmail(subscriber);
-      await sendMockupThankYouEmail(subscriber);
-      await upsertInboundLead({
-        businessName: subscriber.businessName,
-        contactName: subscriber.name,
-        email: subscriber.email,
-        phone: subscriber.phone,
-        instagram: subscriber.socialUrl,
-        googleBusinessUrl: subscriber.googleBusinessUrl,
-        city: subscriber.city
-      });
-    }
     if (subscriber.web) await sendWebInterestEmail(subscriber);
 
     res.status(201).json({ ok: true, subscriber });
@@ -709,6 +762,80 @@ app.get('/api/newsletter/subscribers', async (_req, res) => {
   } catch (error) {
     console.error('Could not fetch newsletter subscribers', error);
     res.status(500).json({ ok: false, message: 'Could not fetch newsletter subscribers.' });
+  }
+});
+
+// Admin-only manual management of the newsletter list — separate from
+// /api/newsletter/subscribe (the public form), so it doesn't trigger any of
+// that endpoint's mockup-lead or notification side effects.
+app.post('/api/newsletter/subscribers', async (req, res) => {
+  try {
+    const email = (req.body.email || '').trim();
+    if (!email) {
+      return res.status(400).json({ ok: false, message: 'Email is required.' });
+    }
+
+    const existing = await NewsletterSubscriber.findOne({ email });
+    if (existing) {
+      return res.status(200).json({ ok: true, subscriber: existing, duplicate: true, message: 'A subscriber with this email already exists.' });
+    }
+
+    const subscriber = await NewsletterSubscriber.create({
+      email,
+      name: req.body.name || '',
+      phone: req.body.phone || '',
+      businessName: req.body.businessName || '',
+      socialUrl: req.body.socialUrl || '',
+      googleBusinessUrl: req.body.googleBusinessUrl || '',
+      city: req.body.city || '',
+      beats: Boolean(req.body.beats),
+      loops: Boolean(req.body.loops),
+      visuals: Boolean(req.body.visuals),
+      web: Boolean(req.body.web),
+      ads: Boolean(req.body.ads)
+    });
+
+    res.status(201).json({ ok: true, subscriber });
+  } catch (error) {
+    console.error('Could not add newsletter subscriber', error);
+    res.status(500).json({ ok: false, message: 'Could not add newsletter subscriber.' });
+  }
+});
+
+app.put('/api/newsletter/subscribers/:id', async (req, res) => {
+  try {
+    const subscriber = await NewsletterSubscriber.findById(req.params.id);
+    if (!subscriber) {
+      return res.status(404).json({ ok: false, message: 'Subscriber not found.' });
+    }
+
+    const fields = ['email', 'name', 'phone', 'businessName', 'socialUrl', 'googleBusinessUrl', 'city'];
+    fields.forEach((field) => {
+      if (req.body[field] !== undefined) subscriber[field] = req.body[field];
+    });
+    const boolFields = ['beats', 'loops', 'visuals', 'web', 'ads'];
+    boolFields.forEach((field) => {
+      if (req.body[field] !== undefined) subscriber[field] = Boolean(req.body[field]);
+    });
+
+    await subscriber.save();
+    res.json({ ok: true, subscriber });
+  } catch (error) {
+    console.error('Could not update newsletter subscriber', error);
+    res.status(500).json({ ok: false, message: 'Could not update newsletter subscriber.' });
+  }
+});
+
+app.delete('/api/newsletter/subscribers/:id', async (req, res) => {
+  try {
+    const deleted = await NewsletterSubscriber.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ ok: false, message: 'Subscriber not found.' });
+    }
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Could not delete newsletter subscriber', error);
+    res.status(500).json({ ok: false, message: 'Could not delete newsletter subscriber.' });
   }
 });
 
@@ -929,7 +1056,7 @@ app.get('/api/crm/leads', async (_req, res) => {
 
 app.post('/api/crm/leads', async (req, res) => {
   try {
-    const { businessName, contactName, phone, instagram, email, website, city, industry, notes, coldEmailSent, dmSent, called, instagramNotFound } = req.body;
+    const { businessName, contactName, phone, instagram, email, website, city, industry, notes, coldEmailSent, dmSent, called, instagramNotFound, emailNotFound } = req.body;
     if (!businessName && !email && !phone) {
       return res.status(400).json({ ok: false, message: 'At least a business name, email, or phone is required.' });
     }
@@ -947,6 +1074,8 @@ app.post('/api/crm/leads', async (req, res) => {
       instagramNotFound: Boolean(instagramNotFound),
       instagramNotFoundAt: instagramNotFound ? new Date() : undefined,
       email: email || '',
+      emailNotFound: Boolean(emailNotFound),
+      emailNotFoundAt: emailNotFound ? new Date() : undefined,
       website: website || '',
       city: city || '',
       industry: industry || '',
@@ -1001,6 +1130,8 @@ app.post('/api/crm/leads/import-bulk', async (req, res) => {
         instagramNotFound: Boolean(row.instagramNotFound),
         instagramNotFoundAt: row.instagramNotFound ? new Date() : undefined,
         email,
+        emailNotFound: Boolean(row.emailNotFound),
+        emailNotFoundAt: row.emailNotFound ? new Date() : undefined,
         website: row.website || '',
         city: row.city || '',
         industry: row.industry || '',
@@ -1151,6 +1282,22 @@ app.patch('/api/crm/leads/:id/instagram-not-found', async (req, res) => {
   }
 });
 
+app.patch('/api/crm/leads/:id/email-not-found', async (req, res) => {
+  try {
+    const lead = await Lead.findById(req.params.id);
+    if (!lead) {
+      return res.status(404).json({ ok: false, message: 'Lead not found.' });
+    }
+    lead.emailNotFound = Boolean(req.body.emailNotFound);
+    lead.emailNotFoundAt = lead.emailNotFound ? new Date() : null;
+    await lead.save();
+    res.json({ ok: true, lead });
+  } catch (error) {
+    console.error('Could not update lead email search status', error);
+    res.status(500).json({ ok: false, message: 'Could not update lead.' });
+  }
+});
+
 app.delete('/api/crm/leads/:id', async (req, res) => {
   try {
     const deleted = await Lead.findByIdAndDelete(req.params.id);
@@ -1177,7 +1324,10 @@ app.post('/api/crm/leads/:id/send-cold-email', async (req, res) => {
       subject: `A free website mockup for ${lead.businessName || 'your business'}`,
       buildHtml: buildColdEmailHtml,
       statusField: 'coldEmailSent',
-      statusAtField: 'coldEmailSentAt'
+      statusAtField: 'coldEmailSentAt',
+      htmlField: 'coldEmailHtml',
+      subjectField: 'coldEmailSubject',
+      resendIdField: 'coldEmailResendId'
     });
     res.status(result.ok ? 200 : 400).json(result);
   } catch (error) {
@@ -1196,7 +1346,10 @@ app.post('/api/crm/leads/:id/send-mockup-review', async (req, res) => {
       subject: 'Your free website mockup is ready! 🎉',
       buildHtml: buildMockupReviewEmailHtml,
       statusField: 'mockupReviewSent',
-      statusAtField: 'mockupReviewSentAt'
+      statusAtField: 'mockupReviewSentAt',
+      htmlField: 'mockupReviewHtml',
+      subjectField: 'mockupReviewSubject',
+      resendIdField: 'mockupReviewResendId'
     });
     res.status(result.ok ? 200 : 400).json(result);
   } catch (error) {
@@ -1215,7 +1368,10 @@ app.post('/api/crm/leads/:id/send-onboarding', async (req, res) => {
       subject: `Let's get started on your new website`,
       buildHtml: buildOnboardingEmailHtml,
       statusField: 'onboardingSent',
-      statusAtField: 'onboardingSentAt'
+      statusAtField: 'onboardingSentAt',
+      htmlField: 'onboardingHtml',
+      subjectField: 'onboardingSubject',
+      resendIdField: 'onboardingResendId'
     });
     res.status(result.ok ? 200 : 400).json(result);
   } catch (error) {
@@ -1224,9 +1380,21 @@ app.post('/api/crm/leads/:id/send-onboarding', async (req, res) => {
   }
 });
 
+const EMAIL_TYPE_FIELD_PREFIX = {
+  cold: 'coldEmail',
+  mockupReview: 'mockupReview',
+  onboarding: 'onboarding'
+};
+
 app.get('/api/crm/leads/:id/track/open', async (req, res) => {
   try {
-    await Lead.findByIdAndUpdate(req.params.id, { opened: true, openedAt: new Date() });
+    const update = { opened: true, openedAt: new Date() };
+    const prefix = EMAIL_TYPE_FIELD_PREFIX[req.query.type];
+    if (prefix) {
+      update[`${prefix}Opened`] = true;
+      update[`${prefix}OpenedAt`] = new Date();
+    }
+    await Lead.findByIdAndUpdate(req.params.id, update);
   } catch (error) {
     console.error('Could not record email open', error);
   }
@@ -1238,7 +1406,13 @@ app.get('/api/crm/leads/:id/track/open', async (req, res) => {
 app.get('/api/crm/leads/:id/track/click', async (req, res) => {
   const target = typeof req.query.u === 'string' ? req.query.u : '';
   try {
-    await Lead.findByIdAndUpdate(req.params.id, { clicked: true, clickedAt: new Date() });
+    const update = { clicked: true, clickedAt: new Date() };
+    const prefix = EMAIL_TYPE_FIELD_PREFIX[req.query.type];
+    if (prefix) {
+      update[`${prefix}Clicked`] = true;
+      update[`${prefix}ClickedAt`] = new Date();
+    }
+    await Lead.findByIdAndUpdate(req.params.id, update);
   } catch (error) {
     console.error('Could not record link click', error);
   }
@@ -1246,6 +1420,53 @@ app.get('/api/crm/leads/:id/track/click', async (req, res) => {
     return res.redirect(302, SITE_URL);
   }
   res.redirect(302, target);
+});
+
+app.get('/api/crm/leads/:id/sent-email', async (req, res) => {
+  try {
+    const lead = await Lead.findById(req.params.id);
+    if (!lead) {
+      return res.status(404).json({ ok: false, message: 'Lead not found.' });
+    }
+
+    const prefix = EMAIL_TYPE_FIELD_PREFIX[req.query.type];
+    if (!prefix) {
+      return res.status(400).json({ ok: false, message: 'Unknown email type.' });
+    }
+
+    const html = lead[`${prefix}Html`];
+    if (!html) {
+      return res.status(404).json({ ok: false, message: 'No sent email on file for this lead yet.' });
+    }
+
+    const result = {
+      subject: lead[`${prefix}Subject`] || '',
+      html,
+      opened: Boolean(lead[`${prefix}Opened`]),
+      openedAt: lead[`${prefix}OpenedAt`] || null,
+      clicked: Boolean(lead[`${prefix}Clicked`]),
+      clickedAt: lead[`${prefix}ClickedAt`] || null,
+      resendStatus: null
+    };
+
+    // Best-effort — pull live delivery status from Resend if we have an id
+    // for this send. Opens/clicks above are our own tracking and are the
+    // reliable numbers; this is supplementary (e.g. delivered/bounced).
+    const resendId = lead[`${prefix}ResendId`];
+    if (resend && resendId) {
+      try {
+        const remote = await resend.emails.get(resendId);
+        result.resendStatus = remote?.data || remote || null;
+      } catch (resendError) {
+        console.error('Could not fetch Resend email status', resendError);
+      }
+    }
+
+    res.json({ ok: true, ...result });
+  } catch (error) {
+    console.error('Could not fetch sent email', error);
+    res.status(500).json({ ok: false, message: 'Could not fetch sent email.' });
+  }
 });
 
 app.post('/api/onboarding/submit', uploadOnboardingFiles, async (req, res) => {

@@ -12,6 +12,7 @@ type ParsedLead = {
   instagram: string;
   instagramNotFound: boolean;
   email: string;
+  emailNotFound: boolean;
   website: string;
   city: string;
   industry: string;
@@ -29,6 +30,7 @@ const emptyManualForm: ParsedLead = {
   instagram: '',
   instagramNotFound: false,
   email: '',
+  emailNotFound: false,
   website: '',
   city: '',
   industry: '',
@@ -39,7 +41,32 @@ const emptyManualForm: ParsedLead = {
   declined: false
 };
 
+const INDUSTRY_OPTIONS = [
+  'Restaurant / Food / Bar',
+  'Hospitality',
+  'Entertainment',
+  'Tech',
+  'Finance',
+  'Plumbing / Electricity / HVAC',
+  'Marketing',
+  'Cars',
+  'Real Estate',
+  'Property Maintenance',
+  'Wholesale',
+  'Beauty / Hair',
+  'Healthcare',
+  'Construction'
+];
+
 const EMAIL_REGEX = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/;
+const EMAIL_REGEX_GLOBAL = /[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/g;
+
+// A cell can hold more than one address (comma, semicolon, or "/" separated).
+// Pull out every valid-looking email and rejoin them canonically.
+const normalizeEmailList = (raw: string): string => {
+  const matches = raw.match(EMAIL_REGEX_GLOBAL);
+  return matches ? matches.join(', ') : '';
+};
 const URL_REGEX = /https?:\/\/[^\s,]+/i;
 const IG_REGEX = /(instagram\.com\/[A-Za-z0-9_.]+|@[A-Za-z0-9_.]{2,30})/i;
 const PHONE_REGEX = /\+?\d[\d\-.\s()]{6,}\d/;
@@ -148,7 +175,12 @@ function extractLeadsFromGrid(grid: any[][]): ParsedLead[] {
       // actually contains an "@" for this row — the other is treated as a
       // "cold email sent" tracker if it has any mark in it at all.
       const emailIdx = emailIdxs.find((idx) => cleanValue(row[idx]).includes('@'));
-      const email = emailIdx !== undefined ? cleanValue(row[emailIdx]) : '';
+      // A single cell may hold multiple addresses (e.g. "a@x.com, b@y.com") —
+      // pull out every one rather than just the whole raw cell text.
+      const email = emailIdx !== undefined ? normalizeEmailList(cleanValue(row[emailIdx])) : '';
+      // A bare "-" in an Email column (when no real address was found) means
+      // it was already searched and confirmed to not exist.
+      const emailNotFound = !email && emailIdxs.some((idx) => DASH_ONLY_REGEX.test(String(row[idx] ?? '').trim()));
       const coldEmailTrackerHasMark = emailIdxs
         .filter((idx) => idx !== emailIdx)
         .some((idx) => cleanValue(row[idx]) !== '');
@@ -170,6 +202,7 @@ function extractLeadsFromGrid(grid: any[][]): ParsedLead[] {
         instagram,
         instagramNotFound,
         email,
+        emailNotFound,
         website: firstNonEmpty(row, websiteIdxs),
         city: firstNonEmpty(row, cityIdxs),
         industry: firstNonEmpty(row, industryIdxs),
@@ -377,7 +410,14 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
               <Col md={6} lg={3}>
                 <Form.Group className="mb-2">
                   <Form.Label>Email</Form.Label>
-                  <Form.Control type="email" value={manualForm.email} onChange={(e) => setManualForm({ ...manualForm, email: e.target.value })} />
+                  <Form.Control
+                    type="email"
+                    multiple
+                    value={manualForm.email}
+                    onChange={(e) => setManualForm({ ...manualForm, email: e.target.value, emailNotFound: false })}
+                    placeholder="email1@x.com, email2@x.com"
+                    disabled={manualForm.emailNotFound}
+                  />
                 </Form.Group>
               </Col>
               <Col md={6} lg={4}>
@@ -395,7 +435,17 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
               <Col md={6} lg={3}>
                 <Form.Group className="mb-2">
                   <Form.Label>Industry</Form.Label>
-                  <Form.Control value={manualForm.industry} onChange={(e) => setManualForm({ ...manualForm, industry: e.target.value })} placeholder="e.g. Landscaping" />
+                  <Form.Control
+                    value={manualForm.industry}
+                    onChange={(e) => setManualForm({ ...manualForm, industry: e.target.value })}
+                    placeholder="Select or type a new industry"
+                    list="industry-options"
+                  />
+                  <datalist id="industry-options">
+                    {INDUSTRY_OPTIONS.map((option) => (
+                      <option key={option} value={option} />
+                    ))}
+                  </datalist>
                 </Form.Group>
               </Col>
               <Col md={12} lg={5}>
@@ -442,6 +492,16 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
                   label="No Instagram found"
                   checked={manualForm.instagramNotFound}
                   onChange={(e) => setManualForm({ ...manualForm, instagramNotFound: e.target.checked, instagram: e.target.checked ? '' : manualForm.instagram })}
+                  className="mb-2"
+                  style={{ whiteSpace: 'nowrap' }}
+                />
+              </Col>
+              <Col xs={12} sm={6} lg={3}>
+                <Form.Check
+                  type="checkbox"
+                  label="No email found"
+                  checked={manualForm.emailNotFound}
+                  onChange={(e) => setManualForm({ ...manualForm, emailNotFound: e.target.checked, email: e.target.checked ? '' : manualForm.email })}
                   className="mb-2"
                   style={{ whiteSpace: 'nowrap' }}
                 />
@@ -515,7 +575,7 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
                     <td>{lead.contactName || '—'}</td>
                     <td>{lead.phone || '—'}</td>
                     <td>{lead.instagram || (lead.instagramNotFound ? 'Searched, not found' : '—')}</td>
-                    <td>{lead.email || '—'}</td>
+                    <td>{lead.email || (lead.emailNotFound ? 'Searched, not found' : '—')}</td>
                     <td>{lead.website || '—'}</td>
                     <td>{lead.city || '—'}</td>
                     <td>{lead.industry || '—'}</td>

@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
-import { Alert, Badge, Button, Col, Form, Row, Table } from 'react-bootstrap';
+import { Alert, Badge, Button, Col, Form, Modal, Row, Table } from 'react-bootstrap';
 import axios from 'axios';
 
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
@@ -9,6 +9,8 @@ export type Lead = {
   businessName?: string;
   contactName?: string;
   email?: string;
+  emailNotFound?: boolean;
+  emailNotFoundAt?: string;
   phone?: string;
   instagram?: string;
   instagramNotFound?: boolean;
@@ -38,6 +40,24 @@ export type Lead = {
   convertedToClient?: boolean;
   convertedToClientAt?: string;
   createdAt: string;
+};
+
+type EmailType = 'cold' | 'mockupReview' | 'onboarding';
+
+const EMAIL_TYPE_LABELS: Record<EmailType, string> = {
+  cold: 'Cold Email',
+  mockupReview: 'Mockup Review Email',
+  onboarding: 'Onboarding Email'
+};
+
+type SentEmailData = {
+  subject: string;
+  html: string;
+  opened: boolean;
+  openedAt: string | null;
+  clicked: boolean;
+  clickedAt: string | null;
+  resendStatus: any;
 };
 
 type DirectionFilter = 'all' | 'inbound' | 'outbound';
@@ -85,6 +105,11 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [busyId, setBusyId] = useState<string | null>(null);
+
+  const [viewingEmail, setViewingEmail] = useState<{ lead: Lead; type: EmailType } | null>(null);
+  const [sentEmailData, setSentEmailData] = useState<SentEmailData | null>(null);
+  const [loadingSentEmail, setLoadingSentEmail] = useState(false);
+  const [sentEmailError, setSentEmailError] = useState('');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [directionFilter, setDirectionFilter] = useState<DirectionFilter>('all');
@@ -278,6 +303,49 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
       }
     });
 
+  const handleToggleEmailNotFound = (lead: Lead) =>
+    runAction(lead, async () => {
+      try {
+        const response = await axios.patch(`${API_BASE_URL}/crm/leads/${lead._id}/email-not-found`, {
+          emailNotFound: !lead.emailNotFound
+        });
+        if (response.data?.ok) {
+          fetchLeads();
+        } else {
+          setError(response.data?.message || 'Could not update email search status.');
+        }
+      } catch (actionError) {
+        console.error(actionError);
+        setError('Could not update email search status.');
+      }
+    });
+
+  const handleViewSentEmail = async (lead: Lead, type: EmailType) => {
+    setViewingEmail({ lead, type });
+    setSentEmailData(null);
+    setSentEmailError('');
+    setLoadingSentEmail(true);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/crm/leads/${lead._id}/sent-email`, { params: { type } });
+      if (response.data?.ok) {
+        setSentEmailData(response.data);
+      } else {
+        setSentEmailError(response.data?.message || 'Could not load the sent email.');
+      }
+    } catch (fetchError) {
+      console.error(fetchError);
+      setSentEmailError('Could not load the sent email.');
+    } finally {
+      setLoadingSentEmail(false);
+    }
+  };
+
+  const closeSentEmailModal = () => {
+    setViewingEmail(null);
+    setSentEmailData(null);
+    setSentEmailError('');
+  };
+
   return (
     <div>
       {message ? <Alert variant="success" onClose={() => setMessage('')} dismissible>{message}</Alert> : null}
@@ -346,14 +414,38 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                     <div>{lead.contactName || '—'}</div>
                     {lead.email ? (
                       <small style={{ color: '#aaa' }}>{lead.email}</small>
+                    ) : lead.emailNotFound ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <small style={{ color: '#666' }}>No email found</small>
+                        <Button
+                          size="sm"
+                          variant="link"
+                          className="p-0 text-start"
+                          style={{ fontSize: '0.75rem' }}
+                          disabled={busy}
+                          onClick={() => handleToggleEmailNotFound(lead)}
+                        >
+                          Undo
+                        </Button>
+                      </div>
                     ) : (
-                      <Button
-                        size="sm"
-                        variant="outline-info"
-                        onClick={() => window.open(buildFindEmailUrl(lead), '_blank', 'noopener,noreferrer')}
-                      >
-                        Find Email
-                      </Button>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <Button
+                          size="sm"
+                          variant="outline-info"
+                          onClick={() => window.open(buildFindEmailUrl(lead), '_blank', 'noopener,noreferrer')}
+                        >
+                          Find Email
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline-secondary"
+                          disabled={busy}
+                          onClick={() => handleToggleEmailNotFound(lead)}
+                        >
+                          No Email Found
+                        </Button>
+                      </div>
                     )}
                   </td>
                   <td>{lead.phone || '—'}</td>
@@ -453,16 +545,34 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '150px' }}>
                         {!lead.inbound ? (
-                          <Button size="sm" variant="outline-warning" disabled={busy || lead.declined} onClick={() => handleSendColdEmail(lead)}>
-                            Send Cold Email
-                          </Button>
+                          lead.coldEmailSent ? (
+                            <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'cold')}>
+                              See Sent Cold Email
+                            </Button>
+                          ) : (
+                            <Button size="sm" variant="outline-warning" disabled={busy || lead.declined} onClick={() => handleSendColdEmail(lead)}>
+                              Send Cold Email
+                            </Button>
+                          )
                         ) : null}
-                        <Button size="sm" variant="outline-primary" disabled={busy || lead.declined} onClick={() => handleSendMockupReview(lead)}>
-                          Send Mockup Review
-                        </Button>
-                        <Button size="sm" variant="outline-success" disabled={busy || lead.declined} onClick={() => handleSendOnboarding(lead)}>
-                          Send Onboarding
-                        </Button>
+                        {lead.mockupReviewSent ? (
+                          <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'mockupReview')}>
+                            See Sent Mockup Review Email
+                          </Button>
+                        ) : (
+                          <Button size="sm" variant="outline-primary" disabled={busy || lead.declined} onClick={() => handleSendMockupReview(lead)}>
+                            Send Mockup Review
+                          </Button>
+                        )}
+                        {lead.onboardingSent ? (
+                          <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'onboarding')}>
+                            See Sent Onboarding Email
+                          </Button>
+                        ) : (
+                          <Button size="sm" variant="outline-success" disabled={busy || lead.declined} onClick={() => handleSendOnboarding(lead)}>
+                            Send Onboarding
+                          </Button>
+                        )}
                         {!lead.declined ? (
                           <Button size="sm" variant="outline-danger" disabled={busy} onClick={() => handleDecline(lead)}>
                             Decline
@@ -477,6 +587,54 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
           </tbody>
         </Table>
       ) : null}
+
+      <Modal show={Boolean(viewingEmail)} onHide={closeSentEmailModal} size="lg" centered>
+        <Modal.Header closeButton style={{ background: '#111', color: 'white', borderBottom: '1px solid #2b2b2b' }}>
+          <Modal.Title>
+            {viewingEmail ? `${EMAIL_TYPE_LABELS[viewingEmail.type]} — ${viewingEmail.lead.businessName || viewingEmail.lead.email}` : ''}
+          </Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ background: '#111', color: 'white' }}>
+          {loadingSentEmail ? <p style={{ color: '#d4d4d4' }}>Loading...</p> : null}
+          {sentEmailError ? <Alert variant="danger">{sentEmailError}</Alert> : null}
+          {sentEmailData ? (
+            <>
+              <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                <div>
+                  <div style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase' }}>Opened</div>
+                  <div style={{ color: sentEmailData.opened ? '#68FF00' : '#ccc' }}>
+                    {sentEmailData.opened ? `✓ Yes — ${sentEmailData.openedAt ? new Date(sentEmailData.openedAt).toLocaleString() : ''}` : 'Not opened'}
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase' }}>Clicked</div>
+                  <div style={{ color: sentEmailData.clicked ? '#68FF00' : '#ccc' }}>
+                    {sentEmailData.clicked ? `✓ Yes — ${sentEmailData.clickedAt ? new Date(sentEmailData.clickedAt).toLocaleString() : ''}` : 'Not clicked'}
+                  </div>
+                </div>
+                {sentEmailData.resendStatus ? (
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase' }}>Resend Status</div>
+                    <div style={{ color: '#ccc' }}>{sentEmailData.resendStatus.last_event || 'Unknown'}</div>
+                  </div>
+                ) : null}
+              </div>
+              <p style={{ color: '#d4d4d4', marginBottom: '0.5rem' }}><strong>Subject:</strong> {sentEmailData.subject}</p>
+              <div style={{ border: '1px solid #2b2b2b', borderRadius: '8px', overflow: 'hidden', background: '#fff' }}>
+                <iframe
+                  title="Sent email preview"
+                  srcDoc={sentEmailData.html}
+                  style={{ width: '100%', height: '500px', border: 'none' }}
+                  sandbox=""
+                />
+              </div>
+            </>
+          ) : null}
+        </Modal.Body>
+        <Modal.Footer style={{ background: '#111', borderTop: '1px solid #2b2b2b' }}>
+          <Button variant="outline-light" size="sm" onClick={closeSentEmailModal}>Close</Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 });

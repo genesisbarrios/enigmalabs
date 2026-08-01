@@ -131,6 +131,11 @@ const Admin = () => {
   const [selectedWebsiteClientIds, setSelectedWebsiteClientIds] = useState<Set<string>>(new Set());
   const [sendingReview, setSendingReview] = useState(false);
 
+  const [showAddSubscriber, setShowAddSubscriber] = useState(false);
+  const [newSubscriber, setNewSubscriber] = useState({ email: '', name: '', phone: '', businessName: '' });
+  const [editingSubscriberId, setEditingSubscriberId] = useState<string | null>(null);
+  const [subscriberEditForm, setSubscriberEditForm] = useState({ email: '', name: '', phone: '', businessName: '' });
+
   const [searchQuery, setSearchQuery] = useState('');
   const [planFilter, setPlanFilter] = useState<'all' | Agreement['planType']>('all');
 
@@ -187,6 +192,69 @@ const Admin = () => {
       setError('Could not load newsletter subscribers.');
     } finally {
       setLoadingSubscribers(false);
+    }
+  };
+
+  const handleAddSubscriber = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!newSubscriber.email) {
+      setError('Email is required to add a subscriber.');
+      return;
+    }
+    try {
+      const response = await axios.post(`${API_BASE_URL}/newsletter/subscribers`, newSubscriber);
+      if (response.data?.ok) {
+        setMessage(response.data.duplicate ? 'A subscriber with this email already exists.' : 'Subscriber added.');
+        setNewSubscriber({ email: '', name: '', phone: '', businessName: '' });
+        setShowAddSubscriber(false);
+        fetchSubscribers();
+      } else {
+        setError(response.data?.message || 'Could not add subscriber.');
+      }
+    } catch (addError) {
+      console.error(addError);
+      setError('Could not add subscriber.');
+    }
+  };
+
+  const handleStartEditSubscriber = (subscriber: Subscriber) => {
+    setEditingSubscriberId(subscriber._id);
+    setSubscriberEditForm({
+      email: subscriber.email || '',
+      name: subscriber.name || '',
+      phone: subscriber.phone || '',
+      businessName: subscriber.businessName || ''
+    });
+  };
+
+  const handleCancelEditSubscriber = () => {
+    setEditingSubscriberId(null);
+    setSubscriberEditForm({ email: '', name: '', phone: '', businessName: '' });
+  };
+
+  const handleSaveSubscriber = async (subscriberId: string) => {
+    try {
+      await axios.put(`${API_BASE_URL}/newsletter/subscribers/${subscriberId}`, subscriberEditForm);
+      setMessage('Subscriber updated.');
+      setEditingSubscriberId(null);
+      fetchSubscribers();
+    } catch (saveError) {
+      console.error(saveError);
+      setError('Could not update the subscriber.');
+    }
+  };
+
+  const handleDeleteSubscriber = async (subscriberId: string) => {
+    const confirmDelete = window.confirm('Delete this newsletter subscriber?');
+    if (!confirmDelete) return;
+
+    try {
+      await axios.delete(`${API_BASE_URL}/newsletter/subscribers/${subscriberId}`);
+      setMessage('Subscriber deleted.');
+      fetchSubscribers();
+    } catch (deleteError) {
+      console.error(deleteError);
+      setError('Could not delete the subscriber.');
     }
   };
 
@@ -469,9 +537,6 @@ const Admin = () => {
         Review onboarding responses, download uploaded brand assets, and remove files once you are done with them.
       </p>
 
-      {message ? <Alert variant="success">{message}</Alert> : null}
-      {error ? <Alert variant="danger">{error}</Alert> : null}
-
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
         <h2 style={{ color: '#68FF00', margin: 0 }}>ONBOARDING FORMS</h2>
         <Button size="sm" variant="success" onClick={() => setShowAddWebsiteClient((prev) => !prev)}>
@@ -583,15 +648,7 @@ const Admin = () => {
         </Card>
       ))}
 
-      <div style={{ marginTop: '2.5rem', marginBottom: '1.25rem' }}>
-        <Form.Control
-          placeholder="Search website clients & agreements by name or email..."
-          value={searchQuery}
-          onChange={(event) => setSearchQuery(event.target.value)}
-        />
-      </div>
-
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem', marginTop: '2.5rem' }}>
         <h2 style={{ color: '#68FF00', margin: 0 }}>Website Clients</h2>
         <Button size="sm" variant="success" onClick={() => setShowAddWebsiteClient((prev) => !prev)}>
           {showAddWebsiteClient ? 'Cancel' : '+ Add Website Client'}
@@ -744,6 +801,17 @@ const Admin = () => {
         );
       })}
 
+      {message ? <Alert variant="success" className="mt-3">{message}</Alert> : null}
+      {error ? <Alert variant="danger" className="mt-3">{error}</Alert> : null}
+
+      <div style={{ marginTop: '1rem', marginBottom: '1.25rem' }}>
+        <Form.Control
+          placeholder="Search website clients & agreements by name or email..."
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+        />
+      </div>
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginTop: '2.5rem', marginBottom: '1rem' }}>
         <h2 style={{ color: '#68FF00', margin: 0 }}>Signed Web Development Agreements</h2>
         <Form.Select value={planFilter} onChange={(event) => setPlanFilter(event.target.value as 'all' | Agreement['planType'])} style={{ maxWidth: '220px' }}>
@@ -791,10 +859,41 @@ const Admin = () => {
         </div>
       ))}
 
-      <h2 style={{ color: '#68FF00', marginTop: '2.5rem', marginBottom: '1rem' }}>Newsletter Subscribers</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginTop: '2.5rem', marginBottom: '1rem' }}>
+        <h2 style={{ color: '#68FF00', margin: 0 }}>Newsletter Subscribers</h2>
+        <Button size="sm" variant="success" onClick={() => setShowAddSubscriber((prev) => !prev)}>
+          {showAddSubscriber ? 'Cancel' : '+ Add Subscriber'}
+        </Button>
+      </div>
       <p style={{ color: '#d4d4d4', marginBottom: '1rem' }}>
         {subscribers.length} newsletter subscriber{subscribers.length === 1 ? '' : 's'}.
       </p>
+
+      {showAddSubscriber ? (
+        <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', marginBottom: '1.25rem' }}>
+          <Card.Body>
+            <Form onSubmit={handleAddSubscriber}>
+              <Form.Group className="mb-3">
+                <Form.Label>Email</Form.Label>
+                <Form.Control type="email" value={newSubscriber.email} onChange={(e) => setNewSubscriber({ ...newSubscriber, email: e.target.value })} required />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Name</Form.Label>
+                <Form.Control value={newSubscriber.name} onChange={(e) => setNewSubscriber({ ...newSubscriber, name: e.target.value })} />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Phone</Form.Label>
+                <Form.Control value={newSubscriber.phone} onChange={(e) => setNewSubscriber({ ...newSubscriber, phone: e.target.value })} />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Business Name</Form.Label>
+                <Form.Control value={newSubscriber.businessName} onChange={(e) => setNewSubscriber({ ...newSubscriber, businessName: e.target.value })} />
+              </Form.Group>
+              <Button type="submit" variant="success">Save Subscriber</Button>
+            </Form>
+          </Card.Body>
+        </Card>
+      ) : null}
 
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
         <Button size="sm" variant="outline-light" onClick={handleCopySubscribers} disabled={!subscribers.length}>
@@ -817,18 +916,52 @@ const Admin = () => {
           <thead>
             <tr>
               <th>Email</th>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Business Name</th>
               <th>Interests</th>
               <th>Subscribed At</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
-            {subscribers.map((subscriber) => (
-              <tr key={subscriber._id}>
-                <td>{subscriber.email}</td>
-                <td>{subscriberInterestLabel(subscriber)}</td>
-                <td>{new Date(subscriber.createdAt).toLocaleString()}</td>
-              </tr>
-            ))}
+            {subscribers.map((subscriber) => {
+              const isEditing = editingSubscriberId === subscriber._id;
+              if (isEditing) {
+                return (
+                  <tr key={subscriber._id}>
+                    <td><Form.Control size="sm" type="email" value={subscriberEditForm.email} onChange={(e) => setSubscriberEditForm({ ...subscriberEditForm, email: e.target.value })} /></td>
+                    <td><Form.Control size="sm" value={subscriberEditForm.name} onChange={(e) => setSubscriberEditForm({ ...subscriberEditForm, name: e.target.value })} /></td>
+                    <td><Form.Control size="sm" value={subscriberEditForm.phone} onChange={(e) => setSubscriberEditForm({ ...subscriberEditForm, phone: e.target.value })} /></td>
+                    <td><Form.Control size="sm" value={subscriberEditForm.businessName} onChange={(e) => setSubscriberEditForm({ ...subscriberEditForm, businessName: e.target.value })} /></td>
+                    <td>{subscriberInterestLabel(subscriber)}</td>
+                    <td>{new Date(subscriber.createdAt).toLocaleString()}</td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '0.4rem' }}>
+                        <Button size="sm" variant="success" onClick={() => handleSaveSubscriber(subscriber._id)}>Save</Button>
+                        <Button size="sm" variant="outline-light" onClick={handleCancelEditSubscriber}>Cancel</Button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              }
+              return (
+                <tr key={subscriber._id}>
+                  <td>{subscriber.email}</td>
+                  <td>{subscriber.name || '—'}</td>
+                  <td>{subscriber.phone || '—'}</td>
+                  <td>{subscriber.businessName || '—'}</td>
+                  <td>{subscriberInterestLabel(subscriber)}</td>
+                  <td>{new Date(subscriber.createdAt).toLocaleString()}</td>
+                  <td>
+                    <div style={{ display: 'flex', gap: '0.4rem' }}>
+                      <Button size="sm" variant="outline-light" onClick={() => handleStartEditSubscriber(subscriber)}>Edit</Button>
+                      <Button size="sm" variant="outline-danger" onClick={() => handleDeleteSubscriber(subscriber._id)}>Delete</Button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </Table>
       ) : null}
