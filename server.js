@@ -447,6 +447,11 @@ const leadSchema = new mongoose.Schema({
   phone: String,
   phoneNormalized: String,
   instagram: String,
+  // Set when someone has already searched for this lead's Instagram and
+  // confirmed it doesn't exist — keeps the Find IG button from being
+  // re-clicked for a search that was already done.
+  instagramNotFound: { type: Boolean, default: false },
+  instagramNotFoundAt: Date,
   website: String,
   city: String,
   industry: String,
@@ -924,7 +929,7 @@ app.get('/api/crm/leads', async (_req, res) => {
 
 app.post('/api/crm/leads', async (req, res) => {
   try {
-    const { businessName, contactName, phone, instagram, email, website, city, industry, notes, coldEmailSent, dmSent, called } = req.body;
+    const { businessName, contactName, phone, instagram, email, website, city, industry, notes, coldEmailSent, dmSent, called, instagramNotFound } = req.body;
     if (!businessName && !email && !phone) {
       return res.status(400).json({ ok: false, message: 'At least a business name, email, or phone is required.' });
     }
@@ -939,6 +944,8 @@ app.post('/api/crm/leads', async (req, res) => {
       contactName: contactName || '',
       phone: phone || '',
       instagram: instagram || '',
+      instagramNotFound: Boolean(instagramNotFound),
+      instagramNotFoundAt: instagramNotFound ? new Date() : undefined,
       email: email || '',
       website: website || '',
       city: city || '',
@@ -991,6 +998,8 @@ app.post('/api/crm/leads/import-bulk', async (req, res) => {
         contactName: row.contactName || '',
         phone,
         instagram: row.instagram || '',
+        instagramNotFound: Boolean(row.instagramNotFound),
+        instagramNotFoundAt: row.instagramNotFound ? new Date() : undefined,
         email,
         website: row.website || '',
         city: row.city || '',
@@ -1122,6 +1131,22 @@ app.patch('/api/crm/leads/:id/called', async (req, res) => {
     res.json({ ok: true, lead });
   } catch (error) {
     console.error('Could not update lead called status', error);
+    res.status(500).json({ ok: false, message: 'Could not update lead.' });
+  }
+});
+
+app.patch('/api/crm/leads/:id/instagram-not-found', async (req, res) => {
+  try {
+    const lead = await Lead.findById(req.params.id);
+    if (!lead) {
+      return res.status(404).json({ ok: false, message: 'Lead not found.' });
+    }
+    lead.instagramNotFound = Boolean(req.body.instagramNotFound);
+    lead.instagramNotFoundAt = lead.instagramNotFound ? new Date() : null;
+    await lead.save();
+    res.json({ ok: true, lead });
+  } catch (error) {
+    console.error('Could not update lead Instagram search status', error);
     res.status(500).json({ ok: false, message: 'Could not update lead.' });
   }
 });

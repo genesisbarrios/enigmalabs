@@ -10,6 +10,7 @@ type ParsedLead = {
   contactName: string;
   phone: string;
   instagram: string;
+  instagramNotFound: boolean;
   email: string;
   website: string;
   city: string;
@@ -26,6 +27,7 @@ const emptyManualForm: ParsedLead = {
   contactName: '',
   phone: '',
   instagram: '',
+  instagramNotFound: false,
   email: '',
   website: '',
   city: '',
@@ -45,6 +47,9 @@ const PHONE_REGEX = /\+?\d[\d\-.\s()]{6,}\d/;
 const CITY_STATE_REGEX = /^[A-Za-z\s.'-]+,\s*[A-Za-z]{2}$/;
 // Common "no value" placeholders used in spreadsheet exports.
 const BLANK_PLACEHOLDER_REGEX = /^-+$|^n\/?a$/i;
+// A bare dash specifically (not "n/a") — in the Instagram column this means
+// "already searched, no account exists," not just "unknown."
+const DASH_ONLY_REGEX = /^-+$/;
 
 const cleanValue = (value: unknown): string => {
   const trimmed = String(value ?? '').trim();
@@ -152,11 +157,18 @@ function extractLeadsFromGrid(grid: any[][]): ParsedLead[] {
       const dmSent = dmIdxs.some((idx) => cleanValue(row[idx]) !== '');
       const called = calledIdxs.some((idx) => cleanValue(row[idx]) !== '');
 
+      // A bare "-" in the Instagram column means it was already searched and
+      // confirmed to not exist — distinct from just being left blank.
+      const igRaw = igIdxs.map((idx) => String(row[idx] ?? '').trim()).find((value) => value !== '') || '';
+      const instagramNotFound = DASH_ONLY_REGEX.test(igRaw);
+      const instagram = instagramNotFound ? '' : cleanValue(igRaw);
+
       return {
         businessName: firstNonEmpty(row, businessIdxs),
         contactName: firstNonEmpty(row, contactIdxs),
         phone: firstNonEmpty(row, phoneIdxs),
-        instagram: firstNonEmpty(row, igIdxs),
+        instagram,
+        instagramNotFound,
         email,
         website: firstNonEmpty(row, websiteIdxs),
         city: firstNonEmpty(row, cityIdxs),
@@ -337,7 +349,12 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
             <Col md={6} lg={3}>
               <Form.Group className="mb-2">
                 <Form.Label>Instagram</Form.Label>
-                <Form.Control value={manualForm.instagram} onChange={(e) => setManualForm({ ...manualForm, instagram: e.target.value })} placeholder="@handle or URL" />
+                <Form.Control
+                  value={manualForm.instagram}
+                  onChange={(e) => setManualForm({ ...manualForm, instagram: e.target.value, instagramNotFound: false })}
+                  placeholder="@handle or URL"
+                  disabled={manualForm.instagramNotFound}
+                />
               </Form.Group>
             </Col>
             <Col md={6} lg={3}>
@@ -370,31 +387,46 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
                 <Form.Control value={manualForm.notes} onChange={(e) => setManualForm({ ...manualForm, notes: e.target.value })} placeholder="e.g. left voicemail, call back Friday" />
               </Form.Group>
             </Col>
-            <Col xs={6} md={4} lg={2} className="d-flex align-items-end">
+          </Row>
+          <Row>
+            <Col xs={12} sm={6} lg={3}>
               <Form.Check
                 type="checkbox"
                 label="Cold email already sent"
                 checked={manualForm.coldEmailSent}
                 onChange={(e) => setManualForm({ ...manualForm, coldEmailSent: e.target.checked })}
                 className="mb-2"
+                style={{ whiteSpace: 'nowrap' }}
               />
             </Col>
-            <Col xs={6} md={4} lg={2} className="d-flex align-items-end">
+            <Col xs={12} sm={6} lg={3}>
               <Form.Check
                 type="checkbox"
                 label="Cold DM already sent"
                 checked={manualForm.dmSent}
                 onChange={(e) => setManualForm({ ...manualForm, dmSent: e.target.checked })}
                 className="mb-2"
+                style={{ whiteSpace: 'nowrap' }}
               />
             </Col>
-            <Col xs={6} md={4} lg={2} className="d-flex align-items-end">
+            <Col xs={12} sm={6} lg={3}>
               <Form.Check
                 type="checkbox"
                 label="Already called"
                 checked={manualForm.called}
                 onChange={(e) => setManualForm({ ...manualForm, called: e.target.checked })}
                 className="mb-2"
+                style={{ whiteSpace: 'nowrap' }}
+              />
+            </Col>
+            <Col xs={12} sm={6} lg={3}>
+              <Form.Check
+                type="checkbox"
+                label="No Instagram found"
+                checked={manualForm.instagramNotFound}
+                onChange={(e) => setManualForm({ ...manualForm, instagramNotFound: e.target.checked, instagram: e.target.checked ? '' : manualForm.instagram })}
+                className="mb-2"
+                style={{ whiteSpace: 'nowrap' }}
               />
             </Col>
           </Row>
@@ -459,7 +491,7 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
                     <td>{lead.businessName || '—'}</td>
                     <td>{lead.contactName || '—'}</td>
                     <td>{lead.phone || '—'}</td>
-                    <td>{lead.instagram || '—'}</td>
+                    <td>{lead.instagram || (lead.instagramNotFound ? 'Searched, not found' : '—')}</td>
                     <td>{lead.email || '—'}</td>
                     <td>{lead.website || '—'}</td>
                     <td>{lead.city || '—'}</td>

@@ -11,6 +11,8 @@ export type Lead = {
   email?: string;
   phone?: string;
   instagram?: string;
+  instagramNotFound?: boolean;
+  instagramNotFoundAt?: string;
   website?: string;
   city?: string;
   googleBusinessUrl?: string;
@@ -259,6 +261,23 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
       }
     });
 
+  const handleToggleInstagramNotFound = (lead: Lead) =>
+    runAction(lead, async () => {
+      try {
+        const response = await axios.patch(`${API_BASE_URL}/crm/leads/${lead._id}/instagram-not-found`, {
+          instagramNotFound: !lead.instagramNotFound
+        });
+        if (response.data?.ok) {
+          fetchLeads();
+        } else {
+          setError(response.data?.message || 'Could not update Instagram search status.');
+        }
+      } catch (actionError) {
+        console.error(actionError);
+        setError('Could not update Instagram search status.');
+      }
+    });
+
   return (
     <div>
       {message ? <Alert variant="success" onClose={() => setMessage('')} dismissible>{message}</Alert> : null}
@@ -352,14 +371,38 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                         <InstagramIcon />
                         <small style={{ color: '#aaa' }}>@{instagramHandle(lead.instagram)}</small>
                       </a>
+                    ) : lead.instagramNotFound ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                        <small style={{ color: '#666' }}>No IG found</small>
+                        <Button
+                          size="sm"
+                          variant="link"
+                          className="p-0 text-start"
+                          style={{ fontSize: '0.75rem' }}
+                          disabled={busy}
+                          onClick={() => handleToggleInstagramNotFound(lead)}
+                        >
+                          Undo
+                        </Button>
+                      </div>
                     ) : (
-                      <Button
-                        size="sm"
-                        variant="outline-info"
-                        onClick={() => window.open(buildFindInstagramUrl(lead), '_blank', 'noopener,noreferrer')}
-                      >
-                        Find IG
-                      </Button>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <Button
+                          size="sm"
+                          variant="outline-info"
+                          onClick={() => window.open(buildFindInstagramUrl(lead), '_blank', 'noopener,noreferrer')}
+                        >
+                          Find IG
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline-secondary"
+                          disabled={busy}
+                          onClick={() => handleToggleInstagramNotFound(lead)}
+                        >
+                          No IG Found
+                        </Button>
+                      </div>
                     )}
                   </td>
                   <td>
