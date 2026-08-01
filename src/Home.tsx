@@ -540,71 +540,6 @@ const Home = () => {
             </Col>
         </Row>
 
-        <Row style={servicesStyle}>
-          <Col xs={12}>
-            <h1 className="section-title-left" id="newsletter-heading" style={{marginTop:"10%"}}>NEWSLETTER</h1>
-          </Col>
-        </Row>
-        <Row style={newsletterSectionStyle}>
-          <Col xs={12} md={6} style={{ display: "flex", justifyContent: "center", alignItems: "center", order: 1 }}>
-            <div style={newsletterCardStyle}>
-              <form style={{ textAlign: "center", width: "100%", maxWidth: "420px", margin: "0 auto" }}>
-                <h3 style={{ color: "#68FF00", marginBottom: "0.25rem" }}>Sign Up For Our Newsletter</h3>
-                <p style={{ color: "#aaa", fontSize: "0.9rem", marginBottom: "1.5rem" }}>
-                  News, tips and discounts. No spam.
-                </p>
-                <input
-                  type="email"
-                  name="e-mail"
-                  placeholder="your@email.com"
-                  style={newsletterInputStyle}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                  }}
-                ></input>
-                <label style={{ display: "block", color: "#d4d4d4", marginBottom: "0.5rem" }}>
-                  What are you interested in?
-                </label>
-                <div style={{ textAlign: "center" }}>
-                  {interestOptions.map((option) => (
-                    <span
-                      key={option.key}
-                      role="checkbox"
-                      aria-checked={option.active}
-                      tabIndex={0}
-                      style={newsletterChipStyle(option.active)}
-                      onClick={option.toggle}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          option.toggle();
-                        }
-                      }}
-                    >
-                      {option.label}
-                    </span>
-                  ))}
-                </div>
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    handleSubmit();
-                  }}
-                  style={newsletterButtonStyle}
-                  type="submit"
-                >
-                  Submit
-                </button>
-                {message && <Alert style={{ marginTop: "1.5rem", backgroundColor: "#111", borderColor: "#68FF00", color: "#68FF00" }}>{message.toString()}</Alert>}
-                {alert && <Alert style={{ marginTop: "1.5rem", backgroundColor: "#2a0000", borderColor: "#ff4d4d", color: "#ff9d9d" }}>{alert.toString()}</Alert>}
-              </form>
-            </div>
-          </Col>
-          <Col xs={12} md={6} style={{ marginTop: "1.5rem", order: 2 }}>
-            <img style={newsletterImageStyle} src="Aliens.png" alt="Aliens" />
-          </Col>
-        </Row>
-
         <Row style={{ ...newsletterSectionStyle, justifyContent: "center" }}>
           <Col xs={12} md={8} style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
             <div style={{ ...newsletterCardStyle, maxWidth: "600px" }}>
@@ -701,6 +636,71 @@ const Home = () => {
                 {mockupAlert && <Alert style={{ marginTop: "1.5rem", backgroundColor: "#2a0000", borderColor: "#ff4d4d", color: "#ff9d9d" }}>{mockupAlert.toString()}</Alert>}
               </form>
             </div>
+          </Col>
+        </Row>
+
+        <Row style={servicesStyle}>
+          <Col xs={12}>
+            <h1 className="section-title-left" id="newsletter-heading" style={{marginTop:"10%"}}>NEWSLETTER</h1>
+          </Col>
+        </Row>
+        <Row style={newsletterSectionStyle}>
+          <Col xs={12} md={6} style={{ display: "flex", justifyContent: "center", alignItems: "center", order: 1 }}>
+            <div style={newsletterCardStyle}>
+              <form style={{ textAlign: "center", width: "100%", maxWidth: "420px", margin: "0 auto" }}>
+                <h3 style={{ color: "#68FF00", marginBottom: "0.25rem" }}>Sign Up For Our Newsletter</h3>
+                <p style={{ color: "#aaa", fontSize: "0.9rem", marginBottom: "1.5rem" }}>
+                  News, tips and discounts. No spam.
+                </p>
+                <input
+                  type="email"
+                  name="e-mail"
+                  placeholder="your@email.com"
+                  style={newsletterInputStyle}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                  }}
+                ></input>
+                <label style={{ display: "block", color: "#d4d4d4", marginBottom: "0.5rem" }}>
+                  What are you interested in?
+                </label>
+                <div style={{ textAlign: "center" }}>
+                  {interestOptions.map((option) => (
+                    <span
+                      key={option.key}
+                      role="checkbox"
+                      aria-checked={option.active}
+                      tabIndex={0}
+                      style={newsletterChipStyle(option.active)}
+                      onClick={option.toggle}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          option.toggle();
+                        }
+                      }}
+                    >
+                      {option.label}
+                    </span>
+                  ))}
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    handleSubmit();
+                  }}
+                  style={newsletterButtonStyle}
+                  type="submit"
+                >
+                  Submit
+                </button>
+                {message && <Alert style={{ marginTop: "1.5rem", backgroundColor: "#111", borderColor: "#68FF00", color: "#68FF00" }}>{message.toString()}</Alert>}
+                {alert && <Alert style={{ marginTop: "1.5rem", backgroundColor: "#2a0000", borderColor: "#ff4d4d", color: "#ff9d9d" }}>{alert.toString()}</Alert>}
+              </form>
+            </div>
+          </Col>
+          <Col xs={12} md={6} style={{ marginTop: "1.5rem", order: 2 }}>
+            <img style={newsletterImageStyle} src="Aliens.png" alt="Aliens" />
           </Col>
         </Row>
 

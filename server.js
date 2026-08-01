@@ -321,6 +321,21 @@ app.use(cors());
 app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// On Vercel, api/index.js kicks off connectDatabase() at module load but
+// doesn't wait for it — without this, requests that arrive before the
+// connection settles just sit in Mongoose's operation buffer until its own
+// timeout fires, which reads as a mysterious hang/FUNCTION_INVOCATION_TIMEOUT
+// instead of a clear, fast error.
+app.use((req, res, next) => {
+  if (req.path.startsWith('/api/leads')) return next(); // scraper routes don't touch Mongo
+  connectDatabase()
+    .then(() => next())
+    .catch((error) => {
+      console.error('Request blocked — database unavailable', error.message);
+      res.status(503).json({ ok: false, message: 'Database is unavailable right now. Please try again shortly.' });
+    });
+});
+
 app.use('/api/leads', require('./leads'));
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -1700,13 +1715,24 @@ function connectDatabase() {
   }
 
   const mongoUri = process.env.MONGO_URI || process.env.ENIGMA_MONGODB_URI || process.env.REACT_APP_MONGO_URI || 'mongodb://127.0.0.1:27017/enigma';
+  // Running as a Vercel serverless function — function timeouts (10-60s) are
+  // far shorter than Mongoose's 30s default server-selection timeout plus
+  // the time it takes to boot an in-memory Mongo binary, so on Vercel we
+  // fail fast and skip the (ephemeral, non-persistent, and slow) in-memory
+  // fallback entirely rather than silently hanging until the request times out.
+  const isServerless = Boolean(process.env.VERCEL);
 
-  connectPromise = mongoose.connect(mongoUri, { dbName: 'enigma' })
+  connectPromise = mongoose.connect(mongoUri, { dbName: 'enigma', serverSelectionTimeoutMS: 5000 })
     .then(() => {
       console.log('MongoDB connected to the enigma database.');
     })
     .catch(async (error) => {
-      console.warn('Primary MongoDB connection failed. Trying in-memory fallback.', error.message);
+      if (isServerless) {
+        console.error('MongoDB connection failed on Vercel — check that ENIGMA_MONGODB_URI is correct and that the database allows connections from Vercel (e.g. Atlas Network Access set to allow all IPs).', error.message);
+        connectPromise = null;
+        throw error;
+      }
+      console.warn('Primary MongoDB connection failed. Trying in-memory fallback (local dev only).', error.message);
       mongoServer = await MongoMemoryServer.create();
       await mongoose.connect(mongoServer.getUri(), { dbName: 'enigma' });
       console.log('Connected to in-memory MongoDB fallback.');
@@ -1714,6 +1740,7 @@ function connectDatabase() {
     .catch((fallbackError) => {
       console.error('MongoDB connection failed. Please set MONGO_URI.', fallbackError.message);
       connectPromise = null;
+      throw fallbackError;
     });
 
   return connectPromise;
