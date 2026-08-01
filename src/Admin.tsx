@@ -804,11 +804,12 @@ const Admin = () => {
       {message ? <Alert variant="success" className="mt-3">{message}</Alert> : null}
       {error ? <Alert variant="danger" className="mt-3">{error}</Alert> : null}
 
-      <div style={{ marginTop: '1rem', marginBottom: '1.25rem' }}>
+      <div style={{ marginTop: '1rem', marginBottom: '1.25rem', display: 'flex', justifyContent: 'flex-end' }}>
         <Form.Control
           placeholder="Search website clients & agreements by name or email..."
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
+          style={{ width: '50%' }}
         />
       </div>
 
