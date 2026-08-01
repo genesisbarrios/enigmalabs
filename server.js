@@ -197,6 +197,9 @@ async function sendLeadEmail(lead, { subject, buildHtml, statusField, statusAtFi
   if (lead.declined) {
     return { ok: false, message: 'This lead has been declined and can no longer be contacted.' };
   }
+  if (lead.convertedToClient) {
+    return { ok: false, message: 'This lead is already a client — contact them from the Website Clients table instead.' };
+  }
 
   try {
     const { error } = await resend.emails.send({
@@ -446,6 +449,8 @@ const leadSchema = new mongoose.Schema({
   instagram: String,
   website: String,
   city: String,
+  industry: String,
+  notes: String,
   googleBusinessUrl: String,
   // true when the lead came in through the public free-mockup signup form;
   // false for anything sourced from the lead scraper or manual/file import.
@@ -462,8 +467,19 @@ const leadSchema = new mongoose.Schema({
   clickedAt: Date,
   responded: { type: Boolean, default: false },
   respondedAt: Date,
+  // Manual trackers — not sent via email, so there's nothing to automate;
+  // the admin toggles these directly in the leads table.
+  dmSent: { type: Boolean, default: false },
+  dmSentAt: Date,
+  called: { type: Boolean, default: false },
+  calledAt: Date,
   declined: { type: Boolean, default: false },
   declinedAt: Date,
+  // Set automatically when a matching onboarded/website client shows up
+  // (same email or phone) — the lead is retired so it can't be double
+  // contacted; ongoing communication happens through the client record.
+  convertedToClient: { type: Boolean, default: false },
+  convertedToClientAt: Date,
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -514,6 +530,19 @@ async function upsertInboundLead({ businessName, contactName, email, phone, inst
   }
 }
 
+async function convertLeadIfMatches({ email, phone }) {
+  if (!email && !phone) return;
+  try {
+    const lead = await findDuplicateLead({ email, phone });
+    if (!lead || lead.convertedToClient) return;
+    lead.convertedToClient = true;
+    lead.convertedToClientAt = new Date();
+    await lead.save();
+  } catch (error) {
+    console.error('Could not mark lead as converted to client', error);
+  }
+}
+
 async function ensureNewsletterSubscriber(email) {
   if (!email) return;
   try {
@@ -541,7 +570,7 @@ function buildSocialMediaLinks(fields) {
     .join(' | ');
 }
 
-async function upsertWebsiteClient({ name, email, address, socialMediaLinks, businessType, website, logo }) {
+async function upsertWebsiteClient({ name, email, address, socialMediaLinks, businessType, website, logo, phone }) {
   if (!email) return;
   try {
     const existing = await WebsiteClient.findOne({ email });
@@ -564,6 +593,9 @@ async function upsertWebsiteClient({ name, email, address, socialMediaLinks, bus
         logo: logo || undefined
       });
     }
+    // This person is now a client — if they were also sitting in the leads
+    // table, retire that lead so it can't be double contacted.
+    await convertLeadIfMatches({ email, phone });
   } catch (error) {
     console.error('Could not save website client record', error);
   }
@@ -578,6 +610,7 @@ async function syncWebsiteClientFromOnboarding(source) {
     socialMediaLinks: buildSocialMediaLinks(source),
     businessType: source.businessType,
     website: source.website,
+    phone: source.phone,
     logo: logoAttachment ? { data: logoAttachment.data, mimeType: logoAttachment.mimeType } : null
   });
 }
@@ -812,6 +845,7 @@ app.post('/api/website-clients', async (req, res) => {
       businessType: businessType || '',
       website: website || ''
     });
+    await convertLeadIfMatches({ email });
     res.status(201).json({ ok: true, client });
   } catch (error) {
     console.error('Could not create website client', error);
@@ -890,7 +924,7 @@ app.get('/api/crm/leads', async (_req, res) => {
 
 app.post('/api/crm/leads', async (req, res) => {
   try {
-    const { businessName, contactName, phone, instagram, email, website, city, coldEmailSent } = req.body;
+    const { businessName, contactName, phone, instagram, email, website, city, industry, notes, coldEmailSent, dmSent, called } = req.body;
     if (!businessName && !email && !phone) {
       return res.status(400).json({ ok: false, message: 'At least a business name, email, or phone is required.' });
     }
@@ -908,9 +942,15 @@ app.post('/api/crm/leads', async (req, res) => {
       email: email || '',
       website: website || '',
       city: city || '',
+      industry: industry || '',
+      notes: notes || '',
       inbound: false,
       coldEmailSent: Boolean(coldEmailSent),
-      coldEmailSentAt: coldEmailSent ? new Date() : undefined
+      coldEmailSentAt: coldEmailSent ? new Date() : undefined,
+      dmSent: Boolean(dmSent),
+      dmSentAt: dmSent ? new Date() : undefined,
+      called: Boolean(called),
+      calledAt: called ? new Date() : undefined
     });
 
     res.status(201).json({ ok: true, lead });
@@ -954,9 +994,17 @@ app.post('/api/crm/leads/import-bulk', async (req, res) => {
         email,
         website: row.website || '',
         city: row.city || '',
+        industry: row.industry || '',
+        notes: row.notes || '',
         inbound: false,
         coldEmailSent: Boolean(row.coldEmailSent),
-        coldEmailSentAt: row.coldEmailSent ? new Date() : undefined
+        coldEmailSentAt: row.coldEmailSent ? new Date() : undefined,
+        dmSent: Boolean(row.dmSent),
+        dmSentAt: row.dmSent ? new Date() : undefined,
+        called: Boolean(row.called),
+        calledAt: row.called ? new Date() : undefined,
+        declined: Boolean(row.declined),
+        declinedAt: row.declined ? new Date() : undefined
       });
       createdLeads.push(lead);
       created += 1;
@@ -1042,6 +1090,38 @@ app.patch('/api/crm/leads/:id/respond', async (req, res) => {
     res.json({ ok: true, lead });
   } catch (error) {
     console.error('Could not update lead response status', error);
+    res.status(500).json({ ok: false, message: 'Could not update lead.' });
+  }
+});
+
+app.patch('/api/crm/leads/:id/dm-sent', async (req, res) => {
+  try {
+    const lead = await Lead.findById(req.params.id);
+    if (!lead) {
+      return res.status(404).json({ ok: false, message: 'Lead not found.' });
+    }
+    lead.dmSent = Boolean(req.body.dmSent);
+    lead.dmSentAt = lead.dmSent ? new Date() : null;
+    await lead.save();
+    res.json({ ok: true, lead });
+  } catch (error) {
+    console.error('Could not update lead DM status', error);
+    res.status(500).json({ ok: false, message: 'Could not update lead.' });
+  }
+});
+
+app.patch('/api/crm/leads/:id/called', async (req, res) => {
+  try {
+    const lead = await Lead.findById(req.params.id);
+    if (!lead) {
+      return res.status(404).json({ ok: false, message: 'Lead not found.' });
+    }
+    lead.called = Boolean(req.body.called);
+    lead.calledAt = lead.called ? new Date() : null;
+    await lead.save();
+    res.json({ ok: true, lead });
+  } catch (error) {
+    console.error('Could not update lead called status', error);
     res.status(500).json({ ok: false, message: 'Could not update lead.' });
   }
 });

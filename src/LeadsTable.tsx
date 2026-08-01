@@ -27,8 +27,14 @@ export type Lead = {
   clickedAt?: string;
   responded?: boolean;
   respondedAt?: string;
+  dmSent?: boolean;
+  dmSentAt?: string;
+  called?: boolean;
+  calledAt?: string;
   declined?: boolean;
   declinedAt?: string;
+  convertedToClient?: boolean;
+  convertedToClientAt?: string;
   createdAt: string;
 };
 
@@ -60,6 +66,14 @@ const instagramHandle = (value: string) => {
 };
 
 const buildInstagramProfileUrl = (value: string) => `https://instagram.com/${instagramHandle(value)}`;
+
+const InstagramIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="2.5" y="2.5" width="19" height="19" rx="5.5" stroke="#E1306C" strokeWidth="2" />
+    <circle cx="12" cy="12" r="5" stroke="#E1306C" strokeWidth="2" />
+    <circle cx="17.7" cy="6.3" r="1.3" fill="#E1306C" />
+  </svg>
+);
 
 export type LeadsTableHandle = { reload: () => void };
 
@@ -215,6 +229,36 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
     });
   };
 
+  const handleToggleDm = (lead: Lead) =>
+    runAction(lead, async () => {
+      try {
+        const response = await axios.patch(`${API_BASE_URL}/crm/leads/${lead._id}/dm-sent`, { dmSent: !lead.dmSent });
+        if (response.data?.ok) {
+          fetchLeads();
+        } else {
+          setError(response.data?.message || 'Could not update DM status.');
+        }
+      } catch (actionError) {
+        console.error(actionError);
+        setError('Could not update DM status.');
+      }
+    });
+
+  const handleToggleCalled = (lead: Lead) =>
+    runAction(lead, async () => {
+      try {
+        const response = await axios.patch(`${API_BASE_URL}/crm/leads/${lead._id}/called`, { called: !lead.called });
+        if (response.data?.ok) {
+          fetchLeads();
+        } else {
+          setError(response.data?.message || 'Could not update called status.');
+        }
+      } catch (actionError) {
+        console.error(actionError);
+        setError('Could not update called status.');
+      }
+    });
+
   return (
     <div>
       {message ? <Alert variant="success" onClose={() => setMessage('')} dismissible>{message}</Alert> : null}
@@ -265,6 +309,8 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
               <th>Phone</th>
               <th>City</th>
               <th>Instagram</th>
+              <th>Cold DM'd</th>
+              <th>Called</th>
               <th>Direction</th>
               <th>Status</th>
               <th>Engagement</th>
@@ -275,7 +321,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
             {filteredLeads.map((lead) => {
               const busy = busyId === lead._id;
               return (
-                <tr key={lead._id} style={lead.declined ? { opacity: 0.5 } : undefined}>
+                <tr key={lead._id} style={lead.declined || lead.convertedToClient ? { opacity: 0.5 } : undefined}>
                   <td>{lead.businessName || '—'}</td>
                   <td>
                     <div>{lead.contactName || '—'}</div>
@@ -295,8 +341,16 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                   <td>{lead.city || '—'}</td>
                   <td>
                     {lead.instagram ? (
-                      <a href={buildInstagramProfileUrl(lead.instagram)} target="_blank" rel="noreferrer" className="text-white">
-                        @{instagramHandle(lead.instagram)}
+                      <a
+                        href={buildInstagramProfileUrl(lead.instagram)}
+                        target="_blank"
+                        rel="noreferrer"
+                        title={`@${instagramHandle(lead.instagram)}`}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                        className="text-white"
+                      >
+                        <InstagramIcon />
+                        <small style={{ color: '#aaa' }}>@{instagramHandle(lead.instagram)}</small>
                       </a>
                     ) : (
                       <Button
@@ -309,12 +363,35 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                     )}
                   </td>
                   <td>
+                    {lead.instagram ? (
+                      <Form.Check
+                        type="checkbox"
+                        label={lead.dmSent ? 'DM Sent' : 'Not DM\'d'}
+                        checked={Boolean(lead.dmSent)}
+                        disabled={busy}
+                        onChange={() => handleToggleDm(lead)}
+                      />
+                    ) : (
+                      <small style={{ color: '#666' }}>No IG</small>
+                    )}
+                  </td>
+                  <td>
+                    <Form.Check
+                      type="checkbox"
+                      label={lead.called ? 'Called' : 'Not Called'}
+                      checked={Boolean(lead.called)}
+                      disabled={busy}
+                      onChange={() => handleToggleCalled(lead)}
+                    />
+                  </td>
+                  <td>
                     <Badge bg={lead.inbound ? 'info' : 'secondary'}>{lead.inbound ? 'Inbound' : 'Outbound'}</Badge>
                   </td>
                   <td>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                      {lead.convertedToClient ? <Badge bg="success">Onboarded — See Client Table</Badge> : null}
                       {lead.declined ? <Badge bg="danger">Declined</Badge> : null}
-                      {isNotContacted(lead) && !lead.declined ? <Badge bg="secondary">Not Contacted</Badge> : null}
+                      {isNotContacted(lead) && !lead.declined && !lead.convertedToClient ? <Badge bg="secondary">Not Contacted</Badge> : null}
                       {lead.coldEmailSent ? <Badge bg="warning" text="dark">Cold Email Sent</Badge> : null}
                       {lead.mockupReviewSent ? <Badge bg="primary">Mockup Review Sent</Badge> : null}
                       {lead.onboardingSent ? <Badge bg="success">Onboarding Sent</Badge> : null}
@@ -328,24 +405,28 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                     </div>
                   </td>
                   <td>
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '150px' }}>
-                      {!lead.inbound ? (
-                        <Button size="sm" variant="outline-warning" disabled={busy || lead.declined} onClick={() => handleSendColdEmail(lead)}>
-                          Send Cold Email
+                    {lead.convertedToClient ? (
+                      <small style={{ color: '#aaa' }}>Already a client — manage them in Website Clients below.</small>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '150px' }}>
+                        {!lead.inbound ? (
+                          <Button size="sm" variant="outline-warning" disabled={busy || lead.declined} onClick={() => handleSendColdEmail(lead)}>
+                            Send Cold Email
+                          </Button>
+                        ) : null}
+                        <Button size="sm" variant="outline-primary" disabled={busy || lead.declined} onClick={() => handleSendMockupReview(lead)}>
+                          Send Mockup Review
                         </Button>
-                      ) : null}
-                      <Button size="sm" variant="outline-primary" disabled={busy || lead.declined} onClick={() => handleSendMockupReview(lead)}>
-                        Send Mockup Review
-                      </Button>
-                      <Button size="sm" variant="outline-success" disabled={busy || lead.declined} onClick={() => handleSendOnboarding(lead)}>
-                        Send Onboarding
-                      </Button>
-                      {!lead.declined ? (
-                        <Button size="sm" variant="outline-danger" disabled={busy} onClick={() => handleDecline(lead)}>
-                          Decline
+                        <Button size="sm" variant="outline-success" disabled={busy || lead.declined} onClick={() => handleSendOnboarding(lead)}>
+                          Send Onboarding
                         </Button>
-                      ) : null}
-                    </div>
+                        {!lead.declined ? (
+                          <Button size="sm" variant="outline-danger" disabled={busy} onClick={() => handleDecline(lead)}>
+                            Decline
+                          </Button>
+                        ) : null}
+                      </div>
+                    )}
                   </td>
                 </tr>
               );
