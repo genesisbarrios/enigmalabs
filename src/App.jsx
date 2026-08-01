@@ -14,7 +14,7 @@ import OnboardingEditLookup from './OnboardingEditLookup';
 import Payment from './Payment';
 import Admin from './Admin';
 import LeadScraper from './LeadScraper';
-import Wallpapers from './Wallpapers';
+import Wallpapers from './wallpapers';
 import {Route, Routes} from 'react-router-dom';
 import {BrowserRouter as Router} from 'react-router-dom';
 const App = () => {

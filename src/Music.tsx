@@ -300,7 +300,7 @@ const Music = () => {
                 <form style={{ textAlign: "center", width: "100%", maxWidth: "420px", margin: "0 auto" }}>
                   <h3 style={{ color: "#68FF00", marginBottom: "0.25rem" }}>Sign Up For Our Newsletter</h3>
                   <p style={{ color: "#aaa", fontSize: "0.9rem", marginBottom: "1.5rem" }}>
-                    Loops, Beats, and discounts. No spam.
+                    Beats, Freebies, and discounts. No spam.
                   </p>
                   <input
                     type="email"
