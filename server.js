@@ -156,12 +156,13 @@ function buildColdEmailHtml(lead) {
     leadId: lead._id,
     type: 'cold',
     paragraphs: [
-      `I came across ${lead.businessName ? `<strong>${lead.businessName}</strong>` : 'your business'} and wanted to reach out — we're Enigma Labs, a web development studio that builds fast, modern websites for local businesses.`,
-      `If you don't have a website yet (or your current one could use an upgrade), we'd love to put together a completely free mockup so you can see exactly what's possible — no obligation at all.`,
-      `Just reply to this email, or book a quick call below and we'll get started.`
+      `I came across ${lead.businessName ? `<strong>${lead.businessName}</strong>'s` : 'your'} business page and noticed you don't currently have a website to showcase your business and make it easier for customers to find you online.`,
+      `To give you an idea of what's possible, I went ahead and designed a custom homepage mockup specifically for your business. I'd love to show it to you — there's no obligation, and it only takes about 5-10 minutes.`,
+      `Would you be available for a quick call sometime in the next day or two? Here's my calendar link for you to schedule it at your convenience:`
     ],
-    ctaLabel: 'Book a quick call',
-    ctaUrl: trackedUrl(lead._id, CALENDAR_LINK, 'cold')
+    ctaLabel: 'Schedule call',
+    ctaUrl: trackedUrl(lead._id, CALENDAR_LINK, 'cold'),
+    signOff: 'Looking forward to hearing from you,<br/><br/>Gen Barrios<br/>enigma-labs.com'
   });
 }
 
