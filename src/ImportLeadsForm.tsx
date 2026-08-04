@@ -100,7 +100,7 @@ function detectLeadFromTokens(tokens: string[]): ParsedLead {
     }
 
     if (!result.instagram && IG_REGEX.test(token)) {
-      result.instagram = token;
+      result.instagram = token.replace(/^@+/, '');
       continue;
     }
 
@@ -193,7 +193,7 @@ function extractLeadsFromGrid(grid: any[][]): ParsedLead[] {
       // confirmed to not exist — distinct from just being left blank.
       const igRaw = igIdxs.map((idx) => String(row[idx] ?? '').trim()).find((value) => value !== '') || '';
       const instagramNotFound = DASH_ONLY_REGEX.test(igRaw);
-      const instagram = instagramNotFound ? '' : cleanValue(igRaw);
+      const instagram = instagramNotFound ? '' : cleanValue(igRaw).replace(/^@+/, '');
 
       return {
         businessName: firstNonEmpty(row, businessIdxs),
