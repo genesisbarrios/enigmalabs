@@ -17,6 +17,8 @@ export type Lead = {
   instagramNotFoundAt?: string;
   website?: string;
   city?: string;
+  industry?: string;
+  notes?: string;
   googleBusinessUrl?: string;
   inbound: boolean;
   coldEmailSent?: boolean;
@@ -59,6 +61,42 @@ type SentEmailData = {
   clickedAt: string | null;
   resendStatus: any;
 };
+
+type EditForm = {
+  businessName: string;
+  contactName: string;
+  phone: string;
+  instagram: string;
+  email: string;
+  website: string;
+  city: string;
+  industry: string;
+  notes: string;
+};
+
+const emptyEditForm: EditForm = {
+  businessName: '',
+  contactName: '',
+  phone: '',
+  instagram: '',
+  email: '',
+  website: '',
+  city: '',
+  industry: '',
+  notes: ''
+};
+
+const editFormFromLead = (lead: Lead): EditForm => ({
+  businessName: lead.businessName || '',
+  contactName: lead.contactName || '',
+  phone: lead.phone || '',
+  instagram: lead.instagram || '',
+  email: lead.email || '',
+  website: lead.website || '',
+  city: lead.city || '',
+  industry: lead.industry || '',
+  notes: lead.notes || ''
+});
 
 type DirectionFilter = 'all' | 'inbound' | 'outbound';
 type StatusFilter = 'all' | 'not_contacted' | 'cold_email' | 'mockup_review' | 'onboarding';
@@ -112,6 +150,11 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
   const [sentEmailData, setSentEmailData] = useState<SentEmailData | null>(null);
   const [loadingSentEmail, setLoadingSentEmail] = useState(false);
   const [sentEmailError, setSentEmailError] = useState('');
+
+  const [editingLead, setEditingLead] = useState<Lead | null>(null);
+  const [editForm, setEditForm] = useState<EditForm>(emptyEditForm);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState('');
 
   const [searchQuery, setSearchQuery] = useState('');
   const [directionFilter, setDirectionFilter] = useState<DirectionFilter>('all');
@@ -365,6 +408,41 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
     setSentEmailError('');
   };
 
+  const openEditModal = (lead: Lead) => {
+    setEditingLead(lead);
+    setEditForm(editFormFromLead(lead));
+    setEditError('');
+  };
+
+  const closeEditModal = () => {
+    setEditingLead(null);
+    setEditForm(emptyEditForm);
+    setEditError('');
+  };
+
+  const handleSaveEdit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!editingLead) return;
+
+    setEditSaving(true);
+    setEditError('');
+    try {
+      const response = await axios.put(`${API_BASE_URL}/crm/leads/${editingLead._id}`, editForm);
+      if (response.data?.ok) {
+        setMessage('Lead updated.');
+        closeEditModal();
+        fetchLeads();
+      } else {
+        setEditError(response.data?.message || 'Could not update lead.');
+      }
+    } catch (saveError) {
+      console.error(saveError);
+      setEditError('Could not update lead.');
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
   return (
     <div>
       {message ? <Alert variant="success" onClose={() => setMessage('')} dismissible>{message}</Alert> : null}
@@ -434,6 +512,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
               <th>Contact</th>
               <th>Phone</th>
               <th>City</th>
+              <th>Website</th>
               <th>Instagram</th>
               <th>Cold DM'd</th>
               <th>Called</th>
@@ -489,6 +568,13 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                   </td>
                   <td>{lead.phone || '—'}</td>
                   <td>{lead.city || '—'}</td>
+                  <td>
+                    {lead.website ? (
+                      <a href={lead.website} target="_blank" rel="noreferrer" className="text-white">
+                        {lead.website.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '')}
+                      </a>
+                    ) : '—'}
+                  </td>
                   <td>
                     {lead.instagram ? (
                       <a
@@ -621,6 +707,9 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                             Decline
                           </Button>
                         ) : null}
+                        <Button size="sm" variant="outline-light" onClick={() => openEditModal(lead)}>
+                          Edit
+                        </Button>
                       </div>
                     )}
                   </td>
@@ -696,6 +785,84 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
         <Modal.Footer style={{ background: '#111', borderTop: '1px solid #2b2b2b' }}>
           <Button variant="outline-light" size="sm" onClick={closeSentEmailModal}>Close</Button>
         </Modal.Footer>
+      </Modal>
+
+      <Modal show={Boolean(editingLead)} onHide={closeEditModal} centered>
+        <Form onSubmit={handleSaveEdit}>
+          <Modal.Header closeButton style={{ background: '#111', color: 'white', borderBottom: '1px solid #2b2b2b' }}>
+            <Modal.Title>Edit Lead</Modal.Title>
+          </Modal.Header>
+          <Modal.Body style={{ background: '#111', color: 'white' }}>
+            {editError ? <Alert variant="danger">{editError}</Alert> : null}
+            <Row>
+              <Col md={6}>
+                <Form.Group className="mb-2">
+                  <Form.Label>Business Name</Form.Label>
+                  <Form.Control value={editForm.businessName} onChange={(e) => setEditForm({ ...editForm, businessName: e.target.value })} />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-2">
+                  <Form.Label>Contact / Owner Name</Form.Label>
+                  <Form.Control value={editForm.contactName} onChange={(e) => setEditForm({ ...editForm, contactName: e.target.value })} />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-2">
+                  <Form.Label>Phone</Form.Label>
+                  <Form.Control value={editForm.phone} onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })} />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-2">
+                  <Form.Label>Email</Form.Label>
+                  <Form.Control value={editForm.email} onChange={(e) => setEditForm({ ...editForm, email: e.target.value })} />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-2">
+                  <Form.Label>Instagram</Form.Label>
+                  <Form.Control value={editForm.instagram} onChange={(e) => setEditForm({ ...editForm, instagram: e.target.value })} placeholder="handle or URL" />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-2">
+                  <Form.Label>Website</Form.Label>
+                  <Form.Control value={editForm.website} onChange={(e) => setEditForm({ ...editForm, website: e.target.value })} placeholder="https://..." />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-2">
+                  <Form.Label>City</Form.Label>
+                  <Form.Control value={editForm.city} onChange={(e) => setEditForm({ ...editForm, city: e.target.value })} placeholder="e.g. Miami, FL" />
+                </Form.Group>
+              </Col>
+              <Col md={6}>
+                <Form.Group className="mb-2">
+                  <Form.Label>Industry</Form.Label>
+                  <Form.Control value={editForm.industry} onChange={(e) => setEditForm({ ...editForm, industry: e.target.value })} />
+                </Form.Group>
+              </Col>
+              <Col md={12}>
+                <Form.Group className="mb-2">
+                  <Form.Label>Comments</Form.Label>
+                  <Form.Control
+                    as="textarea"
+                    rows={2}
+                    value={editForm.notes}
+                    onChange={(e) => setEditForm({ ...editForm, notes: e.target.value })}
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+          </Modal.Body>
+          <Modal.Footer style={{ background: '#111', borderTop: '1px solid #2b2b2b' }}>
+            <Button variant="outline-light" size="sm" onClick={closeEditModal} disabled={editSaving}>Cancel</Button>
+            <Button variant="success" size="sm" type="submit" disabled={editSaving}>
+              {editSaving ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </Modal.Footer>
+        </Form>
       </Modal>
     </div>
   );

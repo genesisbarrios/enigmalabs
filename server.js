@@ -1070,6 +1070,26 @@ app.get('/api/crm/leads', async (_req, res) => {
   }
 });
 
+app.put('/api/crm/leads/:id', async (req, res) => {
+  try {
+    const lead = await Lead.findById(req.params.id);
+    if (!lead) {
+      return res.status(404).json({ ok: false, message: 'Lead not found.' });
+    }
+
+    const fields = ['businessName', 'contactName', 'phone', 'instagram', 'email', 'website', 'city', 'industry', 'notes'];
+    fields.forEach((field) => {
+      if (req.body[field] !== undefined) lead[field] = req.body[field];
+    });
+
+    await lead.save();
+    res.json({ ok: true, lead });
+  } catch (error) {
+    console.error('Could not update lead', error);
+    res.status(500).json({ ok: false, message: 'Could not update lead.' });
+  }
+});
+
 app.post('/api/crm/leads', async (req, res) => {
   try {
     const { businessName, contactName, phone, instagram, email, website, city, industry, notes, coldEmailSent, dmSent, called, instagramNotFound, emailNotFound } = req.body;
