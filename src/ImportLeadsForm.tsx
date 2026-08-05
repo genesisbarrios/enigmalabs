@@ -83,6 +83,16 @@ const cleanValue = (value: unknown): string => {
   return BLANK_PLACEHOLDER_REGEX.test(trimmed) ? '' : trimmed;
 };
 
+// Explicit negatives — "No", "FALSE", "N", "0" — must not count as a mark in
+// a checkbox-style column (Decline/DM/Called/email-tracker), even though the
+// cell isn't blank. Excel booleans also come through as real `false` values.
+const FALSE_TOKEN_REGEX = /^(no|n|false|0|off)$/i;
+const isMarked = (raw: unknown): boolean => {
+  if (typeof raw === 'boolean') return raw;
+  const value = cleanValue(raw);
+  return value !== '' && !FALSE_TOKEN_REGEX.test(value);
+};
+
 // Best-effort classification of a row of unlabeled tokens (pasted text, or a
 // spreadsheet row whose headers we didn't recognize) into lead fields.
 function detectLeadFromTokens(tokens: string[]): ParsedLead {
@@ -183,11 +193,11 @@ function extractLeadsFromGrid(grid: any[][]): ParsedLead[] {
       const emailNotFound = !email && emailIdxs.some((idx) => DASH_ONLY_REGEX.test(String(row[idx] ?? '').trim()));
       const coldEmailTrackerHasMark = emailIdxs
         .filter((idx) => idx !== emailIdx)
-        .some((idx) => cleanValue(row[idx]) !== '');
+        .some((idx) => isMarked(row[idx]));
 
-      const declined = declineIdxs.some((idx) => cleanValue(row[idx]) !== '');
-      const dmSent = dmIdxs.some((idx) => cleanValue(row[idx]) !== '');
-      const called = calledIdxs.some((idx) => cleanValue(row[idx]) !== '');
+      const declined = declineIdxs.some((idx) => isMarked(row[idx]));
+      const dmSent = dmIdxs.some((idx) => isMarked(row[idx]));
+      const called = calledIdxs.some((idx) => isMarked(row[idx]));
 
       // A bare "-" in the Instagram column means it was already searched and
       // confirmed to not exist — distinct from just being left blank.
