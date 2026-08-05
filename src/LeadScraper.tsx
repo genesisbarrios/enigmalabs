@@ -314,7 +314,7 @@ const LeadScraper = () => {
   }
 
   return (
-    <Container style={{ paddingTop: '6rem', paddingBottom: '3rem', maxWidth: '1100px' }}>
+    <Container style={{ paddingTop: '6rem', paddingBottom: '3rem', maxWidth: '1600px' }}>
       <h1 style={{ color: '#68FF00', marginBottom: '0.5rem' }}>Leads</h1>
       <p style={{ color: '#d4d4d4', marginBottom: '1.5rem' }}>
         Inbound leads come from the free mockup signup form. Outbound leads come from the lead scraper below or manual import.

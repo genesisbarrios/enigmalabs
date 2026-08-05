@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
-import { Alert, Badge, Button, Col, Form, Modal, Row, Table } from 'react-bootstrap';
+import { Alert, Badge, Button, Col, Form, Modal, Pagination, Row, Table } from 'react-bootstrap';
 import axios from 'axios';
 
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
@@ -64,6 +64,8 @@ type DirectionFilter = 'all' | 'inbound' | 'outbound';
 type StatusFilter = 'all' | 'not_contacted' | 'cold_email' | 'mockup_review' | 'onboarding';
 type SortOption = 'newest' | 'oldest' | 'name';
 
+const PAGE_SIZE_OPTIONS = [25, 50, 100, 200];
+
 const isNotContacted = (lead: Lead) => !lead.coldEmailSent && !lead.mockupReviewSent && !lead.onboardingSent;
 
 const buildFindEmailUrl = (lead: Lead) => {
@@ -115,6 +117,8 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
   const [directionFilter, setDirectionFilter] = useState<DirectionFilter>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [sortOption, setSortOption] = useState<SortOption>('newest');
+  const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const fetchLeads = async () => {
     setLoading(true);
@@ -174,6 +178,21 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
 
     return result;
   }, [leads, searchQuery, directionFilter, statusFilter, sortOption]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredLeads.length / pageSize));
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, directionFilter, statusFilter, sortOption, pageSize]);
+
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [currentPage, totalPages]);
+
+  const paginatedLeads = useMemo(
+    () => filteredLeads.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [filteredLeads, currentPage, pageSize]
+  );
 
   const runAction = async (lead: Lead, action: () => Promise<void>) => {
     setBusyId(lead._id);
@@ -384,6 +403,26 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
         </Col>
       </Row>
 
+      {!loading && filteredLeads.length > 0 ? (
+        <Row className="mb-2 align-items-center">
+          <Col style={{ color: '#aaa', fontSize: '0.85rem' }}>
+            Showing {(currentPage - 1) * pageSize + 1}–{Math.min(currentPage * pageSize, filteredLeads.length)} of {filteredLeads.length}
+          </Col>
+          <Col xs="auto">
+            <Form.Select
+              size="sm"
+              value={pageSize}
+              onChange={(event) => setPageSize(Number(event.target.value))}
+              style={{ width: 'auto' }}
+            >
+              {PAGE_SIZE_OPTIONS.map((size) => (
+                <option key={size} value={size}>{size} per page</option>
+              ))}
+            </Form.Select>
+          </Col>
+        </Row>
+      ) : null}
+
       {loading ? <p style={{ color: '#d4d4d4' }}>Loading leads...</p> : null}
       {!loading && filteredLeads.length === 0 ? <Alert variant="secondary">No leads match.</Alert> : null}
 
@@ -405,7 +444,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
             </tr>
           </thead>
           <tbody>
-            {filteredLeads.map((lead) => {
+            {paginatedLeads.map((lead) => {
               const busy = busyId === lead._id;
               return (
                 <tr key={lead._id} style={lead.declined || lead.convertedToClient ? { opacity: 0.5 } : undefined}>
@@ -586,6 +625,25 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
             })}
           </tbody>
         </Table>
+      ) : null}
+
+      {!loading && totalPages > 1 ? (
+        <Pagination className="justify-content-center">
+          <Pagination.First onClick={() => setCurrentPage(1)} disabled={currentPage === 1} />
+          <Pagination.Prev onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={currentPage === 1} />
+          {Array.from({ length: totalPages }, (_, index) => index + 1)
+            .filter((page) => page === 1 || page === totalPages || Math.abs(page - currentPage) <= 2)
+            .map((page, index, pages) => (
+              <span key={page} style={{ display: 'contents' }}>
+                {index > 0 && pages[index - 1] !== page - 1 ? <Pagination.Ellipsis disabled /> : null}
+                <Pagination.Item active={page === currentPage} onClick={() => setCurrentPage(page)}>
+                  {page}
+                </Pagination.Item>
+              </span>
+            ))}
+          <Pagination.Next onClick={() => setCurrentPage((page) => Math.min(totalPages, page + 1))} disabled={currentPage === totalPages} />
+          <Pagination.Last onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} />
+        </Pagination>
       ) : null}
 
       <Modal show={Boolean(viewingEmail)} onHide={closeSentEmailModal} size="lg" centered>
