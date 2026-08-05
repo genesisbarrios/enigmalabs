@@ -583,35 +583,39 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                       <small style={{ color: '#aaa' }}>Already a client — manage them in Website Clients below.</small>
                     ) : (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '150px' }}>
-                        {!lead.inbound ? (
-                          lead.coldEmailSent ? (
-                            <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'cold')}>
-                              See Sent Cold Email
-                            </Button>
-                          ) : (
-                            <Button size="sm" variant="outline-warning" disabled={busy || lead.declined} onClick={() => handleSendColdEmail(lead)}>
-                              Send Cold Email
-                            </Button>
-                          )
+                        {lead.email ? (
+                          <>
+                            {!lead.inbound ? (
+                              lead.coldEmailSent ? (
+                                <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'cold')}>
+                                  See Sent Cold Email
+                                </Button>
+                              ) : (
+                                <Button size="sm" variant="outline-warning" disabled={busy || lead.declined} onClick={() => handleSendColdEmail(lead)}>
+                                  Send Cold Email
+                                </Button>
+                              )
+                            ) : null}
+                            {lead.mockupReviewSent ? (
+                              <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'mockupReview')}>
+                                See Sent Mockup Review Email
+                              </Button>
+                            ) : (
+                              <Button size="sm" variant="outline-primary" disabled={busy || lead.declined} onClick={() => handleSendMockupReview(lead)}>
+                                Send Mockup Review
+                              </Button>
+                            )}
+                            {lead.onboardingSent ? (
+                              <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'onboarding')}>
+                                See Sent Onboarding Email
+                              </Button>
+                            ) : (
+                              <Button size="sm" variant="outline-success" disabled={busy || lead.declined} onClick={() => handleSendOnboarding(lead)}>
+                                Send Onboarding
+                              </Button>
+                            )}
+                          </>
                         ) : null}
-                        {lead.mockupReviewSent ? (
-                          <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'mockupReview')}>
-                            See Sent Mockup Review Email
-                          </Button>
-                        ) : (
-                          <Button size="sm" variant="outline-primary" disabled={busy || lead.declined} onClick={() => handleSendMockupReview(lead)}>
-                            Send Mockup Review
-                          </Button>
-                        )}
-                        {lead.onboardingSent ? (
-                          <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'onboarding')}>
-                            See Sent Onboarding Email
-                          </Button>
-                        ) : (
-                          <Button size="sm" variant="outline-success" disabled={busy || lead.declined} onClick={() => handleSendOnboarding(lead)}>
-                            Send Onboarding
-                          </Button>
-                        )}
                         {!lead.declined ? (
                           <Button size="sm" variant="outline-danger" disabled={busy} onClick={() => handleDecline(lead)}>
                             Decline

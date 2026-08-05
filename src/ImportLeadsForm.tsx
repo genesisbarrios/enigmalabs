@@ -142,10 +142,11 @@ function detectLeadFromTokens(tokens: string[]): ParsedLead {
 
 // Shared by file import and header-aware paste import. Spreadsheet exports
 // from a manual outreach tracker often have header quirks a name-keyed
-// object can't represent — most notably two columns both named "Email" (one
-// is the real address, the other is a blank "did we email them" tracker
-// column). Working from a raw grid (array of row arrays) keeps every column
-// by index so duplicate headers don't silently collide/overwrite each other.
+// object can't represent — most notably a separate "Cold Email" tracker
+// column alongside the real "Email" address column (or, on older sheets,
+// two columns both bare-named "Email"). Working from a raw grid (array of
+// row arrays) keeps every column by index so duplicate/similar headers
+// don't silently collide with each other.
 function extractLeadsFromGrid(grid: any[][]): ParsedLead[] {
   if (!grid.length) return [];
 
@@ -163,6 +164,11 @@ function extractLeadsFromGrid(grid: any[][]): ParsedLead[] {
   const phoneIdxs = findIndices([/phone/i]);
   const igIdxs = findIndices([/instagram/i, /^ig$/i]);
   const emailIdxs = findIndices([/email/i]);
+  // "Cold Email" is a dedicated tracker column, not a real address — pull it
+  // out of the generic email match so it never gets mistaken for the actual
+  // Email column (or vice versa) when both are present.
+  const coldEmailIdxs = findIndices([/cold\s*email/i]);
+  const realEmailIdxs = emailIdxs.filter((idx) => !coldEmailIdxs.includes(idx));
   const websiteIdxs = findIndices([/website/i, /^url$/i]);
   const cityIdxs = findIndices([/city/i, /location/i]);
   const industryIdxs = findIndices([/industry/i, /category/i]);
@@ -181,19 +187,20 @@ function extractLeadsFromGrid(grid: any[][]): ParsedLead[] {
 
   return dataRows
     .map((row) => {
-      // Among any columns named "Email", the real address is whichever one
-      // actually contains an "@" for this row — the other is treated as a
-      // "cold email sent" tracker if it has any mark in it at all.
-      const emailIdx = emailIdxs.find((idx) => cleanValue(row[idx]).includes('@'));
+      // Among any columns named "Email" (excluding "Cold Email"), the real
+      // address is whichever one actually contains an "@" for this row — if
+      // there's no dedicated "Cold Email" column, any other "Email"-ish
+      // column is treated as a legacy "did we email them" tracker instead.
+      const emailIdx = realEmailIdxs.find((idx) => cleanValue(row[idx]).includes('@'));
       // A single cell may hold multiple addresses (e.g. "a@x.com, b@y.com") —
       // pull out every one rather than just the whole raw cell text.
       const email = emailIdx !== undefined ? normalizeEmailList(cleanValue(row[emailIdx])) : '';
       // A bare "-" in an Email column (when no real address was found) means
       // it was already searched and confirmed to not exist.
-      const emailNotFound = !email && emailIdxs.some((idx) => DASH_ONLY_REGEX.test(String(row[idx] ?? '').trim()));
-      const coldEmailTrackerHasMark = emailIdxs
-        .filter((idx) => idx !== emailIdx)
-        .some((idx) => isMarked(row[idx]));
+      const emailNotFound = !email && realEmailIdxs.some((idx) => DASH_ONLY_REGEX.test(String(row[idx] ?? '').trim()));
+      const coldEmailTrackerHasMark = coldEmailIdxs.length
+        ? coldEmailIdxs.some((idx) => isMarked(row[idx]))
+        : realEmailIdxs.filter((idx) => idx !== emailIdx).some((idx) => isMarked(row[idx]));
 
       const declined = declineIdxs.some((idx) => isMarked(row[idx]));
       const dmSent = dmIdxs.some((idx) => isMarked(row[idx]));
@@ -527,10 +534,11 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
           <div className="mt-3 mb-4">
             <p style={{ color: '#d4d4d4' }}>
               Paste rows with a header row — one contact per line, tab or comma separated. Recognized columns: Name/Business,
-              Name(Owner)/Contact, Phone, Instagram/IG, Email, Website/URL, City/Location, Industry/Category, Comment/Notes, DM,
-              Called, and Decline. "-" and blank cells are treated as empty; any mark in a DM/Called/Decline column is read as
-              "yes." A bare "-" in the Instagram column means "already searched, not found." Pasting without a header row falls
-              back to best-effort detection, which can't capture Industry or Comments.
+              Name(Owner)/Contact, Phone, Instagram/IG, Email, Cold Email, Website/URL, City/Location, Industry/Category,
+              Comment/Notes, DM, Called, and Decline. "-" and blank cells are treated as empty; any mark in a Cold
+              Email/DM/Called/Decline column is read as "yes" (an explicit "No"/"FALSE"/"0" is read as "no"). A bare "-" in the
+              Instagram column means "already searched, not found." Pasting without a header row falls back to best-effort
+              detection, which can't capture Industry or Comments.
             </p>
             <Form.Control
               as="textarea"
@@ -549,10 +557,11 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
           <div className="mt-3 mb-4">
             <p style={{ color: '#d4d4d4' }}>
               Import a CSV or XLSX file. Recognized columns: Name/Business, Name(Owner)/Contact, Phone, Instagram/IG, Email,
-              Website/URL, City/Location, Industry/Category, Comment/Notes, DM, Called, and Decline. "-" and blank cells are
-              treated as empty; any mark in a DM/Called/Decline column is read as "yes." A bare "-" in the Instagram column means
-              "already searched, not found." If your file has two "Email" columns (a real address plus a sent/not-sent tracker),
-              the one containing an actual address is used as the email and the other is read as "cold email sent."
+              Cold Email, Website/URL, City/Location, Industry/Category, Comment/Notes, DM, Called, and Decline. "-" and blank
+              cells are treated as empty; any mark in a Cold Email/DM/Called/Decline column is read as "yes" (an explicit
+              "No"/"FALSE"/"0" is read as "no"). A bare "-" in the Instagram column means "already searched, not found." If your
+              file has a "Cold Email" column, any mark in it means a cold email was already sent; if it instead has two bare
+              "Email" columns, the one containing an actual address is used as the email and the other is read the same way.
             </p>
             <Form.Control type="file" accept=".csv,.xlsx,.xls" onChange={handleFileChange} />
           </div>
