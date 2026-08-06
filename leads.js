@@ -22,9 +22,12 @@ async function geocode(city) {
     }
   );
 
-  const location = response.data.results[0].geometry.location;
+  const { status, results, error_message } = response.data;
+  if (status !== "OK" || !results.length) {
+    throw new Error(`Geocoding API ${status}${error_message ? `: ${error_message}` : ""} (city: "${city}")`);
+  }
 
-  return location;
+  return results[0].geometry.location;
 }
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
