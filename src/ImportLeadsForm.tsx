@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Button, Card, Col, Form, Row, Table } from 'react-bootstrap';
+import { Alert, Button, Card, Col, Dropdown, DropdownButton, Form, Row, Table } from 'react-bootstrap';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
 
@@ -279,6 +279,28 @@ async function parseFileLeads(file: File): Promise<ParsedLead[]> {
   return extractLeadsFromGrid(grid);
 }
 
+const EXPORT_COLUMNS: { key: string; label: string }[] = [
+  { key: 'businessName', label: 'Business Name' },
+  { key: 'contactName', label: 'Contact Name' },
+  { key: 'phone', label: 'Phone' },
+  { key: 'email', label: 'Email' },
+  { key: 'instagram', label: 'Instagram' },
+  { key: 'website', label: 'Website' },
+  { key: 'city', label: 'City' },
+  { key: 'industry', label: 'Category' },
+  { key: 'notes', label: 'Comments' },
+  { key: 'coldEmailSent', label: 'Cold Email Sent' },
+  { key: 'dmSent', label: 'DM Sent' },
+  { key: 'called', label: 'Called' },
+  { key: 'declined', label: 'Declined' }
+];
+
+const exportRowValue = (lead: any, key: string): string => {
+  const value = lead[key];
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+  return value ?? '';
+};
+
 const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showPasteForm, setShowPasteForm] = useState(false);
@@ -287,6 +309,7 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
   const [pasteText, setPasteText] = useState('');
   const [previewLeads, setPreviewLeads] = useState<ParsedLead[]>([]);
   const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
@@ -371,7 +394,83 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
     }
   };
 
+  const fetchAllLeadsForExport = async (): Promise<any[]> => {
+    const response = await axios.get(`${API_BASE_URL}/crm/leads`);
+    if (!response.data?.ok) throw new Error('Could not load contacts.');
+    return response.data.leads || [];
+  };
+
+  const downloadBlob = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const runExport = async (action: (leads: any[]) => void | Promise<void>) => {
+    setExporting(true);
+    setMessage('');
+    setError('');
+    try {
+      const leads = await fetchAllLeadsForExport();
+      if (!leads.length) {
+        setError('There are no contacts to export.');
+        return;
+      }
+      await action(leads);
+    } catch (exportError) {
+      console.error(exportError);
+      setError('Could not export contacts.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleExportXlsx = () =>
+    runExport((leads) => {
+      const rows = leads.map((lead) => {
+        const row: Record<string, string> = {};
+        EXPORT_COLUMNS.forEach(({ key, label }) => {
+          row[label] = exportRowValue(lead, key);
+        });
+        return row;
+      });
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Contacts');
+      XLSX.writeFile(workbook, 'leads-contacts.xlsx');
+      setMessage(`Exported ${leads.length} contact${leads.length === 1 ? '' : 's'} to XLSX.`);
+    });
+
+  const handleExportCsv = () =>
+    runExport((leads) => {
+      const header = EXPORT_COLUMNS.map((column) => column.label);
+      const rows = leads.map((lead) => EXPORT_COLUMNS.map((column) => exportRowValue(lead, column.key)));
+      const csv = [header, ...rows]
+        .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(','))
+        .join('\n');
+      downloadBlob(new Blob([csv], { type: 'text/csv' }), 'leads-contacts.csv');
+      setMessage(`Exported ${leads.length} contact${leads.length === 1 ? '' : 's'} to CSV.`);
+    });
+
+  const handleCopyContacts = () =>
+    runExport(async (leads) => {
+      const header = EXPORT_COLUMNS.map((column) => column.label).join('\t');
+      const rows = leads.map((lead) => EXPORT_COLUMNS.map((column) => exportRowValue(lead, column.key)).join('\t'));
+      const text = [header, ...rows].join('\n');
+      try {
+        await navigator.clipboard.writeText(text);
+        setMessage(`Copied ${leads.length} contact${leads.length === 1 ? '' : 's'} to clipboard.`);
+      } catch (copyError) {
+        console.error(copyError);
+        setError('Could not copy to clipboard.');
+      }
+    });
+
   return (
+    <>
     <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', marginBottom: '1.5rem' }}>
       <Card.Body>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
@@ -619,6 +718,27 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
         ) : null}
       </Card.Body>
     </Card>
+
+    <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', marginBottom: '1.5rem' }}>
+      <Card.Body>
+        <h4 style={{ margin: '0 0 0.75rem' }}>Export Contacts</h4>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <DropdownButton
+            size="sm"
+            variant="outline-success"
+            title="Export"
+            disabled={exporting}
+          >
+            <Dropdown.Item onClick={handleExportXlsx}>Export as XLSX</Dropdown.Item>
+            <Dropdown.Item onClick={handleExportCsv}>Export as CSV</Dropdown.Item>
+          </DropdownButton>
+          <Button size="sm" variant="outline-light" disabled={exporting} onClick={handleCopyContacts}>
+            Copy to Clipboard
+          </Button>
+        </div>
+      </Card.Body>
+    </Card>
+    </>
   );
 };
 

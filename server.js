@@ -33,6 +33,23 @@ function escapeRegex(value) {
   return (value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+function sanitizeForFilename(value) {
+  return (value || '').replace(/[^a-zA-Z0-9]+/g, '');
+}
+
+function formatDateForFilename(date) {
+  const d = new Date(date || Date.now());
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function buildAgreementFilename({ clientName, effectiveDate }) {
+  const businessName = sanitizeForFilename(clientName) || 'Client';
+  return `WebDevAgreement_EnigmaLabs_${businessName}_${formatDateForFilename(effectiveDate)}.pdf`;
+}
+
 function trackedUrl(leadId, url, type) {
   if (!url) return url;
   const typeParam = type ? `&type=${encodeURIComponent(type)}` : '';
@@ -49,11 +66,11 @@ function trackingPixelTag(leadId, type) {
 // logo and layout consistent across cold outreach, mockup review, onboarding,
 // and website review emails.
 function renderBrandedEmail({ greetingName, paragraphs, ctaLabel, ctaUrl, signOff, leadId, type }) {
-  const name = (greetingName || '').trim().split(' ')[0] || 'there';
+  const name = (greetingName || '').trim().split(' ')[0] || '';
   const paragraphsHtml = paragraphs.map((p) => `<p style="line-height: 1.6;">${p}</p>`).join('\n');
   return `
     <div style="font-family: Arial, Helvetica, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #111;">
-      <h2 style="margin: 0 0 16px;">Hi ${name},</h2>
+      <h2 style="margin: 0 0 16px;">Hi${name ? ` ${name}` : ''},</h2>
       ${paragraphsHtml}
       ${ctaUrl ? `
       <p style="text-align: center; margin: 32px 0;">
@@ -156,7 +173,7 @@ function buildColdEmailHtml(lead) {
     : `I came across ${lead.businessName ? `<strong>${lead.businessName}</strong>'s` : 'your'} business page and noticed you don't currently have a website to showcase your business and make it easier for customers to find you online.`;
 
   return renderBrandedEmail({
-    greetingName: lead.contactName || lead.businessName,
+    greetingName: lead.contactName,
     leadId: lead._id,
     type: 'cold',
     paragraphs: [
@@ -242,10 +259,14 @@ async function sendLeadEmail(lead, { subject, buildHtml, statusField, statusAtFi
 }
 
 function buildWebsiteReviewEmailHtml(client) {
+  const websiteLinkHtml = client.website
+    ? ` You can check it out here: <a href="${client.website}" style="color:#111; font-weight:bold;">${client.website.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '')}</a>.`
+    : '';
+
   return renderBrandedEmail({
     greetingName: client.name,
     paragraphs: [
-      `Your new website${client.name ? ` for <strong>${client.name}</strong>` : ''} is complete! 🎉`,
+      `Your new website${client.name ? ` for <strong>${client.name}</strong>` : ''} is complete! 🎉${websiteLinkHtml}`,
       `Feel free to explore it at your own pace — or if you'd like to walk through it together, schedule a quick review call below.`
     ],
     ctaLabel: 'Schedule a review call',
@@ -282,7 +303,7 @@ async function sendWebsiteReviewEmail(client) {
   return { ok: true, client };
 }
 
-async function sendAgreementEmails({ agreementId, clientName, clientEmail, pdfBuffer }) {
+async function sendAgreementEmails({ agreementId, clientName, clientEmail, effectiveDate, pdfBuffer }) {
   if (!resend) {
     console.warn('RESEND_API_KEY not set — skipping agreement email delivery.');
     return;
@@ -290,7 +311,7 @@ async function sendAgreementEmails({ agreementId, clientName, clientEmail, pdfBu
 
   const attachments = [
     {
-      filename: `WebDev_Agreement_EnigmaLabs.pdf`,
+      filename: buildAgreementFilename({ clientName, effectiveDate }),
       content: pdfBuffer.toString('base64')
     }
   ];
@@ -906,6 +927,7 @@ app.post('/api/agreements/submit', async (req, res) => {
       agreementId: agreement._id,
       clientName,
       clientEmail,
+      effectiveDate,
       pdfBuffer
     });
 
@@ -950,8 +972,9 @@ app.get('/api/agreements/:id/download', async (req, res) => {
     if (!agreement) {
       return res.status(404).json({ ok: false, message: 'Agreement not found.' });
     }
+    const filename = buildAgreementFilename({ clientName: agreement.clientName, effectiveDate: agreement.effectiveDate || agreement.createdAt });
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="WebDev_Agreement_EnigmaLabs.pdf"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.send(agreement.pdf);
   } catch (error) {
     console.error('Could not download agreement', error);
