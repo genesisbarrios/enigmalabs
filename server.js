@@ -151,12 +151,16 @@ async function sendWebInterestEmail(subscriber) {
 // ── Lead outreach emails ──
 
 function buildColdEmailHtml(lead) {
+  const openingLine = lead.website
+    ? `I came across ${lead.businessName ? `<strong>${lead.businessName}</strong>'s` : 'your'} business page and noticed your website could use a modern re-design to attract more customers!`
+    : `I came across ${lead.businessName ? `<strong>${lead.businessName}</strong>'s` : 'your'} business page and noticed you don't currently have a website to showcase your business and make it easier for customers to find you online.`;
+
   return renderBrandedEmail({
     greetingName: lead.contactName || lead.businessName,
     leadId: lead._id,
     type: 'cold',
     paragraphs: [
-      `I came across ${lead.businessName ? `<strong>${lead.businessName}</strong>'s` : 'your'} business page and noticed you don't currently have a website to showcase your business and make it easier for customers to find you online.`,
+      openingLine,
       `To give you an idea of what's possible, I went ahead and designed a custom homepage mockup specifically for your business. I'd love to show it to you — there's no obligation, and it only takes about 5-10 minutes.`,
       `Would you be available for a quick call sometime in the next day or two? Here's my calendar link for you to schedule it at your convenience:`
     ],

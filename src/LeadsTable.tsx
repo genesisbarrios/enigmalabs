@@ -100,6 +100,7 @@ const editFormFromLead = (lead: Lead): EditForm => ({
 
 type DirectionFilter = 'all' | 'inbound' | 'outbound';
 type StatusFilter = 'all' | 'not_contacted' | 'cold_email' | 'mockup_review' | 'onboarding';
+type EmailFilter = 'all' | 'has_email' | 'no_email';
 type SortOption = 'newest' | 'oldest' | 'name';
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100, 200];
@@ -159,6 +160,8 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [directionFilter, setDirectionFilter] = useState<DirectionFilter>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [emailFilter, setEmailFilter] = useState<EmailFilter>('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [sortOption, setSortOption] = useState<SortOption>('newest');
   const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -184,6 +187,14 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
 
   useImperativeHandle(ref, () => ({ reload: fetchLeads }));
 
+  const categoryOptions = useMemo(() => {
+    const categories = new Set<string>();
+    leads.forEach((lead) => {
+      if (lead.industry) categories.add(lead.industry);
+    });
+    return Array.from(categories).sort((a, b) => a.localeCompare(b));
+  }, [leads]);
+
   const filteredLeads = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
     let result = leads.filter((lead) => {
@@ -207,7 +218,14 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
         (statusFilter === 'mockup_review' && lead.mockupReviewSent) ||
         (statusFilter === 'onboarding' && lead.onboardingSent);
 
-      return matchesQuery && matchesDirection && matchesStatus;
+      const matchesEmail =
+        emailFilter === 'all' ||
+        (emailFilter === 'has_email' && Boolean(lead.email)) ||
+        (emailFilter === 'no_email' && !lead.email);
+
+      const matchesCategory = categoryFilter === 'all' || lead.industry === categoryFilter;
+
+      return matchesQuery && matchesDirection && matchesStatus && matchesEmail && matchesCategory;
     });
 
     result = [...result].sort((a, b) => {
@@ -220,13 +238,13 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
     });
 
     return result;
-  }, [leads, searchQuery, directionFilter, statusFilter, sortOption]);
+  }, [leads, searchQuery, directionFilter, statusFilter, emailFilter, categoryFilter, sortOption]);
 
   const totalPages = Math.max(1, Math.ceil(filteredLeads.length / pageSize));
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, directionFilter, statusFilter, sortOption, pageSize]);
+  }, [searchQuery, directionFilter, statusFilter, emailFilter, categoryFilter, sortOption, pageSize]);
 
   useEffect(() => {
     if (currentPage > totalPages) setCurrentPage(totalPages);
@@ -481,6 +499,24 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
         </Col>
       </Row>
 
+      <Row className="mb-3">
+        <Col md={3}>
+          <Form.Select value={emailFilter} onChange={(event) => setEmailFilter(event.target.value as EmailFilter)}>
+            <option value="all">Any Email Status</option>
+            <option value="has_email">Has Email</option>
+            <option value="no_email">No Email</option>
+          </Form.Select>
+        </Col>
+        <Col md={3}>
+          <Form.Select value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
+            <option value="all">All Categories</option>
+            {categoryOptions.map((category) => (
+              <option key={category} value={category}>{category}</option>
+            ))}
+          </Form.Select>
+        </Col>
+      </Row>
+
       {!loading && filteredLeads.length > 0 ? (
         <Row className="mb-2 align-items-center">
           <Col style={{ color: '#aaa', fontSize: '0.85rem' }}>
@@ -512,7 +548,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
               <th>Contact</th>
               <th>Phone</th>
               <th>City</th>
-              <th>Website</th>
+              <th>Category</th>
               <th>Instagram</th>
               <th>Cold DM'd</th>
               <th>Called</th>
@@ -568,13 +604,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                   </td>
                   <td>{lead.phone || '—'}</td>
                   <td>{lead.city || '—'}</td>
-                  <td>
-                    {lead.website ? (
-                      <a href={lead.website} target="_blank" rel="noreferrer" className="text-white">
-                        {lead.website.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '')}
-                      </a>
-                    ) : '—'}
-                  </td>
+                  <td>{lead.industry || '—'}</td>
                   <td>
                     {lead.instagram ? (
                       <a
@@ -621,6 +651,15 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                         </Button>
                       </div>
                     )}
+                    {lead.website ? (
+                      <div style={{ marginTop: '4px' }}>
+                        <a href={lead.website} target="_blank" rel="noreferrer" className="text-white">
+                          <small style={{ color: '#aaa' }}>
+                            {lead.website.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '')}
+                          </small>
+                        </a>
+                      </div>
+                    ) : null}
                   </td>
                   <td>
                     {lead.instagram ? (
