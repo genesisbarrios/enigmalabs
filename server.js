@@ -152,7 +152,7 @@ async function sendWebInterestEmail(subscriber) {
 
 function buildColdEmailHtml(lead) {
   const openingLine = lead.website
-    ? `I came across ${lead.businessName ? `<strong>${lead.businessName}</strong>'s` : 'your'} business page and noticed your website could use a modern re-design to attract more customers!`
+    ? `I came across ${lead.businessName ? `<strong>${lead.businessName}</strong>'s` : 'your'} business page and noticed your website could benefit from a modern refresh. A more updated design can help build trust with visitors, improve your visibility online, and convert more of them into customers.`
     : `I came across ${lead.businessName ? `<strong>${lead.businessName}</strong>'s` : 'your'} business page and noticed you don't currently have a website to showcase your business and make it easier for customers to find you online.`;
 
   return renderBrandedEmail({
