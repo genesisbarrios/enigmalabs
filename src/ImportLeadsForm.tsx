@@ -721,20 +721,22 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
 
     <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', marginBottom: '1.5rem' }}>
       <Card.Body>
-        <h4 style={{ margin: '0 0 0.75rem' }}>Export Contacts</h4>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <DropdownButton
-            size="sm"
-            variant="outline-success"
-            title="Export"
-            disabled={exporting}
-          >
-            <Dropdown.Item onClick={handleExportXlsx}>Export as XLSX</Dropdown.Item>
-            <Dropdown.Item onClick={handleExportCsv}>Export as CSV</Dropdown.Item>
-          </DropdownButton>
-          <Button size="sm" variant="outline-light" disabled={exporting} onClick={handleCopyContacts}>
-            Copy to Clipboard
-          </Button>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <h4 style={{ margin: 0 }}>Export Contacts</h4>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <DropdownButton
+              size="sm"
+              variant="outline-success"
+              title="Export"
+              disabled={exporting}
+            >
+              <Dropdown.Item onClick={handleExportXlsx}>Export as XLSX</Dropdown.Item>
+              <Dropdown.Item onClick={handleExportCsv}>Export as CSV</Dropdown.Item>
+            </DropdownButton>
+            <Button size="sm" variant="outline-light" disabled={exporting} onClick={handleCopyContacts}>
+              Copy to Clipboard
+            </Button>
+          </div>
         </div>
       </Card.Body>
     </Card>

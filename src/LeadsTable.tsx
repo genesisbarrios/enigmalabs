@@ -766,7 +766,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
       ) : null}
 
       {!loading && totalPages > 1 ? (
-        <Pagination className="justify-content-center">
+        <Pagination className="justify-content-center mt-3">
           <Pagination.First onClick={() => setCurrentPage(1)} disabled={currentPage === 1} />
           <Pagination.Prev onClick={() => setCurrentPage((page) => Math.max(1, page - 1))} disabled={currentPage === 1} />
           {Array.from({ length: totalPages }, (_, index) => index + 1)
