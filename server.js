@@ -167,17 +167,36 @@ async function sendWebInterestEmail(subscriber) {
 
 // ── Lead outreach emails ──
 
+// Leads with a website already get pitched content creation/social/ads
+// instead of a website mockup — a different offer, not just different copy.
+function buildContentCreationColdEmailHtml(lead) {
+  const business = lead.businessName ? `<strong>${lead.businessName}</strong>'s` : 'your';
+  return renderBrandedEmail({
+    greetingName: lead.contactName,
+    leadId: lead._id,
+    type: 'cold',
+    paragraphs: [
+      `I came across ${business} website and really like what you've got going — nice work! I did notice your social media could use a bit more consistent content to match it, though.`,
+      `We specialize in content creation (photography &amp; videography), social media management, and ads — everything you'd need to turn that great website into a steady stream of new customers.`,
+      `Would you be available for a quick call sometime in the next day or two? Here's my calendar link for you to schedule it at your convenience:`
+    ],
+    ctaLabel: 'Schedule call',
+    ctaUrl: trackedUrl(lead._id, CALENDAR_LINK, 'cold'),
+    signOff: 'Looking forward to hearing from you,<br/><br/>Gen Barrios<br/>enigma-labs.com'
+  });
+}
+
 function buildColdEmailHtml(lead) {
-  const openingLine = lead.website
-    ? `I came across ${lead.businessName ? `<strong>${lead.businessName}</strong>'s` : 'your'} business page and noticed your website could benefit from a modern refresh. A more updated design can help build trust with visitors, improve your visibility online, and convert more of them into customers.`
-    : `I came across ${lead.businessName ? `<strong>${lead.businessName}</strong>'s` : 'your'} business page and noticed you don't currently have a website to showcase your business and make it easier for customers to find you online.`;
+  if (lead.website) {
+    return buildContentCreationColdEmailHtml(lead);
+  }
 
   return renderBrandedEmail({
     greetingName: lead.contactName,
     leadId: lead._id,
     type: 'cold',
     paragraphs: [
-      openingLine,
+      `I came across ${lead.businessName ? `<strong>${lead.businessName}</strong>'s` : 'your'} business page and noticed you don't currently have a website to showcase your business and make it easier for customers to find you online.`,
       `To give you an idea of what's possible, I went ahead and designed a custom homepage mockup specifically for your business. I'd love to show it to you — there's no obligation, and it only takes about 5-10 minutes.`,
       `Would you be available for a quick call sometime in the next day or two? Here's my calendar link for you to schedule it at your convenience:`
     ],
@@ -1271,8 +1290,8 @@ app.patch('/api/crm/leads/:id/decline', async (req, res) => {
     if (!lead) {
       return res.status(404).json({ ok: false, message: 'Lead not found.' });
     }
-    lead.declined = true;
-    lead.declinedAt = new Date();
+    lead.declined = req.body.declined === undefined ? true : Boolean(req.body.declined);
+    lead.declinedAt = lead.declined ? new Date() : null;
     await lead.save();
     res.json({ ok: true, lead });
   } catch (error) {
@@ -1384,7 +1403,9 @@ app.post('/api/crm/leads/:id/send-cold-email', async (req, res) => {
       return res.status(400).json({ ok: false, message: 'Cold email is only for outbound leads.' });
     }
     const result = await sendLeadEmail(lead, {
-      subject: `A free website mockup for ${lead.businessName || 'your business'}`,
+      subject: lead.website
+        ? `Content ideas for ${lead.businessName || 'your business'}'s social media`
+        : `A free website mockup for ${lead.businessName || 'your business'}`,
       buildHtml: buildColdEmailHtml,
       statusField: 'coldEmailSent',
       statusAtField: 'coldEmailSentAt',

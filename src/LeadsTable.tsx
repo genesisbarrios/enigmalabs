@@ -314,24 +314,27 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
       }
     });
 
-  const handleDecline = (lead: Lead) => {
-    const confirmDecline = window.confirm(
-      `Mark ${lead.businessName || lead.email || 'this lead'} as declined? You will no longer be able to contact them.`
-    );
-    if (!confirmDecline) return;
+  const handleToggleDecline = (lead: Lead) => {
+    const nextDeclined = !lead.declined;
+    if (nextDeclined) {
+      const confirmDecline = window.confirm(
+        `Mark ${lead.businessName || lead.email || 'this lead'} as declined? You will no longer be able to contact them.`
+      );
+      if (!confirmDecline) return;
+    }
 
     runAction(lead, async () => {
       try {
-        const response = await axios.patch(`${API_BASE_URL}/crm/leads/${lead._id}/decline`);
+        const response = await axios.patch(`${API_BASE_URL}/crm/leads/${lead._id}/decline`, { declined: nextDeclined });
         if (response.data?.ok) {
-          setMessage('Lead marked as declined.');
+          setMessage(nextDeclined ? 'Lead marked as declined.' : 'Lead un-declined.');
           fetchLeads();
         } else {
-          setError(response.data?.message || 'Could not decline lead.');
+          setError(response.data?.message || 'Could not update decline status.');
         }
       } catch (actionError) {
         console.error(actionError);
-        setError('Could not decline lead.');
+        setError('Could not update decline status.');
       }
     });
   };
@@ -713,11 +716,11 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                             {!lead.inbound ? (
                               lead.coldEmailSent ? (
                                 <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'cold')}>
-                                  See Sent Cold Email
+                                  See Sent {lead.website ? 'Content Creation ' : ''}Cold Email
                                 </Button>
                               ) : (
                                 <Button size="sm" variant="outline-warning" disabled={busy || lead.declined} onClick={() => handleSendColdEmail(lead)}>
-                                  Send Cold Email
+                                  Send {lead.website ? 'Content Creation ' : ''}Cold Email
                                 </Button>
                               )
                             ) : null}
@@ -741,11 +744,14 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                             )}
                           </>
                         ) : null}
-                        {!lead.declined ? (
-                          <Button size="sm" variant="outline-danger" disabled={busy} onClick={() => handleDecline(lead)}>
-                            Decline
-                          </Button>
-                        ) : null}
+                        <Button
+                          size="sm"
+                          variant={lead.declined ? 'outline-secondary' : 'outline-danger'}
+                          disabled={busy}
+                          onClick={() => handleToggleDecline(lead)}
+                        >
+                          {lead.declined ? 'Undo Decline' : 'Decline'}
+                        </Button>
                         <Button size="sm" variant="outline-light" onClick={() => openEditModal(lead)}>
                           Edit
                         </Button>
