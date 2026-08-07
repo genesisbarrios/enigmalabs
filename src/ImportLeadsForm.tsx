@@ -602,7 +602,7 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
                   style={{ whiteSpace: 'nowrap' }}
                 />
               </Col>
-              <Col xs={12} sm={6} lg={3}>
+              {/* <Col xs={12} sm={6} lg={3}>
                 <Form.Check
                   type="checkbox"
                   label="No Instagram found"
@@ -621,7 +621,7 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
                   className="mb-2"
                   style={{ whiteSpace: 'nowrap' }}
                 />
-              </Col>
+              </Col> */}
             </Row>
             <Button type="submit" variant="success" size="sm" disabled={saving}>
               + Add Lead
