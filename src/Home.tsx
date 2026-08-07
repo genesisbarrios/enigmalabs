@@ -590,7 +590,7 @@ const Home = () => {
               <form style={{ textAlign: "center", width: "100%", maxWidth: "560px", margin: "0 auto" }}>
                 <h3 style={{ color: "#68FF00", marginBottom: "0.25rem" }}>Get a Free Website Mockup 🖥️</h3>
                 <p style={{ color: "#aaa", fontSize: "0.9rem", marginBottom: "1.5rem" }}>
-                 We'll design a free mockup for your business.
+                  We'll design a high-converting landing page for your business.
                 </p>
                 <div style={mockupFieldGridStyle}>
                   <input
