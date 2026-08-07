@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import axios from 'axios';
 import { Link, useNavigate } from "react-router-dom";
 import About from "./About"
@@ -50,6 +50,26 @@ const Home = () => {
   const [mockupGoogleBusinessUrl, setMockupGoogleBusinessUrl] = useState("");
   const [mockupMessage, setMockupMessage] = useState("");
   const [mockupAlert, setMockupAlert] = useState("");
+
+  const [introVisible, setIntroVisible] = useState(false);
+  const introRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const node = introRef.current;
+    if (!node) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIntroVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.3 }
+    );
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
 
   window.onload = function () {
     var message = "0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1 0 1";
@@ -197,7 +217,13 @@ const Home = () => {
       
       texture_canvas = new THREE.Texture(c); // get texture from canvas id = c
       material_canvas = new THREE.MeshLambertMaterial({ map: texture_canvas, transparent: true, opacity: 1 });
-      geometry_canvas = new THREE.BoxGeometry( width_c, height_c, 1 );
+      // The plane is rotated near-edge-on to the camera (see rotateX below), so
+      // its foreshortened far edge can fall short of the frustum and reveal the
+      // scene's black background as a border at the bottom of the viewport.
+      // Oversizing just the geometry (not the texture/columns, to avoid extra
+      // per-frame draw cost) gives it enough margin to fully cover the frame.
+      const geometryOverscan = 1.4;
+      geometry_canvas = new THREE.BoxGeometry( width_c * geometryOverscan, height_c * geometryOverscan, 1 );
       mesh_canvas = new THREE.Mesh( geometry_canvas, material_canvas );
       scene.add( mesh_canvas );
       mesh_canvas.position.set( 0, 0, 0 );
@@ -479,7 +505,7 @@ const Home = () => {
   // let navigate = useNavigate(); 
   // const routeChange = () =>{ 
   //   let path = '/About'; 
-  //   navigate(path);
+  //   navigate(path);f
   // }
 
   return (
@@ -493,6 +519,17 @@ const Home = () => {
         <Row style={{ ...rowStyle, position: 'relative' }} className="hero-row">
           <Col sm={12}>
             <h1 id="title" style={{textAlign:"center", marginTop:'5%'}}>the right formula.</h1>
+          </Col>
+        </Row>
+        <Row style={{ width: '100%', margin: 0 }}>
+          <Col xs={12}>
+            <div ref={introRef} className={`what-we-do${introVisible ? ' is-visible' : ''}`}>
+              <p className="what-we-do-text">
+                We help local businesses generate more customers through{' '}
+                <span className="what-we-do-highlight">high-converting websites,</span>{' '}
+                <span className="what-we-do-highlight">branding, content & ads.</span>
+              </p>
+            </div>
           </Col>
         </Row>
         <Row style={servicesStyle}>
@@ -520,11 +557,11 @@ const Home = () => {
               <Card style={serviceCardStyle} className="servicesCards">
                 <img style={imgStyle} className="servicesImg" alt="video services" src="/ZICARIA.JPG" />
                 <Card.Body>
-                  <h5>Visuals</h5>
+                  <h5>Branding & Ads</h5>
                   <Card.Text>
                     Photography, Videography, Music Videos <br></br>
-                    Short Form Content,  Social Media Management <br></br>
-                    Logos & Graphic Design <br></br>
+                    Short Form Content, Social Media Management <br></br>
+                    Logos, Graphic Design & Ads <br></br>
                   </Card.Text>
                     
                   <a href="/Visuals" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>See Work</Button></a>
