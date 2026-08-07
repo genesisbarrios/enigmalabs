@@ -560,7 +560,7 @@ const Home = () => {
                   <h5>Branding & Ads</h5>
                   <Card.Text>
                     Photography, Videography, Music Videos <br></br>
-                    Short Form Content, Social Media Management <br></br>
+                    Content Creation, Social Media Management <br></br>
                     Logos, Graphic Design & Ads <br></br>
                   </Card.Text>
                     
