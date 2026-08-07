@@ -151,7 +151,7 @@ function handleSubmit() {
           
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h1 className="subpage-title aboutTitle">Photography | Videography | Graphic Design</h1>
+              <h1 className="subpage-title aboutTitle">Branding | Content | Ads</h1>
             </Col>
           </Row>
           <Row style={rowStyle}>
@@ -160,6 +160,7 @@ function handleSubmit() {
               <ul>
                 <li>Photography, Videography, Music Videos, Short Form Content</li>
                 <li>Graphic Design: Logos, Branding, Album Covers, Stickers, Posters and more.</li>
+                <li>Social Media Management & Ads: Instagram, TikTok, YouTube, Facebook and more.</li>
               </ul>
             </Col>
           </Row>
