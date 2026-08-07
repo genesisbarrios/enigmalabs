@@ -282,7 +282,12 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
       }
     });
 
-  const handleSendMockupReview = (lead: Lead) =>
+  const handleSendMockupReview = (lead: Lead) => {
+    const confirmSend = window.confirm(
+      `Send the mockup review email to ${lead.businessName || lead.email || 'this lead'}?`
+    );
+    if (!confirmSend) return;
+
     runAction(lead, async () => {
       try {
         const response = await axios.post(`${API_BASE_URL}/crm/leads/${lead._id}/send-mockup-review`);
@@ -297,8 +302,14 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
         setError('Could not send mockup review email.');
       }
     });
+  };
 
-  const handleSendOnboarding = (lead: Lead) =>
+  const handleSendOnboarding = (lead: Lead) => {
+    const confirmSend = window.confirm(
+      `Send the onboarding email to ${lead.businessName || lead.email || 'this lead'}?`
+    );
+    if (!confirmSend) return;
+
     runAction(lead, async () => {
       try {
         const response = await axios.post(`${API_BASE_URL}/crm/leads/${lead._id}/send-onboarding`);
@@ -313,6 +324,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
         setError('Could not send onboarding email.');
       }
     });
+  };
 
   const handleToggleDecline = (lead: Lead) => {
     const nextDeclined = !lead.declined;
