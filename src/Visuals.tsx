@@ -311,7 +311,7 @@ function handleSubmit() {
               <div style={infoCardStyle}>
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Graphic Design</h6>
                 <ul style={{ marginBottom: 0 }}>
-                  <li>Logos: $50</li>
+                  <li>Logos: $100</li>
                   <li>Album Covers: $50</li>
                   <li>1 Hr Photo Shoot + Album Cover: $150</li>
                 </ul>
