@@ -28,7 +28,7 @@ const About = () => {
             <Col sm={12}>
               <h5>Based out of Miami, Florida Enigma Labs is your all in one creative agency. We provide Audiovisual services as well as modern, custom websites that fit the needs of our clients.</h5>
               <h5>With over half a decade of experience in Software Development and a decade of experience in Music Production Audio Engineering, and Songwriting, we are equipped with the tools needed for any project. The full stop shop to push your creative projects.</h5>
-              <h5>Our creative services include Music Production, Audio Engineering, Web Design and Development, as well as Photography, Videography, Editing, Graphic Design, and Social Media Management.</h5>
+              <h5>Our creative services include Music Production, Audio Engineering, Web Design and Development, as well as Photography, Videography, Editing, Graphic Design, Content Creation, Social Media Management & Ads.</h5>
               <h5 style={{marginTop: "5%"}}>Why should you hire a consultant?</h5>
               <ul>
                 <li>Prioritize your needs</li>
