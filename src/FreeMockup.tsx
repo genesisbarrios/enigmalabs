@@ -155,7 +155,7 @@ const FreeMockup = () => {
     <Container className="aboutContainer">
       <Row style={rowStyle}>
         <Col sm={12}>
-          <h1 className="subpage-title aboutTitle">Get a Free Website Mockup</h1>
+          <h1 className="subpage-title aboutTitle">Free Website Mockup</h1>
         </Col>
       </Row>
 
