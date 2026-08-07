@@ -599,6 +599,7 @@ const Home = () => {
                     placeholder="Your name"
                     value={mockupName}
                     required
+                    className="mockup-input"
                     style={mockupGridInputStyle}
                     onChange={(e) => {
                       setMockupName(e.target.value);
@@ -610,6 +611,7 @@ const Home = () => {
                     placeholder="your@email.com"
                     value={mockupEmail}
                     required
+                    className="mockup-input"
                     style={mockupGridInputStyle}
                     onChange={(e) => {
                       setMockupEmail(e.target.value);
@@ -620,6 +622,7 @@ const Home = () => {
                     name="phone"
                     placeholder="Phone number (optional)"
                     value={mockupPhone}
+                    className="mockup-input"
                     style={mockupGridInputStyle}
                     onChange={(e) => {
                       setMockupPhone(e.target.value);
@@ -630,6 +633,7 @@ const Home = () => {
                     name="business-name"
                     placeholder="Business name (optional)"
                     value={mockupBusinessName}
+                    className="mockup-input"
                     style={mockupGridInputStyle}
                     onChange={(e) => {
                       setMockupBusinessName(e.target.value);
@@ -640,6 +644,7 @@ const Home = () => {
                     name="city"
                     placeholder="City (optional)"
                     value={mockupCity}
+                    className="mockup-input"
                     style={mockupGridInputStyle}
                     onChange={(e) => {
                       setMockupCity(e.target.value);
@@ -650,6 +655,7 @@ const Home = () => {
                     name="social-url"
                     placeholder="Instagram/Facebook handle (optional)"
                     value={mockupSocialUrl}
+                    className="mockup-input"
                     style={mockupGridInputStyle}
                     onChange={(e) => {
                       setMockupSocialUrl(e.target.value);
@@ -660,6 +666,7 @@ const Home = () => {
                     name="google-business-url"
                     placeholder="Google Business URL (optional)"
                     value={mockupGoogleBusinessUrl}
+                    className="mockup-input"
                     style={mockupGridInputStyle}
                     onChange={(e) => {
                       setMockupGoogleBusinessUrl(e.target.value);

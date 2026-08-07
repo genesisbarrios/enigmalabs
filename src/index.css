@@ -193,6 +193,15 @@ button:disabled {
   }
 }
 
+/* Placeholders like "Instagram/Facebook handle (optional)" get clipped in
+   the mockup form's 2-column grid at narrow widths — shrink placeholder
+   text specifically (not the typed value) so the hint stays readable. */
+@media only screen and (max-width: 600px) {
+  .mockup-input::placeholder {
+    font-size: 0.8rem;
+  }
+}
+
 .work-img-wrap{
   width: 100%;
   height: 280px;

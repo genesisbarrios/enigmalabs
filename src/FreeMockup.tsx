@@ -14,19 +14,19 @@ const workProjects = [
   {
     name: "Mars Miami Studios",
     url: "https://www.marsmusicstudios.com/",
-    image: "https://www.dropbox.com/scl/fi/hc1svqnn21ddd4wjjedpk/mars.png?rlkey=034jieiuwha3jtp43i3k7vt4t&st=7y8zgfqm&raw=1",
+    image: "/work/mars.png",
     alt: "Mars Miami Studios"
   },
   {
     name: "Influanto | Music Marketing Platform",
     url: "https://influanto.com",
-    image: "https://dl.dropboxusercontent.com/s/a7lf48b7uht3dnyl59tc1/influantoHomepageLaptop.png?rlkey=pzp4yi2ns6ppjfmwb9m84t4tz&st=gjpea3z3&dl=0",
+    image: "/work/influanto.png",
     alt: "Influanto the all in one music marketing platform"
   },
   {
     name: "Nuralume",
     url: "https://nuralume.xyz",
-    image: "https://dl.dropboxusercontent.com/s/11xwqvyuioco1etjdeu27/nuralume.png?rlkey=xuiz2krmjop7kegb099q4jocg&st=xs0f6rkn&dl=0",
+    image: "/work/nuralume.png",
     alt: "Nuralume"
   }
 ];
@@ -184,6 +184,7 @@ const FreeMockup = () => {
                   placeholder="Your name"
                   value={mockupName}
                   required
+                  className="mockup-input"
                   style={mockupGridInputStyle}
                   onChange={(e) => {
                     setMockupName(e.target.value);
@@ -195,6 +196,7 @@ const FreeMockup = () => {
                   placeholder="your@email.com"
                   value={mockupEmail}
                   required
+                  className="mockup-input"
                   style={mockupGridInputStyle}
                   onChange={(e) => {
                     setMockupEmail(e.target.value);
@@ -205,6 +207,7 @@ const FreeMockup = () => {
                   name="phone"
                   placeholder="Phone number (optional)"
                   value={mockupPhone}
+                  className="mockup-input"
                   style={mockupGridInputStyle}
                   onChange={(e) => {
                     setMockupPhone(e.target.value);
@@ -215,6 +218,7 @@ const FreeMockup = () => {
                   name="business-name"
                   placeholder="Business name (optional)"
                   value={mockupBusinessName}
+                  className="mockup-input"
                   style={mockupGridInputStyle}
                   onChange={(e) => {
                     setMockupBusinessName(e.target.value);
@@ -225,6 +229,7 @@ const FreeMockup = () => {
                   name="city"
                   placeholder="City (optional)"
                   value={mockupCity}
+                  className="mockup-input"
                   style={mockupGridInputStyle}
                   onChange={(e) => {
                     setMockupCity(e.target.value);
@@ -235,6 +240,7 @@ const FreeMockup = () => {
                   name="social-url"
                   placeholder="Instagram/Facebook handle (optional)"
                   value={mockupSocialUrl}
+                  className="mockup-input"
                   style={mockupGridInputStyle}
                   onChange={(e) => {
                     setMockupSocialUrl(e.target.value);
@@ -245,6 +251,7 @@ const FreeMockup = () => {
                   name="google-business-url"
                   placeholder="Google Business URL (optional)"
                   value={mockupGoogleBusinessUrl}
+                  className="mockup-input"
                   style={mockupGridInputStyle}
                   onChange={(e) => {
                     setMockupGoogleBusinessUrl(e.target.value);
