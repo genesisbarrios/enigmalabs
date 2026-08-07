@@ -5,6 +5,7 @@ import axios from "axios";
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 
 const wallpapers = [
+  { name: "Enigma Labs", src: "/WALLPAPER/enigma-trippy.png", download: "enigma-labs-trippy.png"},
   { name: "Aliens", src: "/WALLPAPER/Aliens.png", download: "enigma-labs-wallpaper-aliens.png" },
   { name: "Never Stop", src: "/WALLPAPER/never-stop.png", download: "enigma-labs-wallpaper-never-stop.png" },
   { name: "No Rules", src: "/WALLPAPER/no-rules.png", download: "enigma-labs-wallpaper-no-rules.png" }
