@@ -716,11 +716,11 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                             {!lead.inbound ? (
                               lead.coldEmailSent ? (
                                 <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'cold')}>
-                                  See Sent {lead.website ? 'Content Creation ' : ''}Cold Email
+                                  See Sent {lead.website ? 'Marketing / Ads ' : ''}Cold Email
                                 </Button>
                               ) : (
                                 <Button size="sm" variant="outline-warning" disabled={busy || lead.declined} onClick={() => handleSendColdEmail(lead)}>
-                                  Send {lead.website ? 'Content Creation ' : ''}Cold Email
+                                  Send {lead.website ? 'Marketing / Ads ' : ''}Cold Email
                                 </Button>
                               )
                             ) : null}

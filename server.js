@@ -167,9 +167,10 @@ async function sendWebInterestEmail(subscriber) {
 
 // ── Lead outreach emails ──
 
-// Leads with a website already get pitched content creation/social/ads
-// instead of a website mockup — a different offer, not just different copy.
-function buildContentCreationColdEmailHtml(lead) {
+// Leads with a website already get pitched marketing/ads (content creation,
+// social media management, and ads) instead of a website mockup — a
+// different offer, not just different copy.
+function buildMarketingAdsColdEmailHtml(lead) {
   const business = lead.businessName ? `<strong>${lead.businessName}</strong>'s` : 'your';
   return renderBrandedEmail({
     greetingName: lead.contactName,
@@ -188,7 +189,7 @@ function buildContentCreationColdEmailHtml(lead) {
 
 function buildColdEmailHtml(lead) {
   if (lead.website) {
-    return buildContentCreationColdEmailHtml(lead);
+    return buildMarketingAdsColdEmailHtml(lead);
   }
 
   return renderBrandedEmail({
