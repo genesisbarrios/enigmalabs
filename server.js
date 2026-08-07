@@ -1523,9 +1523,16 @@ app.get('/api/crm/leads/:id/sent-email', async (req, res) => {
       return res.status(404).json({ ok: false, message: 'No sent email on file for this lead yet.' });
     }
 
+    // The stored HTML is the exact snapshot that was emailed, tracking pixel
+    // included — rendering it as-is in the admin "See Sent Email" preview
+    // would fire a real /track/open request for the admin's own view and
+    // falsely mark the email as opened by the recipient. Strip it here, in
+    // the read-only preview response only; the stored copy is untouched.
+    const previewHtml = html.replace(/<img[^>]*\/track\/open[^>]*>/gi, '');
+
     const result = {
       subject: lead[`${prefix}Subject`] || '',
-      html,
+      html: previewHtml,
       opened: Boolean(lead[`${prefix}Opened`]),
       openedAt: lead[`${prefix}OpenedAt`] || null,
       clicked: Boolean(lead[`${prefix}Clicked`]),
