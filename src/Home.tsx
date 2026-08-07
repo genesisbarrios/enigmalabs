@@ -555,7 +555,7 @@ const Home = () => {
             </Col>
             <Col xs={12} md={4}>
               <Card style={serviceCardStyle} className="servicesCards">
-                <img style={imgStyle} className="servicesImg" alt="video services" src="/ZICARIA.JPG" />
+                <img style={imgStyle} className="servicesImg" alt="video services" src="https://www.enigma-labs.com/portrait6.jpg" />
                 <Card.Body>
                   <h5>Branding & Ads</h5>
                   <Card.Text>
