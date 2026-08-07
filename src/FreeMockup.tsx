@@ -36,7 +36,7 @@ const FreeMockup = () => {
     document.title = "Enigma Labs | Free Website Mockup";
     document.querySelector('meta[name="description"]')?.setAttribute(
       "content",
-      "Get a free, no-obligation website mockup from Enigma Labs — a high-converting, SEO-ready design built for your business."
+      "Get a free website mockup from Enigma Labs — a high-converting, SEO-ready design built for your business."
     );
   }, []);
 
@@ -165,7 +165,7 @@ const FreeMockup = () => {
             A high-converting website, built to bring in customers.
           </h2>
           <p style={{ maxWidth: "560px", lineHeight: 1.7, color: "#d4d4d4" }}>
-            I'll design a completely free, no-obligation mockup of your new homepage — no generic templates, just a
+            I'll design a completely free mockup of your new homepage — no generic templates, just a
             site built around what your business actually does. Every site I build is optimized for conversions and
             set up with SEO from day one, so it doesn't just look good, it actually brings in new customers.
           </p>
