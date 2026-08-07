@@ -194,7 +194,7 @@ function handleSubmit() {
               <h5 className="subsection-title" style={{marginTop: "5%"}}>Services</h5>
               <ul>
                 <li>Web Design & Web Development, Google Business Setup, SEO</li>
-                <li>Support & Maintenance: Hosting, Domain, Updates, etc. </li>
+                <li>Support & Maintenance: Hosting, Domain Setup, Updates, etc. </li>
                 <li>Graphic Design & Marketing: Logos, Branding, & Ads</li>
               </ul>
             </Col>

@@ -750,7 +750,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                           disabled={busy}
                           onClick={() => handleToggleDecline(lead)}
                         >
-                          {lead.declined ? 'Undo Decline' : 'Decline'}
+                          {lead.declined ? 'Undo Inactive' : 'Decline / Inactive'}
                         </Button>
                         <Button size="sm" variant="outline-light" onClick={() => openEditModal(lead)}>
                           Edit

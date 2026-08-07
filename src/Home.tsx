@@ -545,7 +545,7 @@ const Home = () => {
                   <h5>Web Development</h5>
                   <Card.Text>
                     Web Design + Web Development <br></br>
-                    Hosting & Google Business Setup <br></br>
+                    Hosting, Domain & Google Business Setup <br></br>
                     Digital Marketing & Ads <br></br>
                    <br></br>
                   </Card.Text>
