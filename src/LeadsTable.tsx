@@ -155,6 +155,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [editForm, setEditForm] = useState<EditForm>(emptyEditForm);
   const [editSaving, setEditSaving] = useState(false);
+  const [editDeleting, setEditDeleting] = useState(false);
   const [editError, setEditError] = useState('');
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -473,6 +474,33 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
       setEditError('Could not update lead.');
     } finally {
       setEditSaving(false);
+    }
+  };
+
+  const handleDeleteLead = async () => {
+    if (!editingLead) return;
+
+    const confirmDelete = window.confirm(
+      `Delete ${editingLead.businessName || editingLead.email || 'this lead'}? This cannot be undone.`
+    );
+    if (!confirmDelete) return;
+
+    setEditDeleting(true);
+    setEditError('');
+    try {
+      const response = await axios.delete(`${API_BASE_URL}/crm/leads/${editingLead._id}`);
+      if (response.data?.ok) {
+        setMessage('Lead deleted.');
+        closeEditModal();
+        fetchLeads();
+      } else {
+        setEditError(response.data?.message || 'Could not delete lead.');
+      }
+    } catch (deleteError) {
+      console.error(deleteError);
+      setEditError('Could not delete lead.');
+    } finally {
+      setEditDeleting(false);
     }
   };
 
@@ -916,8 +944,17 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
             </Row>
           </Modal.Body>
           <Modal.Footer style={{ background: '#111', borderTop: '1px solid #2b2b2b' }}>
-            <Button variant="outline-light" size="sm" onClick={closeEditModal} disabled={editSaving}>Cancel</Button>
-            <Button variant="success" size="sm" type="submit" disabled={editSaving}>
+            <Button
+              variant="outline-danger"
+              size="sm"
+              className="me-auto"
+              onClick={handleDeleteLead}
+              disabled={editSaving || editDeleting}
+            >
+              {editDeleting ? 'Deleting...' : 'Delete Business'}
+            </Button>
+            <Button variant="outline-light" size="sm" onClick={closeEditModal} disabled={editSaving || editDeleting}>Cancel</Button>
+            <Button variant="success" size="sm" type="submit" disabled={editSaving || editDeleting}>
               {editSaving ? 'Saving...' : 'Save Changes'}
             </Button>
           </Modal.Footer>
