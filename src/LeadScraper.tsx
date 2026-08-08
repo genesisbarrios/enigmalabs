@@ -8,6 +8,23 @@ import ImportLeadsForm from './ImportLeadsForm';
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 const ADMIN_PASSWORD = process.env.REACT_APP_ONBOARD_PW;
 
+const INDUSTRY_OPTIONS = [
+  'Restaurant / Food / Bar',
+  'Hospitality',
+  'Entertainment',
+  'Tech',
+  'Finance',
+  'Plumbing / Electricity / HVAC',
+  'Marketing',
+  'Cars',
+  'Real Estate',
+  'Property Maintenance',
+  'Wholesale',
+  'Beauty / Hair',
+  'Healthcare',
+  'Construction'
+];
+
 const columnToggleBtnStyle: React.CSSProperties = {
   marginLeft: '8px',
   border: 'none',
@@ -52,6 +69,7 @@ const LeadScraper = () => {
 
   const leadsTableRef = useRef<LeadsTableHandle>(null);
   const [savingLeads, setSavingLeads] = useState(false);
+  const [saveIndustry, setSaveIndustry] = useState('');
 
   const [niche, setNiche] = useState('');
   const [keyword, setKeyword] = useState('');
@@ -273,7 +291,8 @@ const LeadScraper = () => {
         phone: lead.phone,
         email: lead.email || '',
         website: lead.website || '',
-        city: reduceAddress(lead.address) || ''
+        city: reduceAddress(lead.address) || '',
+        industry: saveIndustry
       }));
       const response = await axios.post(`${API_BASE_URL}/crm/leads/save-from-scraper`, { leads: payload });
       if (response.data?.ok) {
@@ -411,6 +430,18 @@ const LeadScraper = () => {
             <Button size="sm" variant="outline-success" onClick={handleEnrichAll} disabled={!leadsToExport.length || enriching}>
               {enriching ? `Enriching... (${enrichProgress.done}/${enrichProgress.total})` : `Enrich All with Email${selected.size > 0 ? ` (${selected.size} selected)` : ''}`}
             </Button>
+            <Form.Control
+              value={saveIndustry}
+              onChange={(e) => setSaveIndustry(e.target.value)}
+              placeholder="Industry for saved leads (optional)"
+              list="scraper-industry-options"
+              style={{ maxWidth: '260px' }}
+            />
+            <datalist id="scraper-industry-options">
+              {INDUSTRY_OPTIONS.map((option) => (
+                <option key={option} value={option} />
+              ))}
+            </datalist>
             <Button size="sm" variant="success" onClick={handleSaveAsLeads} disabled={!leadsToExport.length || savingLeads}>
               {savingLeads ? 'Saving...' : `Save as Leads${selected.size > 0 ? ` (${selected.size} selected)` : ''}`}
             </Button>

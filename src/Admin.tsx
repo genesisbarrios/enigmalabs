@@ -74,12 +74,38 @@ type WebsiteClient = {
   socialMediaLinks: string;
   businessType: string;
   website: string;
+  hasExistingWebsite?: boolean;
   logo?: { mimeType?: string } | null;
   websiteReviewSentAt?: string | null;
   createdAt: string;
 };
 
-const emptyWebsiteClientForm = { name: '', email: '', address: '', socialMediaLinks: '', businessType: '', website: '' };
+const INDUSTRY_OPTIONS = [
+  'Restaurant / Food / Bar',
+  'Hospitality',
+  'Entertainment',
+  'Tech',
+  'Finance',
+  'Plumbing / Electricity / HVAC',
+  'Marketing',
+  'Cars',
+  'Real Estate',
+  'Property Maintenance',
+  'Wholesale',
+  'Beauty / Hair',
+  'Healthcare',
+  'Construction'
+];
+
+const emptyWebsiteClientForm = {
+  name: '',
+  email: '',
+  address: '',
+  socialMediaLinks: '',
+  businessType: '',
+  website: '',
+  hasExistingWebsite: true
+};
 
 type Subscriber = {
   _id: string;
@@ -138,6 +164,8 @@ const Admin = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [planFilter, setPlanFilter] = useState<'all' | Agreement['planType']>('all');
+  const [websiteFilter, setWebsiteFilter] = useState<'all' | 'has' | 'none'>('all');
+  const [igFilter, setIgFilter] = useState<'all' | 'has' | 'none'>('all');
 
   const fetchClients = async () => {
     try {
@@ -269,14 +297,28 @@ const Admin = () => {
 
   const filteredWebsiteClients = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return websiteClients;
-    return websiteClients.filter((client) =>
-      (client.name || '').toLowerCase().includes(q) ||
-      (client.email || '').toLowerCase().includes(q) ||
-      (client.businessType || '').toLowerCase().includes(q) ||
-      (client.address || '').toLowerCase().includes(q)
-    );
-  }, [websiteClients, searchQuery]);
+    return websiteClients.filter((client) => {
+      const matchesQuery =
+        !q ||
+        (client.name || '').toLowerCase().includes(q) ||
+        (client.email || '').toLowerCase().includes(q) ||
+        (client.businessType || '').toLowerCase().includes(q) ||
+        (client.address || '').toLowerCase().includes(q);
+
+      const matchesWebsite =
+        websiteFilter === 'all' ||
+        (websiteFilter === 'has' && Boolean(client.website)) ||
+        (websiteFilter === 'none' && !client.website);
+
+      const hasIg = /instagram/i.test(client.socialMediaLinks || '');
+      const matchesIg =
+        igFilter === 'all' ||
+        (igFilter === 'has' && hasIg) ||
+        (igFilter === 'none' && !hasIg);
+
+      return matchesQuery && matchesWebsite && matchesIg;
+    });
+  }, [websiteClients, searchQuery, websiteFilter, igFilter]);
 
   const filteredAgreements = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();
@@ -356,7 +398,8 @@ const Admin = () => {
       address: client.address || '',
       socialMediaLinks: client.socialMediaLinks || '',
       businessType: client.businessType || '',
-      website: client.website || ''
+      website: client.website || '',
+      hasExistingWebsite: client.hasExistingWebsite ?? true
     });
   };
 
@@ -655,6 +698,19 @@ const Admin = () => {
         </Button>
       </div>
 
+      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+        <Form.Select value={websiteFilter} onChange={(e) => setWebsiteFilter(e.target.value as 'all' | 'has' | 'none')} style={{ maxWidth: '220px' }}>
+          <option value="all">Website: All</option>
+          <option value="has">Has Website</option>
+          <option value="none">No Website</option>
+        </Form.Select>
+        <Form.Select value={igFilter} onChange={(e) => setIgFilter(e.target.value as 'all' | 'has' | 'none')} style={{ maxWidth: '220px' }}>
+          <option value="all">Instagram: All</option>
+          <option value="has">Has Instagram</option>
+          <option value="none">No Instagram</option>
+        </Form.Select>
+      </div>
+
       {showAddWebsiteClient ? (
         <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', marginBottom: '1.25rem' }}>
           <Card.Body>
@@ -672,8 +728,18 @@ const Admin = () => {
                 <Form.Control value={newWebsiteClient.address} onChange={(e) => setNewWebsiteClient({ ...newWebsiteClient, address: e.target.value })} />
               </Form.Group>
               <Form.Group className="mb-3">
-                <Form.Label>Business Type</Form.Label>
-                <Form.Control value={newWebsiteClient.businessType} onChange={(e) => setNewWebsiteClient({ ...newWebsiteClient, businessType: e.target.value })} placeholder="e.g. Restaurant, Photographer" />
+                <Form.Label>Industry</Form.Label>
+                <Form.Control
+                  value={newWebsiteClient.businessType}
+                  onChange={(e) => setNewWebsiteClient({ ...newWebsiteClient, businessType: e.target.value })}
+                  placeholder="Select or type a new industry"
+                  list="admin-industry-options"
+                />
+                <datalist id="admin-industry-options">
+                  {INDUSTRY_OPTIONS.map((option) => (
+                    <option key={option} value={option} />
+                  ))}
+                </datalist>
               </Form.Group>
               <Form.Group className="mb-3">
                 <Form.Label>Social Media Links</Form.Label>
@@ -682,6 +748,14 @@ const Admin = () => {
               <Form.Group className="mb-3">
                 <Form.Label>Website</Form.Label>
                 <Form.Control value={newWebsiteClient.website} onChange={(e) => setNewWebsiteClient({ ...newWebsiteClient, website: e.target.value })} placeholder="https://..." />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Check
+                  type="switch"
+                  label="Client already had this website (we didn't build it)"
+                  checked={newWebsiteClient.hasExistingWebsite}
+                  onChange={(e) => setNewWebsiteClient({ ...newWebsiteClient, hasExistingWebsite: e.target.checked })}
+                />
               </Form.Group>
               <Button type="submit" variant="success">Save Client</Button>
             </Form>
@@ -729,8 +803,13 @@ const Admin = () => {
                   <Form.Control value={websiteClientEditForm.address} onChange={(e) => setWebsiteClientEditForm({ ...websiteClientEditForm, address: e.target.value })} />
                 </Form.Group>
                 <Form.Group className="mb-3">
-                  <Form.Label>Business Type</Form.Label>
-                  <Form.Control value={websiteClientEditForm.businessType} onChange={(e) => setWebsiteClientEditForm({ ...websiteClientEditForm, businessType: e.target.value })} placeholder="e.g. Restaurant, Photographer" />
+                  <Form.Label>Industry</Form.Label>
+                  <Form.Control
+                    value={websiteClientEditForm.businessType}
+                    onChange={(e) => setWebsiteClientEditForm({ ...websiteClientEditForm, businessType: e.target.value })}
+                    placeholder="Select or type a new industry"
+                    list="admin-industry-options"
+                  />
                 </Form.Group>
                 <Form.Group className="mb-3">
                   <Form.Label>Social Media Links</Form.Label>
@@ -739,6 +818,14 @@ const Admin = () => {
                 <Form.Group className="mb-3">
                   <Form.Label>Website</Form.Label>
                   <Form.Control value={websiteClientEditForm.website} onChange={(e) => setWebsiteClientEditForm({ ...websiteClientEditForm, website: e.target.value })} placeholder="https://..." />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Check
+                    type="switch"
+                    label="Client already had this website (we didn't build it)"
+                    checked={websiteClientEditForm.hasExistingWebsite}
+                    onChange={(e) => setWebsiteClientEditForm({ ...websiteClientEditForm, hasExistingWebsite: e.target.checked })}
+                  />
                 </Form.Group>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <Button size="sm" variant="success" onClick={() => handleSaveWebsiteClient(client._id)}>Save</Button>
@@ -786,7 +873,18 @@ const Admin = () => {
               <small style={{ color: '#aaa' }}>{client.email}</small>
             </div>
             <div style={{ flex: '1 1 130px', fontSize: '0.85rem', color: '#ccc' }}>{client.businessType || '—'}</div>
-            <div style={{ flex: '1 1 160px', fontSize: '0.85rem', color: '#ccc', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{client.website || '—'}</div>
+            <div style={{ flex: '1 1 160px', fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {client.website ? (
+                <>
+                  <a href={client.website} target="_blank" rel="noreferrer" className="text-white">{client.website}</a>
+                  {client.hasExistingWebsite ? (
+                    <div><small style={{ color: '#888' }}>Existing website</small></div>
+                  ) : null}
+                </>
+              ) : (
+                <span style={{ color: '#ccc' }}>—</span>
+              )}
+            </div>
             {client.websiteReviewSentAt ? (
               <Badge bg="success" style={{ flexShrink: 0 }}>Review Sent</Badge>
             ) : null}

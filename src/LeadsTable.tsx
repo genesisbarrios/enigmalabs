@@ -48,7 +48,7 @@ type EmailType = 'cold' | 'mockupReview' | 'onboarding';
 
 const EMAIL_TYPE_LABELS: Record<EmailType, string> = {
   cold: 'Cold Email',
-  mockupReview: 'Mockup Review Email',
+  mockupReview: 'Website Review Email',
   onboarding: 'Onboarding Email'
 };
 
@@ -284,8 +284,13 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
     });
 
   const handleSendMockupReview = (lead: Lead) => {
+    if (!lead.website) {
+      setError('This lead has no website URL on file — add one before sending the website review email.');
+      return;
+    }
+
     const confirmSend = window.confirm(
-      `Send the mockup review email to ${lead.businessName || lead.email || 'this lead'}?`
+      `Send the website review email to ${lead.businessName || lead.email || 'this lead'}?`
     );
     if (!confirmSend) return;
 
@@ -293,14 +298,14 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
       try {
         const response = await axios.post(`${API_BASE_URL}/crm/leads/${lead._id}/send-mockup-review`);
         if (response.data?.ok) {
-          setMessage(`Mockup review email sent to ${lead.businessName || lead.email}.`);
+          setMessage(`Website review email sent to ${lead.businessName || lead.email}.`);
           fetchLeads();
         } else {
-          setError(response.data?.message || 'Could not send mockup review email.');
+          setError(response.data?.message || 'Could not send website review email.');
         }
       } catch (actionError) {
         console.error(actionError);
-        setError('Could not send mockup review email.');
+        setError('Could not send website review email.');
       }
     });
   };
@@ -529,7 +534,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
             <option value="all">Any Contact Status</option>
             <option value="not_contacted">Not Contacted</option>
             <option value="cold_email">Cold Email Sent</option>
-            <option value="mockup_review">Mockup Review Sent</option>
+            <option value="mockup_review">Website Review Sent</option>
             <option value="onboarding">Onboarding Sent</option>
           </Form.Select>
         </Col>
@@ -737,7 +742,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                       {lead.declined ? <Badge bg="danger">Declined / Inactive</Badge> : null}
                       {isNotContacted(lead) && !lead.declined && !lead.convertedToClient ? <Badge bg="secondary">Not Contacted</Badge> : null}
                       {lead.coldEmailSent ? <Badge bg="warning" text="dark">Cold Email Sent</Badge> : null}
-                      {lead.mockupReviewSent ? <Badge bg="primary">Mockup Review Sent</Badge> : null}
+                      {lead.mockupReviewSent ? <Badge bg="primary">Website Review Sent</Badge> : null}
                       {lead.onboardingSent ? <Badge bg="success">Onboarding Sent</Badge> : null}
                     </div>
                   </td>
@@ -768,11 +773,17 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                             ) : null}
                             {lead.mockupReviewSent ? (
                               <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'mockupReview')}>
-                                See Sent Mockup Review Email
+                                See Sent Website Review Email
                               </Button>
                             ) : (
-                              <Button size="sm" variant="outline-primary" disabled={busy || lead.declined} onClick={() => handleSendMockupReview(lead)}>
-                                Send Mockup Review
+                              <Button
+                                size="sm"
+                                variant="outline-primary"
+                                disabled={busy || lead.declined || !lead.website}
+                                title={!lead.website ? 'Add a website URL for this lead first.' : undefined}
+                                onClick={() => handleSendMockupReview(lead)}
+                              >
+                                Send Website Review
                               </Button>
                             )}
                             {lead.onboardingSent ? (

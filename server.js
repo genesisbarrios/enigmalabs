@@ -213,10 +213,10 @@ function buildMockupReviewEmailHtml(lead) {
     leadId: lead._id,
     type: 'mockupReview',
     paragraphs: [
-      `Great news — we've finished your free website mockup${lead.businessName ? ` for <strong>${lead.businessName}</strong>` : ''}! We think you're going to love what we put together.`,
+      `Great news — your new website${lead.businessName ? ` for <strong>${lead.businessName}</strong>` : ''} is complete! We think you're going to love what we put together.`,
       `Let's schedule a quick call to walk through it together and answer any questions you have.`
     ],
-    ctaLabel: 'Schedule your mockup review',
+    ctaLabel: 'Schedule your website review',
     ctaUrl: trackedUrl(lead._id, CALENDAR_LINK, 'mockupReview')
   });
 }
@@ -504,6 +504,13 @@ const websiteClientSchema = new mongoose.Schema({
   socialMediaLinks: String,
   businessType: String,
   website: String,
+  // Whether the client already had this website before we worked with them,
+  // vs. a site we built for them ourselves. Defaults true (the conservative
+  // assumption) so a client never gets a "congrats on your new site!" email
+  // for a site we didn't actually build unless someone explicitly flips this
+  // off. See scripts/mark-existing-websites.js for the one-time backfill of
+  // records created before this field existed.
+  hasExistingWebsite: { type: Boolean, default: true },
   logo: {
     data: Buffer,
     mimeType: String
@@ -1028,7 +1035,7 @@ app.get('/api/website-clients/:id/logo', async (req, res) => {
 
 app.post('/api/website-clients', async (req, res) => {
   try {
-    const { name, email, address, socialMediaLinks, businessType, website } = req.body;
+    const { name, email, address, socialMediaLinks, businessType, website, hasExistingWebsite } = req.body;
     if (!name || !email) {
       return res.status(400).json({ ok: false, message: 'Name and email are required.' });
     }
@@ -1038,7 +1045,8 @@ app.post('/api/website-clients', async (req, res) => {
       address: address || '',
       socialMediaLinks: socialMediaLinks || '',
       businessType: businessType || '',
-      website: website || ''
+      website: website || '',
+      hasExistingWebsite: hasExistingWebsite === undefined ? true : Boolean(hasExistingWebsite)
     });
     await convertLeadIfMatches({ email });
     res.status(201).json({ ok: true, client });
@@ -1061,6 +1069,9 @@ app.put('/api/website-clients/:id', async (req, res) => {
         client[field] = req.body[field];
       }
     });
+    if (req.body.hasExistingWebsite !== undefined) {
+      client.hasExistingWebsite = Boolean(req.body.hasExistingWebsite);
+    }
 
     await client.save();
     res.json({ ok: true, client });
@@ -1272,6 +1283,7 @@ app.post('/api/crm/leads/save-from-scraper', async (req, res) => {
         email,
         website: row.website || '',
         city: row.city || '',
+        industry: row.industry || '',
         inbound: false
       });
       createdLeads.push(lead);
@@ -1427,8 +1439,13 @@ app.post('/api/crm/leads/:id/send-mockup-review', async (req, res) => {
     if (!lead) {
       return res.status(404).json({ ok: false, message: 'Lead not found.' });
     }
+    // This email announces a finished website — there's nothing to review
+    // without a website URL on file.
+    if (!lead.website) {
+      return res.status(400).json({ ok: false, message: 'This lead has no website URL on file — add one before sending the website review email.' });
+    }
     const result = await sendLeadEmail(lead, {
-      subject: 'Your free website mockup is ready! 🎉',
+      subject: 'Your website is ready! 🎉',
       buildHtml: buildMockupReviewEmailHtml,
       statusField: 'mockupReviewSent',
       statusAtField: 'mockupReviewSentAt',
@@ -1438,8 +1455,8 @@ app.post('/api/crm/leads/:id/send-mockup-review', async (req, res) => {
     });
     res.status(result.ok ? 200 : 400).json(result);
   } catch (error) {
-    console.error('Could not send mockup review email', error);
-    res.status(500).json({ ok: false, message: 'Could not send mockup review email.' });
+    console.error('Could not send website review email', error);
+    res.status(500).json({ ok: false, message: 'Could not send website review email.' });
   }
 });
 
