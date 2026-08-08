@@ -182,7 +182,7 @@ function buildMarketingAdsColdEmailHtml(lead) {
     type: 'cold',
     paragraphs: [
       `I came across ${business} website and really like what you've got going — nice work! I did notice your social media could use a bit more consistent content to match it, though.`,
-      `We specialize in content creation (photography &amp; videography), social media management, and ads — everything you'd need to turn that great website into a steady stream of new customers.`,
+      `We specialize in content creation (photography, videography &amp; graphic design), social media management, and ads — everything you'd need to turn that great website into a steady stream of new customers.`,
       `Would you be available for a quick call sometime in the next day or two? Here's my calendar link for you to schedule it at your convenience:`
     ],
     ctaLabel: 'Schedule call',
@@ -310,15 +310,15 @@ function buildClientMarketingPitchEmailHtml(client) {
         const websiteLinkHtml = client.website
           ? ` I took a look at <a href="${client.website}" style="color:#111; font-weight:bold;">${client.website.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '')}</a> and it's looking great!`
           : '';
-        return `Hope things are going well over at ${business}!${websiteLinkHtml} I did notice your social media could use a bit more consistent content to match it, though.`;
+        return `Hope things are going well over at ${business}!${websiteLinkHtml} I noticed your social media could use a bit more consistent content to reach more people.`;
       })()
-    : `Hope things are going well over at ${business} — it's clear you're doing great work! I did notice your social media could use a bit more consistent content to match it, though.`;
+    : `Hope things are going well over at ${business}! I noticed your social media could use a bit more consistent content to reach more people.`;
 
   return renderBrandedEmail({
     greetingName: client.name,
     paragraphs: [
       openingLine,
-      `We also offer content creation (photography &amp; videography), social media management, and ads — happy to put together a plan to help bring in more customers if you're interested.`,
+      `We also offer content creation (photography, videography &amp; graphic design), social media management, and ads — happy to put together a plan to help bring in more customers if you're interested.`,
       `Let's schedule a quick call to go over some ideas:`
     ],
     ctaLabel: 'Schedule a call',
