@@ -308,7 +308,9 @@ function buildWebsiteReviewEmailHtml(client) {
     : '';
 
   return renderBrandedEmail({
-    greetingName: client.name,
+    // Website clients only have a single `name` field, which is usually the
+    // business name, not a person — don't guess a "first name" out of it.
+    greetingName: undefined,
     paragraphs: [
       `Your new website${client.name ? ` for <strong>${client.name}</strong>` : ''} is complete! 🎉${websiteLinkHtml}`,
       `Feel free to explore it at your own pace — or if you'd like to walk through it together, schedule a quick review call below.`
@@ -328,7 +330,9 @@ function buildClientMarketingPitchEmailHtml(client) {
   const openingLine = `Hope things are going well over at ${business}! I was taking a look at your social media and noticed there’s an opportunity to make your content more consistent and engaging, while showcasing your business to more potential customers.`;
 
   return renderBrandedEmail({
-    greetingName: client.name,
+    // Website clients only have a single `name` field, which is usually the
+    // business name, not a person — don't guess a "first name" out of it.
+    greetingName: undefined,
     paragraphs: [
       openingLine,
       `We also offer content creation (photography, videography &amp; graphic design), social media management, and ads — happy to put together a plan to help bring in more customers if you're interested.`,
@@ -387,7 +391,7 @@ async function sendClientMarketingEmail(client) {
     const { error } = await resend.emails.send({
       from: AGREEMENT_FROM_EMAIL,
       to: client.email,
-      subject: `Content ideas for ${client.name || 'your business'}'s social media`,
+      subject: `A few content ideas for ${client.name || 'your business'} 💡`,
       html: buildClientMarketingPitchEmailHtml(client)
     });
     if (error) {
@@ -1542,8 +1546,8 @@ app.post('/api/crm/leads/:id/send-cold-email', async (req, res) => {
     }
     const result = await sendLeadEmail(lead, {
       subject: lead.website
-        ? `Content ideas for ${lead.businessName || 'your business'}'s social media`
-        : `A free website mockup for ${lead.businessName || 'your business'}`,
+        ? `A few content ideas for ${lead.businessName || 'your business'} 💡`
+        : `Free Website Mockup 🖥️ for ${lead.businessName || 'your business'}`,
       buildHtml: buildColdEmailHtml,
       statusField: 'coldEmailSent',
       statusAtField: 'coldEmailSentAt',
@@ -1571,7 +1575,7 @@ app.post('/api/crm/leads/:id/send-outdated-mockup', async (req, res) => {
       return res.status(400).json({ ok: false, message: 'This email only applies to leads with a website flagged as outdated.' });
     }
     const result = await sendLeadEmail(lead, {
-      subject: `A refreshed website mockup for ${lead.businessName || 'your business'}`,
+      subject: `Free Website Redesign 🖥️ for ${lead.businessName || 'your business'}`,
       buildHtml: buildOutdatedWebsiteMockupEmailHtml,
       statusField: 'outdatedMockupSent',
       statusAtField: 'outdatedMockupSentAt',
