@@ -378,6 +378,7 @@ const Home = () => {
     borderRadius: "20px",
     boxShadow: "0 0 30px rgba(104, 255, 0, 0.15)",
     width: "100%",
+    margin: "0 auto",
     padding: "2.75rem 2rem"
   };
 
@@ -540,7 +541,7 @@ const Home = () => {
         <Row style={{ ...rowStyle, height: 'auto', marginBottom: '4rem' }} id="servicesContainerRow" className="d-flex align-items-center">
             <Col xs={12} md={4} >
               <Card style={serviceCardStyle} className="servicesCards">
-              <a href="influanto.com" target="_blank"><img style={imgStyle} className="servicesImg" alt="influanto the all in one music marketing platform" src="https://dl.dropboxusercontent.com/s/a7lf48b7uht3dnyl59tc1/influantoHomepageLaptop.png?rlkey=pzp4yi2ns6ppjfmwb9m84t4tz&st=gjpea3z3&dl=0" /></a>
+              <a href="https://influanto.com" target="_blank" rel="noreferrer"><img style={imgStyle} className="servicesImg" alt="influanto the all in one music marketing platform" src="/work/influanto.png" /></a>
                 <Card.Body>
                   <h5>Web Development</h5>
                   <Card.Text>
@@ -750,8 +751,8 @@ const Home = () => {
               </form>
             </div>
           </Col>
-          <Col xs={12} md={6} style={{ marginTop: "1.5rem", order: 2 }}>
-            <img style={newsletterImageStyle} src="Aliens.png" alt="Aliens" />
+          <Col xs={12} md={6} style={{ marginTop: "1.5rem", order: 2, display: "flex", justifyContent: "center" }}>
+            <img style={{ ...newsletterImageStyle, margin: "0 auto" }} src="Aliens.png" alt="Aliens" />
           </Col>
         </Row>
 
