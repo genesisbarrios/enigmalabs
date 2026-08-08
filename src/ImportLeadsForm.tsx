@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Alert, Button, Card, Col, Dropdown, DropdownButton, Form, Row, Table } from 'react-bootstrap';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
@@ -304,7 +304,7 @@ const exportRowValue = (lead: any, key: string): string => {
 const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
   const [showAddForm, setShowAddForm] = useState(false);
   const [showPasteForm, setShowPasteForm] = useState(false);
-  const [showFileForm, setShowFileForm] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [manualForm, setManualForm] = useState<ParsedLead>(emptyManualForm);
   const [pasteText, setPasteText] = useState('');
   const [previewLeads, setPreviewLeads] = useState<ParsedLead[]>([]);
@@ -482,11 +482,27 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
             <Button size="sm" variant={showPasteForm ? 'outline-light' : 'success'} onClick={() => setShowPasteForm((prev) => !prev)}>
               {showPasteForm ? 'Cancel' : '+ Paste Contacts'}
             </Button>
-            <Button size="sm" variant={showFileForm ? 'outline-light' : 'success'} onClick={() => setShowFileForm((prev) => !prev)}>
-              {showFileForm ? 'Cancel' : '+ Import File'}
+            <Button size="sm" variant="success" onClick={() => fileInputRef.current?.click()}>
+              + Import File
             </Button>
+            <Form.Control
+              ref={fileInputRef}
+              type="file"
+              accept=".csv,.xlsx,.xls"
+              onChange={handleFileChange}
+              className="d-none"
+            />
           </div>
         </div>
+        <p style={{ color: '#888', fontSize: '0.8rem', margin: '0.5rem 0 0' }}>
+          "+ Import File" accepts CSV or XLSX. Recognized columns: Name/Business, Name(Owner)/Contact, Phone,
+          Instagram/IG, Email, Cold Email, Website/URL, City/Location, Industry/Category, Comment/Notes, DM, Called,
+          and Decline. "-" and blank cells are treated as empty; any mark in a Cold Email/DM/Called/Decline column is
+          read as "yes" (an explicit "No"/"FALSE"/"0" is read as "no"). A bare "-" in the Instagram column means
+          "already searched, not found." If your file has a "Cold Email" column, any mark in it means a cold email
+          was already sent; if it instead has two bare "Email" columns, the one containing an actual address is used
+          as the email and the other is read the same way.
+        </p>
 
         {message ? <Alert variant="success" onClose={() => setMessage('')} dismissible className="mt-3">{message}</Alert> : null}
         {error ? <Alert variant="danger" onClose={() => setError('')} dismissible className="mt-3">{error}</Alert> : null}
@@ -649,20 +665,6 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
             <Button size="sm" variant="outline-light" className="mt-2" onClick={handleParsePaste} disabled={!pasteText.trim()}>
               Detect Leads From Pasted Text
             </Button>
-          </div>
-        ) : null}
-
-        {showFileForm ? (
-          <div className="mt-3 mb-4">
-            <p style={{ color: '#d4d4d4' }}>
-              Import a CSV or XLSX file. Recognized columns: Name/Business, Name(Owner)/Contact, Phone, Instagram/IG, Email,
-              Cold Email, Website/URL, City/Location, Industry/Category, Comment/Notes, DM, Called, and Decline. "-" and blank
-              cells are treated as empty; any mark in a Cold Email/DM/Called/Decline column is read as "yes" (an explicit
-              "No"/"FALSE"/"0" is read as "no"). A bare "-" in the Instagram column means "already searched, not found." If your
-              file has a "Cold Email" column, any mark in it means a cold email was already sent; if it instead has two bare
-              "Email" columns, the one containing an actual address is used as the email and the other is read the same way.
-            </p>
-            <Form.Control type="file" accept=".csv,.xlsx,.xls" onChange={handleFileChange} />
           </div>
         ) : null}
 
