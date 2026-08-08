@@ -678,25 +678,27 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                   </td>
                   <td>
                     {lead.instagram ? (
-                      <Form.Check
-                        type="checkbox"
-                        label={lead.dmSent ? 'DM Sent' : 'Not DM\'d'}
-                        checked={Boolean(lead.dmSent)}
+                      <Button
+                        size="sm"
+                        variant={lead.dmSent ? 'success' : 'outline-secondary'}
                         disabled={busy}
-                        onChange={() => handleToggleDm(lead)}
-                      />
+                        onClick={() => handleToggleDm(lead)}
+                      >
+                        {lead.dmSent ? 'DM Sent' : 'Not DM\'d'}
+                      </Button>
                     ) : (
                       <small style={{ color: '#666' }}>No IG</small>
                     )}
                   </td>
                   <td>
-                    <Form.Check
-                      type="checkbox"
-                      label={lead.called ? 'Called' : 'Not Called'}
-                      checked={Boolean(lead.called)}
+                    <Button
+                      size="sm"
+                      variant={lead.called ? 'success' : 'outline-secondary'}
                       disabled={busy}
-                      onChange={() => handleToggleCalled(lead)}
-                    />
+                      onClick={() => handleToggleCalled(lead)}
+                    >
+                      {lead.called ? 'Called' : 'Not Called'}
+                    </Button>
                   </td>
                   <td>
                     <Badge bg={lead.inbound ? 'info' : 'secondary'}>{lead.inbound ? 'Inbound' : 'Outbound'}</Badge>
@@ -704,7 +706,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                   <td>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                       {lead.convertedToClient ? <Badge bg="success">Onboarded — See Client Table</Badge> : null}
-                      {lead.declined ? <Badge bg="danger">Declined</Badge> : null}
+                      {lead.declined ? <Badge bg="danger">Declined / Inactive</Badge> : null}
                       {isNotContacted(lead) && !lead.declined && !lead.convertedToClient ? <Badge bg="secondary">Not Contacted</Badge> : null}
                       {lead.coldEmailSent ? <Badge bg="warning" text="dark">Cold Email Sent</Badge> : null}
                       {lead.mockupReviewSent ? <Badge bg="primary">Mockup Review Sent</Badge> : null}
