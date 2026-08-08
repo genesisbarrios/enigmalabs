@@ -182,7 +182,7 @@ function buildMarketingAdsColdEmailHtml(lead) {
     type: 'cold',
     paragraphs: [
       `I came across ${business} website and really like what you've got going — nice work! I did notice your social media could use a bit more consistent content to match it, though.`,
-      `We specialize in content creation (photography, videography &amp; graphic design), social media management, and ads — everything you'd need to turn that great website into a steady stream of new customers.`,
+      `I help businesses create and manage short-form content that keeps their brand active online while turning social media attention into actual leads and customers. I’d love to put together a few content ideas specifically for [Business Name] and show you what I have in mind.`,
       `Would you be available for a quick call sometime in the next day or two? Here's my calendar link for you to schedule it at your convenience:`
     ],
     ctaLabel: 'Schedule call',
@@ -310,9 +310,9 @@ function buildClientMarketingPitchEmailHtml(client) {
         const websiteLinkHtml = client.website
           ? ` I took a look at <a href="${client.website}" style="color:#111; font-weight:bold;">${client.website.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '')}</a> and it's looking great!`
           : '';
-        return `Hope things are going well over at ${business}!${websiteLinkHtml} I noticed your social media could use a bit more consistent content to reach more people.`;
+        return `Hope things are going well over at ${business}!${websiteLinkHtml} I was taking a look at your social media and noticed there’s an opportunity to make your content more consistent and engaging, while showcasing your business to more potential customers.`;
       })()
-    : `Hope things are going well over at ${business}! I noticed your social media could use a bit more consistent content to reach more people.`;
+    : `Hope things are going well over at ${business}! I was taking a look at your social media and noticed there’s an opportunity to make your content more consistent and engaging, while showcasing your business to more potential customers.`;
 
   return renderBrandedEmail({
     greetingName: client.name,
