@@ -211,9 +211,29 @@ function buildColdEmailHtml(lead) {
   });
 }
 
+// Second cold-email option, only offered when outdatedWebsite is flagged —
+// pitches a refreshed mockup rather than the marketing/ads services pitch
+// (buildMarketingAdsColdEmailHtml), which stays available alongside this one.
+function buildOutdatedWebsiteMockupEmailHtml(lead) {
+  const business = lead.businessName ? `<strong>${lead.businessName}</strong>'s` : 'your';
+  return renderBrandedEmail({
+    greetingName: lead.contactName,
+    leadId: lead._id,
+    type: 'outdatedMockup',
+    paragraphs: [
+      `I came across ${business} business page and noticed your website could benefit from a modern refresh. A more updated design can help build trust with new customers, improve your visibility online, and convert more visitors into appointments.`,
+      `To give you an idea of what's possible, I went ahead and designed a custom homepage mockup specifically for your business. I'd love to show it to you — there's no obligation, and it only takes about 5-10 minutes.`,
+      `Would you be available for a quick call sometime in the next day or two? Here's my calendar link for you to schedule it at your convenience:`
+    ],
+    ctaLabel: 'Schedule call',
+    ctaUrl: trackedUrl(lead._id, CALENDAR_LINK, 'outdatedMockup'),
+    signOff: 'Looking forward to hearing from you,<br/><br/>Gen Barrios<br/>enigma-labs.com'
+  });
+}
+
 function buildMockupReviewEmailHtml(lead) {
   return renderBrandedEmail({
-    greetingName: lead.contactName || lead.businessName,
+    greetingName: lead.contactName,
     leadId: lead._id,
     type: 'mockupReview',
     paragraphs: [
@@ -227,7 +247,7 @@ function buildMockupReviewEmailHtml(lead) {
 
 function buildOnboardingEmailHtml(lead) {
   return renderBrandedEmail({
-    greetingName: lead.contactName || lead.businessName,
+    greetingName: lead.contactName,
     leadId: lead._id,
     type: 'onboarding',
     paragraphs: [
