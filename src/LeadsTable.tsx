@@ -16,6 +16,7 @@ export type Lead = {
   instagramNotFound?: boolean;
   instagramNotFoundAt?: string;
   website?: string;
+  outdatedWebsite?: boolean;
   city?: string;
   industry?: string;
   notes?: string;
@@ -25,6 +26,8 @@ export type Lead = {
   coldEmailSentAt?: string;
   mockupReviewSent?: boolean;
   mockupReviewSentAt?: string;
+  outdatedMockupSent?: boolean;
+  outdatedMockupSentAt?: string;
   onboardingSent?: boolean;
   onboardingSentAt?: string;
   opened?: boolean;
@@ -44,12 +47,13 @@ export type Lead = {
   createdAt: string;
 };
 
-type EmailType = 'cold' | 'mockupReview' | 'onboarding';
+type EmailType = 'cold' | 'mockupReview' | 'onboarding' | 'outdatedMockup';
 
 const EMAIL_TYPE_LABELS: Record<EmailType, string> = {
   cold: 'Cold Email',
   mockupReview: 'Website Review Email',
-  onboarding: 'Onboarding Email'
+  onboarding: 'Onboarding Email',
+  outdatedMockup: 'Mockup Cold Email'
 };
 
 type SentEmailData = {
@@ -69,6 +73,7 @@ type EditForm = {
   instagram: string;
   email: string;
   website: string;
+  outdatedWebsite: boolean;
   city: string;
   industry: string;
   notes: string;
@@ -81,6 +86,7 @@ const emptyEditForm: EditForm = {
   instagram: '',
   email: '',
   website: '',
+  outdatedWebsite: false,
   city: '',
   industry: '',
   notes: ''
@@ -93,6 +99,7 @@ const editFormFromLead = (lead: Lead): EditForm => ({
   instagram: lead.instagram || '',
   email: lead.email || '',
   website: lead.website || '',
+  outdatedWebsite: lead.outdatedWebsite || false,
   city: lead.city || '',
   industry: lead.industry || '',
   notes: lead.notes || ''
@@ -282,6 +289,33 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
         setError('Could not send cold email.');
       }
     });
+
+  const handleSendOutdatedMockup = (lead: Lead) => {
+    if (!lead.website || !lead.outdatedWebsite) {
+      setError('This email only applies to leads with a website flagged as outdated.');
+      return;
+    }
+
+    const confirmSend = window.confirm(
+      `Send the mockup cold email to ${lead.businessName || lead.email || 'this lead'}?`
+    );
+    if (!confirmSend) return;
+
+    runAction(lead, async () => {
+      try {
+        const response = await axios.post(`${API_BASE_URL}/crm/leads/${lead._id}/send-outdated-mockup`);
+        if (response.data?.ok) {
+          setMessage(`Mockup cold email sent to ${lead.businessName || lead.email}.`);
+          fetchLeads();
+        } else {
+          setError(response.data?.message || 'Could not send mockup cold email.');
+        }
+      } catch (actionError) {
+        console.error(actionError);
+        setError('Could not send mockup cold email.');
+      }
+    });
+  };
 
   const handleSendMockupReview = (lead: Lead) => {
     if (!lead.website) {
@@ -706,6 +740,9 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                             {lead.website.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '')}
                           </small>
                         </a>
+                        {lead.outdatedWebsite ? (
+                          <div><small style={{ color: '#888' }}>Outdated</small></div>
+                        ) : null}
                       </div>
                     ) : null}
                   </td>
@@ -771,30 +808,45 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                                 </Button>
                               )
                             ) : null}
-                            {lead.onboardingSent ? (
-                              <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'onboarding')}>
-                                See Sent Onboarding Email
-                              </Button>
-                            ) : (
-                              <Button size="sm" variant="outline-success" disabled={busy || lead.declined} onClick={() => handleSendOnboarding(lead)}>
-                                Send Onboarding
-                              </Button>
-                            )}
-                            {lead.mockupReviewSent ? (
-                              <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'mockupReview')}>
-                                See Sent Website Review Email
-                              </Button>
-                            ) : (
-                              <Button
-                                size="sm"
-                                variant="outline-primary"
-                                disabled={busy || lead.declined || !lead.website}
-                                title={!lead.website ? 'Add a website URL for this lead first.' : undefined}
-                                onClick={() => handleSendMockupReview(lead)}
-                              >
-                                Send Website Review
-                              </Button>
-                            )}
+                            {!lead.inbound && lead.website && lead.outdatedWebsite ? (
+                              lead.outdatedMockupSent ? (
+                                <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'outdatedMockup')}>
+                                  See Sent Mockup Cold Email
+                                </Button>
+                              ) : (
+                                <Button size="sm" variant="outline-warning" disabled={busy || lead.declined} onClick={() => handleSendOutdatedMockup(lead)}>
+                                  Send Mockup Cold Email
+                                </Button>
+                              )
+                            ) : null}
+                            {!lead.website || lead.outdatedWebsite ? (
+                              lead.onboardingSent ? (
+                                <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'onboarding')}>
+                                  See Sent Onboarding Email
+                                </Button>
+                              ) : (
+                                <Button size="sm" variant="outline-success" disabled={busy || lead.declined} onClick={() => handleSendOnboarding(lead)}>
+                                  Send Onboarding
+                                </Button>
+                              )
+                            ) : null}
+                            {!lead.website || lead.outdatedWebsite ? (
+                              lead.mockupReviewSent ? (
+                                <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'mockupReview')}>
+                                  See Sent Website Review Email
+                                </Button>
+                              ) : (
+                                <Button
+                                  size="sm"
+                                  variant="outline-primary"
+                                  disabled={busy || lead.declined || !lead.website}
+                                  title={!lead.website ? 'Add a website URL for this lead first.' : undefined}
+                                  onClick={() => handleSendMockupReview(lead)}
+                                >
+                                  Send Website Review
+                                </Button>
+                              )
+                            ) : null}
                           </>
                         ) : null}
                         <Button
@@ -927,6 +979,16 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                 <Form.Group className="mb-2">
                   <Form.Label>Website</Form.Label>
                   <Form.Control value={editForm.website} onChange={(e) => setEditForm({ ...editForm, website: e.target.value })} placeholder="https://..." />
+                </Form.Group>
+              </Col>
+              <Col md={6} className="d-flex align-items-end">
+                <Form.Group className="mb-2">
+                  <Form.Check
+                    type="checkbox"
+                    label="Website is outdated"
+                    checked={editForm.outdatedWebsite}
+                    onChange={(e) => setEditForm({ ...editForm, outdatedWebsite: e.target.checked })}
+                  />
                 </Form.Group>
               </Col>
               <Col md={6}>

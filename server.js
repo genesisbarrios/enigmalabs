@@ -305,14 +305,7 @@ function buildWebsiteReviewEmailHtml(client) {
 function buildClientMarketingPitchEmailHtml(client) {
   const business = client.name ? `<strong>${client.name}</strong>` : 'your business';
 
-  const openingLine = client.hasExistingWebsite
-    ? (() => {
-        const websiteLinkHtml = client.website
-          ? ` I took a look at <a href="${client.website}" style="color:#111; font-weight:bold;">${client.website.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '')}</a> and it's looking great!`
-          : '';
-        return `Hope things are going well over at ${business}!${websiteLinkHtml} I was taking a look at your social media and noticed there’s an opportunity to make your content more consistent and engaging, while showcasing your business to more potential customers.`;
-      })()
-    : `Hope things are going well over at ${business}! I was taking a look at your social media and noticed there’s an opportunity to make your content more consistent and engaging, while showcasing your business to more potential customers.`;
+  const openingLine = `Hope things are going well over at ${business}! I was taking a look at your social media and noticed there’s an opportunity to make your content more consistent and engaging, while showcasing your business to more potential customers.`;
 
   return renderBrandedEmail({
     greetingName: client.name,
@@ -608,6 +601,10 @@ const leadSchema = new mongoose.Schema({
   instagramNotFound: { type: Boolean, default: false },
   instagramNotFoundAt: Date,
   website: String,
+  // When true (only meaningful if website is set), the lead's site needs a
+  // refresh — unlocks a second cold-email option (the mockup-refresh pitch)
+  // alongside the regular marketing/ads cold email.
+  outdatedWebsite: { type: Boolean, default: false },
   city: String,
   industry: String,
   notes: String,
@@ -635,6 +632,18 @@ const leadSchema = new mongoose.Schema({
   mockupReviewOpenedAt: Date,
   mockupReviewClicked: { type: Boolean, default: false },
   mockupReviewClickedAt: Date,
+  // Separate from coldEmail* — a lead with an outdated website can get both
+  // the marketing/ads cold email (coldEmail* fields, unchanged) and this
+  // mockup-refresh pitch, so each needs its own send-state.
+  outdatedMockupSent: { type: Boolean, default: false },
+  outdatedMockupSentAt: Date,
+  outdatedMockupHtml: String,
+  outdatedMockupSubject: String,
+  outdatedMockupResendId: String,
+  outdatedMockupOpened: { type: Boolean, default: false },
+  outdatedMockupOpenedAt: Date,
+  outdatedMockupClicked: { type: Boolean, default: false },
+  outdatedMockupClickedAt: Date,
   onboardingSent: { type: Boolean, default: false },
   onboardingSentAt: Date,
   onboardingHtml: String,
@@ -1230,6 +1239,9 @@ app.put('/api/crm/leads/:id', async (req, res) => {
     fields.forEach((field) => {
       if (req.body[field] !== undefined) lead[field] = req.body[field];
     });
+    if (req.body.outdatedWebsite !== undefined) {
+      lead.outdatedWebsite = Boolean(req.body.outdatedWebsite);
+    }
 
     await lead.save();
     res.json({ ok: true, lead });
@@ -1241,7 +1253,7 @@ app.put('/api/crm/leads/:id', async (req, res) => {
 
 app.post('/api/crm/leads', async (req, res) => {
   try {
-    const { businessName, contactName, phone, instagram, email, website, city, industry, notes, coldEmailSent, dmSent, called, instagramNotFound, emailNotFound } = req.body;
+    const { businessName, contactName, phone, instagram, email, website, city, industry, notes, coldEmailSent, dmSent, called, instagramNotFound, emailNotFound, outdatedWebsite } = req.body;
     if (!businessName && !email && !phone) {
       return res.status(400).json({ ok: false, message: 'At least a business name, email, or phone is required.' });
     }
@@ -1262,6 +1274,7 @@ app.post('/api/crm/leads', async (req, res) => {
       emailNotFound: Boolean(emailNotFound),
       emailNotFoundAt: emailNotFound ? new Date() : undefined,
       website: website || '',
+      outdatedWebsite: Boolean(outdatedWebsite),
       city: city || '',
       industry: industry || '',
       notes: notes || '',
@@ -1318,6 +1331,7 @@ app.post('/api/crm/leads/import-bulk', async (req, res) => {
         emailNotFound: Boolean(row.emailNotFound),
         emailNotFoundAt: row.emailNotFound ? new Date() : undefined,
         website: row.website || '',
+        outdatedWebsite: Boolean(row.outdatedWebsite),
         city: row.city || '',
         industry: row.industry || '',
         notes: row.notes || '',
@@ -1524,6 +1538,34 @@ app.post('/api/crm/leads/:id/send-cold-email', async (req, res) => {
   }
 });
 
+app.post('/api/crm/leads/:id/send-outdated-mockup', async (req, res) => {
+  try {
+    const lead = await Lead.findById(req.params.id);
+    if (!lead) {
+      return res.status(404).json({ ok: false, message: 'Lead not found.' });
+    }
+    if (lead.inbound) {
+      return res.status(400).json({ ok: false, message: 'Cold email is only for outbound leads.' });
+    }
+    if (!lead.website || !lead.outdatedWebsite) {
+      return res.status(400).json({ ok: false, message: 'This email only applies to leads with a website flagged as outdated.' });
+    }
+    const result = await sendLeadEmail(lead, {
+      subject: `A refreshed website mockup for ${lead.businessName || 'your business'}`,
+      buildHtml: buildOutdatedWebsiteMockupEmailHtml,
+      statusField: 'outdatedMockupSent',
+      statusAtField: 'outdatedMockupSentAt',
+      htmlField: 'outdatedMockupHtml',
+      subjectField: 'outdatedMockupSubject',
+      resendIdField: 'outdatedMockupResendId'
+    });
+    res.status(result.ok ? 200 : 400).json(result);
+  } catch (error) {
+    console.error('Could not send outdated-website mockup email', error);
+    res.status(500).json({ ok: false, message: 'Could not send outdated-website mockup email.' });
+  }
+});
+
 app.post('/api/crm/leads/:id/send-mockup-review', async (req, res) => {
   try {
     const lead = await Lead.findById(req.params.id);
@@ -1576,7 +1618,8 @@ app.post('/api/crm/leads/:id/send-onboarding', async (req, res) => {
 const EMAIL_TYPE_FIELD_PREFIX = {
   cold: 'coldEmail',
   mockupReview: 'mockupReview',
-  onboarding: 'onboarding'
+  onboarding: 'onboarding',
+  outdatedMockup: 'outdatedMockup'
 };
 
 app.get('/api/crm/leads/:id/track/open', async (req, res) => {

@@ -14,6 +14,7 @@ type ParsedLead = {
   email: string;
   emailNotFound: boolean;
   website: string;
+  outdatedWebsite: boolean;
   city: string;
   industry: string;
   notes: string;
@@ -32,6 +33,7 @@ const emptyManualForm: ParsedLead = {
   email: '',
   emailNotFound: false,
   website: '',
+  outdatedWebsite: false,
   city: '',
   industry: '',
   notes: '',
@@ -176,6 +178,7 @@ function extractLeadsFromGrid(grid: any[][]): ParsedLead[] {
   const declineIdxs = findIndices([/decline/i]);
   const dmIdxs = findIndices([/^dm$/i, /direct message/i]);
   const calledIdxs = findIndices([/call/i]);
+  const outdatedWebsiteIdxs = findIndices([/outdated/i]);
 
   const firstNonEmpty = (row: any[], idxs: number[]) => {
     for (const idx of idxs) {
@@ -205,6 +208,7 @@ function extractLeadsFromGrid(grid: any[][]): ParsedLead[] {
       const declined = declineIdxs.some((idx) => isMarked(row[idx]));
       const dmSent = dmIdxs.some((idx) => isMarked(row[idx]));
       const called = calledIdxs.some((idx) => isMarked(row[idx]));
+      const outdatedWebsite = outdatedWebsiteIdxs.some((idx) => isMarked(row[idx]));
 
       // A bare "-" in the Instagram column means it was already searched and
       // confirmed to not exist — distinct from just being left blank.
@@ -221,6 +225,7 @@ function extractLeadsFromGrid(grid: any[][]): ParsedLead[] {
         email,
         emailNotFound,
         website: firstNonEmpty(row, websiteIdxs),
+        outdatedWebsite,
         city: firstNonEmpty(row, cityIdxs),
         industry: firstNonEmpty(row, industryIdxs),
         notes: firstNonEmpty(row, notesIdxs),
@@ -233,7 +238,7 @@ function extractLeadsFromGrid(grid: any[][]): ParsedLead[] {
     .filter((lead) => lead.businessName || lead.email || lead.phone);
 }
 
-const HEADER_HINT_REGEX = /business|^name$|company|owner|contact|phone|instagram|^ig$|email|website|^url$|city|location|industry|category|comment|note|decline|^dm$|call/i;
+const HEADER_HINT_REGEX = /business|^name$|company|owner|contact|phone|instagram|^ig$|email|website|^url$|city|location|industry|category|comment|note|decline|^dm$|call|outdated/i;
 
 // Paste rows are just tab/comma-separated text with no guaranteed headers.
 // If the first line looks like a header row (matches known column names),
@@ -286,6 +291,7 @@ const EXPORT_COLUMNS: { key: string; label: string }[] = [
   { key: 'email', label: 'Email' },
   { key: 'instagram', label: 'Instagram' },
   { key: 'website', label: 'Website' },
+  { key: 'outdatedWebsite', label: 'Outdated Website' },
   { key: 'city', label: 'City' },
   { key: 'industry', label: 'Category' },
   { key: 'notes', label: 'Comments' },
@@ -496,11 +502,12 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
         </div>
         <p style={{ color: '#888', fontSize: '0.8rem', margin: '0.5rem 0 0' }}>
           "+ Import File" accepts CSV or XLSX. Recognized columns: Name/Business, Name(Owner)/Contact, Phone,
-          Instagram/IG, Email, Cold Email, Website/URL, City/Location, Industry/Category, Comment/Notes, DM, Called,
-          and Decline. "-" and blank cells are treated as empty; any mark in a Cold Email/DM/Called/Decline column is
-          read as "yes" (an explicit "No"/"FALSE"/"0" is read as "no"). A bare "-" in the Instagram column means
-          "already searched, not found." If your file has a "Cold Email" column, any mark in it means a cold email
-          was already sent; if it instead has two bare "Email" columns, the one containing an actual address is used
+          Instagram/IG, Email, Cold Email, Website/URL, Outdated Website, City/Location, Industry/Category,
+          Comment/Notes, DM, Called, and Decline. "-" and blank cells are treated as empty; any mark in a Cold
+          Email/Outdated Website/DM/Called/Decline column is read as "yes" (an explicit "No"/"FALSE"/"0" is read as
+          "no"). A bare "-" in the Instagram column means "already searched, not found." If your file has a "Cold
+          Email" column, any mark in it means a cold email was already sent; if it instead has two bare "Email"
+          columns, the one containing an actual address is used
           as the email and the other is read the same way.
         </p>
 
@@ -618,6 +625,16 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
                   style={{ whiteSpace: 'nowrap' }}
                 />
               </Col>
+              <Col xs={12} sm={6} lg={3}>
+                <Form.Check
+                  type="checkbox"
+                  label="Website is outdated"
+                  checked={manualForm.outdatedWebsite}
+                  onChange={(e) => setManualForm({ ...manualForm, outdatedWebsite: e.target.checked })}
+                  className="mb-2"
+                  style={{ whiteSpace: 'nowrap' }}
+                />
+              </Col>
               {/* <Col xs={12} sm={6} lg={3}>
                 <Form.Check
                   type="checkbox"
@@ -649,11 +666,11 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
           <div className="mt-3 mb-4">
             <p style={{ color: '#d4d4d4' }}>
               Paste rows with a header row — one contact per line, tab or comma separated. Recognized columns: Name/Business,
-              Name(Owner)/Contact, Phone, Instagram/IG, Email, Cold Email, Website/URL, City/Location, Industry/Category,
-              Comment/Notes, DM, Called, and Decline. "-" and blank cells are treated as empty; any mark in a Cold
-              Email/DM/Called/Decline column is read as "yes" (an explicit "No"/"FALSE"/"0" is read as "no"). A bare "-" in the
-              Instagram column means "already searched, not found." Pasting without a header row falls back to best-effort
-              detection, which can't capture Industry or Comments.
+              Name(Owner)/Contact, Phone, Instagram/IG, Email, Cold Email, Website/URL, Outdated Website, City/Location,
+              Industry/Category, Comment/Notes, DM, Called, and Decline. "-" and blank cells are treated as empty; any mark in a
+              Cold Email/Outdated Website/DM/Called/Decline column is read as "yes" (an explicit "No"/"FALSE"/"0" is read as
+              "no"). A bare "-" in the Instagram column means "already searched, not found." Pasting without a header row falls
+              back to best-effort detection, which can't capture Industry or Comments.
             </p>
             <Form.Control
               as="textarea"
@@ -679,6 +696,7 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
                   <th>Instagram</th>
                   <th>Email</th>
                   <th>Website</th>
+                  <th>Outdated Website</th>
                   <th>City</th>
                   <th>Industry</th>
                   <th>Comments</th>
@@ -697,6 +715,7 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
                     <td>{lead.instagram || (lead.instagramNotFound ? 'Searched, not found' : '—')}</td>
                     <td>{lead.email || (lead.emailNotFound ? 'Searched, not found' : '—')}</td>
                     <td>{lead.website || '—'}</td>
+                    <td>{lead.outdatedWebsite ? 'Yes' : 'No'}</td>
                     <td>{lead.city || '—'}</td>
                     <td>{lead.industry || '—'}</td>
                     <td>{lead.notes || '—'}</td>
