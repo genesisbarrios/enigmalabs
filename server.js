@@ -22,6 +22,10 @@ const CALENDAR_LINK = process.env.CALENDAR_LINK || '';
 if (!CALENDAR_LINK) {
   console.warn('CALENDAR_LINK not set — mockup thank-you emails will omit the booking link.');
 }
+// Separate booking link for marketing/ads pitch calls, distinct from
+// CALENDAR_LINK (which is for website mockup/review calls) — falls back to
+// CALENDAR_LINK if not set so those emails don't end up with a dead button.
+const CALENDAR_CHAT_LINK = process.env.CALENDAR_CHAT_LINK || CALENDAR_LINK;
 
 // 1x1 transparent PNG used for email open tracking.
 const TRACKING_PIXEL = Buffer.from(
@@ -182,7 +186,7 @@ function buildMarketingAdsColdEmailHtml(lead) {
       `Would you be available for a quick call sometime in the next day or two? Here's my calendar link for you to schedule it at your convenience:`
     ],
     ctaLabel: 'Schedule call',
-    ctaUrl: trackedUrl(lead._id, CALENDAR_LINK, 'cold'),
+    ctaUrl: trackedUrl(lead._id, CALENDAR_CHAT_LINK, 'cold'),
     signOff: 'Looking forward to hearing from you,<br/><br/>Gen Barrios<br/>enigma-labs.com'
   });
 }
@@ -294,12 +298,43 @@ function buildWebsiteReviewEmailHtml(client) {
   });
 }
 
+// Two variants sharing the same pitch — only the opening line differs. For
+// clients with an existing website (we didn't build it), compliment the
+// website itself. For clients whose website we built, complimenting "your
+// website" would be odd (we made it) — compliment the business instead.
+function buildClientMarketingPitchEmailHtml(client) {
+  const business = client.name ? `<strong>${client.name}</strong>` : 'your business';
+
+  const openingLine = client.hasExistingWebsite
+    ? (() => {
+        const websiteLinkHtml = client.website
+          ? ` I took a look at <a href="${client.website}" style="color:#111; font-weight:bold;">${client.website.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '')}</a> and it's looking great!`
+          : '';
+        return `Hope things are going well over at ${business}!${websiteLinkHtml} I did notice your social media could use a bit more consistent content to match it, though.`;
+      })()
+    : `Hope things are going well over at ${business} — it's clear you're doing great work! I did notice your social media could use a bit more consistent content to match it, though.`;
+
+  return renderBrandedEmail({
+    greetingName: client.name,
+    paragraphs: [
+      openingLine,
+      `We also offer content creation (photography &amp; videography), social media management, and ads — happy to put together a plan to help bring in more customers if you're interested.`,
+      `Let's schedule a quick call to go over some ideas:`
+    ],
+    ctaLabel: 'Schedule a call',
+    ctaUrl: CALENDAR_CHAT_LINK
+  });
+}
+
 async function sendWebsiteReviewEmail(client) {
   if (!resend) {
     return { ok: false, message: 'RESEND_API_KEY not set — email delivery is not configured.' };
   }
   if (!client.email) {
     return { ok: false, message: 'This client has no email address on file.' };
+  }
+  if (client.hasExistingWebsite) {
+    return { ok: false, message: 'This client already had their website before we worked with them — the "new website is ready" email only applies to sites we built. Use Send Marketing Email instead.' };
   }
 
   try {
@@ -319,6 +354,39 @@ async function sendWebsiteReviewEmail(client) {
   }
 
   client.websiteReviewSentAt = new Date();
+  await client.save();
+  return { ok: true, client };
+}
+
+// Separate action from sendWebsiteReviewEmail on purpose — this pitches
+// content/social/ads and only makes sense for a client whose website we
+// didn't build ourselves (saying "I like your website" about a site we
+// built for them would be a bit odd).
+async function sendClientMarketingEmail(client) {
+  if (!resend) {
+    return { ok: false, message: 'RESEND_API_KEY not set — email delivery is not configured.' };
+  }
+  if (!client.email) {
+    return { ok: false, message: 'This client has no email address on file.' };
+  }
+
+  try {
+    const { error } = await resend.emails.send({
+      from: AGREEMENT_FROM_EMAIL,
+      to: client.email,
+      subject: `Content ideas for ${client.name || 'your business'}'s social media`,
+      html: buildClientMarketingPitchEmailHtml(client)
+    });
+    if (error) {
+      console.error('Could not send client marketing email', error);
+      return { ok: false, message: 'Failed to send the email.' };
+    }
+  } catch (error) {
+    console.error('Could not send client marketing email', error);
+    return { ok: false, message: 'Failed to send the email.' };
+  }
+
+  client.marketingEmailSentAt = new Date();
   await client.save();
   return { ok: true, client };
 }
@@ -516,6 +584,7 @@ const websiteClientSchema = new mongoose.Schema({
     mimeType: String
   },
   websiteReviewSentAt: Date,
+  marketingEmailSentAt: Date,
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -1113,6 +1182,28 @@ app.post('/api/website-clients/send-review', async (req, res) => {
   } catch (error) {
     console.error('Could not send website review emails', error);
     res.status(500).json({ ok: false, message: 'Could not send website review emails.' });
+  }
+});
+
+app.post('/api/website-clients/send-marketing-email', async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body.ids) ? req.body.ids : [];
+    if (!ids.length) {
+      return res.status(400).json({ ok: false, message: 'At least one client id is required.' });
+    }
+
+    const clients = await WebsiteClient.find({ _id: { $in: ids } });
+    const results = [];
+    for (const client of clients) {
+      const result = await sendClientMarketingEmail(client);
+      results.push({ id: client._id, ok: result.ok, message: result.message });
+    }
+
+    const sentCount = results.filter((r) => r.ok).length;
+    res.json({ ok: true, sentCount, results });
+  } catch (error) {
+    console.error('Could not send marketing emails', error);
+    res.status(500).json({ ok: false, message: 'Could not send marketing emails.' });
   }
 });
 

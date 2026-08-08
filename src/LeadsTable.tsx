@@ -771,6 +771,15 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                                 </Button>
                               )
                             ) : null}
+                            {lead.onboardingSent ? (
+                              <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'onboarding')}>
+                                See Sent Onboarding Email
+                              </Button>
+                            ) : (
+                              <Button size="sm" variant="outline-success" disabled={busy || lead.declined} onClick={() => handleSendOnboarding(lead)}>
+                                Send Onboarding
+                              </Button>
+                            )}
                             {lead.mockupReviewSent ? (
                               <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'mockupReview')}>
                                 See Sent Website Review Email
@@ -784,15 +793,6 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                                 onClick={() => handleSendMockupReview(lead)}
                               >
                                 Send Website Review
-                              </Button>
-                            )}
-                            {lead.onboardingSent ? (
-                              <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'onboarding')}>
-                                See Sent Onboarding Email
-                              </Button>
-                            ) : (
-                              <Button size="sm" variant="outline-success" disabled={busy || lead.declined} onClick={() => handleSendOnboarding(lead)}>
-                                Send Onboarding
                               </Button>
                             )}
                           </>

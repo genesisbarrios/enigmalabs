@@ -77,6 +77,7 @@ type WebsiteClient = {
   hasExistingWebsite?: boolean;
   logo?: { mimeType?: string } | null;
   websiteReviewSentAt?: string | null;
+  marketingEmailSentAt?: string | null;
   createdAt: string;
 };
 
@@ -156,6 +157,7 @@ const Admin = () => {
   const [newWebsiteClient, setNewWebsiteClient] = useState(emptyWebsiteClientForm);
   const [selectedWebsiteClientIds, setSelectedWebsiteClientIds] = useState<Set<string>>(new Set());
   const [sendingReview, setSendingReview] = useState(false);
+  const [sendingMarketingEmail, setSendingMarketingEmail] = useState(false);
 
   const [showAddSubscriber, setShowAddSubscriber] = useState(false);
   const [newSubscriber, setNewSubscriber] = useState({ email: '', name: '', phone: '', businessName: '' });
@@ -473,6 +475,28 @@ const Admin = () => {
     }
   };
 
+  const handleSendMarketingEmail = async (clientIds: string[]) => {
+    if (!clientIds.length) return;
+    setSendingMarketingEmail(true);
+    setMessage('');
+    setError('');
+    try {
+      const response = await axios.post(`${API_BASE_URL}/website-clients/send-marketing-email`, { ids: clientIds });
+      if (response.data?.ok) {
+        setMessage(`Sent marketing email to ${response.data.sentCount} of ${clientIds.length} client${clientIds.length === 1 ? '' : 's'}.`);
+        setSelectedWebsiteClientIds(new Set());
+        fetchWebsiteClients();
+      } else {
+        setError(response.data?.message || 'Could not send marketing emails.');
+      }
+    } catch (sendError) {
+      console.error(sendError);
+      setError('Could not send marketing emails.');
+    } finally {
+      setSendingMarketingEmail(false);
+    }
+  };
+
   const handleAddWebsiteClient = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!newWebsiteClient.name || !newWebsiteClient.email) {
@@ -780,6 +804,14 @@ const Admin = () => {
           >
             {sendingReview ? 'Sending...' : `Send Website Review${selectedWebsiteClientIds.size > 0 ? ` (${selectedWebsiteClientIds.size} selected)` : ''}`}
           </Button>
+          <Button
+            size="sm"
+            variant="outline-primary"
+            disabled={selectedWebsiteClientIds.size === 0 || sendingMarketingEmail}
+            onClick={() => handleSendMarketingEmail(Array.from(selectedWebsiteClientIds))}
+          >
+            {sendingMarketingEmail ? 'Sending...' : `Send Marketing Email${selectedWebsiteClientIds.size > 0 ? ` (${selectedWebsiteClientIds.size} selected)` : ''}`}
+          </Button>
         </div>
       ) : null}
 
@@ -885,12 +917,18 @@ const Admin = () => {
                 <span style={{ color: '#ccc' }}>—</span>
               )}
             </div>
-            {client.websiteReviewSentAt ? (
-              <Badge bg="success" style={{ flexShrink: 0 }}>Review Sent</Badge>
-            ) : null}
-            <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
-              <Button size="sm" variant="outline-success" disabled={sendingReview} onClick={() => handleSendWebsiteReview([client._id])}>
-                Send Website Review
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flexShrink: 0 }}>
+              {client.websiteReviewSentAt ? <Badge bg="success">Review Sent</Badge> : null}
+              {client.marketingEmailSentAt ? <Badge bg="primary">Marketing Sent</Badge> : null}
+            </div>
+            <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0, flexWrap: 'wrap' }}>
+              {!client.hasExistingWebsite ? (
+                <Button size="sm" variant="outline-success" disabled={sendingReview} onClick={() => handleSendWebsiteReview([client._id])}>
+                  Send Website Review
+                </Button>
+              ) : null}
+              <Button size="sm" variant="outline-primary" disabled={sendingMarketingEmail} onClick={() => handleSendMarketingEmail([client._id])}>
+                Send Marketing Email
               </Button>
               <Button size="sm" variant="outline-light" onClick={() => handleStartEditWebsiteClient(client)}>Edit</Button>
               <Button size="sm" variant="outline-danger" onClick={() => handleDeleteWebsiteClient(client._id)}>Delete</Button>
