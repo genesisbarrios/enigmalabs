@@ -182,7 +182,7 @@ function buildMarketingAdsColdEmailHtml(lead) {
     type: 'cold',
     paragraphs: [
       `I came across ${business} website and really like what you've got going — nice work! I did notice your social media could use a bit more consistent content to match it, though.`,
-      `I help businesses create and manage short-form content that keeps their brand active online while turning social media attention into actual leads and customers. I’d love to put together a few content ideas specifically for [Business Name] and show you what I have in mind.`,
+      `I help businesses create and manage short-form content that keeps their brand active online while turning social media attention into actual leads and customers. I’d love to put together a few content ideas specifically for ${business} and show you what I have in mind.`,
       `Would you be available for a quick call sometime in the next day or two? Here's my calendar link for you to schedule it at your convenience:`
     ],
     ctaLabel: 'Schedule call',
