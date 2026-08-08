@@ -231,20 +231,6 @@ function buildOutdatedWebsiteMockupEmailHtml(lead) {
   });
 }
 
-function buildMockupReviewEmailHtml(lead) {
-  return renderBrandedEmail({
-    greetingName: lead.contactName,
-    leadId: lead._id,
-    type: 'mockupReview',
-    paragraphs: [
-      `Great news — your new website${lead.businessName ? ` for <strong>${lead.businessName}</strong>` : ''} is complete! We think you're going to love what we put together.`,
-      `Let's schedule a quick call to walk through it together and answer any questions you have.`
-    ],
-    ctaLabel: 'Schedule your website review',
-    ctaUrl: trackedUrl(lead._id, CALENDAR_LINK, 'mockupReview')
-  });
-}
-
 function buildOnboardingEmailHtml(lead) {
   return renderBrandedEmail({
     greetingName: lead.contactName,
@@ -647,15 +633,6 @@ const leadSchema = new mongoose.Schema({
   coldEmailOpenedAt: Date,
   coldEmailClicked: { type: Boolean, default: false },
   coldEmailClickedAt: Date,
-  mockupReviewSent: { type: Boolean, default: false },
-  mockupReviewSentAt: Date,
-  mockupReviewHtml: String,
-  mockupReviewSubject: String,
-  mockupReviewResendId: String,
-  mockupReviewOpened: { type: Boolean, default: false },
-  mockupReviewOpenedAt: Date,
-  mockupReviewClicked: { type: Boolean, default: false },
-  mockupReviewClickedAt: Date,
   // Separate from coldEmail* — a lead with an outdated website can get both
   // the marketing/ads cold email (coldEmail* fields, unchanged) and this
   // mockup-refresh pitch, so each needs its own send-state.
@@ -1590,33 +1567,6 @@ app.post('/api/crm/leads/:id/send-outdated-mockup', async (req, res) => {
   }
 });
 
-app.post('/api/crm/leads/:id/send-mockup-review', async (req, res) => {
-  try {
-    const lead = await Lead.findById(req.params.id);
-    if (!lead) {
-      return res.status(404).json({ ok: false, message: 'Lead not found.' });
-    }
-    // This email announces a finished website — there's nothing to review
-    // without a website URL on file.
-    if (!lead.website) {
-      return res.status(400).json({ ok: false, message: 'This lead has no website URL on file — add one before sending the website review email.' });
-    }
-    const result = await sendLeadEmail(lead, {
-      subject: 'Your website is ready! 🎉',
-      buildHtml: buildMockupReviewEmailHtml,
-      statusField: 'mockupReviewSent',
-      statusAtField: 'mockupReviewSentAt',
-      htmlField: 'mockupReviewHtml',
-      subjectField: 'mockupReviewSubject',
-      resendIdField: 'mockupReviewResendId'
-    });
-    res.status(result.ok ? 200 : 400).json(result);
-  } catch (error) {
-    console.error('Could not send website review email', error);
-    res.status(500).json({ ok: false, message: 'Could not send website review email.' });
-  }
-});
-
 app.post('/api/crm/leads/:id/send-onboarding', async (req, res) => {
   try {
     const lead = await Lead.findById(req.params.id);
@@ -1641,7 +1591,6 @@ app.post('/api/crm/leads/:id/send-onboarding', async (req, res) => {
 
 const EMAIL_TYPE_FIELD_PREFIX = {
   cold: 'coldEmail',
-  mockupReview: 'mockupReview',
   onboarding: 'onboarding',
   outdatedMockup: 'outdatedMockup'
 };

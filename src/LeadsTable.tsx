@@ -24,8 +24,6 @@ export type Lead = {
   inbound: boolean;
   coldEmailSent?: boolean;
   coldEmailSentAt?: string;
-  mockupReviewSent?: boolean;
-  mockupReviewSentAt?: string;
   outdatedMockupSent?: boolean;
   outdatedMockupSentAt?: string;
   onboardingSent?: boolean;
@@ -47,11 +45,10 @@ export type Lead = {
   createdAt: string;
 };
 
-type EmailType = 'cold' | 'mockupReview' | 'onboarding' | 'outdatedMockup';
+type EmailType = 'cold' | 'onboarding' | 'outdatedMockup';
 
 const EMAIL_TYPE_LABELS: Record<EmailType, string> = {
   cold: 'Cold Email',
-  mockupReview: 'Website Review Email',
   onboarding: 'Onboarding Email',
   outdatedMockup: 'Mockup Cold Email'
 };
@@ -106,13 +103,13 @@ const editFormFromLead = (lead: Lead): EditForm => ({
 });
 
 type DirectionFilter = 'all' | 'inbound' | 'outbound';
-type StatusFilter = 'all' | 'not_contacted' | 'cold_email' | 'mockup_review' | 'onboarding';
+type StatusFilter = 'all' | 'not_contacted' | 'cold_email' | 'onboarding';
 type EmailFilter = 'all' | 'has_email' | 'no_email';
 type SortOption = 'newest' | 'oldest' | 'name';
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100, 200];
 
-const isNotContacted = (lead: Lead) => !lead.coldEmailSent && !lead.mockupReviewSent && !lead.onboardingSent;
+const isNotContacted = (lead: Lead) => !lead.coldEmailSent && !lead.onboardingSent;
 
 const buildFindEmailUrl = (lead: Lead) => {
   const query = `${lead.businessName || ''} ${lead.city || ''} ("@gmail.com" OR "@outlook.com" OR "@hotmail.com" OR "@yahoo.com" OR "@icloud.com")`.trim();
@@ -223,7 +220,6 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
         statusFilter === 'all' ||
         (statusFilter === 'not_contacted' && isNotContacted(lead)) ||
         (statusFilter === 'cold_email' && lead.coldEmailSent) ||
-        (statusFilter === 'mockup_review' && lead.mockupReviewSent) ||
         (statusFilter === 'onboarding' && lead.onboardingSent);
 
       const matchesEmail =
@@ -313,33 +309,6 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
       } catch (actionError) {
         console.error(actionError);
         setError('Could not send mockup cold email.');
-      }
-    });
-  };
-
-  const handleSendMockupReview = (lead: Lead) => {
-    if (!lead.website) {
-      setError('This lead has no website URL on file — add one before sending the website review email.');
-      return;
-    }
-
-    const confirmSend = window.confirm(
-      `Send the website review email to ${lead.businessName || lead.email || 'this lead'}?`
-    );
-    if (!confirmSend) return;
-
-    runAction(lead, async () => {
-      try {
-        const response = await axios.post(`${API_BASE_URL}/crm/leads/${lead._id}/send-mockup-review`);
-        if (response.data?.ok) {
-          setMessage(`Website review email sent to ${lead.businessName || lead.email}.`);
-          fetchLeads();
-        } else {
-          setError(response.data?.message || 'Could not send website review email.');
-        }
-      } catch (actionError) {
-        console.error(actionError);
-        setError('Could not send website review email.');
       }
     });
   };
@@ -568,7 +537,6 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
             <option value="all">Any Contact Status</option>
             <option value="not_contacted">Not Contacted</option>
             <option value="cold_email">Cold Email Sent</option>
-            <option value="mockup_review">Website Review Sent</option>
             <option value="onboarding">Onboarding Sent</option>
           </Form.Select>
         </Col>
@@ -779,7 +747,6 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                       {lead.declined ? <Badge bg="danger">Declined / Inactive</Badge> : null}
                       {isNotContacted(lead) && !lead.declined && !lead.convertedToClient ? <Badge bg="secondary">Not Contacted</Badge> : null}
                       {lead.coldEmailSent ? <Badge bg="warning" text="dark">Cold Email Sent</Badge> : null}
-                      {lead.mockupReviewSent ? <Badge bg="primary">Website Review Sent</Badge> : null}
                       {lead.onboardingSent ? <Badge bg="success">Onboarding Sent</Badge> : null}
                     </div>
                   </td>
@@ -827,23 +794,6 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                               ) : (
                                 <Button size="sm" variant="outline-success" disabled={busy || lead.declined} onClick={() => handleSendOnboarding(lead)}>
                                   Send Onboarding
-                                </Button>
-                              )
-                            ) : null}
-                            {!lead.website || lead.outdatedWebsite ? (
-                              lead.mockupReviewSent ? (
-                                <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'mockupReview')}>
-                                  See Sent Website Review Email
-                                </Button>
-                              ) : (
-                                <Button
-                                  size="sm"
-                                  variant="outline-primary"
-                                  disabled={busy || lead.declined || !lead.website}
-                                  title={!lead.website ? 'Add a website URL for this lead first.' : undefined}
-                                  onClick={() => handleSendMockupReview(lead)}
-                                >
-                                  Send Website Review
                                 </Button>
                               )
                             ) : null}

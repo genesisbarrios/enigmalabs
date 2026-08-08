@@ -21,6 +21,14 @@ const DesktopIcon = () => (
   </svg>
 );
 
+const PaymentIcon = () => (
+  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#68FF00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <rect x="2" y="5" width="20" height="14" rx="2" />
+    <path d="M2 10h20" />
+    <path d="M6 15h4" />
+  </svg>
+);
+
 const optionCardStyle: React.CSSProperties = {
   background: '#111',
   color: 'white',
@@ -45,14 +53,32 @@ const OnboardingLanding = () => {
   }, []);
 
   return (
-    <Container style={{ paddingTop: '6rem', paddingBottom: '3rem', maxWidth: '1000px' }}>
+    <Container style={{ paddingTop: '6rem', paddingBottom: '3rem', maxWidth: '1200px' }}>
       <h1 style={{ color: '#68FF00', marginBottom: '0.5rem' }}>Client Onboarding</h1>
       <p style={{ color: '#d4d4d4', marginBottom: '2.5rem' }}>
         Let's get your project started. Choose an option below.
       </p>
 
       <Row className="g-4">
-        <Col xs={12} md={6}>
+        <Col xs={12} md={4}>
+          <Card
+            style={optionCardStyle}
+            className="onboarding-option-card"
+            onClick={() => navigate('/payment')}
+          >
+            <Card.Body>
+              <h3 className="onboarding-option-title" style={{ color: '#68FF00', marginBottom: '1rem' }}>Make a Payment</h3>
+              <p style={{ color: '#d4d4d4' }}>
+                Ready to get started? Pay for your website here to kick off the project.
+              </p>
+              <div style={{ marginTop: '1.5rem' }}>
+                <PaymentIcon />
+              </div>
+            </Card.Body>
+          </Card>
+        </Col>
+
+        <Col xs={12} md={4}>
           <Card
             style={optionCardStyle}
             className="onboarding-option-card"
@@ -71,7 +97,7 @@ const OnboardingLanding = () => {
           </Card>
         </Col>
 
-        <Col xs={12} md={6}>
+        <Col xs={12} md={4}>
           <Card
             style={optionCardStyle}
             className="onboarding-option-card"
