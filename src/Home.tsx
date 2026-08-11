@@ -517,7 +517,7 @@ const Home = () => {
       </div>
 
       <div style={homeContainer} className="HomeContainer">
-        <Row style={{ ...rowStyle, position: 'relative' }} className="hero-row d-flex align-items-center">
+        <Row style={{ ...rowStyle, position: 'relative', marginTop: 0 }} className="hero-row d-flex align-items-center">
           <Col sm={12}>
             <h1 id="title" style={{textAlign:"center"}}>the right formula.</h1>
           </Col>
