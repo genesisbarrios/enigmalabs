@@ -4,6 +4,23 @@ import axios from 'axios';
 
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 
+const INDUSTRY_OPTIONS = [
+  'Restaurant / Food / Bar',
+  'Hospitality',
+  'Entertainment',
+  'Tech',
+  'Finance',
+  'Plumbing / Electricity / HVAC',
+  'Marketing',
+  'Cars',
+  'Real Estate',
+  'Property Maintenance',
+  'Wholesale',
+  'Beauty / Hair',
+  'Healthcare',
+  'Construction'
+];
+
 export type Lead = {
   _id: string;
   businessName?: string;
@@ -950,7 +967,17 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
               <Col md={6}>
                 <Form.Group className="mb-2">
                   <Form.Label>Industry</Form.Label>
-                  <Form.Control value={editForm.industry} onChange={(e) => setEditForm({ ...editForm, industry: e.target.value })} />
+                  <Form.Control
+                    value={editForm.industry}
+                    onChange={(e) => setEditForm({ ...editForm, industry: e.target.value })}
+                    placeholder="Select or type a new industry"
+                    list="lead-industry-options"
+                  />
+                  <datalist id="lead-industry-options">
+                    {INDUSTRY_OPTIONS.map((option) => (
+                      <option key={option} value={option} />
+                    ))}
+                  </datalist>
                 </Form.Group>
               </Col>
               <Col md={12}>
