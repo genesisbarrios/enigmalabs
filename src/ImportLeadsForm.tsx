@@ -246,11 +246,48 @@ const HEADER_HINT_REGEX = /business|^name$|company|owner|contact|phone|instagram
 // — this is the only way to reliably capture columns like Industry or
 // Comments, which can't be guessed from position alone. Otherwise fall back
 // to best-effort per-line token detection.
+// A plain line.split(',') breaks the moment any field's own value contains a
+// comma — most commonly "City, State" (e.g. "Miami, FL"), which silently
+// shifts every column after it by one, so Industry ends up holding whatever
+// the next real column was. This respects double-quoted fields ("Miami,
+// FL") the way a real CSV would, so a comma inside a quoted value doesn't
+// split it. Unquoted commas inside a value are still ambiguous — quote
+// values that contain a comma if pasting comma-separated text.
+function splitCsvLine(line: string): string[] {
+  const fields: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const char = line[i];
+    if (inQuotes) {
+      if (char === '"') {
+        if (line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        current += char;
+      }
+    } else if (char === '"') {
+      inQuotes = true;
+    } else if (char === ',') {
+      fields.push(current);
+      current = '';
+    } else {
+      current += char;
+    }
+  }
+  fields.push(current);
+  return fields;
+}
+
 function parsePastedLeads(text: string): ParsedLead[] {
   const lines = text.split('\n').map((line) => line.trim()).filter(Boolean);
   if (!lines.length) return [];
 
-  const splitLine = (line: string) => (line.includes('\t') ? line.split('\t') : line.split(','));
+  const splitLine = (line: string) => (line.includes('\t') ? line.split('\t') : splitCsvLine(line));
   const firstRowTokens = splitLine(lines[0]).map((token) => token.trim());
   const looksLikeHeader = firstRowTokens.filter((token) => HEADER_HINT_REGEX.test(token)).length >= 2;
 
@@ -346,6 +383,10 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
     }
   };
 
+  const updatePreviewLead = (index: number, updates: Partial<ParsedLead>) => {
+    setPreviewLeads((prev) => prev.map((lead, i) => (i === index ? { ...lead, ...updates } : lead)));
+  };
+
   const handleParsePaste = () => {
     setError('');
     const parsed = parsePastedLeads(pasteText);
@@ -354,7 +395,7 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
       return;
     }
     setPreviewLeads(parsed);
-    setMessage(`Detected ${parsed.length} lead${parsed.length === 1 ? '' : 's'} — review below, then save.`);
+    setMessage(`Detected ${parsed.length} lead${parsed.length === 1 ? '' : 's'} — review and edit below, then save.`);
   };
 
   const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -370,7 +411,7 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
         return;
       }
       setPreviewLeads(parsed);
-      setMessage(`Detected ${parsed.length} lead${parsed.length === 1 ? '' : 's'} from the file — review below, then save.`);
+      setMessage(`Detected ${parsed.length} lead${parsed.length === 1 ? '' : 's'} from the file — review and edit below, then save.`);
     } catch (fileError) {
       console.error(fileError);
       setError('Could not read that file. Try a CSV or XLSX export.');
@@ -665,19 +706,21 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
         {showPasteForm ? (
           <div className="mt-3 mb-4">
             <p style={{ color: '#d4d4d4' }}>
-              Paste rows with a header row — one contact per line, tab or comma separated. Recognized columns: Name/Business,
-              Name(Owner)/Contact, Phone, Instagram/IG, Email, Cold Email, Website/URL, Outdated Website, City/Location,
-              Industry/Category, Comment/Notes, DM, Called, and Decline. "-" and blank cells are treated as empty; any mark in a
-              Cold Email/Outdated Website/DM/Called/Decline column is read as "yes" (an explicit "No"/"FALSE"/"0" is read as
-              "no"). A bare "-" in the Instagram column means "already searched, not found." Pasting without a header row falls
-              back to best-effort detection, which can't capture Industry or Comments.
+              Paste rows with a header row — one contact per line, tab or comma separated. If pasting comma-separated and a
+              value itself contains a comma (e.g. a "Miami, FL" city), wrap that value in double quotes so it isn't split into
+              two columns. Recognized columns: Name/Business, Name(Owner)/Contact, Phone, Instagram/IG, Email, Cold Email,
+              Website/URL, Outdated Website, City/Location, Industry/Category, Comment/Notes, DM, Called, and Decline. "-" and
+              blank cells are treated as empty; any mark in a Cold Email/Outdated Website/DM/Called/Decline column is read as
+              "yes" (an explicit "No"/"FALSE"/"0" is read as "no"). A bare "-" in the Instagram column means "already searched,
+              not found." Pasting without a header row falls back to best-effort detection, which can't capture Industry or
+              Comments.
             </p>
             <Form.Control
               as="textarea"
               rows={4}
               value={pasteText}
               onChange={(e) => setPasteText(e.target.value)}
-              placeholder={'Name, Phone Number, Location, Industry, Email, Instagram, Comment\nJoe\'s Pizza, (555) 123-4567, Miami, FL, Food, joe@example.com, @joespizza, left voicemail'}
+              placeholder={'Name, Phone Number, Location, Industry, Email, Instagram, Comment\nJoe\'s Pizza, (555) 123-4567, "Miami, FL", Food, joe@example.com, @joespizza, left voicemail'}
             />
             <Button size="sm" variant="outline-light" className="mt-2" onClick={handleParsePaste} disabled={!pasteText.trim()}>
               Detect Leads From Pasted Text
@@ -709,20 +752,137 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
               <tbody>
                 {previewLeads.map((lead, index) => (
                   <tr key={index}>
-                    <td>{lead.businessName || '—'}</td>
-                    <td>{lead.contactName || '—'}</td>
-                    <td>{lead.phone || '—'}</td>
-                    <td>{lead.instagram || (lead.instagramNotFound ? 'Searched, not found' : '—')}</td>
-                    <td>{lead.email || (lead.emailNotFound ? 'Searched, not found' : '—')}</td>
-                    <td>{lead.website || '—'}</td>
-                    <td>{lead.outdatedWebsite ? 'Yes' : 'No'}</td>
-                    <td>{lead.city || '—'}</td>
-                    <td>{lead.industry || '—'}</td>
-                    <td>{lead.notes || '—'}</td>
-                    <td>{lead.coldEmailSent ? 'Yes' : 'No'}</td>
-                    <td>{lead.dmSent ? 'Yes' : 'No'}</td>
-                    <td>{lead.called ? 'Yes' : 'No'}</td>
-                    <td>{lead.declined ? 'Yes' : 'No'}</td>
+                    <td>
+                      <Form.Control
+                        size="sm"
+                        style={{ minWidth: '120px' }}
+                        value={lead.businessName}
+                        onChange={(e) => updatePreviewLead(index, { businessName: e.target.value })}
+                      />
+                    </td>
+                    <td>
+                      <Form.Control
+                        size="sm"
+                        style={{ minWidth: '110px' }}
+                        value={lead.contactName}
+                        onChange={(e) => updatePreviewLead(index, { contactName: e.target.value })}
+                      />
+                    </td>
+                    <td>
+                      <Form.Control
+                        size="sm"
+                        style={{ minWidth: '110px' }}
+                        value={lead.phone}
+                        onChange={(e) => updatePreviewLead(index, { phone: e.target.value })}
+                      />
+                    </td>
+                    <td>
+                      <Form.Control
+                        size="sm"
+                        style={{ minWidth: '110px', marginBottom: '2px' }}
+                        value={lead.instagram}
+                        placeholder={lead.instagramNotFound ? 'Searched, not found' : undefined}
+                        disabled={lead.instagramNotFound}
+                        onChange={(e) => updatePreviewLead(index, { instagram: e.target.value })}
+                      />
+                      <Form.Check
+                        type="checkbox"
+                        label="Not found"
+                        checked={lead.instagramNotFound}
+                        onChange={(e) => updatePreviewLead(index, { instagramNotFound: e.target.checked, instagram: e.target.checked ? '' : lead.instagram })}
+                        style={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}
+                      />
+                    </td>
+                    <td>
+                      <Form.Control
+                        size="sm"
+                        style={{ minWidth: '150px', marginBottom: '2px' }}
+                        value={lead.email}
+                        placeholder={lead.emailNotFound ? 'Searched, not found' : undefined}
+                        disabled={lead.emailNotFound}
+                        onChange={(e) => updatePreviewLead(index, { email: e.target.value })}
+                      />
+                      <Form.Check
+                        type="checkbox"
+                        label="Not found"
+                        checked={lead.emailNotFound}
+                        onChange={(e) => updatePreviewLead(index, { emailNotFound: e.target.checked, email: e.target.checked ? '' : lead.email })}
+                        style={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}
+                      />
+                    </td>
+                    <td>
+                      <Form.Control
+                        size="sm"
+                        style={{ minWidth: '140px' }}
+                        value={lead.website}
+                        onChange={(e) => updatePreviewLead(index, { website: e.target.value })}
+                      />
+                    </td>
+                    <td className="text-center">
+                      <Form.Check
+                        type="checkbox"
+                        checked={lead.outdatedWebsite}
+                        onChange={(e) => updatePreviewLead(index, { outdatedWebsite: e.target.checked })}
+                      />
+                    </td>
+                    <td>
+                      <Form.Control
+                        size="sm"
+                        style={{ minWidth: '110px' }}
+                        value={lead.city}
+                        onChange={(e) => updatePreviewLead(index, { city: e.target.value })}
+                      />
+                    </td>
+                    <td>
+                      <Form.Control
+                        size="sm"
+                        style={{ minWidth: '150px' }}
+                        value={lead.industry}
+                        list="preview-industry-options"
+                        onChange={(e) => updatePreviewLead(index, { industry: e.target.value })}
+                      />
+                      <datalist id="preview-industry-options">
+                        {INDUSTRY_OPTIONS.map((option) => (
+                          <option key={option} value={option} />
+                        ))}
+                      </datalist>
+                    </td>
+                    <td>
+                      <Form.Control
+                        size="sm"
+                        style={{ minWidth: '150px' }}
+                        value={lead.notes}
+                        onChange={(e) => updatePreviewLead(index, { notes: e.target.value })}
+                      />
+                    </td>
+                    <td className="text-center">
+                      <Form.Check
+                        type="checkbox"
+                        checked={lead.coldEmailSent}
+                        onChange={(e) => updatePreviewLead(index, { coldEmailSent: e.target.checked })}
+                      />
+                    </td>
+                    <td className="text-center">
+                      <Form.Check
+                        type="checkbox"
+                        checked={lead.dmSent}
+                        onChange={(e) => updatePreviewLead(index, { dmSent: e.target.checked })}
+                      />
+                    </td>
+                    <td className="text-center">
+                      <Form.Check
+                        type="checkbox"
+                        checked={lead.called}
+                        onChange={(e) => updatePreviewLead(index, { called: e.target.checked })}
+                      />
+                    </td>
+                    <td className="text-center">
+                      <Form.Check
+                        type="checkbox"
+                        checked={lead.declined}
+                        onChange={(e) => updatePreviewLead(index, { declined: e.target.checked })}
+                      />
+                    </td>
                   </tr>
                 ))}
               </tbody>
