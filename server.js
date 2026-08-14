@@ -18,14 +18,12 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 const AGREEMENT_FROM_EMAIL = process.env.AGREEMENT_FROM_EMAIL || 'agreements@enigma-labs.com';
 const ADMIN_NOTIFICATION_EMAIL = 'info@enigma-labs.com';
 const SITE_URL = process.env.SITE_URL || 'https://enigma-labs.com';
+// Single booking link used across every outreach email (cold, marketing,
+// mockup, onboarding, website/marketing pitches for both leads and clients).
 const CALENDAR_LINK = process.env.CALENDAR_LINK || '';
 if (!CALENDAR_LINK) {
-  console.warn('CALENDAR_LINK not set — mockup thank-you emails will omit the booking link.');
+  console.warn('CALENDAR_LINK not set — outreach emails will omit the booking link.');
 }
-// Separate booking link for marketing/ads pitch calls, distinct from
-// CALENDAR_LINK (which is for website mockup/review calls) — falls back to
-// CALENDAR_LINK if not set so those emails don't end up with a dead button.
-const CALENDAR_CHAT_LINK = process.env.CALENDAR_CHAT_LINK || CALENDAR_LINK;
 
 // 1x1 transparent PNG used for email open tracking.
 const TRACKING_PIXEL = Buffer.from(
@@ -186,7 +184,7 @@ function buildMarketingAdsColdEmailHtml(lead) {
       `Would you be available for a quick call sometime in the next day or two? Here's my calendar link for you to schedule it at your convenience:`
     ],
     ctaLabel: 'Schedule call',
-    ctaUrl: trackedUrl(lead._id, CALENDAR_CHAT_LINK, 'cold'),
+    ctaUrl: trackedUrl(lead._id, CALENDAR_LINK, 'cold'),
     signOff: 'Looking forward to hearing from you,<br/><br/>Gen Barrios<br/>enigma-labs.com'
   });
 }
@@ -325,7 +323,7 @@ function buildClientMarketingPitchEmailHtml(client) {
       `Let's schedule a quick call to go over some ideas:`
     ],
     ctaLabel: 'Schedule a call',
-    ctaUrl: CALENDAR_CHAT_LINK
+    ctaUrl: CALENDAR_LINK
   });
 }
 
