@@ -41,6 +41,7 @@ export type Lead = {
   inbound: boolean;
   coldEmailSent?: boolean;
   coldEmailSentAt?: string;
+  coldEmailResentAt?: string;
   outdatedMockupSent?: boolean;
   outdatedMockupSentAt?: string;
   onboardingSent?: boolean;
@@ -787,19 +788,21 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                                   <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'cold')}>
                                     See Sent {lead.website ? 'Marketing / Ads ' : ''}Cold Email
                                   </Button>
-                                  <Button
-                                    size="sm"
-                                    variant="outline-warning"
-                                    disabled={busy || lead.declined}
-                                    onClick={() => {
-                                      const confirmResend = window.confirm(
-                                        `Resend the cold email to ${lead.businessName || lead.email || 'this lead'}? They already received one before.`
-                                      );
-                                      if (confirmResend) handleSendColdEmail(lead);
-                                    }}
-                                  >
-                                    Resend Cold Email
-                                  </Button>
+                                  {!lead.coldEmailResentAt ? (
+                                    <Button
+                                      size="sm"
+                                      variant="outline-warning"
+                                      disabled={busy || lead.declined}
+                                      onClick={() => {
+                                        const confirmResend = window.confirm(
+                                          `Resend the cold email to ${lead.businessName || lead.email || 'this lead'}? They already received one before.`
+                                        );
+                                        if (confirmResend) handleSendColdEmail(lead);
+                                      }}
+                                    >
+                                      Resend Cold Email
+                                    </Button>
+                                  ) : null}
                                 </>
                               ) : (
                                 <Button size="sm" variant="outline-warning" disabled={busy || lead.declined} onClick={() => handleSendColdEmail(lead)}>

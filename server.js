@@ -622,6 +622,9 @@ const leadSchema = new mongoose.Schema({
   inbound: { type: Boolean, default: false },
   coldEmailSent: { type: Boolean, default: false },
   coldEmailSentAt: Date,
+  // Set the one time the cold email is resent — once present, resending is
+  // blocked (both server-side here and by hiding the button client-side).
+  coldEmailResentAt: Date,
   // Snapshot of exactly what was sent, plus per-email open/click tracking —
   // so "See Sent Email" can show the real thing later, not a re-render.
   coldEmailHtml: String,
@@ -1518,6 +1521,14 @@ app.post('/api/crm/leads/:id/send-cold-email', async (req, res) => {
     }
     if (lead.inbound) {
       return res.status(400).json({ ok: false, message: 'Cold email is only for outbound leads.' });
+    }
+    // First call for this lead is the original send; any call after that is
+    // a resend — allowed exactly once.
+    if (lead.coldEmailSent) {
+      if (lead.coldEmailResentAt) {
+        return res.status(400).json({ ok: false, message: 'This cold email has already been resent once — no further resends allowed.' });
+      }
+      lead.coldEmailResentAt = new Date();
     }
     const result = await sendLeadEmail(lead, {
       subject: lead.website
