@@ -676,6 +676,9 @@ const leadSchema = new mongoose.Schema({
   // contacted; ongoing communication happens through the client record.
   convertedToClient: { type: Boolean, default: false },
   convertedToClientAt: Date,
+  // Only set for inbound (public form) leads — used to rate-limit spam floods
+  // from the free-mockup form by source IP.
+  submittedIp: String,
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -695,6 +698,60 @@ function splitEmails(value) {
     .filter(Boolean);
 }
 
+// ── Free-mockup form spam detection ─────────────────────────────────────────
+// The public form has no login/CAPTCHA, so it gets flooded with bot
+// submissions. These checks are layered (any one hit marks the submission as
+// spam) and every layer responds as if the request succeeded, so scripted
+// abuse gets no signal to adapt to.
+
+function getRequestIp(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) return String(forwarded).split(',')[0].trim();
+  return req.socket?.remoteAddress || '';
+}
+
+function isUrlLike(value) {
+  return /^https?:\/\//i.test(value) || /\.[a-z]{2,}(\/|$)/i.test(value);
+}
+
+const SOCIAL_HOST_RE = /instagram\.com|instagr\.am|facebook\.com|fb\.com|fb\.me/i;
+const GOOGLE_HOST_RE = /google\.com|g\.page|goo\.gl/i;
+
+async function isLikelySpamMockupSubmission(payload, req) {
+  // Honeypot: a hidden field real users never see or fill; bots that
+  // auto-fill every input on the page populate it.
+  if (payload.honeypot) return true;
+
+  // Timing trap: the form reports how long it was open before submit — a
+  // human takes at least a few seconds to fill six fields.
+  const formLoadedAt = Number(payload.formLoadedAt) || 0;
+  if (!formLoadedAt || Date.now() - formLoadedAt < 3000) return true;
+
+  // Both optional link fields stuffed with URLs unrelated to their stated
+  // purpose (a garbage domain instead of an actual Instagram/Facebook or
+  // Google Business link) is the exact pattern seen in real spam floods.
+  const social = payload.socialUrl || '';
+  const google = payload.googleBusinessUrl || '';
+  const socialLooksBogus = social && isUrlLike(social) && !SOCIAL_HOST_RE.test(social);
+  const googleLooksBogus = google && isUrlLike(google) && !GOOGLE_HOST_RE.test(google);
+  if (socialLooksBogus && googleLooksBogus) return true;
+
+  // Per-IP flood limit — more than 5 inbound mockup requests from the same
+  // IP in 15 minutes isn't a real prospect.
+  const ip = getRequestIp(req);
+  if (ip) {
+    const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000);
+    const recentCount = await Lead.countDocuments({
+      inbound: true,
+      submittedIp: ip,
+      createdAt: { $gte: fifteenMinAgo }
+    });
+    if (recentCount >= 5) return true;
+  }
+
+  return false;
+}
+
 async function findDuplicateLead({ email, phone }) {
   const conditions = [];
   splitEmails(email).forEach((address) => {
@@ -706,7 +763,7 @@ async function findDuplicateLead({ email, phone }) {
   return Lead.findOne({ $or: conditions });
 }
 
-async function upsertInboundLead({ businessName, contactName, email, phone, instagram, googleBusinessUrl, city }) {
+async function upsertInboundLead({ businessName, contactName, email, phone, instagram, googleBusinessUrl, city, submittedIp }) {
   try {
     const existing = await findDuplicateLead({ email, phone });
     if (existing) {
@@ -718,6 +775,7 @@ async function upsertInboundLead({ businessName, contactName, email, phone, inst
       existing.city = city || existing.city;
       existing.email = existing.email || email;
       existing.phone = existing.phone || phone;
+      existing.submittedIp = submittedIp || existing.submittedIp;
       await existing.save();
       return existing;
     }
@@ -729,6 +787,7 @@ async function upsertInboundLead({ businessName, contactName, email, phone, inst
       instagram: instagram || '',
       googleBusinessUrl: googleBusinessUrl || '',
       city: city || '',
+      submittedIp: submittedIp || '',
       inbound: true
     });
   } catch (error) {
@@ -841,7 +900,9 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       visuals: Boolean(req.body.visuals),
       web: Boolean(req.body.web),
       ads: Boolean(req.body.ads),
-      freemockups: Boolean(req.body.freemockups)
+      freemockups: Boolean(req.body.freemockups),
+      honeypot: req.body.website || '',
+      formLoadedAt: req.body.formLoadedAt
     };
 
     const hasNewsletterInterest = payload.beats || payload.loops || payload.visuals || payload.web || payload.ads;
@@ -850,6 +911,12 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
     // keep mockup-only submissions out of the newsletter table entirely and
     // route them straight into the leads CRM instead.
     if (payload.freemockups && !hasNewsletterInterest) {
+      // Spam responds identically to a real success so scripted abuse gets
+      // no feedback to adapt to — it just silently never becomes a lead.
+      if (await isLikelySpamMockupSubmission(payload, req)) {
+        return res.status(201).json({ ok: true, message: 'Mockup request received.' });
+      }
+
       const existingLead = await findDuplicateLead({ email: payload.email, phone: payload.phone });
       const isNewMockupRequest = !existingLead || !existingLead.inbound;
 
@@ -860,7 +927,8 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
         phone: payload.phone,
         instagram: payload.socialUrl,
         googleBusinessUrl: payload.googleBusinessUrl,
-        city: payload.city
+        city: payload.city,
+        submittedIp: getRequestIp(req)
       });
 
       if (isNewMockupRequest) {
