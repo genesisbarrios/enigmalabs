@@ -875,10 +875,11 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
       ) : null}
 
       <Modal show={Boolean(viewingEmail)} onHide={closeSentEmailModal} size="lg" centered>
-        <Modal.Header closeButton style={{ background: '#111', color: 'white', borderBottom: '1px solid #2b2b2b' }}>
+        <Modal.Header style={{ background: '#111', color: 'white', borderBottom: '1px solid #2b2b2b' }}>
           <Modal.Title>
             {viewingEmail ? `${EMAIL_TYPE_LABELS[viewingEmail.type]} — ${viewingEmail.lead.businessName || viewingEmail.lead.email}` : ''}
           </Modal.Title>
+          <button type="button" className="btn-close btn-close-danger" aria-label="Close" onClick={closeSentEmailModal} />
         </Modal.Header>
         <Modal.Body style={{ background: '#111', color: 'white' }}>
           {loadingSentEmail ? <p style={{ color: '#d4d4d4' }}>Loading...</p> : null}
