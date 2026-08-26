@@ -764,7 +764,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                       {lead.convertedToClient ? <Badge bg="success">Onboarded — See Client Table</Badge> : null}
                       {lead.declined ? <Badge bg="danger">Declined / Inactive</Badge> : null}
                       {isNotContacted(lead) && !lead.declined && !lead.convertedToClient ? <Badge bg="secondary">Not Contacted</Badge> : null}
-                      {lead.coldEmailSent ? <Badge bg="warning" text="dark">Cold Email Sent</Badge> : null}
+                      {lead.coldEmailSent ? <Badge bg="success">Cold Email Sent</Badge> : null}
                       {lead.onboardingSent ? <Badge bg="success">Onboarding Sent</Badge> : null}
                     </div>
                   </td>
