@@ -1018,6 +1018,51 @@ app.post('/api/newsletter/subscribers', async (req, res) => {
   }
 });
 
+app.post('/api/newsletter/subscribers/import-bulk', async (req, res) => {
+  try {
+    const rows = Array.isArray(req.body.subscribers) ? req.body.subscribers : [];
+    if (!rows.length) {
+      return res.status(400).json({ ok: false, message: 'No subscribers to import.' });
+    }
+
+    let created = 0;
+    let skipped = 0;
+
+    for (const row of rows) {
+      const email = (row.email || '').trim();
+      if (!email) {
+        skipped += 1;
+        continue;
+      }
+
+      const existing = await NewsletterSubscriber.findOne({ email });
+      if (existing) {
+        skipped += 1;
+        continue;
+      }
+
+      await NewsletterSubscriber.create({
+        email,
+        name: row.name || '',
+        phone: row.phone || '',
+        businessName: row.businessName || '',
+        socialUrl: row.socialUrl || '',
+        beats: Boolean(row.beats),
+        loops: Boolean(row.loops),
+        visuals: Boolean(row.visuals),
+        web: Boolean(row.web),
+        ads: Boolean(row.ads)
+      });
+      created += 1;
+    }
+
+    res.status(201).json({ ok: true, created, skipped });
+  } catch (error) {
+    console.error('Could not bulk import newsletter subscribers', error);
+    res.status(500).json({ ok: false, message: 'Could not import subscribers.' });
+  }
+});
+
 app.put('/api/newsletter/subscribers/:id', async (req, res) => {
   try {
     const subscriber = await NewsletterSubscriber.findById(req.params.id);

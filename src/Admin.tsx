@@ -136,6 +136,66 @@ const subscriberInterestLabel = (subscriber: Subscriber) => {
   return interests.length ? interests.join(', ') : '—';
 };
 
+type PastedSubscriber = { email: string; name: string; phone: string; businessName: string; socialUrl: string };
+
+// Excel/Sheets pastes are tab-separated when copied as a range; fall back to
+// comma-separated for plain-text pastes.
+const splitSubscriberLine = (line: string): string[] =>
+  (line.includes('\t') ? line.split('\t') : line.split(',')).map((cell) => cell.trim());
+
+// Some exported sheets include a lone "Genre" section/divider row between the
+// header and the real data (or between blocks of rows) — it isn't a
+// subscriber, just a label, recognizable by mentioning "genre" while having
+// almost no other content.
+const isGenreMarkerRow = (row: string[]) =>
+  row.some((cell) => /genre/i.test(cell)) && row.filter(Boolean).length <= 2;
+
+const parsePastedSubscribers = (text: string): PastedSubscriber[] => {
+  const rows = text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map(splitSubscriberLine)
+    .filter((row) => !isGenreMarkerRow(row));
+
+  if (!rows.length) return [];
+
+  const headerKeywords = /email|name|phone|business|instagram|social/i;
+  const looksLikeHeader = rows[0].some((cell) => headerKeywords.test(cell));
+
+  let emailIdx = 0;
+  let nameIdx = -1;
+  let phoneIdx = -1;
+  let businessIdx = -1;
+  let socialIdx = -1;
+
+  if (looksLikeHeader) {
+    rows[0].forEach((cell, idx) => {
+      const c = cell.toLowerCase();
+      if (c.includes('email')) emailIdx = idx;
+      else if (c.includes('instagram') || c.includes('social')) socialIdx = idx;
+      else if (c.includes('business')) businessIdx = idx;
+      else if (c.includes('phone')) phoneIdx = idx;
+      else if (c.includes('name')) nameIdx = idx;
+    });
+  } else {
+    [emailIdx, nameIdx, phoneIdx, businessIdx, socialIdx] = [0, 1, 2, 3, 4];
+  }
+
+  const dataRows = looksLikeHeader ? rows.slice(1) : rows;
+
+  return dataRows
+    .filter((row) => !isGenreMarkerRow(row))
+    .map((row) => ({
+      email: (row[emailIdx] || '').trim(),
+      name: nameIdx >= 0 ? (row[nameIdx] || '').trim() : '',
+      phone: phoneIdx >= 0 ? (row[phoneIdx] || '').trim() : '',
+      businessName: businessIdx >= 0 ? (row[businessIdx] || '').trim() : '',
+      socialUrl: socialIdx >= 0 ? (row[socialIdx] || '').trim() : ''
+    }))
+    .filter((row) => row.email.includes('@'));
+};
+
 const Admin = () => {
   const navigate = useNavigate();
   const [clients, setClients] = useState<Client[]>([]);
@@ -160,9 +220,13 @@ const Admin = () => {
   const [sendingMarketingEmail, setSendingMarketingEmail] = useState(false);
 
   const [showAddSubscriber, setShowAddSubscriber] = useState(false);
-  const [newSubscriber, setNewSubscriber] = useState({ email: '', name: '', phone: '', businessName: '' });
+  const BLANK_SUBSCRIBER_FORM = { email: '', name: '', phone: '', businessName: '', socialUrl: '', beats: false, loops: false, visuals: false, web: false, ads: false };
+  const [newSubscriber, setNewSubscriber] = useState(BLANK_SUBSCRIBER_FORM);
   const [editingSubscriberId, setEditingSubscriberId] = useState<string | null>(null);
-  const [subscriberEditForm, setSubscriberEditForm] = useState({ email: '', name: '', phone: '', businessName: '' });
+  const [subscriberEditForm, setSubscriberEditForm] = useState({ email: '', name: '', phone: '', businessName: '', socialUrl: '' });
+  const [showPasteSubscribers, setShowPasteSubscribers] = useState(false);
+  const [pasteSubscribersText, setPasteSubscribersText] = useState('');
+  const [importingSubscribers, setImportingSubscribers] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [planFilter, setPlanFilter] = useState<'all' | Agreement['planType']>('all');
@@ -235,7 +299,7 @@ const Admin = () => {
       const response = await axios.post(`${API_BASE_URL}/newsletter/subscribers`, newSubscriber);
       if (response.data?.ok) {
         setMessage(response.data.duplicate ? 'A subscriber with this email already exists.' : 'Subscriber added.');
-        setNewSubscriber({ email: '', name: '', phone: '', businessName: '' });
+        setNewSubscriber(BLANK_SUBSCRIBER_FORM);
         setShowAddSubscriber(false);
         fetchSubscribers();
       } else {
@@ -247,19 +311,45 @@ const Admin = () => {
     }
   };
 
+  const handlePasteSubscribers = async () => {
+    const parsed = parsePastedSubscribers(pasteSubscribersText);
+    if (!parsed.length) {
+      setError('Could not detect any subscribers in the pasted text.');
+      return;
+    }
+    setImportingSubscribers(true);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/newsletter/subscribers/import-bulk`, { subscribers: parsed });
+      if (response.data?.ok) {
+        setMessage(`Imported ${response.data.created} subscriber${response.data.created === 1 ? '' : 's'}${response.data.skipped ? ` — skipped ${response.data.skipped} (duplicate or missing email)` : ''}.`);
+        setPasteSubscribersText('');
+        setShowPasteSubscribers(false);
+        fetchSubscribers();
+      } else {
+        setError(response.data?.message || 'Could not import subscribers.');
+      }
+    } catch (importError) {
+      console.error(importError);
+      setError('Could not import subscribers.');
+    } finally {
+      setImportingSubscribers(false);
+    }
+  };
+
   const handleStartEditSubscriber = (subscriber: Subscriber) => {
     setEditingSubscriberId(subscriber._id);
     setSubscriberEditForm({
       email: subscriber.email || '',
       name: subscriber.name || '',
       phone: subscriber.phone || '',
-      businessName: subscriber.businessName || ''
+      businessName: subscriber.businessName || '',
+      socialUrl: subscriber.socialUrl || ''
     });
   };
 
   const handleCancelEditSubscriber = () => {
     setEditingSubscriberId(null);
-    setSubscriberEditForm({ email: '', name: '', phone: '', businessName: '' });
+    setSubscriberEditForm({ email: '', name: '', phone: '', businessName: '', socialUrl: '' });
   };
 
   const handleSaveSubscriber = async (subscriberId: string) => {
@@ -998,13 +1088,41 @@ const Admin = () => {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginTop: '2.5rem', marginBottom: '1rem' }}>
         <h2 style={{ color: '#68FF00', margin: 0 }}>Newsletter Subscribers</h2>
-        <Button size="sm" variant="success" onClick={() => setShowAddSubscriber((prev) => !prev)}>
-          {showAddSubscriber ? 'Cancel' : '+ Add Subscriber'}
-        </Button>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <Button size="sm" variant="outline-success" onClick={() => setShowPasteSubscribers((prev) => !prev)}>
+            {showPasteSubscribers ? 'Cancel' : '+ Paste From Excel'}
+          </Button>
+          <Button size="sm" variant="success" onClick={() => setShowAddSubscriber((prev) => !prev)}>
+            {showAddSubscriber ? 'Cancel' : '+ Add Subscriber'}
+          </Button>
+        </div>
       </div>
       <p style={{ color: '#d4d4d4', marginBottom: '1rem' }}>
         {subscribers.length} newsletter subscriber{subscribers.length === 1 ? '' : 's'}.
       </p>
+
+      {showPasteSubscribers ? (
+        <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', marginBottom: '1.25rem' }}>
+          <Card.Body>
+            <p style={{ color: '#aaa', fontSize: '0.85rem' }}>
+              Paste rows copied from Excel/Sheets — one subscriber per line, tab or comma separated. A header row
+              (Email, Name, Phone, Business, Instagram) is used to match columns if present; otherwise that order is
+              assumed. Any stray row that's just a "Genre" marker/divider is ignored automatically, and duplicate
+              emails are skipped.
+            </p>
+            <Form.Control
+              as="textarea"
+              rows={6}
+              value={pasteSubscribersText}
+              onChange={(e) => setPasteSubscribersText(e.target.value)}
+              placeholder={'Email\tName\tPhone\tBusiness\tInstagram\njane@example.com\tJane Doe\t305-555-1234\tJane\'s Bakery\t@janesbakery'}
+            />
+            <Button size="sm" variant="outline-light" className="mt-2" onClick={handlePasteSubscribers} disabled={!pasteSubscribersText.trim() || importingSubscribers}>
+              {importingSubscribers ? 'Importing...' : 'Detect & Import Subscribers'}
+            </Button>
+          </Card.Body>
+        </Card>
+      ) : null}
 
       {showAddSubscriber ? (
         <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', marginBottom: '1.25rem' }}>
@@ -1025,6 +1143,45 @@ const Admin = () => {
               <Form.Group className="mb-3">
                 <Form.Label>Business Name</Form.Label>
                 <Form.Control value={newSubscriber.businessName} onChange={(e) => setNewSubscriber({ ...newSubscriber, businessName: e.target.value })} />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Instagram</Form.Label>
+                <Form.Control value={newSubscriber.socialUrl} onChange={(e) => setNewSubscriber({ ...newSubscriber, socialUrl: e.target.value })} placeholder="@handle or profile URL" />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Interests</Form.Label>
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                  <Form.Check
+                    type="checkbox"
+                    label="Beats"
+                    checked={newSubscriber.beats}
+                    onChange={(e) => setNewSubscriber({ ...newSubscriber, beats: e.target.checked })}
+                  />
+                  <Form.Check
+                    type="checkbox"
+                    label="Loops"
+                    checked={newSubscriber.loops}
+                    onChange={(e) => setNewSubscriber({ ...newSubscriber, loops: e.target.checked })}
+                  />
+                  <Form.Check
+                    type="checkbox"
+                    label="Visuals"
+                    checked={newSubscriber.visuals}
+                    onChange={(e) => setNewSubscriber({ ...newSubscriber, visuals: e.target.checked })}
+                  />
+                  <Form.Check
+                    type="checkbox"
+                    label="Web"
+                    checked={newSubscriber.web}
+                    onChange={(e) => setNewSubscriber({ ...newSubscriber, web: e.target.checked })}
+                  />
+                  <Form.Check
+                    type="checkbox"
+                    label="Ads"
+                    checked={newSubscriber.ads}
+                    onChange={(e) => setNewSubscriber({ ...newSubscriber, ads: e.target.checked })}
+                  />
+                </div>
               </Form.Group>
               <Button type="submit" variant="success">Save Subscriber</Button>
             </Form>
@@ -1056,6 +1213,7 @@ const Admin = () => {
               <th>Name</th>
               <th>Phone</th>
               <th>Business Name</th>
+              <th>Instagram</th>
               <th>Interests</th>
               <th>Subscribed At</th>
               <th>Actions</th>
@@ -1071,6 +1229,7 @@ const Admin = () => {
                     <td><Form.Control size="sm" value={subscriberEditForm.name} onChange={(e) => setSubscriberEditForm({ ...subscriberEditForm, name: e.target.value })} /></td>
                     <td><Form.Control size="sm" value={subscriberEditForm.phone} onChange={(e) => setSubscriberEditForm({ ...subscriberEditForm, phone: e.target.value })} /></td>
                     <td><Form.Control size="sm" value={subscriberEditForm.businessName} onChange={(e) => setSubscriberEditForm({ ...subscriberEditForm, businessName: e.target.value })} /></td>
+                    <td><Form.Control size="sm" value={subscriberEditForm.socialUrl} onChange={(e) => setSubscriberEditForm({ ...subscriberEditForm, socialUrl: e.target.value })} /></td>
                     <td>{subscriberInterestLabel(subscriber)}</td>
                     <td>{new Date(subscriber.createdAt).toLocaleString()}</td>
                     <td>
@@ -1088,6 +1247,7 @@ const Admin = () => {
                   <td>{subscriber.name || '—'}</td>
                   <td>{subscriber.phone || '—'}</td>
                   <td>{subscriber.businessName || '—'}</td>
+                  <td>{subscriber.socialUrl || '—'}</td>
                   <td>{subscriberInterestLabel(subscriber)}</td>
                   <td>{new Date(subscriber.createdAt).toLocaleString()}</td>
                   <td>
