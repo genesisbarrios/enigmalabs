@@ -749,7 +749,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                   <td>
                     <Button
                       size="sm"
-                      variant={lead.called ? 'success' : 'outline-secondary'}
+                      variant={lead.called ? 'success' : 'warning'}
                       disabled={busy}
                       onClick={() => handleToggleCalled(lead)}
                     >
