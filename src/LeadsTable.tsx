@@ -127,7 +127,8 @@ type SortOption = 'newest' | 'oldest' | 'name';
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100, 200];
 
-const isNotContacted = (lead: Lead) => !lead.coldEmailSent && !lead.onboardingSent;
+const isNotContacted = (lead: Lead) =>
+  !lead.coldEmailSent && !lead.outdatedMockupSent && !lead.dmSent && !lead.called && !lead.onboardingSent;
 
 const buildFindEmailUrl = (lead: Lead) => {
   const query = `${lead.businessName || ''} ${lead.city || ''} ("@gmail.com" OR "@outlook.com" OR "@hotmail.com" OR "@yahoo.com" OR "@icloud.com")`.trim();
