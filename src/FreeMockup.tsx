@@ -6,6 +6,12 @@ const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 
 const workProjects = [
   {
+    name: "Pretty Kitty Miami Rescue",
+    url: "https://prettykittymiamirescue.org",
+    image: "/work/prettykittymiami.png",
+    alt: "Pretty Kitty Miami Rescue"
+  },
+  {
     name: "Photographer Portfolio Website",
     url: "https://www.cinemautographer.com/",
     image: "https://dl.dropboxusercontent.com/s/1jm89lj35tqm1qk0hp1yr/maury.gif?rlkey=tlzw5eq3vkz77q3vx5ol3hpt0&st=vhxcy8fv&dl=0",
