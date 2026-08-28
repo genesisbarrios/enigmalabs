@@ -345,33 +345,29 @@ function renderNewsletterEmail({ subscriber, subject, bodyText, ctaLabel, ctaUrl
 async function sendMusicInterestThankYouEmail(subscriber) {
   // Only pick a specific pitch when exactly one music interest is checked —
   // if more than one, fall back to the general "check out our work" email.
-  const activeInterests = ['beats', 'loops', 'mixing'].filter((key) => subscriber[key]);
+  const activeInterests = ['beats', 'loopsTemplates'].filter((key) => subscriber[key]);
   const single = activeInterests.length === 1 ? activeInterests[0] : null;
 
   let subject = 'Thanks for signing up!';
   let buildHtml = (sendId) => buildMusicInterestThankYouHtml(subscriber, sendId);
   let templateKey = 'general-signup';
-  if (single === 'loops') {
+  if (single === 'loopsTemplates') {
     subject = 'Thanks for signing up — here\'s a free gift 🎁';
     buildHtml = (sendId) => buildLoopsGiftEmailHtml(subscriber, sendId);
     templateKey = 'loops-gift';
   } else if (single === 'beats') {
     buildHtml = (sendId) => buildBeatsEmailHtml(subscriber, sendId);
     templateKey = 'beats-intro';
-  } else if (single === 'mixing') {
-    subject = 'Thanks for signing up — here\'s a free gift 🎁';
-    buildHtml = (sendId) => buildMixingTemplateEmailHtml(subscriber, sendId);
-    templateKey = 'mixing-gift';
   }
 
-  // Beats and loops signups always get the matching terms-of-usage PDF
-  // attached, regardless of which template ends up being used.
+  // Beats and loops-templates signups always get the matching
+  // terms-of-usage PDF attached, regardless of which template is used.
   const attachments = [];
   if (subscriber.beats) {
     const attachment = loadTermsAttachment(BEATS_TERMS_FILENAME);
     if (attachment) attachments.push(attachment);
   }
-  if (subscriber.loops) {
+  if (subscriber.loopsTemplates) {
     const attachment = loadTermsAttachment(LOOPS_TERMS_FILENAME);
     if (attachment) attachments.push(attachment);
   }
@@ -740,8 +736,6 @@ const newsletterSubscriberSchema = new mongoose.Schema({
   googleBusinessUrl: String,
   city: String,
   beats: Boolean,
-  mixing: Boolean,
-  loops: Boolean,
   loopsTemplates: Boolean,
   visuals: Boolean,
   web: Boolean,
@@ -756,7 +750,7 @@ const NewsletterSubscriber = mongoose.model('NewsletterSubscriber', newsletterSu
 // Newsletter categories a subscriber/email can belong to. 'signup' is used
 // for the automatic thank-you emails sent at sign-up time, not a real
 // interest checkbox — it exists so those emails show up in analytics too.
-const NEWSLETTER_CATEGORIES = ['beats', 'mixing', 'loops', 'web', 'ads'];
+const NEWSLETTER_CATEGORIES = ['beats', 'loopsTemplates', 'web', 'ads'];
 
 // A reusable "this exact email was sent to a whole segment" record, kept so
 // it can be picked again later from the per-subscriber Contact panel
@@ -1178,7 +1172,7 @@ async function ensureNewsletterSubscriber(email) {
   try {
     const existing = await NewsletterSubscriber.findOne({ email });
     if (!existing) {
-      await NewsletterSubscriber.create({ email, beats: false, loops: false, visuals: false, web: true });
+      await NewsletterSubscriber.create({ email, beats: false, visuals: false, web: true });
     }
   } catch (error) {
     console.error('Could not add signer to newsletter list', error);
@@ -1259,10 +1253,11 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       socialUrl: req.body.socialUrl || '',
       googleBusinessUrl: req.body.googleBusinessUrl || '',
       city: req.body.city || '',
-      beats: Boolean(req.body.beats),
-      mixing: Boolean(req.body.mixing),
-      loops: Boolean(req.body.loops),
-      loopsTemplates: Boolean(req.body.loopsTemplates),
+      // "mixing" folds into "beats" and "loops" folds into "loopsTemplates" —
+      // both retired as standalone categories, kept here only so any stale
+      // client still sending the old field names doesn't lose the signal.
+      beats: Boolean(req.body.beats) || Boolean(req.body.mixing),
+      loopsTemplates: Boolean(req.body.loopsTemplates) || Boolean(req.body.loops),
       visuals: Boolean(req.body.visuals),
       web: Boolean(req.body.web),
       ads: Boolean(req.body.ads),
@@ -1270,7 +1265,7 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       freemockups: Boolean(req.body.freemockups)
     };
 
-    const hasNewsletterInterest = payload.beats || payload.loops || payload.loopsTemplates || payload.visuals || payload.web || payload.ads || payload.vocalTemplates;
+    const hasNewsletterInterest = payload.beats || payload.loopsTemplates || payload.visuals || payload.web || payload.ads || payload.vocalTemplates;
 
     // The free-mockup form is a lead-gen flow, not a newsletter signup —
     // keep mockup-only submissions out of the newsletter table entirely and
@@ -1310,9 +1305,7 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       const isNewAdsInterest = payload.ads && !existing.ads;
       const isNewMusicInterest =
         (payload.beats && !existing.beats) ||
-        (payload.loops && !existing.loops) ||
-        (payload.loopsTemplates && !existing.loopsTemplates) ||
-        (payload.mixing && !existing.mixing);
+        (payload.loopsTemplates && !existing.loopsTemplates);
 
       existing.name = payload.name || existing.name;
       existing.phone = payload.phone || existing.phone;
@@ -1321,8 +1314,6 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       existing.googleBusinessUrl = payload.googleBusinessUrl || existing.googleBusinessUrl;
       existing.city = payload.city || existing.city;
       existing.beats = existing.beats || payload.beats;
-      existing.mixing = existing.mixing || payload.mixing;
-      existing.loops = existing.loops || payload.loops;
       existing.loopsTemplates = existing.loopsTemplates || payload.loopsTemplates;
       existing.visuals = existing.visuals || payload.visuals;
       existing.web = existing.web || payload.web;
@@ -1340,7 +1331,7 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
     const subscriber = await NewsletterSubscriber.create(payload);
     if (subscriber.web) await sendServiceInterestEmails(subscriber, 'web');
     if (subscriber.ads) await sendServiceInterestEmails(subscriber, 'ads');
-    if (subscriber.beats || subscriber.loops || subscriber.loopsTemplates || subscriber.mixing) await sendMusicInterestThankYouEmail(subscriber);
+    if (subscriber.beats || subscriber.loopsTemplates) await sendMusicInterestThankYouEmail(subscriber);
 
     res.status(201).json({ ok: true, subscriber });
   } catch (error) {
@@ -1383,7 +1374,7 @@ app.post('/api/newsletter/subscribers', async (req, res) => {
       googleBusinessUrl: req.body.googleBusinessUrl || '',
       city: req.body.city || '',
       beats: Boolean(req.body.beats),
-      loops: Boolean(req.body.loops),
+      loopsTemplates: Boolean(req.body.loopsTemplates),
       visuals: Boolean(req.body.visuals),
       web: Boolean(req.body.web),
       ads: Boolean(req.body.ads),
@@ -1417,8 +1408,6 @@ app.post('/api/newsletter/subscribers/import', async (req, res) => {
         phone: (row.phone || '').trim(),
         socialUrl: (row.socialUrl || '').trim(),
         beats: Boolean(row.beats),
-        mixing: Boolean(row.mixing),
-        loops: Boolean(row.loops),
         loopsTemplates: Boolean(row.loopsTemplates),
         visuals: Boolean(row.visuals),
         web: Boolean(row.web),
@@ -1466,7 +1455,6 @@ app.post('/api/newsletter/subscribers/import-bulk', async (req, res) => {
         businessName: row.businessName || '',
         socialUrl: row.socialUrl || '',
         beats: Boolean(row.beats),
-        loops: Boolean(row.loops),
         visuals: Boolean(row.visuals),
         web: Boolean(row.web),
         ads: Boolean(row.ads)
@@ -1492,7 +1480,7 @@ app.put('/api/newsletter/subscribers/:id', async (req, res) => {
     fields.forEach((field) => {
       if (req.body[field] !== undefined) subscriber[field] = req.body[field];
     });
-    const boolFields = ['beats', 'loops', 'visuals', 'web', 'ads'];
+    const boolFields = ['beats', 'loopsTemplates', 'visuals', 'web', 'ads', 'vocalTemplates'];
     boolFields.forEach((field) => {
       if (req.body[field] !== undefined) subscriber[field] = Boolean(req.body[field]);
     });
@@ -1621,7 +1609,7 @@ function autoAttachmentsForCategory(category) {
     const attachment = loadTermsAttachment(BEATS_TERMS_FILENAME);
     if (attachment) attachments.push(attachment);
   }
-  if (category === 'loops') {
+  if (category === 'loopsTemplates') {
     const attachment = loadTermsAttachment(LOOPS_TERMS_FILENAME);
     if (attachment) attachments.push(attachment);
   }

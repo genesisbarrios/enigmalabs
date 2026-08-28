@@ -117,8 +117,6 @@ type Subscriber = {
   socialUrl?: string;
   googleBusinessUrl?: string;
   beats: boolean;
-  mixing: boolean;
-  loops: boolean;
   visuals: boolean;
   web: boolean;
   ads: boolean;
@@ -128,10 +126,8 @@ type Subscriber = {
   createdAt: string;
 };
 
-const INTEREST_FIELDS: { key: 'beats' | 'mixing' | 'loops' | 'visuals' | 'web' | 'ads' | 'vocalTemplates' | 'loopsTemplates'; label: string }[] = [
+const INTEREST_FIELDS: { key: 'beats' | 'loopsTemplates' | 'visuals' | 'web' | 'ads' | 'vocalTemplates'; label: string }[] = [
   { key: 'beats', label: 'Beats' },
-  { key: 'mixing', label: 'Mixing' },
-  { key: 'loops', label: 'Loops' },
   { key: 'loopsTemplates', label: 'Loops & Templates' },
   { key: 'visuals', label: 'Visuals' },
   { key: 'web', label: 'Web' },
@@ -141,8 +137,6 @@ const INTEREST_FIELDS: { key: 'beats' | 'mixing' | 'loops' | 'visuals' | 'web' |
 
 const emptySubscriberInterests = {
   beats: false,
-  mixing: false,
-  loops: false,
   loopsTemplates: false,
   visuals: false,
   web: false,
@@ -156,18 +150,19 @@ const subscriberInterestLabel = (subscriber: Subscriber) => {
 };
 
 // ── Newsletter campaigns / contact / analytics ──────────────────────────────
+// "Mixing" was folded into "Beats" and "Loops" was replaced by "Loops &
+// Templates" — both categories removed, existing subscriber data migrated.
 
-type NewsletterCategory = 'beats' | 'mixing' | 'loops' | 'web' | 'ads';
+type NewsletterCategory = 'beats' | 'loopsTemplates' | 'web' | 'ads';
 
 const NEWSLETTER_CATEGORY_LABELS: Record<NewsletterCategory, string> = {
   beats: 'Beats',
-  mixing: 'Mixing',
-  loops: 'Loops',
+  loopsTemplates: 'Loops & Templates',
   web: 'Web Development',
   ads: 'Ads'
 };
 
-const NEWSLETTER_CATEGORIES: NewsletterCategory[] = ['beats', 'mixing', 'loops', 'web', 'ads'];
+const NEWSLETTER_CATEGORIES: NewsletterCategory[] = ['beats', 'loopsTemplates', 'web', 'ads'];
 
 // Categories a subscriber currently qualifies for — used to default the
 // Contact panel's category picker.
@@ -204,8 +199,7 @@ const TEMPLATE_PRESETS: Record<NewsletterCategory, Record<string, TemplatePreset
     },
     'custom-message': { label: 'Custom Message', subject: '', bodyText: '' }
   },
-  mixing: { 'custom-message': { label: 'Custom Message', subject: '', bodyText: '' } },
-  loops: { 'custom-message': { label: 'Custom Message', subject: '', bodyText: '' } },
+  loopsTemplates: { 'custom-message': { label: 'Custom Message', subject: '', bodyText: '' } },
   web: { 'custom-message': { label: 'Custom Message', subject: '', bodyText: '' } },
   ads: { 'custom-message': { label: 'Custom Message', subject: '', bodyText: '' } }
 };
@@ -679,8 +673,6 @@ const Admin = () => {
       businessName: subscriber.businessName || '',
       socialUrl: subscriber.socialUrl || '',
       beats: subscriber.beats || false,
-      mixing: subscriber.mixing || false,
-      loops: subscriber.loops || false,
       loopsTemplates: subscriber.loopsTemplates || false,
       visuals: subscriber.visuals || false,
       web: subscriber.web || false,
@@ -754,10 +746,8 @@ const Admin = () => {
           name: String(findSubscriberField(row, ['name', 'full name']) ?? '').trim(),
           phone: String(findSubscriberField(row, ['phone', 'phone number']) ?? '').trim(),
           socialUrl: String(findSubscriberField(row, ['instagram', 'social', 'social url', 'socialurl']) ?? '').trim(),
-          beats: toBoolField(findSubscriberField(row, ['beats'])),
-          mixing: toBoolField(findSubscriberField(row, ['mixing'])),
-          loops: toBoolField(findSubscriberField(row, ['loops'])),
-          loopsTemplates: toBoolField(findSubscriberField(row, ['loopstemplates', 'loops & templates', 'loops and templates'])),
+          beats: toBoolField(findSubscriberField(row, ['beats', 'mixing'])),
+          loopsTemplates: toBoolField(findSubscriberField(row, ['loopstemplates', 'loops & templates', 'loops and templates', 'loops'])),
           visuals: toBoolField(findSubscriberField(row, ['visuals'])),
           web: toBoolField(findSubscriberField(row, ['web'])),
           ads: toBoolField(findSubscriberField(row, ['ads'])),
@@ -1035,12 +1025,11 @@ const Admin = () => {
   };
 
   const handleExportSubscribersCsv = () => {
-    const header = ['Email', 'Beats', 'Mixing', 'Loops', 'Visuals', 'Web', 'Ads', 'Subscribed At'];
+    const header = ['Email', 'Beats', 'Loops & Templates', 'Visuals', 'Web', 'Ads', 'Vocal Templates', 'Subscribed At'];
     const rows = subscribers.map((subscriber) => [
       subscriber.email,
       subscriber.beats ? 'Yes' : 'No',
-      subscriber.mixing ? 'Yes' : 'No',
-      subscriber.loops ? 'Yes' : 'No',
+      subscriber.loopsTemplates ? 'Yes' : 'No',
       subscriber.visuals ? 'Yes' : 'No',
       subscriber.web ? 'Yes' : 'No',
       subscriber.ads ? 'Yes' : 'No',
@@ -1057,8 +1046,7 @@ const Admin = () => {
     const rows = subscribers.map((subscriber) => ({
       Email: subscriber.email,
       Beats: subscriber.beats ? 'Yes' : 'No',
-      Mixing: subscriber.mixing ? 'Yes' : 'No',
-      Loops: subscriber.loops ? 'Yes' : 'No',
+      'Loops & Templates': subscriber.loopsTemplates ? 'Yes' : 'No',
       Visuals: subscriber.visuals ? 'Yes' : 'No',
       Web: subscriber.web ? 'Yes' : 'No',
       Ads: subscriber.ads ? 'Yes' : 'No',
@@ -1831,7 +1819,7 @@ const Admin = () => {
                                     {contactAttachments.map((a) => a.filename).join(', ')}
                                   </div>
                                 ) : null}
-                                {(contactForm.category === 'beats' || contactForm.category === 'loops') ? (
+                                {(contactForm.category === 'beats' || contactForm.category === 'loopsTemplates') ? (
                                   <div style={{ fontSize: '0.7rem', color: '#666', marginTop: '0.25rem' }}>
                                     The {contactForm.category === 'beats' ? 'Beats' : 'Loops'} Terms of Usage PDF is attached automatically.
                                   </div>
@@ -1956,7 +1944,7 @@ const Admin = () => {
             {campaignAttachments.length ? (
               <div style={{ fontSize: '0.75rem', color: '#aaa', marginTop: '0.25rem' }}>{campaignAttachments.map((a) => a.filename).join(', ')}</div>
             ) : null}
-            {(campaignForm.category === 'beats' || campaignForm.category === 'loops') ? (
+            {(campaignForm.category === 'beats' || campaignForm.category === 'loopsTemplates') ? (
               <div style={{ fontSize: '0.7rem', color: '#666', marginTop: '0.25rem' }}>
                 The {campaignForm.category === 'beats' ? 'Beats' : 'Loops'} Terms of Usage PDF is attached automatically.
               </div>
