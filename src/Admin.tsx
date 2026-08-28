@@ -117,6 +117,7 @@ type Subscriber = {
   socialUrl?: string;
   googleBusinessUrl?: string;
   beats: boolean;
+  mixing: boolean;
   loops: boolean;
   visuals: boolean;
   web: boolean;
@@ -128,6 +129,7 @@ type Subscriber = {
 const subscriberInterestLabel = (subscriber: Subscriber) => {
   const interests = [
     subscriber.beats ? 'Beats' : null,
+    subscriber.mixing ? 'Mixing' : null,
     subscriber.loops ? 'Loops' : null,
     subscriber.visuals ? 'Visuals' : null,
     subscriber.web ? 'Web' : null,
@@ -220,7 +222,7 @@ const Admin = () => {
   const [sendingMarketingEmail, setSendingMarketingEmail] = useState(false);
 
   const [showAddSubscriber, setShowAddSubscriber] = useState(false);
-  const BLANK_SUBSCRIBER_FORM = { email: '', name: '', phone: '', businessName: '', socialUrl: '', beats: false, loops: false, visuals: false, web: false, ads: false };
+  const BLANK_SUBSCRIBER_FORM = { email: '', name: '', phone: '', businessName: '', socialUrl: '', beats: false, mixing: false, loops: false, visuals: false, web: false, ads: false };
   const [newSubscriber, setNewSubscriber] = useState(BLANK_SUBSCRIBER_FORM);
   const [editingSubscriberId, setEditingSubscriberId] = useState<string | null>(null);
   const [subscriberEditForm, setSubscriberEditForm] = useState({ email: '', name: '', phone: '', businessName: '', socialUrl: '' });
@@ -627,10 +629,11 @@ const Admin = () => {
   };
 
   const handleExportSubscribersCsv = () => {
-    const header = ['Email', 'Beats', 'Loops', 'Visuals', 'Web', 'Ads', 'Subscribed At'];
+    const header = ['Email', 'Beats', 'Mixing', 'Loops', 'Visuals', 'Web', 'Ads', 'Subscribed At'];
     const rows = subscribers.map((subscriber) => [
       subscriber.email,
       subscriber.beats ? 'Yes' : 'No',
+      subscriber.mixing ? 'Yes' : 'No',
       subscriber.loops ? 'Yes' : 'No',
       subscriber.visuals ? 'Yes' : 'No',
       subscriber.web ? 'Yes' : 'No',
@@ -647,6 +650,7 @@ const Admin = () => {
     const rows = subscribers.map((subscriber) => ({
       Email: subscriber.email,
       Beats: subscriber.beats ? 'Yes' : 'No',
+      Mixing: subscriber.mixing ? 'Yes' : 'No',
       Loops: subscriber.loops ? 'Yes' : 'No',
       Visuals: subscriber.visuals ? 'Yes' : 'No',
       Web: subscriber.web ? 'Yes' : 'No',
@@ -1156,6 +1160,12 @@ const Admin = () => {
                     label="Beats"
                     checked={newSubscriber.beats}
                     onChange={(e) => setNewSubscriber({ ...newSubscriber, beats: e.target.checked })}
+                  />
+                  <Form.Check
+                    type="checkbox"
+                    label="Mixing"
+                    checked={newSubscriber.mixing}
+                    onChange={(e) => setNewSubscriber({ ...newSubscriber, mixing: e.target.checked })}
                   />
                   <Form.Check
                     type="checkbox"
