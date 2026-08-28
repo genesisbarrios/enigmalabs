@@ -119,6 +119,7 @@ type Subscriber = {
   socialUrl?: string;
   googleBusinessUrl?: string;
   beats: boolean;
+  mixing: boolean;
   visuals: boolean;
   web: boolean;
   ads: boolean;
@@ -127,8 +128,9 @@ type Subscriber = {
   createdAt: string;
 };
 
-const INTEREST_FIELDS: { key: 'beats' | 'loopsTemplates' | 'visuals' | 'web' | 'ads'; label: string }[] = [
-  { key: 'beats', label: 'Beats & Mixing' },
+const INTEREST_FIELDS: { key: 'beats' | 'mixing' | 'loopsTemplates' | 'visuals' | 'web' | 'ads'; label: string }[] = [
+  { key: 'beats', label: 'Beats' },
+  { key: 'mixing', label: 'Mixing' },
   { key: 'loopsTemplates', label: 'Loops & Templates' },
   { key: 'visuals', label: 'Visuals' },
   { key: 'web', label: 'Web' },
@@ -137,6 +139,7 @@ const INTEREST_FIELDS: { key: 'beats' | 'loopsTemplates' | 'visuals' | 'web' | '
 
 const emptySubscriberInterests = {
   beats: false,
+  mixing: false,
   loopsTemplates: false,
   visuals: false,
   web: false,
@@ -149,19 +152,18 @@ const subscriberInterestLabel = (subscriber: Subscriber) => {
 };
 
 // ── Newsletter campaigns / contact / analytics ──────────────────────────────
-// "Mixing" was folded into "Beats" and "Loops" was replaced by "Loops &
-// Templates" — both categories removed, existing subscriber data migrated.
 
-type NewsletterCategory = 'beats' | 'loopsTemplates' | 'web' | 'ads';
+type NewsletterCategory = 'beats' | 'mixing' | 'loopsTemplates' | 'web' | 'ads';
 
 const NEWSLETTER_CATEGORY_LABELS: Record<NewsletterCategory, string> = {
-  beats: 'Beats & Mixing',
+  beats: 'Beats',
+  mixing: 'Mixing',
   loopsTemplates: 'Loops & Templates',
   web: 'Web Development',
   ads: 'Ads'
 };
 
-const NEWSLETTER_CATEGORIES: NewsletterCategory[] = ['beats', 'loopsTemplates', 'web', 'ads'];
+const NEWSLETTER_CATEGORIES: NewsletterCategory[] = ['beats', 'mixing', 'loopsTemplates', 'web', 'ads'];
 
 // Categories a subscriber currently qualifies for — used to default the
 // Contact panel's category picker.
@@ -198,6 +200,7 @@ const TEMPLATE_PRESETS: Record<NewsletterCategory, Record<string, TemplatePreset
     },
     'custom-message': { label: 'Custom Message', subject: '', bodyText: '' }
   },
+  mixing: { 'custom-message': { label: 'Custom Message', subject: '', bodyText: '' } },
   loopsTemplates: { 'custom-message': { label: 'Custom Message', subject: '', bodyText: '' } },
   web: { 'custom-message': { label: 'Custom Message', subject: '', bodyText: '' } },
   ads: { 'custom-message': { label: 'Custom Message', subject: '', bodyText: '' } }
@@ -674,6 +677,7 @@ const Admin = () => {
       businessName: subscriber.businessName || '',
       socialUrl: subscriber.socialUrl || '',
       beats: subscriber.beats || false,
+      mixing: subscriber.mixing || false,
       loopsTemplates: subscriber.loopsTemplates || false,
       visuals: subscriber.visuals || false,
       web: subscriber.web || false,
@@ -746,7 +750,8 @@ const Admin = () => {
           name: String(findSubscriberField(row, ['name', 'full name']) ?? '').trim(),
           phone: String(findSubscriberField(row, ['phone', 'phone number']) ?? '').trim(),
           socialUrl: String(findSubscriberField(row, ['instagram', 'social', 'social url', 'socialurl']) ?? '').trim(),
-          beats: toBoolField(findSubscriberField(row, ['beats', 'mixing'])),
+          beats: toBoolField(findSubscriberField(row, ['beats'])),
+          mixing: toBoolField(findSubscriberField(row, ['mixing'])),
           loopsTemplates: toBoolField(findSubscriberField(row, ['loopstemplates', 'loops & templates', 'loops and templates', 'loops'])),
           visuals: toBoolField(findSubscriberField(row, ['visuals'])),
           web: toBoolField(findSubscriberField(row, ['web'])),
@@ -1039,10 +1044,11 @@ const Admin = () => {
   };
 
   const handleExportSubscribersCsv = () => {
-    const header = ['Email', 'Beats & Mixing', 'Loops & Templates', 'Visuals', 'Web', 'Ads', 'Subscribed At'];
+    const header = ['Email', 'Beats', 'Mixing', 'Loops & Templates', 'Visuals', 'Web', 'Ads', 'Subscribed At'];
     const rows = subscribers.map((subscriber) => [
       subscriber.email,
       subscriber.beats ? 'Yes' : 'No',
+      subscriber.mixing ? 'Yes' : 'No',
       subscriber.loopsTemplates ? 'Yes' : 'No',
       subscriber.visuals ? 'Yes' : 'No',
       subscriber.web ? 'Yes' : 'No',
@@ -1058,7 +1064,8 @@ const Admin = () => {
   const handleExportSubscribersXlsx = () => {
     const rows = subscribers.map((subscriber) => ({
       Email: subscriber.email,
-      'Beats & Mixing': subscriber.beats ? 'Yes' : 'No',
+      Beats: subscriber.beats ? 'Yes' : 'No',
+      Mixing: subscriber.mixing ? 'Yes' : 'No',
       'Loops & Templates': subscriber.loopsTemplates ? 'Yes' : 'No',
       Visuals: subscriber.visuals ? 'Yes' : 'No',
       Web: subscriber.web ? 'Yes' : 'No',
@@ -1853,7 +1860,7 @@ const Admin = () => {
                                 ) : null}
                                 {(contactForm.category === 'beats' || contactForm.category === 'loopsTemplates') ? (
                                   <div style={{ fontSize: '0.7rem', color: '#666', marginTop: '0.25rem' }}>
-                                    The {contactForm.category === 'beats' ? 'Beats & Mixing' : 'Loops & Templates'} Terms of Usage PDF is attached automatically.
+                                    The {contactForm.category === 'beats' ? 'Beats' : 'Loops & Templates'} Terms of Usage PDF is attached automatically.
                                   </div>
                                 ) : null}
                               </Form.Group>
@@ -1997,7 +2004,7 @@ const Admin = () => {
             ) : null}
             {(campaignForm.category === 'beats' || campaignForm.category === 'loopsTemplates') ? (
               <div style={{ fontSize: '0.7rem', color: '#666', marginTop: '0.25rem' }}>
-                The {campaignForm.category === 'beats' ? 'Beats & Mixing' : 'Loops & Templates'} Terms of Usage PDF is attached automatically.
+                The {campaignForm.category === 'beats' ? 'Beats' : 'Loops & Templates'} Terms of Usage PDF is attached automatically.
               </div>
             ) : null}
           </Form.Group>

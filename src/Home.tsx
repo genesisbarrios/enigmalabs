@@ -278,6 +278,7 @@ const Home = () => {
     const dataToSend = {
       email,
       beats,
+      mixing: beats,
       visuals,
       web,
       ads
