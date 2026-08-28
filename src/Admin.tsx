@@ -386,6 +386,15 @@ const Admin = () => {
   const [campaignAttachments, setCampaignAttachments] = useState<FileAttachment[]>([]);
   const [campaignSending, setCampaignSending] = useState(false);
 
+  // Web/ads "campaigns" bypass the newsletter-interest composer entirely —
+  // they always resend the fixed cold-email pitch to matching leads,
+  // filtered by whether the lead has already opened/clicked it.
+  const LEAD_CAMPAIGN_CATEGORIES: NewsletterCategory[] = ['web', 'ads'];
+  const [leadAudienceOpenedFilter, setLeadAudienceOpenedFilter] = useState<'all' | 'opened' | 'not_opened'>('not_opened');
+  const [leadAudienceClickedFilter, setLeadAudienceClickedFilter] = useState<'all' | 'clicked' | 'not_clicked'>('not_clicked');
+  const [leadAudienceCount, setLeadAudienceCount] = useState<number | null>(null);
+  const [leadAudienceLoading, setLeadAudienceLoading] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [planFilter, setPlanFilter] = useState<'all' | Agreement['planType']>('all');
   const [websiteFilter, setWebsiteFilter] = useState<'all' | 'has' | 'none'>('all');
@@ -667,7 +676,60 @@ const Admin = () => {
     [subscribers, campaignForm.recipientCategories]
   );
 
+  const isLeadCampaign = LEAD_CAMPAIGN_CATEGORIES.includes(campaignForm.category);
+
+  useEffect(() => {
+    if (!showCreateCampaign || !isLeadCampaign) {
+      setLeadAudienceCount(null);
+      return;
+    }
+    let cancelled = false;
+    setLeadAudienceLoading(true);
+    axios
+      .get(`${API_BASE_URL}/crm/leads/audience-count`, {
+        params: { category: campaignForm.category, openedFilter: leadAudienceOpenedFilter, clickedFilter: leadAudienceClickedFilter }
+      })
+      .then((response) => {
+        if (!cancelled && response.data?.ok) setLeadAudienceCount(response.data.count);
+      })
+      .catch(() => {
+        if (!cancelled) setLeadAudienceCount(null);
+      })
+      .finally(() => {
+        if (!cancelled) setLeadAudienceLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [showCreateCampaign, isLeadCampaign, campaignForm.category, leadAudienceOpenedFilter, leadAudienceClickedFilter]);
+
+  const handleSendLeadCampaign = async () => {
+    if (!window.confirm(`Resend the cold email to all ${leadAudienceCount ?? 0} matching lead(s)?`)) {
+      return;
+    }
+    setCampaignSending(true);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/crm/leads/bulk-send-cold-email`, {
+        category: campaignForm.category,
+        openedFilter: leadAudienceOpenedFilter,
+        clickedFilter: leadAudienceClickedFilter
+      });
+      if (response.data?.ok) {
+        setNewsletterMessage(`Cold email sent to ${response.data.sent} of ${response.data.total} leads.`);
+        setShowCreateCampaign(false);
+      } else {
+        setNewsletterError(response.data?.message || 'Could not send to leads.');
+      }
+    } catch (sendError: any) {
+      setNewsletterError(sendError?.response?.data?.message || 'Could not send to leads.');
+    } finally {
+      setCampaignSending(false);
+    }
+  };
+
   const handleSendCampaign = async () => {
+    if (isLeadCampaign) return handleSendLeadCampaign();
+
     const recipientLabel = campaignForm.recipientCategories.map((c) => NEWSLETTER_CATEGORY_LABELS[c]).join(', ');
     if (!window.confirm(`Send this to all ${campaignRecipientCount} subscriber(s) interested in ${recipientLabel}?`)) {
       return;
@@ -2066,89 +2128,136 @@ const Admin = () => {
         </Modal.Header>
         <Modal.Body style={{ background: '#111', color: 'white' }}>
           <Form.Group className="mb-2">
-            <Form.Label style={{ fontSize: '0.8rem' }}>Newsletter Type (picks the template)</Form.Label>
+            <Form.Label style={{ fontSize: '0.8rem' }}>Newsletter Type{isLeadCampaign ? '' : ' (picks the template)'}</Form.Label>
             <Form.Select size="sm" value={campaignForm.category} onChange={(e) => handleCampaignCategoryChange(e.target.value as NewsletterCategory)}>
               {NEWSLETTER_CATEGORIES.map((cat) => (
                 <option key={cat} value={cat}>{NEWSLETTER_CATEGORY_LABELS[cat]}</option>
               ))}
             </Form.Select>
           </Form.Group>
-          <Form.Group className="mb-2">
-            <Form.Label style={{ fontSize: '0.8rem' }}>Send to subscribers interested in</Form.Label>
-            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-              {NEWSLETTER_CATEGORIES.map((cat) => (
-                <Form.Check
-                  key={cat}
-                  type="checkbox"
-                  label={NEWSLETTER_CATEGORY_LABELS[cat]}
-                  checked={campaignForm.recipientCategories.includes(cat)}
-                  onChange={() => toggleCampaignRecipientCategory(cat)}
-                />
-              ))}
-            </div>
-          </Form.Group>
-          <Form.Group className="mb-2">
-            <Form.Label style={{ fontSize: '0.8rem' }}>Template</Form.Label>
-            <Form.Select size="sm" value={campaignForm.templateKey} onChange={(e) => handleCampaignTemplateChange(e.target.value)}>
-              {Object.entries(TEMPLATE_PRESETS[campaignForm.category]).map(([key, preset]) => (
-                <option key={key} value={key}>{preset.label}</option>
-              ))}
-            </Form.Select>
-          </Form.Group>
-          <Form.Group className="mb-2">
-            <Form.Label style={{ fontSize: '0.8rem' }}>Subject</Form.Label>
-            <Form.Control size="sm" value={campaignForm.subject} onChange={(e) => setCampaignForm({ ...campaignForm, subject: e.target.value })} />
-          </Form.Group>
-          <Form.Group className="mb-2">
-            <Form.Label style={{ fontSize: '0.8rem' }}>Message ("(name)" is replaced with each recipient's first name)</Form.Label>
-            <Form.Control as="textarea" rows={5} size="sm" value={campaignForm.bodyText} onChange={(e) => setCampaignForm({ ...campaignForm, bodyText: e.target.value })} />
-          </Form.Group>
-          <Form.Group className="mb-2">
-            <Form.Label style={{ fontSize: '0.8rem' }}>Image URL (optional — shown above the button)</Form.Label>
-            <Form.Control size="sm" value={campaignForm.imageUrl} onChange={(e) => setCampaignForm({ ...campaignForm, imageUrl: e.target.value })} placeholder="https://..." />
-            {campaignForm.imageUrl ? (
-              <img src={campaignForm.imageUrl} alt="" style={{ maxWidth: '160px', marginTop: '0.5rem', borderRadius: '6px', display: 'block' }} />
-            ) : null}
-          </Form.Group>
-          <Row>
-            <Col md={6}>
+
+          {isLeadCampaign ? (
+            <>
+              <p style={{ fontSize: '0.8rem', color: '#aaa' }}>
+                {campaignForm.category === 'ads'
+                  ? 'Ads campaigns always resend the marketing/ads cold-email pitch to leads that already have a website.'
+                  : 'Web Development campaigns always resend the free-mockup cold-email pitch to leads without a website yet.'}{' '}
+                Leads already onboarded (moved to Website Clients) or declined are excluded automatically.
+              </p>
+              <Row>
+                <Col md={6}>
+                  <Form.Group className="mb-2">
+                    <Form.Label style={{ fontSize: '0.8rem' }}>Opened the cold email?</Form.Label>
+                    <Form.Select size="sm" value={leadAudienceOpenedFilter} onChange={(e) => setLeadAudienceOpenedFilter(e.target.value as typeof leadAudienceOpenedFilter)}>
+                      <option value="all">Doesn't matter</option>
+                      <option value="not_opened">Hasn't opened</option>
+                      <option value="opened">Has opened</option>
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group className="mb-2">
+                    <Form.Label style={{ fontSize: '0.8rem' }}>Clicked the link?</Form.Label>
+                    <Form.Select size="sm" value={leadAudienceClickedFilter} onChange={(e) => setLeadAudienceClickedFilter(e.target.value as typeof leadAudienceClickedFilter)}>
+                      <option value="all">Doesn't matter</option>
+                      <option value="not_clicked">Hasn't clicked</option>
+                      <option value="clicked">Has clicked</option>
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Alert variant="secondary" style={{ fontSize: '0.85rem' }}>
+                {leadAudienceLoading ? 'Counting matching leads...' : (
+                  <>This will resend the cold email to <strong>{leadAudienceCount ?? 0}</strong> matching lead{leadAudienceCount === 1 ? '' : 's'}.</>
+                )}
+              </Alert>
+            </>
+          ) : (
+            <>
               <Form.Group className="mb-2">
-                <Form.Label style={{ fontSize: '0.8rem' }}>Button Label (optional)</Form.Label>
-                <Form.Control size="sm" value={campaignForm.ctaLabel} onChange={(e) => setCampaignForm({ ...campaignForm, ctaLabel: e.target.value })} />
+                <Form.Label style={{ fontSize: '0.8rem' }}>Send to subscribers interested in</Form.Label>
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                  {NEWSLETTER_CATEGORIES.filter((cat) => !LEAD_CAMPAIGN_CATEGORIES.includes(cat)).map((cat) => (
+                    <Form.Check
+                      key={cat}
+                      type="checkbox"
+                      label={NEWSLETTER_CATEGORY_LABELS[cat]}
+                      checked={campaignForm.recipientCategories.includes(cat)}
+                      onChange={() => toggleCampaignRecipientCategory(cat)}
+                    />
+                  ))}
+                </div>
               </Form.Group>
-            </Col>
-            <Col md={6}>
               <Form.Group className="mb-2">
-                <Form.Label style={{ fontSize: '0.8rem' }}>Button Link (optional)</Form.Label>
-                <Form.Control size="sm" value={campaignForm.ctaUrl} onChange={(e) => setCampaignForm({ ...campaignForm, ctaUrl: e.target.value })} />
+                <Form.Label style={{ fontSize: '0.8rem' }}>Template</Form.Label>
+                <Form.Select size="sm" value={campaignForm.templateKey} onChange={(e) => handleCampaignTemplateChange(e.target.value)}>
+                  {Object.entries(TEMPLATE_PRESETS[campaignForm.category]).map(([key, preset]) => (
+                    <option key={key} value={key}>{preset.label}</option>
+                  ))}
+                </Form.Select>
               </Form.Group>
-            </Col>
-          </Row>
-          <Form.Group className="mb-2">
-            <Form.Label style={{ fontSize: '0.8rem' }}>Attach Files (optional — sent to every recipient)</Form.Label>
-            <Form.Control size="sm" type="file" multiple onChange={(e) => handleCampaignAttachmentChange((e.target as HTMLInputElement).files)} />
-            {campaignAttachments.length ? (
-              <div style={{ fontSize: '0.75rem', color: '#aaa', marginTop: '0.25rem' }}>{campaignAttachments.map((a) => a.filename).join(', ')}</div>
-            ) : null}
-            {(campaignForm.category === 'beats' || campaignForm.category === 'loopsTemplates') ? (
-              <div style={{ fontSize: '0.7rem', color: '#666', marginTop: '0.25rem' }}>
-                The {campaignForm.category === 'beats' ? 'Beats' : 'Loops & Templates'} Terms of Usage PDF is attached automatically.
-              </div>
-            ) : null}
-          </Form.Group>
-          <Alert variant="secondary" style={{ fontSize: '0.85rem' }}>
-            {campaignForm.recipientCategories.length ? (
-              <>This will send to <strong>{campaignRecipientCount}</strong> subscriber{campaignRecipientCount === 1 ? '' : 's'} currently interested in {campaignForm.recipientCategories.map((c) => NEWSLETTER_CATEGORY_LABELS[c]).join(', ')}.</>
-            ) : (
-              'Select at least one interest to send to.'
-            )}
-          </Alert>
+              <Form.Group className="mb-2">
+                <Form.Label style={{ fontSize: '0.8rem' }}>Subject</Form.Label>
+                <Form.Control size="sm" value={campaignForm.subject} onChange={(e) => setCampaignForm({ ...campaignForm, subject: e.target.value })} />
+              </Form.Group>
+              <Form.Group className="mb-2">
+                <Form.Label style={{ fontSize: '0.8rem' }}>Message ("(name)" is replaced with each recipient's first name)</Form.Label>
+                <Form.Control as="textarea" rows={5} size="sm" value={campaignForm.bodyText} onChange={(e) => setCampaignForm({ ...campaignForm, bodyText: e.target.value })} />
+              </Form.Group>
+              <Form.Group className="mb-2">
+                <Form.Label style={{ fontSize: '0.8rem' }}>Image URL (optional — shown above the button)</Form.Label>
+                <Form.Control size="sm" value={campaignForm.imageUrl} onChange={(e) => setCampaignForm({ ...campaignForm, imageUrl: e.target.value })} placeholder="https://..." />
+                {campaignForm.imageUrl ? (
+                  <img src={campaignForm.imageUrl} alt="" style={{ maxWidth: '160px', marginTop: '0.5rem', borderRadius: '6px', display: 'block' }} />
+                ) : null}
+              </Form.Group>
+              <Row>
+                <Col md={6}>
+                  <Form.Group className="mb-2">
+                    <Form.Label style={{ fontSize: '0.8rem' }}>Button Label (optional)</Form.Label>
+                    <Form.Control size="sm" value={campaignForm.ctaLabel} onChange={(e) => setCampaignForm({ ...campaignForm, ctaLabel: e.target.value })} />
+                  </Form.Group>
+                </Col>
+                <Col md={6}>
+                  <Form.Group className="mb-2">
+                    <Form.Label style={{ fontSize: '0.8rem' }}>Button Link (optional)</Form.Label>
+                    <Form.Control size="sm" value={campaignForm.ctaUrl} onChange={(e) => setCampaignForm({ ...campaignForm, ctaUrl: e.target.value })} />
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Form.Group className="mb-2">
+                <Form.Label style={{ fontSize: '0.8rem' }}>Attach Files (optional — sent to every recipient)</Form.Label>
+                <Form.Control size="sm" type="file" multiple onChange={(e) => handleCampaignAttachmentChange((e.target as HTMLInputElement).files)} />
+                {campaignAttachments.length ? (
+                  <div style={{ fontSize: '0.75rem', color: '#aaa', marginTop: '0.25rem' }}>{campaignAttachments.map((a) => a.filename).join(', ')}</div>
+                ) : null}
+                {campaignForm.category === 'beats' || campaignForm.category === 'loopsTemplates' ? (
+                  <div style={{ fontSize: '0.7rem', color: '#666', marginTop: '0.25rem' }}>
+                    The {campaignForm.category === 'beats' ? 'Beats' : 'Loops & Templates'} Terms of Usage PDF is attached automatically.
+                  </div>
+                ) : null}
+              </Form.Group>
+              <Alert variant="secondary" style={{ fontSize: '0.85rem' }}>
+                {campaignForm.recipientCategories.length ? (
+                  <>This will send to <strong>{campaignRecipientCount}</strong> subscriber{campaignRecipientCount === 1 ? '' : 's'} currently interested in {campaignForm.recipientCategories.map((c) => NEWSLETTER_CATEGORY_LABELS[c]).join(', ')}.</>
+                ) : (
+                  'Select at least one interest to send to.'
+                )}
+              </Alert>
+            </>
+          )}
         </Modal.Body>
         <Modal.Footer style={{ background: '#111', borderTop: '1px solid #2b2b2b' }}>
           <Button variant="outline-light" size="sm" onClick={() => setShowCreateCampaign(false)} disabled={campaignSending}>Cancel</Button>
-          <Button variant="warning" size="sm" disabled={campaignSending || !campaignForm.subject || !campaignForm.bodyText || !campaignRecipientCount} onClick={handleSendCampaign}>
-            {campaignSending ? 'Sending...' : `Send Campaign to ${campaignRecipientCount}`}
-          </Button>
+          {isLeadCampaign ? (
+            <Button variant="warning" size="sm" disabled={campaignSending || leadAudienceLoading || !leadAudienceCount} onClick={handleSendCampaign}>
+              {campaignSending ? 'Sending...' : `Send Cold Email to ${leadAudienceCount ?? 0}`}
+            </Button>
+          ) : (
+            <Button variant="warning" size="sm" disabled={campaignSending || !campaignForm.subject || !campaignForm.bodyText || !campaignRecipientCount} onClick={handleSendCampaign}>
+              {campaignSending ? 'Sending...' : `Send Campaign to ${campaignRecipientCount}`}
+            </Button>
+          )}
         </Modal.Footer>
       </Modal>
 

@@ -2351,6 +2351,73 @@ app.post('/api/crm/leads/:id/send-cold-email', async (req, res) => {
   }
 });
 
+// Web/ads "campaigns" don't use the newsletter-interest checkbox system —
+// they always target leads (not newsletter subscribers), split by whether
+// the lead already has a website: no website -> the web-dev mockup pitch,
+// has a website -> the ads/marketing pitch. Excludes anyone already
+// onboarded (they've moved to the Website Clients table) or declined.
+function buildLeadAudienceQuery({ category, openedFilter, clickedFilter }) {
+  const query = {
+    email: { $ne: '' },
+    convertedToClient: { $ne: true },
+    declined: { $ne: true },
+    ...(category === 'ads' ? { website: { $ne: '' } } : { $or: [{ website: '' }, { website: { $exists: false } }] })
+  };
+  if (openedFilter === 'opened') query.coldEmailOpened = true;
+  if (openedFilter === 'not_opened') query.coldEmailOpened = { $ne: true };
+  if (clickedFilter === 'clicked') query.coldEmailClicked = true;
+  if (clickedFilter === 'not_clicked') query.coldEmailClicked = { $ne: true };
+  return query;
+}
+
+app.get('/api/crm/leads/audience-count', async (req, res) => {
+  try {
+    const { category, openedFilter, clickedFilter } = req.query;
+    if (category !== 'web' && category !== 'ads') {
+      return res.status(400).json({ ok: false, message: 'category must be "web" or "ads".' });
+    }
+    const count = await Lead.countDocuments(buildLeadAudienceQuery({ category, openedFilter, clickedFilter }));
+    res.json({ ok: true, count });
+  } catch (error) {
+    console.error('Could not count lead audience', error);
+    res.status(500).json({ ok: false, message: 'Could not count matching leads.' });
+  }
+});
+
+app.post('/api/crm/leads/bulk-send-cold-email', async (req, res) => {
+  try {
+    const { category, openedFilter, clickedFilter } = req.body;
+    if (category !== 'web' && category !== 'ads') {
+      return res.status(400).json({ ok: false, message: 'category must be "web" or "ads".' });
+    }
+    const leads = await Lead.find(buildLeadAudienceQuery({ category, openedFilter, clickedFilter }));
+    if (!leads.length) {
+      return res.status(400).json({ ok: false, message: 'No leads match those filters.' });
+    }
+
+    let sent = 0;
+    for (const lead of leads) {
+      const result = await sendLeadEmail(lead, {
+        subject: lead.website
+          ? `A few content ideas for ${lead.businessName || 'your business'} 💡`
+          : `Free Website Mockup 🖥️ for ${lead.businessName || 'your business'}`,
+        buildHtml: buildColdEmailHtml,
+        statusField: 'coldEmailSent',
+        statusAtField: 'coldEmailSentAt',
+        htmlField: 'coldEmailHtml',
+        subjectField: 'coldEmailSubject',
+        resendIdField: 'coldEmailResendId'
+      });
+      if (result.ok) sent += 1;
+    }
+
+    res.status(201).json({ ok: true, sent, total: leads.length });
+  } catch (error) {
+    console.error('Could not bulk-send cold email', error);
+    res.status(500).json({ ok: false, message: 'Could not send to leads.' });
+  }
+});
+
 app.post('/api/crm/leads/:id/send-outdated-mockup', async (req, res) => {
   try {
     const lead = await Lead.findById(req.params.id);
