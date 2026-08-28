@@ -439,15 +439,23 @@ async function sendServiceInterestEmails(subscriber, category) {
 // different offer, not just different copy.
 function buildMarketingAdsColdEmailHtml(lead) {
   const business = lead.businessName ? `<strong>${lead.businessName}</strong>'s` : 'your';
+  // Inbound leads already signed up wanting this — skip the cold-outreach
+  // framing and just confirm we're on it.
+  const paragraphs = lead.inbound
+    ? [
+        `Thanks for signing up! We're already putting together a few content and ads ideas specifically for ${business} to help turn more social media attention into actual leads and customers.`,
+        `Feel free to schedule a quick call at your convenience so we can walk through what we have in mind:`
+      ]
+    : [
+        `I came across ${business} website and really like what you've got going — nice work! I did notice your social media could use a bit more consistent content to match it, though.`,
+        `I help businesses create and manage short-form content that keeps their brand active online while turning social media attention into actual leads and customers. I’d love to put together a few content ideas specifically for ${business} and show you what I have in mind.`,
+        `Would you be available for a quick call sometime in the next day or two? Here's my calendar link for you to schedule it at your convenience:`
+      ];
   return renderBrandedEmail({
     greetingName: lead.contactName,
     leadId: lead._id,
     type: 'cold',
-    paragraphs: [
-      `I came across ${business} website and really like what you've got going — nice work! I did notice your social media could use a bit more consistent content to match it, though.`,
-      `I help businesses create and manage short-form content that keeps their brand active online while turning social media attention into actual leads and customers. I’d love to put together a few content ideas specifically for ${business} and show you what I have in mind.`,
-      `Would you be available for a quick call sometime in the next day or two? Here's my calendar link for you to schedule it at your convenience:`
-    ],
+    paragraphs,
     ctaLabel: 'Schedule call',
     ctaUrl: trackedUrl(lead._id, CALENDAR_LINK, 'cold'),
     signOff: `Looking forward to hearing from you,<br/><br/>Gen Barrios<br/><a href="${SITE_URL}" style="color:#111;">enigma-labs.com</a>`
@@ -459,15 +467,26 @@ function buildColdEmailHtml(lead) {
     return buildMarketingAdsColdEmailHtml(lead);
   }
 
+  const business = lead.businessName ? `<strong>${lead.businessName}</strong>'s` : 'your';
+  const businessFor = lead.businessName ? `<strong>${lead.businessName}</strong>` : 'your business';
+  // Inbound leads already signed up wanting a mockup — skip the cold-outreach
+  // framing and just confirm we're on it.
+  const paragraphs = lead.inbound
+    ? [
+        `Thanks for signing up! We're already working on a custom homepage mockup for ${businessFor} and will have it ready within a couple hours.`,
+        `Feel free to schedule a quick call at your convenience so we can walk through it together once it's ready — there's no obligation, and it only takes about 5-10 minutes:`
+      ]
+    : [
+        `I came across ${business} business page and noticed you don't currently have a website to showcase your business and make it easier for customers to find you online.`,
+        `To give you an idea of what's possible, I went ahead and designed a custom homepage mockup specifically for your business. I'd love to show it to you — there's no obligation, and it only takes about 5-10 minutes.`,
+        `Would you be available for a quick call sometime in the next day or two? Here's my calendar link for you to schedule it at your convenience:`
+      ];
+
   return renderBrandedEmail({
     greetingName: lead.contactName,
     leadId: lead._id,
     type: 'cold',
-    paragraphs: [
-      `I came across ${lead.businessName ? `<strong>${lead.businessName}</strong>'s` : 'your'} business page and noticed you don't currently have a website to showcase your business and make it easier for customers to find you online.`,
-      `To give you an idea of what's possible, I went ahead and designed a custom homepage mockup specifically for your business. I'd love to show it to you — there's no obligation, and it only takes about 5-10 minutes.`,
-      `Would you be available for a quick call sometime in the next day or two? Here's my calendar link for you to schedule it at your convenience:`
-    ],
+    paragraphs,
     ctaLabel: 'Schedule call',
     ctaUrl: trackedUrl(lead._id, CALENDAR_LINK, 'cold'),
     signOff: `Looking forward to hearing from you,<br/><br/>Gen Barrios<br/><a href="${SITE_URL}" style="color:#111;">enigma-labs.com</a>`
