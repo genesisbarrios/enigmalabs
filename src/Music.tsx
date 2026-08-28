@@ -19,6 +19,8 @@ const Music = () => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [beats, setBeats] = useState(false);
+  const [mixing, setMixing] = useState(false);
+  const [loopsTemplates, setLoopsTemplates] = useState(false);
   const [visuals, setVisuals] = useState(false);
   const [web, setWeb] = useState(false);
   const [ads, setAds] = useState(false);
@@ -102,7 +104,9 @@ const Music = () => {
   });
 
   const interestOptions: { key: string; label: string; active: boolean; toggle: () => void }[] = [
-    { key: "beats", label: "Beats & Mixing", active: beats, toggle: () => setBeats(!beats) },
+    { key: "beats", label: "Beats", active: beats, toggle: () => setBeats(!beats) },
+    { key: "mixing", label: "Mixing", active: mixing, toggle: () => setMixing(!mixing) },
+    { key: "loopsTemplates", label: "Loops & Templates", active: loopsTemplates, toggle: () => setLoopsTemplates(!loopsTemplates) },
     { key: "visuals", label: "Visuals", active: visuals, toggle: () => setVisuals(!visuals) },
     { key: "web", label: "Web Development", active: web, toggle: () => setWeb(!web) },
     { key: "ads", label: "Ads", active: ads, toggle: () => setAds(!ads) }
@@ -123,6 +127,8 @@ const Music = () => {
       name,
       phone,
       beats,
+      mixing,
+      loopsTemplates,
       visuals,
       web,
       ads

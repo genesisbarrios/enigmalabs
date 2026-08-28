@@ -4,6 +4,8 @@ const mongoose = require('mongoose');
 const multer = require('multer');
 const AdmZip = require('adm-zip');
 const dotenv = require('dotenv');
+const fs = require('fs');
+const path = require('path');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const { Resend } = require('resend');
 const { buildAgreementPdf } = require('./agreementPdf');
@@ -24,6 +26,29 @@ const CALENDAR_LINK = process.env.CALENDAR_LINK || '';
 if (!CALENDAR_LINK) {
   console.warn('CALENDAR_LINK not set — outreach emails will omit the booking link.');
 }
+// Newsletter-signup thank-you links.
+const BEATSTARS_URL = 'https://www.beatstars.com/genwav';
+const VOCAL_TEMPLATE_URL = 'https://8b7144f1.sibforms.com/serve/MUIFANfZ8T4NBdE4ABH_tfvhrlJdDDILTXLQF3UbMln3_35ejHMu2b8SfC-QikgMiWobS_QmBdPjevLZZfbT4TCpV9SgduygFDXKA2mILoXwHr8uXaUYz2F73fGwXmwV_ZhrRMzOz8GskfSI3BSvfvNlGTS-m30A4RZILrEUel1xsCwFPDWRa2WboMJ_7O1_RdzLPWQWzuOeUI39';
+const GENWAV_INSTAGRAM_URL = 'https://instagram.com/gen.wav';
+const ENIGMA_INSTAGRAM_URL = 'https://www.instagram.com/_enigmalabs/';
+
+// Terms-of-usage PDFs attached to every beats/loops signup email — read once
+// and cached in memory since these are static files bundled with the app.
+const TERMS_PDF_CACHE = {};
+function loadTermsAttachment(filename) {
+  if (TERMS_PDF_CACHE[filename]) return TERMS_PDF_CACHE[filename];
+  try {
+    const buffer = fs.readFileSync(path.join(__dirname, 'public', filename));
+    const attachment = { filename, content: buffer.toString('base64') };
+    TERMS_PDF_CACHE[filename] = attachment;
+    return attachment;
+  } catch (error) {
+    console.error(`Could not load terms-of-usage attachment "${filename}"`, error);
+    return null;
+  }
+}
+const BEATS_TERMS_FILENAME = 'Beats by Enigma Terms of Usage.pdf';
+const LOOPS_TERMS_FILENAME = 'Loops by enigma TERMS OF USAGE.pdf';
 
 // 1x1 transparent PNG used for email open tracking.
 const TRACKING_PIXEL = Buffer.from(
@@ -89,6 +114,16 @@ function renderBrandedEmail({ greetingName, paragraphs, ctaLabel, ctaUrl, signOf
   `;
 }
 
+// Small, low-emphasis Instagram follow link appended to the bottom of
+// subscriber-facing thank-you emails.
+function instagramFollowCta(url, handleLabel) {
+  return `
+      <p style="text-align:center; margin-top:16px; font-size:12px;">
+        <a href="${url}" style="color:#888; text-decoration:none;">📷 Follow ${handleLabel} on Instagram</a>
+      </p>
+  `;
+}
+
 function buildMockupThankYouHtml(subscriber) {
   const firstName = (subscriber.name || '').trim().split(' ')[0] || 'there';
   const businessPhrase = subscriber.businessName
@@ -99,8 +134,9 @@ function buildMockupThankYouHtml(subscriber) {
     <div style="font-family: Arial, Helvetica, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #111;">
       <h2 style="margin: 0 0 16px;">Thanks for signing up, ${firstName}!</h2>
       <p style="line-height: 1.6;">
-        We received your request for a free website mockup${businessPhrase}. Our team is already
-        putting it together — the next step is a quick call to walk through it together.
+        We received your request for a free website mockup${businessPhrase}. We'll get back to you shortly —
+        in the meantime, feel free to check out our work on
+        <a href="${SITE_URL}/Tech" style="color:#111; font-weight:bold;">our website</a>.
       </p>
       ${CALENDAR_LINK ? `
       <p style="text-align: center; margin: 32px 0;">
@@ -112,6 +148,7 @@ function buildMockupThankYouHtml(subscriber) {
       <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
         <img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" />
       </div>
+      ${instagramFollowCta(ENIGMA_INSTAGRAM_URL, '@_enigmalabs')}
     </div>
   `;
 }
@@ -133,6 +170,220 @@ async function sendMockupThankYouEmail(subscriber) {
   } catch (error) {
     console.error('Could not send mockup thank-you email', error);
   }
+}
+
+// Generic fallback — used when more than one music-related interest is
+// checked at once, so no single specific pitch applies.
+function buildMusicInterestThankYouHtml(subscriber, sendId) {
+  const firstName = (subscriber.name || '').trim().split(' ')[0] || 'there';
+
+  return `
+    <div style="font-family: Arial, Helvetica, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #111;">
+      <h2 style="margin: 0 0 16px;">Thanks for signing up, ${firstName}!</h2>
+      <p style="line-height: 1.6;">
+        We'll get back to you shortly — in the meantime, feel free to check out our work on
+        <a href="${newsletterTrackedUrl(sendId, `${SITE_URL}/Music`)}" style="color:#111; font-weight:bold;">our website</a>.
+      </p>
+      <p style="line-height: 1.6;">Talk soon,<br/>Gen Barrios<br/>Enigma Labs</p>
+      <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+        <img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" />
+      </div>
+      ${instagramFollowCta(GENWAV_INSTAGRAM_URL, '@gen.wav')}
+      ${newsletterTrackingPixelTag(sendId)}
+    </div>
+  `;
+}
+
+// Loops-only signup — thank-you gift: the Wav Pack Volume 1 sample pack.
+function buildLoopsGiftEmailHtml(subscriber, sendId) {
+  const firstName = (subscriber.name || '').trim().split(' ')[0] || 'there';
+  const trackedUrl = newsletterTrackedUrl(sendId, BEATSTARS_URL);
+
+  return `
+    <div style="font-family: Arial, Helvetica, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #111;">
+      <h2 style="margin: 0 0 16px;">Thanks for signing up, ${firstName}!</h2>
+      <p style="line-height: 1.6;">
+        We'll get back to you shortly — and as a thank-you, here's a free gift: the
+        <strong>Wav Pack Volume 1</strong> sample pack, on us.
+      </p>
+      <p style="text-align:center; margin:24px 0;">
+        <a href="${trackedUrl}">
+          <img src="${SITE_URL}/wav-pack-vol1.jpg" alt="Wav Pack Volume 1" width="300" style="max-width:100%; border-radius:8px; display:inline-block;" />
+        </a>
+      </p>
+      <p style="text-align: center; margin: 32px 0;">
+        <a href="${trackedUrl}" style="background:#68FF00; color:#111; text-decoration:none; font-weight:bold; padding:12px 24px; border-radius:6px; display:inline-block;">
+          Get Wav Pack Volume 1 Free
+        </a>
+      </p>
+      <p style="line-height: 1.6;">Talk soon,<br/>Gen Barrios<br/>Enigma Labs</p>
+      <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+        <img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" />
+      </div>
+      ${instagramFollowCta(GENWAV_INSTAGRAM_URL, '@gen.wav')}
+      ${newsletterTrackingPixelTag(sendId)}
+    </div>
+  `;
+}
+
+// Beats-only signup — a true player embed doesn't render in email clients
+// (iframes/JS are stripped by Gmail, Outlook, Apple Mail, etc.), so this
+// points to the BeatStars store instead via a clear button.
+function buildBeatsEmailHtml(subscriber, sendId) {
+  const firstName = (subscriber.name || '').trim().split(' ')[0] || 'there';
+  const trackedUrl = newsletterTrackedUrl(sendId, BEATSTARS_URL);
+
+  return `
+    <div style="font-family: Arial, Helvetica, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #111;">
+      <h2 style="margin: 0 0 16px;">Thanks for signing up, ${firstName}!</h2>
+      <p style="line-height: 1.6;">
+        We'll get back to you shortly — in the meantime, check out the latest beats on BeatStars.
+      </p>
+      <p style="text-align: center; margin: 32px 0;">
+        <a href="${trackedUrl}" style="background:#68FF00; color:#111; text-decoration:none; font-weight:bold; padding:12px 24px; border-radius:6px; display:inline-block;">
+          Listen on BeatStars
+        </a>
+      </p>
+      <p style="line-height: 1.6;">Talk soon,<br/>Gen Barrios<br/>Enigma Labs</p>
+      <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+        <img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" />
+      </div>
+      ${instagramFollowCta(GENWAV_INSTAGRAM_URL, '@gen.wav')}
+      ${newsletterTrackingPixelTag(sendId)}
+    </div>
+  `;
+}
+
+// Mixing-only signup — thank-you gift: the free R&B vocal template.
+function buildMixingTemplateEmailHtml(subscriber, sendId) {
+  const firstName = (subscriber.name || '').trim().split(' ')[0] || 'there';
+  const trackedUrl = newsletterTrackedUrl(sendId, VOCAL_TEMPLATE_URL);
+
+  return `
+    <div style="font-family: Arial, Helvetica, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #111;">
+      <h2 style="margin: 0 0 16px;">Thanks for signing up, ${firstName}!</h2>
+      <p style="line-height: 1.6;">
+        We'll get back to you shortly — and as a thank-you, here's a free gift: our
+        <strong>R&amp;B Vocal Template</strong>, on us.
+      </p>
+      <p style="text-align:center; margin:24px 0;">
+        <a href="${trackedUrl}">
+          <img src="${SITE_URL}/rnb-vocal-template.jpg" alt="Free R&B Vocal Template" width="300" style="max-width:100%; border-radius:8px; display:inline-block;" />
+        </a>
+      </p>
+      <p style="text-align: center; margin: 32px 0;">
+        <a href="${trackedUrl}" style="background:#68FF00; color:#111; text-decoration:none; font-weight:bold; padding:12px 24px; border-radius:6px; display:inline-block;">
+          Get the Free R&amp;B Vocal Template
+        </a>
+      </p>
+      <p style="line-height: 1.6;">Talk soon,<br/>Gen Barrios<br/>Enigma Labs</p>
+      <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+        <img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" />
+      </div>
+      ${instagramFollowCta(GENWAV_INSTAGRAM_URL, '@gen.wav')}
+      ${newsletterTrackingPixelTag(sendId)}
+    </div>
+  `;
+}
+
+// Web/Ads signups — no specific gift requested, so this reuses the same
+// "check out our work" pattern, linking to the Tech page (where web dev and
+// ads services live) instead of the Music page.
+function buildServiceInterestThankYouHtml(subscriber, sendId) {
+  const firstName = (subscriber.name || '').trim().split(' ')[0] || 'there';
+
+  return `
+    <div style="font-family: Arial, Helvetica, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #111;">
+      <h2 style="margin: 0 0 16px;">Thanks for signing up, ${firstName}!</h2>
+      <p style="line-height: 1.6;">
+        We'll get back to you shortly — in the meantime, feel free to check out our work on
+        <a href="${newsletterTrackedUrl(sendId, `${SITE_URL}/Tech`)}" style="color:#111; font-weight:bold;">our website</a>.
+      </p>
+      <p style="line-height: 1.6;">Talk soon,<br/>Gen Barrios<br/>Enigma Labs</p>
+      <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+        <img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" />
+      </div>
+      ${instagramFollowCta(ENIGMA_INSTAGRAM_URL, '@_enigmalabs')}
+      ${newsletterTrackingPixelTag(sendId)}
+    </div>
+  `;
+}
+
+// Shared renderer for admin-composed newsletter emails — both one-off
+// "Contact" sends and category-wide campaigns. `bodyText` is plain text
+// (newlines become <br/>); "(name)" is mail-merged with the recipient's
+// first name.
+function renderNewsletterEmail({ subscriber, subject, bodyText, ctaLabel, ctaUrl, sendId, instagramUrl, instagramLabel }) {
+  const firstName = (subscriber.name || '').trim().split(' ')[0] || 'there';
+  const mergedBody = (bodyText || '')
+    .replace(/\(name\)/gi, firstName)
+    .split('\n')
+    .map((line) => line.trim() ? `<p style="line-height: 1.6;">${line}</p>` : '')
+    .join('\n');
+  const trackedCta = ctaUrl ? newsletterTrackedUrl(sendId, ctaUrl) : null;
+
+  return `
+    <div style="font-family: Arial, Helvetica, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #111;">
+      <h2 style="margin: 0 0 16px;">Hi ${firstName},</h2>
+      ${mergedBody}
+      ${trackedCta ? `
+      <p style="text-align: center; margin: 32px 0;">
+        <a href="${trackedCta}" style="background:#68FF00; color:#111; text-decoration:none; font-weight:bold; padding:12px 24px; border-radius:6px; display:inline-block;">
+          ${ctaLabel || 'Learn more'}
+        </a>
+      </p>` : ''}
+      <p style="line-height: 1.6;">Best,<br/>Gen Barrios<br/>Enigma Labs</p>
+      <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+        <img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" />
+      </div>
+      ${instagramUrl ? instagramFollowCta(instagramUrl, instagramLabel) : ''}
+      ${newsletterTrackingPixelTag(sendId)}
+    </div>
+  `;
+}
+
+async function sendMusicInterestThankYouEmail(subscriber) {
+  // Only pick a specific pitch when exactly one music interest is checked —
+  // if more than one, fall back to the general "check out our work" email.
+  const activeInterests = ['beats', 'loops', 'mixing'].filter((key) => subscriber[key]);
+  const single = activeInterests.length === 1 ? activeInterests[0] : null;
+
+  let subject = 'Thanks for signing up!';
+  let buildHtml = (sendId) => buildMusicInterestThankYouHtml(subscriber, sendId);
+  let templateKey = 'general-signup';
+  if (single === 'loops') {
+    subject = 'Thanks for signing up — here\'s a free gift 🎁';
+    buildHtml = (sendId) => buildLoopsGiftEmailHtml(subscriber, sendId);
+    templateKey = 'loops-gift';
+  } else if (single === 'beats') {
+    buildHtml = (sendId) => buildBeatsEmailHtml(subscriber, sendId);
+    templateKey = 'beats-intro';
+  } else if (single === 'mixing') {
+    subject = 'Thanks for signing up — here\'s a free gift 🎁';
+    buildHtml = (sendId) => buildMixingTemplateEmailHtml(subscriber, sendId);
+    templateKey = 'mixing-gift';
+  }
+
+  // Beats and loops signups always get the matching terms-of-usage PDF
+  // attached, regardless of which template ends up being used.
+  const attachments = [];
+  if (subscriber.beats) {
+    const attachment = loadTermsAttachment(BEATS_TERMS_FILENAME);
+    if (attachment) attachments.push(attachment);
+  }
+  if (subscriber.loops) {
+    const attachment = loadTermsAttachment(LOOPS_TERMS_FILENAME);
+    if (attachment) attachments.push(attachment);
+  }
+
+  await sendAndLogNewsletterEmail({
+    subscriber,
+    category: single || 'signup',
+    templateKey,
+    subject,
+    buildHtml,
+    attachments
+  });
 }
 
 async function sendAdminNotification(subject, text) {
@@ -160,11 +411,21 @@ async function sendMockupSignupEmail(subscriber) {
   );
 }
 
-async function sendWebInterestEmail(subscriber) {
+const SERVICE_INTEREST_LABELS = { web: 'Web Development', ads: 'Ads' };
+
+async function sendServiceInterestEmails(subscriber, category) {
+  const label = SERVICE_INTEREST_LABELS[category] || category;
   await sendAdminNotification(
-    `New web development newsletter signup: ${subscriber.email}`,
-    `A newsletter subscriber marked interest in Web Development:\n\nEmail: ${subscriber.email}${subscriber.name ? `\nName: ${subscriber.name}` : ''}${subscriber.phone ? `\nPhone: ${subscriber.phone}` : ''}`
+    `New ${label} newsletter signup: ${subscriber.email}`,
+    `A newsletter subscriber marked interest in ${label}:\n\nEmail: ${subscriber.email}${subscriber.name ? `\nName: ${subscriber.name}` : ''}${subscriber.phone ? `\nPhone: ${subscriber.phone}` : ''}`
   );
+  await sendAndLogNewsletterEmail({
+    subscriber,
+    category,
+    templateKey: 'signup-thank-you',
+    subject: 'Thanks for signing up!',
+    buildHtml: (sendId) => buildServiceInterestThankYouHtml(subscriber, sendId)
+  });
 }
 
 // ── Lead outreach emails ──
@@ -433,7 +694,9 @@ async function sendAgreementEmails({ agreementId, clientName, clientEmail, effec
 }
 
 app.use(cors());
-app.use(express.json({ limit: '2mb' }));
+// 15mb to comfortably fit a base64-encoded beat/loop preview file attached to
+// a newsletter "Contact"/campaign send (see /api/newsletter/*).
+app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 // On Vercel, api/index.js kicks off connectDatabase() at module load but
@@ -477,7 +740,9 @@ const newsletterSubscriberSchema = new mongoose.Schema({
   googleBusinessUrl: String,
   city: String,
   beats: Boolean,
+  mixing: Boolean,
   loops: Boolean,
+  loopsTemplates: Boolean,
   visuals: Boolean,
   web: Boolean,
   ads: Boolean,
@@ -487,6 +752,104 @@ const newsletterSubscriberSchema = new mongoose.Schema({
 });
 
 const NewsletterSubscriber = mongoose.model('NewsletterSubscriber', newsletterSubscriberSchema, 'newsletter');
+
+// Newsletter categories a subscriber/email can belong to. 'signup' is used
+// for the automatic thank-you emails sent at sign-up time, not a real
+// interest checkbox — it exists so those emails show up in analytics too.
+const NEWSLETTER_CATEGORIES = ['beats', 'mixing', 'loops', 'web', 'ads'];
+
+// A reusable "this exact email was sent to a whole segment" record, kept so
+// it can be picked again later from the per-subscriber Contact panel
+// ("resend a previous campaign") without retyping it.
+const newsletterCampaignSchema = new mongoose.Schema({
+  category: { type: String, enum: NEWSLETTER_CATEGORIES, required: true },
+  templateKey: String,
+  subject: String,
+  html: String,
+  recipientCount: { type: Number, default: 0 },
+  createdAt: { type: Date, default: Date.now }
+});
+const NewsletterCampaign = mongoose.model('NewsletterCampaign', newsletterCampaignSchema, 'newsletter_campaigns');
+
+// One row per email actually sent to a subscriber — signup thank-yous,
+// one-off "Contact" sends, and campaign blasts all land here so open/click
+// analytics can be viewed per subscriber and aggregated per category.
+const newsletterSendSchema = new mongoose.Schema({
+  subscriberId: { type: mongoose.Schema.Types.ObjectId, ref: 'NewsletterSubscriber', required: true },
+  campaignId: { type: mongoose.Schema.Types.ObjectId, ref: 'NewsletterCampaign' },
+  category: { type: String, enum: [...NEWSLETTER_CATEGORIES, 'signup'], required: true },
+  templateKey: String,
+  subject: String,
+  html: String,
+  resendId: String,
+  opened: { type: Boolean, default: false },
+  openedAt: Date,
+  clicked: { type: Boolean, default: false },
+  clickedAt: Date,
+  sentAt: { type: Date, default: Date.now }
+});
+const NewsletterSend = mongoose.model('NewsletterSend', newsletterSendSchema, 'newsletter_sends');
+
+function newsletterTrackedUrl(sendId, url) {
+  if (!url || !sendId) return url;
+  return `${SITE_URL}/api/newsletter/sends/${sendId}/track/click?u=${encodeURIComponent(url)}`;
+}
+
+function newsletterTrackingPixelTag(sendId) {
+  if (!sendId) return '';
+  return `<img src="${SITE_URL}/api/newsletter/sends/${sendId}/track/open" width="1" height="1" alt="" style="display:none;" />`;
+}
+
+// Sends one already-built email to a subscriber and logs it as a
+// NewsletterSend row — the single place every subscriber-facing send (signup
+// thank-yous, one-off contacts, campaign blasts) goes through so analytics
+// stay complete. The tracking pixel/link wrapping happens here: callers pass
+// `html`/`ctaUrls` unwrapped and this stamps in the real send id afterward by
+// re-rendering — simpler callers just embed `%%SEND_ID%%` placeholders,
+// replaced once the row exists.
+async function sendAndLogNewsletterEmail({ subscriber, campaignId, category, templateKey, subject, buildHtml, attachments }) {
+  if (!resend) {
+    console.warn('RESEND_API_KEY not set — skipping newsletter send.');
+    return { ok: false, message: 'Email delivery is not configured.' };
+  }
+  if (!subscriber || !subscriber.email) {
+    return { ok: false, message: 'Subscriber has no email address.' };
+  }
+
+  const send = await NewsletterSend.create({
+    subscriberId: subscriber._id,
+    campaignId: campaignId || undefined,
+    category,
+    templateKey,
+    subject,
+    html: ''
+  });
+
+  const html = buildHtml(send._id.toString());
+
+  try {
+    const { data, error } = await resend.emails.send({
+      from: AGREEMENT_FROM_EMAIL,
+      to: subscriber.email,
+      subject,
+      html,
+      ...(attachments && attachments.length ? { attachments } : {})
+    });
+    if (error) {
+      console.error('Could not send newsletter email', error);
+      await NewsletterSend.findByIdAndDelete(send._id);
+      return { ok: false, message: 'Failed to send the email.' };
+    }
+    send.html = html;
+    send.resendId = data?.id;
+    await send.save();
+    return { ok: true, send };
+  } catch (error) {
+    console.error('Could not send newsletter email', error);
+    await NewsletterSend.findByIdAndDelete(send._id);
+    return { ok: false, message: 'Failed to send the email.' };
+  }
+}
 
 const onboardingClientSchema = new mongoose.Schema({
   clientName: String,
@@ -677,6 +1040,9 @@ const leadSchema = new mongoose.Schema({
   // contacted; ongoing communication happens through the client record.
   convertedToClient: { type: Boolean, default: false },
   convertedToClientAt: Date,
+  // Only set for inbound (public form) leads — used to rate-limit spam floods
+  // from the free-mockup form by source IP.
+  submittedIp: String,
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -696,6 +1062,60 @@ function splitEmails(value) {
     .filter(Boolean);
 }
 
+// ── Free-mockup form spam detection ─────────────────────────────────────────
+// The public form has no login/CAPTCHA, so it gets flooded with bot
+// submissions. These checks are layered (any one hit marks the submission as
+// spam) and every layer responds as if the request succeeded, so scripted
+// abuse gets no signal to adapt to.
+
+function getRequestIp(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (forwarded) return String(forwarded).split(',')[0].trim();
+  return req.socket?.remoteAddress || '';
+}
+
+function isUrlLike(value) {
+  return /^https?:\/\//i.test(value) || /\.[a-z]{2,}(\/|$)/i.test(value);
+}
+
+const SOCIAL_HOST_RE = /instagram\.com|instagr\.am|facebook\.com|fb\.com|fb\.me/i;
+const GOOGLE_HOST_RE = /google\.com|g\.page|goo\.gl/i;
+
+async function isLikelySpamMockupSubmission(payload, req) {
+  // Honeypot: a hidden field real users never see or fill; bots that
+  // auto-fill every input on the page populate it.
+  if (payload.honeypot) return true;
+
+  // Timing trap: the form reports how long it was open before submit — a
+  // human takes at least a few seconds to fill six fields.
+  const formLoadedAt = Number(payload.formLoadedAt) || 0;
+  if (!formLoadedAt || Date.now() - formLoadedAt < 3000) return true;
+
+  // Both optional link fields stuffed with URLs unrelated to their stated
+  // purpose (a garbage domain instead of an actual Instagram/Facebook or
+  // Google Business link) is the exact pattern seen in real spam floods.
+  const social = payload.socialUrl || '';
+  const google = payload.googleBusinessUrl || '';
+  const socialLooksBogus = social && isUrlLike(social) && !SOCIAL_HOST_RE.test(social);
+  const googleLooksBogus = google && isUrlLike(google) && !GOOGLE_HOST_RE.test(google);
+  if (socialLooksBogus && googleLooksBogus) return true;
+
+  // Per-IP flood limit — more than 5 inbound mockup requests from the same
+  // IP in 15 minutes isn't a real prospect.
+  const ip = getRequestIp(req);
+  if (ip) {
+    const fifteenMinAgo = new Date(Date.now() - 15 * 60 * 1000);
+    const recentCount = await Lead.countDocuments({
+      inbound: true,
+      submittedIp: ip,
+      createdAt: { $gte: fifteenMinAgo }
+    });
+    if (recentCount >= 5) return true;
+  }
+
+  return false;
+}
+
 async function findDuplicateLead({ email, phone }) {
   const conditions = [];
   splitEmails(email).forEach((address) => {
@@ -707,7 +1127,7 @@ async function findDuplicateLead({ email, phone }) {
   return Lead.findOne({ $or: conditions });
 }
 
-async function upsertInboundLead({ businessName, contactName, email, phone, instagram, googleBusinessUrl, city }) {
+async function upsertInboundLead({ businessName, contactName, email, phone, instagram, googleBusinessUrl, city, submittedIp }) {
   try {
     const existing = await findDuplicateLead({ email, phone });
     if (existing) {
@@ -719,6 +1139,7 @@ async function upsertInboundLead({ businessName, contactName, email, phone, inst
       existing.city = city || existing.city;
       existing.email = existing.email || email;
       existing.phone = existing.phone || phone;
+      existing.submittedIp = submittedIp || existing.submittedIp;
       await existing.save();
       return existing;
     }
@@ -730,6 +1151,7 @@ async function upsertInboundLead({ businessName, contactName, email, phone, inst
       instagram: instagram || '',
       googleBusinessUrl: googleBusinessUrl || '',
       city: city || '',
+      submittedIp: submittedIp || '',
       inbound: true
     });
   } catch (error) {
@@ -838,7 +1260,9 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       googleBusinessUrl: req.body.googleBusinessUrl || '',
       city: req.body.city || '',
       beats: Boolean(req.body.beats),
+      mixing: Boolean(req.body.mixing),
       loops: Boolean(req.body.loops),
+      loopsTemplates: Boolean(req.body.loopsTemplates),
       visuals: Boolean(req.body.visuals),
       web: Boolean(req.body.web),
       ads: Boolean(req.body.ads),
@@ -846,12 +1270,18 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       freemockups: Boolean(req.body.freemockups)
     };
 
-    const hasNewsletterInterest = payload.beats || payload.loops || payload.visuals || payload.web || payload.ads || payload.vocalTemplates;
+    const hasNewsletterInterest = payload.beats || payload.loops || payload.loopsTemplates || payload.visuals || payload.web || payload.ads || payload.vocalTemplates;
 
     // The free-mockup form is a lead-gen flow, not a newsletter signup —
     // keep mockup-only submissions out of the newsletter table entirely and
     // route them straight into the leads CRM instead.
     if (payload.freemockups && !hasNewsletterInterest) {
+      // Spam responds identically to a real success so scripted abuse gets
+      // no feedback to adapt to — it just silently never becomes a lead.
+      if (await isLikelySpamMockupSubmission(payload, req)) {
+        return res.status(201).json({ ok: true, message: 'Mockup request received.' });
+      }
+
       const existingLead = await findDuplicateLead({ email: payload.email, phone: payload.phone });
       const isNewMockupRequest = !existingLead || !existingLead.inbound;
 
@@ -862,7 +1292,8 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
         phone: payload.phone,
         instagram: payload.socialUrl,
         googleBusinessUrl: payload.googleBusinessUrl,
-        city: payload.city
+        city: payload.city,
+        submittedIp: getRequestIp(req)
       });
 
       if (isNewMockupRequest) {
@@ -876,6 +1307,12 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
     const existing = await NewsletterSubscriber.findOne({ email: payload.email });
     if (existing) {
       const isNewWebInterest = payload.web && !existing.web;
+      const isNewAdsInterest = payload.ads && !existing.ads;
+      const isNewMusicInterest =
+        (payload.beats && !existing.beats) ||
+        (payload.loops && !existing.loops) ||
+        (payload.loopsTemplates && !existing.loopsTemplates) ||
+        (payload.mixing && !existing.mixing);
 
       existing.name = payload.name || existing.name;
       existing.phone = payload.phone || existing.phone;
@@ -884,20 +1321,26 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       existing.googleBusinessUrl = payload.googleBusinessUrl || existing.googleBusinessUrl;
       existing.city = payload.city || existing.city;
       existing.beats = existing.beats || payload.beats;
+      existing.mixing = existing.mixing || payload.mixing;
       existing.loops = existing.loops || payload.loops;
+      existing.loopsTemplates = existing.loopsTemplates || payload.loopsTemplates;
       existing.visuals = existing.visuals || payload.visuals;
       existing.web = existing.web || payload.web;
       existing.ads = existing.ads || payload.ads;
       existing.vocalTemplates = existing.vocalTemplates || payload.vocalTemplates;
       await existing.save();
 
-      if (isNewWebInterest) await sendWebInterestEmail(existing);
+      if (isNewWebInterest) await sendServiceInterestEmails(existing, 'web');
+      if (isNewAdsInterest) await sendServiceInterestEmails(existing, 'ads');
+      if (isNewMusicInterest) await sendMusicInterestThankYouEmail(existing);
 
       return res.status(200).json({ ok: true, subscriber: existing, message: 'Subscription updated.' });
     }
 
     const subscriber = await NewsletterSubscriber.create(payload);
-    if (subscriber.web) await sendWebInterestEmail(subscriber);
+    if (subscriber.web) await sendServiceInterestEmails(subscriber, 'web');
+    if (subscriber.ads) await sendServiceInterestEmails(subscriber, 'ads');
+    if (subscriber.beats || subscriber.loops || subscriber.loopsTemplates || subscriber.mixing) await sendMusicInterestThankYouEmail(subscriber);
 
     res.status(201).json({ ok: true, subscriber });
   } catch (error) {
@@ -972,9 +1415,11 @@ app.post('/api/newsletter/subscribers/import', async (req, res) => {
         email: (row.email || '').trim(),
         name: (row.name || '').trim(),
         phone: (row.phone || '').trim(),
-        businessName: (row.businessName || '').trim(),
+        socialUrl: (row.socialUrl || '').trim(),
         beats: Boolean(row.beats),
+        mixing: Boolean(row.mixing),
         loops: Boolean(row.loops),
+        loopsTemplates: Boolean(row.loopsTemplates),
         visuals: Boolean(row.visuals),
         web: Boolean(row.web),
         ads: Boolean(row.ads),
@@ -991,6 +1436,51 @@ app.post('/api/newsletter/subscribers/import', async (req, res) => {
   }
 });
 
+app.post('/api/newsletter/subscribers/import-bulk', async (req, res) => {
+  try {
+    const rows = Array.isArray(req.body.subscribers) ? req.body.subscribers : [];
+    if (!rows.length) {
+      return res.status(400).json({ ok: false, message: 'No subscribers to import.' });
+    }
+
+    let created = 0;
+    let skipped = 0;
+
+    for (const row of rows) {
+      const email = (row.email || '').trim();
+      if (!email) {
+        skipped += 1;
+        continue;
+      }
+
+      const existing = await NewsletterSubscriber.findOne({ email });
+      if (existing) {
+        skipped += 1;
+        continue;
+      }
+
+      await NewsletterSubscriber.create({
+        email,
+        name: row.name || '',
+        phone: row.phone || '',
+        businessName: row.businessName || '',
+        socialUrl: row.socialUrl || '',
+        beats: Boolean(row.beats),
+        loops: Boolean(row.loops),
+        visuals: Boolean(row.visuals),
+        web: Boolean(row.web),
+        ads: Boolean(row.ads)
+      });
+      created += 1;
+    }
+
+    res.status(201).json({ ok: true, created, skipped });
+  } catch (error) {
+    console.error('Could not bulk import newsletter subscribers', error);
+    res.status(500).json({ ok: false, message: 'Could not import subscribers.' });
+  }
+});
+
 app.put('/api/newsletter/subscribers/:id', async (req, res) => {
   try {
     const subscriber = await NewsletterSubscriber.findById(req.params.id);
@@ -1002,7 +1492,7 @@ app.put('/api/newsletter/subscribers/:id', async (req, res) => {
     fields.forEach((field) => {
       if (req.body[field] !== undefined) subscriber[field] = req.body[field];
     });
-    const boolFields = ['beats', 'loops', 'visuals', 'web', 'ads', 'vocalTemplates'];
+    const boolFields = ['beats', 'loops', 'visuals', 'web', 'ads'];
     boolFields.forEach((field) => {
       if (req.body[field] !== undefined) subscriber[field] = Boolean(req.body[field]);
     });
@@ -1025,6 +1515,221 @@ app.delete('/api/newsletter/subscribers/:id', async (req, res) => {
   } catch (error) {
     console.error('Could not delete newsletter subscriber', error);
     res.status(500).json({ ok: false, message: 'Could not delete newsletter subscriber.' });
+  }
+});
+
+// ── Newsletter email tracking ──
+
+app.get('/api/newsletter/sends/:id/track/open', async (req, res) => {
+  try {
+    await NewsletterSend.findByIdAndUpdate(req.params.id, { opened: true, openedAt: new Date() });
+  } catch (error) {
+    console.error('Could not record newsletter email open', error);
+  }
+  res.setHeader('Content-Type', 'image/png');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.send(TRACKING_PIXEL);
+});
+
+app.get('/api/newsletter/sends/:id/track/click', async (req, res) => {
+  const target = typeof req.query.u === 'string' ? req.query.u : '';
+  try {
+    await NewsletterSend.findByIdAndUpdate(req.params.id, { clicked: true, clickedAt: new Date() });
+  } catch (error) {
+    console.error('Could not record newsletter link click', error);
+  }
+  res.redirect(302, target || SITE_URL);
+});
+
+// ── Newsletter analytics ──
+
+// All emails ever sent to one subscriber (signup thank-yous, one-off
+// contacts, campaign blasts) — powers the per-subscriber "Analytics" panel.
+app.get('/api/newsletter/subscribers/:id/sends', async (req, res) => {
+  try {
+    const sends = await NewsletterSend.find({ subscriberId: req.params.id }).sort({ sentAt: -1 });
+    res.json({ ok: true, sends });
+  } catch (error) {
+    console.error('Could not load subscriber send history', error);
+    res.status(500).json({ ok: false, message: 'Could not load send history.' });
+  }
+});
+
+// One stored send's full HTML (read-only preview) — tracking pixel stripped
+// so viewing it here doesn't falsely mark it as opened, same as the leads
+// "See Sent Email" preview.
+app.get('/api/newsletter/sends/:id', async (req, res) => {
+  try {
+    const send = await NewsletterSend.findById(req.params.id);
+    if (!send) return res.status(404).json({ ok: false, message: 'Send not found.' });
+    const previewHtml = (send.html || '').replace(/<img[^>]*\/track\/open[^>]*>/gi, '');
+    res.json({ ok: true, send: { ...send.toObject(), html: previewHtml } });
+  } catch (error) {
+    console.error('Could not load newsletter send', error);
+    res.status(500).json({ ok: false, message: 'Could not load send.' });
+  }
+});
+
+// Aggregate open/click stats + full send list for one newsletter category —
+// powers the "analytics for a certain type of newsletter" view.
+app.get('/api/newsletter/analytics', async (req, res) => {
+  try {
+    const category = req.query.category;
+    const filter = category && category !== 'all' ? { category } : {};
+    const sends = await NewsletterSend.find(filter).sort({ sentAt: -1 }).populate('subscriberId', 'email name');
+
+    const totalSent = sends.length;
+    const totalOpened = sends.filter((s) => s.opened).length;
+    const totalClicked = sends.filter((s) => s.clicked).length;
+
+    res.json({
+      ok: true,
+      stats: {
+        totalSent,
+        totalOpened,
+        totalClicked,
+        openRate: totalSent ? totalOpened / totalSent : 0,
+        clickRate: totalSent ? totalClicked / totalSent : 0
+      },
+      sends
+    });
+  } catch (error) {
+    console.error('Could not load newsletter analytics', error);
+    res.status(500).json({ ok: false, message: 'Could not load analytics.' });
+  }
+});
+
+// ── Newsletter campaigns ──
+
+app.get('/api/newsletter/campaigns', async (req, res) => {
+  try {
+    const category = req.query.category;
+    const filter = category && category !== 'all' ? { category } : {};
+    const campaigns = await NewsletterCampaign.find(filter).sort({ createdAt: -1 });
+    res.json({ ok: true, campaigns });
+  } catch (error) {
+    console.error('Could not load newsletter campaigns', error);
+    res.status(500).json({ ok: false, message: 'Could not load campaigns.' });
+  }
+});
+
+// Beats and loops campaigns/contacts always get the matching terms-of-usage
+// PDF attached, same rule as the automatic signup emails.
+function autoAttachmentsForCategory(category) {
+  const attachments = [];
+  if (category === 'beats') {
+    const attachment = loadTermsAttachment(BEATS_TERMS_FILENAME);
+    if (attachment) attachments.push(attachment);
+  }
+  if (category === 'loops') {
+    const attachment = loadTermsAttachment(LOOPS_TERMS_FILENAME);
+    if (attachment) attachments.push(attachment);
+  }
+  return attachments;
+}
+
+// Sends a template (or a previously-sent campaign, verbatim) to every
+// subscriber currently marked interested in `category`, and logs the whole
+// blast as a reusable NewsletterCampaign so it can be resent later.
+app.post('/api/newsletter/campaigns', async (req, res) => {
+  try {
+    const { category, templateKey, subject, bodyText, ctaLabel, ctaUrl, attachments: uploadedAttachments } = req.body;
+    if (!NEWSLETTER_CATEGORIES.includes(category)) {
+      return res.status(400).json({ ok: false, message: 'Unknown newsletter category.' });
+    }
+    if (!subject || !bodyText) {
+      return res.status(400).json({ ok: false, message: 'Subject and message body are required.' });
+    }
+
+    const recipients = await NewsletterSubscriber.find({ [category]: true, email: { $ne: '' } });
+    if (!recipients.length) {
+      return res.status(400).json({ ok: false, message: `No subscribers are currently interested in ${category}.` });
+    }
+
+    const campaign = await NewsletterCampaign.create({
+      category,
+      templateKey: templateKey || 'custom-message',
+      subject,
+      html: bodyText, // stores the reusable plain-text body, not final rendered HTML — each send re-renders with its own tracking
+      recipientCount: recipients.length
+    });
+
+    const instagramUrl = category === 'web' || category === 'ads' ? ENIGMA_INSTAGRAM_URL : GENWAV_INSTAGRAM_URL;
+    const instagramLabel = category === 'web' || category === 'ads' ? '@_enigmalabs' : '@gen.wav';
+    const attachments = [...autoAttachmentsForCategory(category), ...(Array.isArray(uploadedAttachments) ? uploadedAttachments : [])];
+
+    let sent = 0;
+    for (const subscriber of recipients) {
+      const result = await sendAndLogNewsletterEmail({
+        subscriber,
+        campaignId: campaign._id,
+        category,
+        templateKey: campaign.templateKey,
+        subject,
+        buildHtml: (sendId) => renderNewsletterEmail({ subscriber, subject, bodyText, ctaLabel, ctaUrl, sendId, instagramUrl, instagramLabel }),
+        attachments
+      });
+      if (result.ok) sent += 1;
+    }
+
+    res.status(201).json({ ok: true, campaign, sent, total: recipients.length });
+  } catch (error) {
+    console.error('Could not send newsletter campaign', error);
+    res.status(500).json({ ok: false, message: 'Could not send campaign.' });
+  }
+});
+
+// One-off send to a single subscriber from the "Contact" panel — either a
+// fresh template or an exact resend of a previous campaign's content.
+app.post('/api/newsletter/subscribers/:id/send', async (req, res) => {
+  try {
+    const subscriber = await NewsletterSubscriber.findById(req.params.id);
+    if (!subscriber) {
+      return res.status(404).json({ ok: false, message: 'Subscriber not found.' });
+    }
+    if (!subscriber.email) {
+      return res.status(400).json({ ok: false, message: 'This subscriber has no email address.' });
+    }
+
+    let { category, templateKey, subject, bodyText, ctaLabel, ctaUrl, attachments: uploadedAttachments } = req.body;
+    let campaignId;
+
+    if (req.body.resendCampaignId) {
+      const campaign = await NewsletterCampaign.findById(req.body.resendCampaignId);
+      if (!campaign) return res.status(404).json({ ok: false, message: 'Campaign not found.' });
+      category = campaign.category;
+      templateKey = campaign.templateKey;
+      subject = campaign.subject;
+      bodyText = campaign.html;
+      campaignId = campaign._id;
+    }
+
+    if (!NEWSLETTER_CATEGORIES.includes(category)) {
+      return res.status(400).json({ ok: false, message: 'Unknown newsletter category.' });
+    }
+    if (!subject || !bodyText) {
+      return res.status(400).json({ ok: false, message: 'Subject and message body are required.' });
+    }
+
+    const instagramUrl = category === 'web' || category === 'ads' ? ENIGMA_INSTAGRAM_URL : GENWAV_INSTAGRAM_URL;
+    const instagramLabel = category === 'web' || category === 'ads' ? '@_enigmalabs' : '@gen.wav';
+    const attachments = [...autoAttachmentsForCategory(category), ...(Array.isArray(uploadedAttachments) ? uploadedAttachments : [])];
+
+    const result = await sendAndLogNewsletterEmail({
+      subscriber,
+      campaignId,
+      category,
+      templateKey: templateKey || 'custom-message',
+      subject,
+      buildHtml: (sendId) => renderNewsletterEmail({ subscriber, subject, bodyText, ctaLabel, ctaUrl, sendId, instagramUrl, instagramLabel }),
+      attachments
+    });
+
+    if (!result.ok) return res.status(400).json(result);
+    res.status(201).json({ ok: true, send: result.send });
+  } catch (error) {
+    console.error('Could not send newsletter contact email', error);
+    res.status(500).json({ ok: false, message: 'Could not send email.' });
   }
 });
 

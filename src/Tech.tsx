@@ -127,6 +127,12 @@ const workProjects = [
     url: "https://nuralume.xyz",
     image: "https://dl.dropboxusercontent.com/s/11xwqvyuioco1etjdeu27/nuralume.png?rlkey=xuiz2krmjop7kegb099q4jocg&st=xs0f6rkn&dl=0",
     alt: "Nuralume"
+  },
+  {
+    name: "Pretty Kitty Miami Rescue",
+    url: "https://prettykittymiamirescue.org",
+    image: "/work/prettykittymiami.png",
+    alt: "Pretty Kitty Miami Rescue"
   }
 ];
 

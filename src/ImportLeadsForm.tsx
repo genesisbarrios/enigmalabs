@@ -639,9 +639,9 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
               <Col xs={12} sm={6} lg={3}>
                 <Form.Check
                   type="checkbox"
-                  label="Cold email already sent"
-                  checked={manualForm.coldEmailSent}
-                  onChange={(e) => setManualForm({ ...manualForm, coldEmailSent: e.target.checked })}
+                  label="Cold DM already sent"
+                  checked={manualForm.dmSent}
+                  onChange={(e) => setManualForm({ ...manualForm, dmSent: e.target.checked })}
                   className="mb-2"
                   style={{ whiteSpace: 'nowrap' }}
                 />
@@ -649,9 +649,9 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
               <Col xs={12} sm={6} lg={3}>
                 <Form.Check
                   type="checkbox"
-                  label="Cold DM already sent"
-                  checked={manualForm.dmSent}
-                  onChange={(e) => setManualForm({ ...manualForm, dmSent: e.target.checked })}
+                  label="Cold email already sent"
+                  checked={manualForm.coldEmailSent}
+                  onChange={(e) => setManualForm({ ...manualForm, coldEmailSent: e.target.checked })}
                   className="mb-2"
                   style={{ whiteSpace: 'nowrap' }}
                 />
@@ -743,8 +743,8 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
                   <th>City</th>
                   <th>Industry</th>
                   <th>Comments</th>
-                  <th>Cold Email Sent</th>
                   <th>DM Sent</th>
+                  <th>Cold Email Sent</th>
                   <th>Called</th>
                   <th>Declined</th>
                 </tr>
@@ -858,15 +858,15 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
                     <td className="text-center">
                       <Form.Check
                         type="checkbox"
-                        checked={lead.coldEmailSent}
-                        onChange={(e) => updatePreviewLead(index, { coldEmailSent: e.target.checked })}
+                        checked={lead.dmSent}
+                        onChange={(e) => updatePreviewLead(index, { dmSent: e.target.checked })}
                       />
                     </td>
                     <td className="text-center">
                       <Form.Check
                         type="checkbox"
-                        checked={lead.dmSent}
-                        onChange={(e) => updatePreviewLead(index, { dmSent: e.target.checked })}
+                        checked={lead.coldEmailSent}
+                        onChange={(e) => updatePreviewLead(index, { coldEmailSent: e.target.checked })}
                       />
                     </td>
                     <td className="text-center">

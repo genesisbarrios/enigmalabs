@@ -127,7 +127,8 @@ type SortOption = 'newest' | 'oldest' | 'name';
 
 const PAGE_SIZE_OPTIONS = [25, 50, 100, 200];
 
-const isNotContacted = (lead: Lead) => !lead.coldEmailSent && !lead.onboardingSent;
+const isNotContacted = (lead: Lead) =>
+  !lead.coldEmailSent && !lead.outdatedMockupSent && !lead.dmSent && !lead.called && !lead.onboardingSent;
 
 const buildFindEmailUrl = (lead: Lead) => {
   const query = `${lead.businessName || ''} ${lead.city || ''} ("@gmail.com" OR "@outlook.com" OR "@hotmail.com" OR "@yahoo.com" OR "@icloud.com")`.trim();
@@ -747,7 +748,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                   <td>
                     <Button
                       size="sm"
-                      variant={lead.called ? 'success' : 'outline-secondary'}
+                      variant={lead.called ? 'success' : 'warning'}
                       disabled={busy}
                       onClick={() => handleToggleCalled(lead)}
                     >
@@ -762,7 +763,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                       {lead.convertedToClient ? <Badge bg="success">Onboarded — See Client Table</Badge> : null}
                       {lead.declined ? <Badge bg="danger">Declined / Inactive</Badge> : null}
                       {isNotContacted(lead) && !lead.declined && !lead.convertedToClient ? <Badge bg="secondary">Not Contacted</Badge> : null}
-                      {lead.coldEmailSent ? <Badge bg="warning" text="dark">Cold Email Sent</Badge> : null}
+                      {lead.coldEmailSent ? <Badge bg="success">Cold Email Sent</Badge> : null}
                       {lead.onboardingSent ? <Badge bg="success">Onboarding Sent</Badge> : null}
                     </div>
                   </td>
@@ -780,7 +781,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '150px' }}>
                         {lead.email ? (
                           <>
-                            {!lead.inbound ? (
+                            {!lead.inbound && !lead.onboardingSent ? (
                               lead.coldEmailSent ? (
                                 <>
                                   <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'cold')}>
@@ -873,10 +874,11 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
       ) : null}
 
       <Modal show={Boolean(viewingEmail)} onHide={closeSentEmailModal} size="lg" centered>
-        <Modal.Header closeButton style={{ background: '#111', color: 'white', borderBottom: '1px solid #2b2b2b' }}>
+        <Modal.Header style={{ background: '#111', color: 'white', borderBottom: '1px solid #2b2b2b' }}>
           <Modal.Title>
             {viewingEmail ? `${EMAIL_TYPE_LABELS[viewingEmail.type]} — ${viewingEmail.lead.businessName || viewingEmail.lead.email}` : ''}
           </Modal.Title>
+          <button type="button" className="btn-close btn-close-danger" aria-label="Close" onClick={closeSentEmailModal} />
         </Modal.Header>
         <Modal.Body style={{ background: '#111', color: 'white' }}>
           {loadingSentEmail ? <p style={{ color: '#d4d4d4' }}>Loading...</p> : null}

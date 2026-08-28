@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Badge, Button, Card, Container, Form, ListGroup, Table } from 'react-bootstrap';
+import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
+import { Alert, Badge, Button, Card, Col, Container, Form, ListGroup, Modal, Row, Table } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
@@ -117,18 +117,22 @@ type Subscriber = {
   socialUrl?: string;
   googleBusinessUrl?: string;
   beats: boolean;
+  mixing: boolean;
   loops: boolean;
   visuals: boolean;
   web: boolean;
   ads: boolean;
   vocalTemplates: boolean;
+  loopsTemplates: boolean;
   freemockups?: boolean;
   createdAt: string;
 };
 
-const INTEREST_FIELDS: { key: 'beats' | 'loops' | 'visuals' | 'web' | 'ads' | 'vocalTemplates'; label: string }[] = [
+const INTEREST_FIELDS: { key: 'beats' | 'mixing' | 'loops' | 'visuals' | 'web' | 'ads' | 'vocalTemplates' | 'loopsTemplates'; label: string }[] = [
   { key: 'beats', label: 'Beats' },
+  { key: 'mixing', label: 'Mixing' },
   { key: 'loops', label: 'Loops' },
+  { key: 'loopsTemplates', label: 'Loops & Templates' },
   { key: 'visuals', label: 'Visuals' },
   { key: 'web', label: 'Web' },
   { key: 'ads', label: 'Ads' },
@@ -137,7 +141,9 @@ const INTEREST_FIELDS: { key: 'beats' | 'loops' | 'visuals' | 'web' | 'ads' | 'v
 
 const emptySubscriberInterests = {
   beats: false,
+  mixing: false,
   loops: false,
+  loopsTemplates: false,
   visuals: false,
   web: false,
   ads: false,
@@ -147,6 +153,161 @@ const emptySubscriberInterests = {
 const subscriberInterestLabel = (subscriber: Subscriber) => {
   const interests = INTEREST_FIELDS.filter((field) => subscriber[field.key]).map((field) => field.label);
   return interests.length ? interests.join(', ') : '—';
+};
+
+// ── Newsletter campaigns / contact / analytics ──────────────────────────────
+
+type NewsletterCategory = 'beats' | 'mixing' | 'loops' | 'web' | 'ads';
+
+const NEWSLETTER_CATEGORY_LABELS: Record<NewsletterCategory, string> = {
+  beats: 'Beats',
+  mixing: 'Mixing',
+  loops: 'Loops',
+  web: 'Web Development',
+  ads: 'Ads'
+};
+
+const NEWSLETTER_CATEGORIES: NewsletterCategory[] = ['beats', 'mixing', 'loops', 'web', 'ads'];
+
+// Categories a subscriber currently qualifies for — used to default the
+// Contact panel's category picker.
+const subscriberCategories = (subscriber: Subscriber): NewsletterCategory[] =>
+  NEWSLETTER_CATEGORIES.filter((key) => subscriber[key]);
+
+type TemplatePreset = { label: string; subject: string; bodyText: string; ctaLabel?: string; ctaUrl?: string };
+
+// Only "beats" has named presets today — every other category gets a single
+// free-form "Custom Message" composer.
+const TEMPLATE_PRESETS: Record<NewsletterCategory, Record<string, TemplatePreset>> = {
+  beats: {
+    'new-beats-dropped': {
+      label: 'New Beats Dropped',
+      subject: 'New beats just dropped 🔥',
+      bodyText: "Hey (name), just dropped some new beats — thought you might like these. Take a listen below!",
+      ctaLabel: 'Listen on BeatStars',
+      ctaUrl: 'https://www.beatstars.com/genwav'
+    },
+    'discount-announcement': {
+      label: 'Discount Announcement',
+      subject: 'Limited-time discount on beats 🎁',
+      bodyText: "Hey (name), running a limited-time discount on beats right now — grab something before it ends!",
+      ctaLabel: 'Shop the Discount',
+      ctaUrl: 'https://www.beatstars.com/genwav'
+    },
+    'custom-beats-for-you': {
+      label: 'Custom Beats For You',
+      subject: 'I made some beats for you 🎧',
+      bodyText:
+        "Hey (name), I love what you've been putting out and I wanted to send you some beats I think you'd like! Let me know what you think, or if you want to work on something custom I can do that as well.\n\nBest,\n\nGen, Enigma Labs",
+      ctaLabel: 'Listen on BeatStars',
+      ctaUrl: 'https://www.beatstars.com/genwav'
+    },
+    'custom-message': { label: 'Custom Message', subject: '', bodyText: '' }
+  },
+  mixing: { 'custom-message': { label: 'Custom Message', subject: '', bodyText: '' } },
+  loops: { 'custom-message': { label: 'Custom Message', subject: '', bodyText: '' } },
+  web: { 'custom-message': { label: 'Custom Message', subject: '', bodyText: '' } },
+  ads: { 'custom-message': { label: 'Custom Message', subject: '', bodyText: '' } }
+};
+
+type NewsletterSend = {
+  _id: string;
+  subscriberId: string | { _id: string; email: string; name?: string };
+  campaignId?: string;
+  category: NewsletterCategory | 'signup';
+  templateKey?: string;
+  subject: string;
+  html: string;
+  opened: boolean;
+  openedAt?: string;
+  clicked: boolean;
+  clickedAt?: string;
+  sentAt: string;
+};
+
+type NewsletterCampaign = {
+  _id: string;
+  category: NewsletterCategory;
+  templateKey: string;
+  subject: string;
+  html: string;
+  recipientCount: number;
+  createdAt: string;
+};
+
+type FileAttachment = { filename: string; content: string };
+
+function readFileAsAttachment(file: File): Promise<FileAttachment> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = String(reader.result || '');
+      const base64 = result.split(',')[1] || '';
+      resolve({ filename: file.name, content: base64 });
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+type PastedSubscriber = { email: string; name: string; phone: string; businessName: string; socialUrl: string };
+
+// Excel/Sheets pastes are tab-separated when copied as a range; fall back to
+// comma-separated for plain-text pastes.
+const splitSubscriberLine = (line: string): string[] =>
+  (line.includes('\t') ? line.split('\t') : line.split(',')).map((cell) => cell.trim());
+
+// Some exported sheets include a lone "Genre" section/divider row between the
+// header and the real data (or between blocks of rows) — it isn't a
+// subscriber, just a label, recognizable by mentioning "genre" while having
+// almost no other content.
+const isGenreMarkerRow = (row: string[]) =>
+  row.some((cell) => /genre/i.test(cell)) && row.filter(Boolean).length <= 2;
+
+const parsePastedSubscribers = (text: string): PastedSubscriber[] => {
+  const rows = text
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map(splitSubscriberLine)
+    .filter((row) => !isGenreMarkerRow(row));
+
+  if (!rows.length) return [];
+
+  const headerKeywords = /email|name|phone|business|instagram|social/i;
+  const looksLikeHeader = rows[0].some((cell) => headerKeywords.test(cell));
+
+  let emailIdx = 0;
+  let nameIdx = -1;
+  let phoneIdx = -1;
+  let businessIdx = -1;
+  let socialIdx = -1;
+
+  if (looksLikeHeader) {
+    rows[0].forEach((cell, idx) => {
+      const c = cell.toLowerCase();
+      if (c.includes('email')) emailIdx = idx;
+      else if (c.includes('instagram') || c.includes('social')) socialIdx = idx;
+      else if (c.includes('business')) businessIdx = idx;
+      else if (c.includes('phone')) phoneIdx = idx;
+      else if (c.includes('name')) nameIdx = idx;
+    });
+  } else {
+    [emailIdx, nameIdx, phoneIdx, businessIdx, socialIdx] = [0, 1, 2, 3, 4];
+  }
+
+  const dataRows = looksLikeHeader ? rows.slice(1) : rows;
+
+  return dataRows
+    .filter((row) => !isGenreMarkerRow(row))
+    .map((row) => ({
+      email: (row[emailIdx] || '').trim(),
+      name: nameIdx >= 0 ? (row[nameIdx] || '').trim() : '',
+      phone: phoneIdx >= 0 ? (row[phoneIdx] || '').trim() : '',
+      businessName: businessIdx >= 0 ? (row[businessIdx] || '').trim() : '',
+      socialUrl: socialIdx >= 0 ? (row[socialIdx] || '').trim() : ''
+    }))
+    .filter((row) => row.email.includes('@'));
 };
 
 const Admin = () => {
@@ -173,11 +334,42 @@ const Admin = () => {
   const [sendingMarketingEmail, setSendingMarketingEmail] = useState(false);
 
   const [showAddSubscriber, setShowAddSubscriber] = useState(false);
-  const [newSubscriber, setNewSubscriber] = useState({ email: '', name: '', phone: '', businessName: '', ...emptySubscriberInterests });
+  const BLANK_SUBSCRIBER_FORM = { email: '', name: '', phone: '', businessName: '', socialUrl: '', ...emptySubscriberInterests };
+  const [newSubscriber, setNewSubscriber] = useState(BLANK_SUBSCRIBER_FORM);
   const [editingSubscriberId, setEditingSubscriberId] = useState<string | null>(null);
-  const [subscriberEditForm, setSubscriberEditForm] = useState({ email: '', name: '', phone: '', businessName: '', ...emptySubscriberInterests });
+  const [subscriberEditForm, setSubscriberEditForm] = useState({ email: '', name: '', phone: '', businessName: '', socialUrl: '', ...emptySubscriberInterests });
+  const [showPasteSubscribers, setShowPasteSubscribers] = useState(false);
+  const [pasteSubscribersText, setPasteSubscribersText] = useState('');
+  const [importingSubscribers, setImportingSubscribers] = useState(false);
   const [subscriberImportStatus, setSubscriberImportStatus] = useState('');
   const subscriberFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Contact panel (per-subscriber, inline "box underneath" the row)
+  const BLANK_CONTACT_FORM = { category: 'beats' as NewsletterCategory, templateKey: 'custom-message', subject: '', bodyText: '', ctaLabel: '', ctaUrl: '', resendCampaignId: '' };
+  const [contactOpenId, setContactOpenId] = useState<string | null>(null);
+  const [contactForm, setContactForm] = useState(BLANK_CONTACT_FORM);
+  const [contactAttachments, setContactAttachments] = useState<FileAttachment[]>([]);
+  const [contactCampaigns, setContactCampaigns] = useState<NewsletterCampaign[]>([]);
+  const [contactSending, setContactSending] = useState(false);
+
+  // Per-subscriber Analytics modal
+  const [analyticsSubscriber, setAnalyticsSubscriber] = useState<Subscriber | null>(null);
+  const [analyticsSends, setAnalyticsSends] = useState<NewsletterSend[]>([]);
+  const [loadingSubscriberAnalytics, setLoadingSubscriberAnalytics] = useState(false);
+
+  // Global "analytics for a newsletter type" view
+  const [showNewsletterAnalytics, setShowNewsletterAnalytics] = useState(false);
+  const [analyticsCategory, setAnalyticsCategory] = useState<'all' | NewsletterCategory>('all');
+  const [categoryStats, setCategoryStats] = useState<{ totalSent: number; totalOpened: number; totalClicked: number; openRate: number; clickRate: number } | null>(null);
+  const [categorySends, setCategorySends] = useState<NewsletterSend[]>([]);
+  const [loadingCategoryAnalytics, setLoadingCategoryAnalytics] = useState(false);
+
+  // Create Campaign modal
+  const [showCreateCampaign, setShowCreateCampaign] = useState(false);
+  const BLANK_CAMPAIGN_FORM = { category: 'beats' as NewsletterCategory, templateKey: 'custom-message', subject: '', bodyText: '', ctaLabel: '', ctaUrl: '' };
+  const [campaignForm, setCampaignForm] = useState(BLANK_CAMPAIGN_FORM);
+  const [campaignAttachments, setCampaignAttachments] = useState<FileAttachment[]>([]);
+  const [campaignSending, setCampaignSending] = useState(false);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [planFilter, setPlanFilter] = useState<'all' | Agreement['planType']>('all');
@@ -250,7 +442,7 @@ const Admin = () => {
       const response = await axios.post(`${API_BASE_URL}/newsletter/subscribers`, newSubscriber);
       if (response.data?.ok) {
         setMessage(response.data.duplicate ? 'A subscriber with this email already exists.' : 'Subscriber added.');
-        setNewSubscriber({ email: '', name: '', phone: '', businessName: '', ...emptySubscriberInterests });
+        setNewSubscriber(BLANK_SUBSCRIBER_FORM);
         setShowAddSubscriber(false);
         fetchSubscribers();
       } else {
@@ -262,6 +454,222 @@ const Admin = () => {
     }
   };
 
+  const handlePasteSubscribers = async () => {
+    const parsed = parsePastedSubscribers(pasteSubscribersText);
+    if (!parsed.length) {
+      setError('Could not detect any subscribers in the pasted text.');
+      return;
+    }
+    setImportingSubscribers(true);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/newsletter/subscribers/import-bulk`, { subscribers: parsed });
+      if (response.data?.ok) {
+        setMessage(`Imported ${response.data.created} subscriber${response.data.created === 1 ? '' : 's'}${response.data.skipped ? ` — skipped ${response.data.skipped} (duplicate or missing email)` : ''}.`);
+        setPasteSubscribersText('');
+        setShowPasteSubscribers(false);
+        fetchSubscribers();
+      } else {
+        setError(response.data?.message || 'Could not import subscribers.');
+      }
+    } catch (importError) {
+      console.error(importError);
+      setError('Could not import subscribers.');
+    } finally {
+      setImportingSubscribers(false);
+    }
+  };
+
+  // ── Contact panel ────────────────────────────────────────────────────────
+
+  const loadCampaignsForCategory = async (category: NewsletterCategory) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/newsletter/campaigns`, { params: { category } });
+      setContactCampaigns(response.data?.campaigns || []);
+    } catch (loadError) {
+      console.error(loadError);
+      setContactCampaigns([]);
+    }
+  };
+
+  const handleOpenContact = (subscriber: Subscriber) => {
+    if (contactOpenId === subscriber._id) {
+      setContactOpenId(null);
+      return;
+    }
+    const defaultCategory = subscriberCategories(subscriber)[0] || 'beats';
+    const preset = TEMPLATE_PRESETS[defaultCategory]['custom-message'];
+    setContactForm({ ...BLANK_CONTACT_FORM, category: defaultCategory, subject: preset.subject, bodyText: preset.bodyText });
+    setContactAttachments([]);
+    setAnalyticsSubscriber(null); // don't show two overlapping subscriber panels at once
+    setContactOpenId(subscriber._id);
+    loadCampaignsForCategory(defaultCategory);
+  };
+
+  const handleContactCategoryChange = (category: NewsletterCategory) => {
+    const templateKey = 'custom-message';
+    const preset = TEMPLATE_PRESETS[category][templateKey];
+    setContactForm({ ...contactForm, category, templateKey, subject: preset.subject, bodyText: preset.bodyText, ctaLabel: preset.ctaLabel || '', ctaUrl: preset.ctaUrl || '', resendCampaignId: '' });
+    loadCampaignsForCategory(category);
+  };
+
+  const handleContactTemplateChange = (templateKey: string) => {
+    const preset = TEMPLATE_PRESETS[contactForm.category][templateKey];
+    setContactForm({ ...contactForm, templateKey, subject: preset.subject, bodyText: preset.bodyText, ctaLabel: preset.ctaLabel || '', ctaUrl: preset.ctaUrl || '', resendCampaignId: '' });
+  };
+
+  const handleContactResendCampaignChange = (campaignId: string) => {
+    if (!campaignId) {
+      setContactForm({ ...contactForm, resendCampaignId: '' });
+      return;
+    }
+    const campaign = contactCampaigns.find((c) => c._id === campaignId);
+    setContactForm({
+      ...contactForm,
+      resendCampaignId: campaignId,
+      subject: campaign?.subject || contactForm.subject,
+      bodyText: campaign?.html || contactForm.bodyText
+    });
+  };
+
+  const handleContactAttachmentChange = async (files: FileList | null) => {
+    if (!files || !files.length) return;
+    const read = await Promise.all(Array.from(files).map(readFileAsAttachment));
+    setContactAttachments(read);
+  };
+
+  const handleSendContact = async (subscriber: Subscriber) => {
+    setContactSending(true);
+    try {
+      const payload = contactForm.resendCampaignId
+        ? { resendCampaignId: contactForm.resendCampaignId }
+        : {
+            category: contactForm.category,
+            templateKey: contactForm.templateKey,
+            subject: contactForm.subject,
+            bodyText: contactForm.bodyText,
+            ctaLabel: contactForm.ctaLabel,
+            ctaUrl: contactForm.ctaUrl,
+            attachments: contactAttachments
+          };
+      const response = await axios.post(`${API_BASE_URL}/newsletter/subscribers/${subscriber._id}/send`, payload);
+      if (response.data?.ok) {
+        setMessage(`Email sent to ${subscriber.email}.`);
+        setContactOpenId(null);
+      } else {
+        setError(response.data?.message || 'Could not send email.');
+      }
+    } catch (sendError: any) {
+      setError(sendError?.response?.data?.message || 'Could not send email.');
+    } finally {
+      setContactSending(false);
+    }
+  };
+
+  // ── Per-subscriber analytics ────────────────────────────────────────────
+
+  const handleOpenSubscriberAnalytics = async (subscriber: Subscriber) => {
+    setContactOpenId(null);
+    setAnalyticsSubscriber(subscriber);
+    setLoadingSubscriberAnalytics(true);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/newsletter/subscribers/${subscriber._id}/sends`);
+      setAnalyticsSends(response.data?.sends || []);
+    } catch (loadError) {
+      console.error(loadError);
+      setAnalyticsSends([]);
+    } finally {
+      setLoadingSubscriberAnalytics(false);
+    }
+  };
+
+  // ── Global "analytics by newsletter type" view ──────────────────────────
+
+  const loadCategoryAnalytics = async (category: 'all' | NewsletterCategory) => {
+    setLoadingCategoryAnalytics(true);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/newsletter/analytics`, { params: { category } });
+      setCategoryStats(response.data?.stats || null);
+      setCategorySends(response.data?.sends || []);
+    } catch (loadError) {
+      console.error(loadError);
+      setCategoryStats(null);
+      setCategorySends([]);
+    } finally {
+      setLoadingCategoryAnalytics(false);
+    }
+  };
+
+  const handleToggleNewsletterAnalytics = () => {
+    const next = !showNewsletterAnalytics;
+    setShowNewsletterAnalytics(next);
+    if (next) loadCategoryAnalytics(analyticsCategory);
+  };
+
+  const handleAnalyticsCategoryChange = (category: 'all' | NewsletterCategory) => {
+    setAnalyticsCategory(category);
+    loadCategoryAnalytics(category);
+  };
+
+  // ── Create Campaign ──────────────────────────────────────────────────────
+
+  const handleOpenCreateCampaign = () => {
+    const preset = TEMPLATE_PRESETS.beats['custom-message'];
+    setCampaignForm({ ...BLANK_CAMPAIGN_FORM, subject: preset.subject, bodyText: preset.bodyText });
+    setCampaignAttachments([]);
+    setShowCreateCampaign(true);
+  };
+
+  const handleCampaignCategoryChange = (category: NewsletterCategory) => {
+    const templateKey = 'custom-message';
+    const preset = TEMPLATE_PRESETS[category][templateKey];
+    setCampaignForm({ ...campaignForm, category, templateKey, subject: preset.subject, bodyText: preset.bodyText, ctaLabel: preset.ctaLabel || '', ctaUrl: preset.ctaUrl || '' });
+  };
+
+  const handleCampaignTemplateChange = (templateKey: string) => {
+    const preset = TEMPLATE_PRESETS[campaignForm.category][templateKey];
+    setCampaignForm({ ...campaignForm, templateKey, subject: preset.subject, bodyText: preset.bodyText, ctaLabel: preset.ctaLabel || '', ctaUrl: preset.ctaUrl || '' });
+  };
+
+  const handleCampaignAttachmentChange = async (files: FileList | null) => {
+    if (!files || !files.length) return;
+    const read = await Promise.all(Array.from(files).map(readFileAsAttachment));
+    setCampaignAttachments(read);
+  };
+
+  const campaignRecipientCount = useMemo(
+    () => subscribers.filter((s) => s[campaignForm.category]).length,
+    [subscribers, campaignForm.category]
+  );
+
+  const handleSendCampaign = async () => {
+    if (!window.confirm(`Send this to all ${campaignRecipientCount} subscriber(s) interested in ${NEWSLETTER_CATEGORY_LABELS[campaignForm.category]}?`)) {
+      return;
+    }
+    setCampaignSending(true);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/newsletter/campaigns`, {
+        category: campaignForm.category,
+        templateKey: campaignForm.templateKey,
+        subject: campaignForm.subject,
+        bodyText: campaignForm.bodyText,
+        ctaLabel: campaignForm.ctaLabel,
+        ctaUrl: campaignForm.ctaUrl,
+        attachments: campaignAttachments
+      });
+      if (response.data?.ok) {
+        setMessage(`Campaign sent to ${response.data.sent} of ${response.data.total} subscribers.`);
+        setShowCreateCampaign(false);
+        if (showNewsletterAnalytics) loadCategoryAnalytics(analyticsCategory);
+      } else {
+        setError(response.data?.message || 'Could not send campaign.');
+      }
+    } catch (sendError: any) {
+      setError(sendError?.response?.data?.message || 'Could not send campaign.');
+    } finally {
+      setCampaignSending(false);
+    }
+  };
+
   const handleStartEditSubscriber = (subscriber: Subscriber) => {
     setEditingSubscriberId(subscriber._id);
     setSubscriberEditForm({
@@ -269,8 +677,11 @@ const Admin = () => {
       name: subscriber.name || '',
       phone: subscriber.phone || '',
       businessName: subscriber.businessName || '',
+      socialUrl: subscriber.socialUrl || '',
       beats: subscriber.beats || false,
+      mixing: subscriber.mixing || false,
       loops: subscriber.loops || false,
+      loopsTemplates: subscriber.loopsTemplates || false,
       visuals: subscriber.visuals || false,
       web: subscriber.web || false,
       ads: subscriber.ads || false,
@@ -280,7 +691,7 @@ const Admin = () => {
 
   const handleCancelEditSubscriber = () => {
     setEditingSubscriberId(null);
-    setSubscriberEditForm({ email: '', name: '', phone: '', businessName: '', ...emptySubscriberInterests });
+    setSubscriberEditForm({ email: '', name: '', phone: '', businessName: '', socialUrl: '', ...emptySubscriberInterests });
   };
 
   const handleSaveSubscriber = async (subscriberId: string) => {
@@ -342,9 +753,11 @@ const Admin = () => {
           email: String(findSubscriberField(row, ['email', 'email address']) ?? '').trim(),
           name: String(findSubscriberField(row, ['name', 'full name']) ?? '').trim(),
           phone: String(findSubscriberField(row, ['phone', 'phone number']) ?? '').trim(),
-          businessName: String(findSubscriberField(row, ['businessname', 'business name']) ?? '').trim(),
+          socialUrl: String(findSubscriberField(row, ['instagram', 'social', 'social url', 'socialurl']) ?? '').trim(),
           beats: toBoolField(findSubscriberField(row, ['beats'])),
+          mixing: toBoolField(findSubscriberField(row, ['mixing'])),
           loops: toBoolField(findSubscriberField(row, ['loops'])),
+          loopsTemplates: toBoolField(findSubscriberField(row, ['loopstemplates', 'loops & templates', 'loops and templates'])),
           visuals: toBoolField(findSubscriberField(row, ['visuals'])),
           web: toBoolField(findSubscriberField(row, ['web'])),
           ads: toBoolField(findSubscriberField(row, ['ads'])),
@@ -622,10 +1035,11 @@ const Admin = () => {
   };
 
   const handleExportSubscribersCsv = () => {
-    const header = ['Email', 'Beats', 'Loops', 'Visuals', 'Web', 'Ads', 'Vocal Templates', 'Subscribed At'];
+    const header = ['Email', 'Beats', 'Mixing', 'Loops', 'Visuals', 'Web', 'Ads', 'Subscribed At'];
     const rows = subscribers.map((subscriber) => [
       subscriber.email,
       subscriber.beats ? 'Yes' : 'No',
+      subscriber.mixing ? 'Yes' : 'No',
       subscriber.loops ? 'Yes' : 'No',
       subscriber.visuals ? 'Yes' : 'No',
       subscriber.web ? 'Yes' : 'No',
@@ -643,6 +1057,7 @@ const Admin = () => {
     const rows = subscribers.map((subscriber) => ({
       Email: subscriber.email,
       Beats: subscriber.beats ? 'Yes' : 'No',
+      Mixing: subscriber.mixing ? 'Yes' : 'No',
       Loops: subscriber.loops ? 'Yes' : 'No',
       Visuals: subscriber.visuals ? 'Yes' : 'No',
       Web: subscriber.web ? 'Yes' : 'No',
@@ -1085,13 +1500,125 @@ const Admin = () => {
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginTop: '2.5rem', marginBottom: '1rem' }}>
         <h2 style={{ color: '#68FF00', margin: 0 }}>Newsletter Subscribers</h2>
-        <Button size="sm" variant="success" onClick={() => setShowAddSubscriber((prev) => !prev)}>
-          {showAddSubscriber ? 'Cancel' : '+ Add Subscriber'}
-        </Button>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <Button size="sm" variant="outline-info" onClick={handleToggleNewsletterAnalytics}>
+            {showNewsletterAnalytics ? 'Hide Analytics' : '📊 Newsletter Analytics'}
+          </Button>
+          <Button size="sm" variant="outline-warning" onClick={handleOpenCreateCampaign}>
+            + Create Campaign
+          </Button>
+          <Button size="sm" variant="outline-success" onClick={() => setShowPasteSubscribers((prev) => !prev)}>
+            {showPasteSubscribers ? 'Cancel' : '+ Paste From Excel'}
+          </Button>
+          <Button size="sm" variant="success" onClick={() => setShowAddSubscriber((prev) => !prev)}>
+            {showAddSubscriber ? 'Cancel' : '+ Add Subscriber'}
+          </Button>
+        </div>
       </div>
+
+      {showNewsletterAnalytics ? (
+        <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', marginBottom: '1.25rem' }}>
+          <Card.Body>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Analytics by Newsletter Type</h3>
+              <Form.Select
+                size="sm"
+                style={{ maxWidth: '220px' }}
+                value={analyticsCategory}
+                onChange={(e) => handleAnalyticsCategoryChange(e.target.value as 'all' | NewsletterCategory)}
+              >
+                <option value="all">All Types</option>
+                {NEWSLETTER_CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>{NEWSLETTER_CATEGORY_LABELS[cat]}</option>
+                ))}
+              </Form.Select>
+            </div>
+
+            {loadingCategoryAnalytics ? <p>Loading analytics...</p> : null}
+
+            {!loadingCategoryAnalytics && categoryStats ? (
+              <>
+                <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase' }}>Sent</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{categoryStats.totalSent}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase' }}>Opened</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#68FF00' }}>
+                      {categoryStats.totalOpened} <small style={{ fontSize: '0.9rem', color: '#aaa' }}>({(categoryStats.openRate * 100).toFixed(0)}%)</small>
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase' }}>Clicked</div>
+                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#38bdf8' }}>
+                      {categoryStats.totalClicked} <small style={{ fontSize: '0.9rem', color: '#aaa' }}>({(categoryStats.clickRate * 100).toFixed(0)}%)</small>
+                    </div>
+                  </div>
+                </div>
+
+                {categorySends.length === 0 ? (
+                  <Alert variant="secondary">No emails sent for this type yet.</Alert>
+                ) : (
+                  <Table striped bordered hover variant="dark" responsive size="sm">
+                    <thead>
+                      <tr>
+                        <th>Recipient</th>
+                        <th>Type</th>
+                        <th>Subject</th>
+                        <th>Sent</th>
+                        <th>Opened</th>
+                        <th>Clicked</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {categorySends.map((send) => {
+                        const recipient = typeof send.subscriberId === 'object' ? send.subscriberId : null;
+                        return (
+                          <tr key={send._id}>
+                            <td>{recipient?.email || '—'}</td>
+                            <td><Badge bg="secondary">{NEWSLETTER_CATEGORY_LABELS[send.category as NewsletterCategory] || send.category}</Badge></td>
+                            <td>{send.subject}</td>
+                            <td>{new Date(send.sentAt).toLocaleString()}</td>
+                            <td>{send.opened ? <span style={{ color: '#68FF00' }}>✓ {send.openedAt ? new Date(send.openedAt).toLocaleDateString() : ''}</span> : <span style={{ color: '#666' }}>—</span>}</td>
+                            <td>{send.clicked ? <span style={{ color: '#38bdf8' }}>✓ {send.clickedAt ? new Date(send.clickedAt).toLocaleDateString() : ''}</span> : <span style={{ color: '#666' }}>—</span>}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </Table>
+                )}
+              </>
+            ) : null}
+          </Card.Body>
+        </Card>
+      ) : null}
       <p style={{ color: '#d4d4d4', marginBottom: '1rem' }}>
         {subscribers.length} newsletter subscriber{subscribers.length === 1 ? '' : 's'}.
       </p>
+
+      {showPasteSubscribers ? (
+        <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', marginBottom: '1.25rem' }}>
+          <Card.Body>
+            <p style={{ color: '#aaa', fontSize: '0.85rem' }}>
+              Paste rows copied from Excel/Sheets — one subscriber per line, tab or comma separated. A header row
+              (Email, Name, Phone, Business, Instagram) is used to match columns if present; otherwise that order is
+              assumed. Any stray row that's just a "Genre" marker/divider is ignored automatically, and duplicate
+              emails are skipped.
+            </p>
+            <Form.Control
+              as="textarea"
+              rows={6}
+              value={pasteSubscribersText}
+              onChange={(e) => setPasteSubscribersText(e.target.value)}
+              placeholder={'Email\tName\tPhone\tBusiness\tInstagram\njane@example.com\tJane Doe\t305-555-1234\tJane\'s Bakery\t@janesbakery'}
+            />
+            <Button size="sm" variant="outline-light" className="mt-2" onClick={handlePasteSubscribers} disabled={!pasteSubscribersText.trim() || importingSubscribers}>
+              {importingSubscribers ? 'Importing...' : 'Detect & Import Subscribers'}
+            </Button>
+          </Card.Body>
+        </Card>
+      ) : null}
 
       {showAddSubscriber ? (
         <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', marginBottom: '1.25rem' }}>
@@ -1112,6 +1639,10 @@ const Admin = () => {
               <Form.Group className="mb-3">
                 <Form.Label>Business Name</Form.Label>
                 <Form.Control value={newSubscriber.businessName} onChange={(e) => setNewSubscriber({ ...newSubscriber, businessName: e.target.value })} />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Instagram</Form.Label>
+                <Form.Control value={newSubscriber.socialUrl} onChange={(e) => setNewSubscriber({ ...newSubscriber, socialUrl: e.target.value })} placeholder="@handle or profile URL" />
               </Form.Group>
               <Form.Group className="mb-3">
                 <Form.Label>Interests</Form.Label>
@@ -1169,6 +1700,7 @@ const Admin = () => {
               <th>Name</th>
               <th>Phone</th>
               <th>Business Name</th>
+              <th>Instagram</th>
               <th>Interests</th>
               <th>Subscribed At</th>
               <th>Actions</th>
@@ -1184,6 +1716,7 @@ const Admin = () => {
                     <td><Form.Control size="sm" value={subscriberEditForm.name} onChange={(e) => setSubscriberEditForm({ ...subscriberEditForm, name: e.target.value })} /></td>
                     <td><Form.Control size="sm" value={subscriberEditForm.phone} onChange={(e) => setSubscriberEditForm({ ...subscriberEditForm, phone: e.target.value })} /></td>
                     <td><Form.Control size="sm" value={subscriberEditForm.businessName} onChange={(e) => setSubscriberEditForm({ ...subscriberEditForm, businessName: e.target.value })} /></td>
+                    <td><Form.Control size="sm" value={subscriberEditForm.socialUrl} onChange={(e) => setSubscriberEditForm({ ...subscriberEditForm, socialUrl: e.target.value })} /></td>
                     <td>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                         {INTEREST_FIELDS.map((field) => (
@@ -1208,25 +1741,238 @@ const Admin = () => {
                 );
               }
               return (
-                <tr key={subscriber._id}>
-                  <td>{subscriber.email}</td>
-                  <td>{subscriber.name || '—'}</td>
-                  <td>{subscriber.phone || '—'}</td>
-                  <td>{subscriber.businessName || '—'}</td>
-                  <td>{subscriberInterestLabel(subscriber)}</td>
-                  <td>{new Date(subscriber.createdAt).toLocaleString()}</td>
-                  <td>
-                    <div style={{ display: 'flex', gap: '0.4rem' }}>
-                      <Button size="sm" variant="outline-light" onClick={() => handleStartEditSubscriber(subscriber)}>Edit</Button>
-                      <Button size="sm" variant="outline-danger" onClick={() => handleDeleteSubscriber(subscriber._id)}>Delete</Button>
-                    </div>
-                  </td>
-                </tr>
+                <Fragment key={subscriber._id}>
+                  <tr>
+                    <td>{subscriber.email}</td>
+                    <td>{subscriber.name || '—'}</td>
+                    <td>{subscriber.phone || '—'}</td>
+                    <td>{subscriber.businessName || '—'}</td>
+                    <td>{subscriber.socialUrl || '—'}</td>
+                    <td>{subscriberInterestLabel(subscriber)}</td>
+                    <td>{new Date(subscriber.createdAt).toLocaleString()}</td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                        <Button size="sm" variant={contactOpenId === subscriber._id ? 'warning' : 'outline-warning'} onClick={() => handleOpenContact(subscriber)}>
+                          {contactOpenId === subscriber._id ? 'Close' : 'Contact'}
+                        </Button>
+                        <Button size="sm" variant="outline-info" onClick={() => handleOpenSubscriberAnalytics(subscriber)}>Analytics</Button>
+                        <Button size="sm" variant="outline-light" onClick={() => handleStartEditSubscriber(subscriber)}>Edit</Button>
+                        <Button size="sm" variant="outline-danger" onClick={() => handleDeleteSubscriber(subscriber._id)}>Delete</Button>
+                      </div>
+                    </td>
+                  </tr>
+                  {contactOpenId === subscriber._id ? (
+                    <tr>
+                      <td colSpan={8} style={{ background: '#0a0a0a' }}>
+                        <div style={{ padding: '1rem' }}>
+                          <h4 style={{ fontSize: '1rem', marginBottom: '0.75rem' }}>
+                            Contact {subscriber.name || subscriber.email}
+                          </h4>
+                          <Form.Group className="mb-2">
+                            <Form.Label style={{ fontSize: '0.8rem' }}>Newsletter Type</Form.Label>
+                            <Form.Select size="sm" style={{ maxWidth: '260px' }} value={contactForm.category} onChange={(e) => handleContactCategoryChange(e.target.value as NewsletterCategory)}>
+                              {NEWSLETTER_CATEGORIES.map((cat) => (
+                                <option key={cat} value={cat}>
+                                  {NEWSLETTER_CATEGORY_LABELS[cat]}{subscriber[cat] ? ' ✓ subscribed' : ''}
+                                </option>
+                              ))}
+                            </Form.Select>
+                          </Form.Group>
+
+                          <Form.Group className="mb-2">
+                            <Form.Label style={{ fontSize: '0.8rem' }}>Resend a Previous Campaign (optional)</Form.Label>
+                            <Form.Select size="sm" style={{ maxWidth: '360px' }} value={contactForm.resendCampaignId} onChange={(e) => handleContactResendCampaignChange(e.target.value)}>
+                              <option value="">— Or compose a new email below —</option>
+                              {contactCampaigns.map((c) => (
+                                <option key={c._id} value={c._id}>{c.subject} ({new Date(c.createdAt).toLocaleDateString()})</option>
+                              ))}
+                            </Form.Select>
+                          </Form.Group>
+
+                          {!contactForm.resendCampaignId ? (
+                            <>
+                              <Form.Group className="mb-2">
+                                <Form.Label style={{ fontSize: '0.8rem' }}>Template</Form.Label>
+                                <Form.Select size="sm" style={{ maxWidth: '260px' }} value={contactForm.templateKey} onChange={(e) => handleContactTemplateChange(e.target.value)}>
+                                  {Object.entries(TEMPLATE_PRESETS[contactForm.category]).map(([key, preset]) => (
+                                    <option key={key} value={key}>{preset.label}</option>
+                                  ))}
+                                </Form.Select>
+                              </Form.Group>
+                              <Form.Group className="mb-2">
+                                <Form.Label style={{ fontSize: '0.8rem' }}>Subject</Form.Label>
+                                <Form.Control size="sm" value={contactForm.subject} onChange={(e) => setContactForm({ ...contactForm, subject: e.target.value })} />
+                              </Form.Group>
+                              <Form.Group className="mb-2">
+                                <Form.Label style={{ fontSize: '0.8rem' }}>Message ("(name)" is replaced with their first name)</Form.Label>
+                                <Form.Control as="textarea" rows={5} size="sm" value={contactForm.bodyText} onChange={(e) => setContactForm({ ...contactForm, bodyText: e.target.value })} />
+                              </Form.Group>
+                              <Row>
+                                <Col md={6}>
+                                  <Form.Group className="mb-2">
+                                    <Form.Label style={{ fontSize: '0.8rem' }}>Button Label (optional)</Form.Label>
+                                    <Form.Control size="sm" value={contactForm.ctaLabel} onChange={(e) => setContactForm({ ...contactForm, ctaLabel: e.target.value })} />
+                                  </Form.Group>
+                                </Col>
+                                <Col md={6}>
+                                  <Form.Group className="mb-2">
+                                    <Form.Label style={{ fontSize: '0.8rem' }}>Button Link (optional)</Form.Label>
+                                    <Form.Control size="sm" value={contactForm.ctaUrl} onChange={(e) => setContactForm({ ...contactForm, ctaUrl: e.target.value })} />
+                                  </Form.Group>
+                                </Col>
+                              </Row>
+                              <Form.Group className="mb-3">
+                                <Form.Label style={{ fontSize: '0.8rem' }}>
+                                  Attach Files {contactForm.category === 'beats' && contactForm.templateKey === 'custom-beats-for-you' ? '(upload the beats to send)' : '(optional)'}
+                                </Form.Label>
+                                <Form.Control size="sm" type="file" multiple onChange={(e) => handleContactAttachmentChange((e.target as HTMLInputElement).files)} />
+                                {contactAttachments.length ? (
+                                  <div style={{ fontSize: '0.75rem', color: '#aaa', marginTop: '0.25rem' }}>
+                                    {contactAttachments.map((a) => a.filename).join(', ')}
+                                  </div>
+                                ) : null}
+                                {(contactForm.category === 'beats' || contactForm.category === 'loops') ? (
+                                  <div style={{ fontSize: '0.7rem', color: '#666', marginTop: '0.25rem' }}>
+                                    The {contactForm.category === 'beats' ? 'Beats' : 'Loops'} Terms of Usage PDF is attached automatically.
+                                  </div>
+                                ) : null}
+                              </Form.Group>
+                            </>
+                          ) : (
+                            <p style={{ fontSize: '0.8rem', color: '#aaa' }}>
+                              This will resend the selected campaign's exact subject and message.
+                            </p>
+                          )}
+
+                          <Button size="sm" variant="success" disabled={contactSending || !contactForm.subject || !contactForm.bodyText} onClick={() => handleSendContact(subscriber)}>
+                            {contactSending ? 'Sending...' : `Send to ${subscriber.email}`}
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : null}
+                </Fragment>
               );
             })}
           </tbody>
         </Table>
       ) : null}
+
+      <Modal show={Boolean(analyticsSubscriber)} onHide={() => setAnalyticsSubscriber(null)} size="lg" centered>
+        <Modal.Header style={{ background: '#111', color: 'white', borderBottom: '1px solid #2b2b2b' }}>
+          <Modal.Title>
+            Analytics — {analyticsSubscriber?.name || analyticsSubscriber?.email}
+          </Modal.Title>
+          <button type="button" className="btn-close btn-close-danger" aria-label="Close" onClick={() => setAnalyticsSubscriber(null)} />
+        </Modal.Header>
+        <Modal.Body style={{ background: '#111', color: 'white' }}>
+          {loadingSubscriberAnalytics ? <p>Loading...</p> : null}
+          {!loadingSubscriberAnalytics && analyticsSends.length === 0 ? (
+            <Alert variant="secondary">No emails sent to this subscriber yet.</Alert>
+          ) : null}
+          {!loadingSubscriberAnalytics && analyticsSends.length > 0 ? (
+            <Table striped bordered hover variant="dark" responsive size="sm">
+              <thead>
+                <tr>
+                  <th>Type</th>
+                  <th>Template</th>
+                  <th>Subject</th>
+                  <th>Sent</th>
+                  <th>Opened</th>
+                  <th>Clicked</th>
+                </tr>
+              </thead>
+              <tbody>
+                {analyticsSends.map((send) => (
+                  <tr key={send._id}>
+                    <td>
+                      <Badge bg={send.category === 'signup' ? 'secondary' : 'info'}>
+                        {send.category === 'signup' ? 'Signup' : NEWSLETTER_CATEGORY_LABELS[send.category as NewsletterCategory] || send.category}
+                      </Badge>
+                    </td>
+                    <td style={{ fontSize: '0.8rem', color: '#aaa' }}>{send.templateKey || '—'}</td>
+                    <td>{send.subject}</td>
+                    <td>{new Date(send.sentAt).toLocaleString()}</td>
+                    <td>{send.opened ? <span style={{ color: '#68FF00' }}>✓ Opened</span> : <span style={{ color: '#666' }}>Not opened</span>}</td>
+                    <td>{send.clicked ? <span style={{ color: '#38bdf8' }}>✓ Clicked</span> : <span style={{ color: '#666' }}>Not clicked</span>}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          ) : null}
+        </Modal.Body>
+        <Modal.Footer style={{ background: '#111', borderTop: '1px solid #2b2b2b' }}>
+          <Button variant="outline-light" size="sm" onClick={() => setAnalyticsSubscriber(null)}>Close</Button>
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={showCreateCampaign} onHide={() => setShowCreateCampaign(false)} size="lg" centered>
+        <Modal.Header style={{ background: '#111', color: 'white', borderBottom: '1px solid #2b2b2b' }}>
+          <Modal.Title>Create Campaign</Modal.Title>
+          <button type="button" className="btn-close btn-close-danger" aria-label="Close" onClick={() => setShowCreateCampaign(false)} />
+        </Modal.Header>
+        <Modal.Body style={{ background: '#111', color: 'white' }}>
+          <Form.Group className="mb-2">
+            <Form.Label style={{ fontSize: '0.8rem' }}>Newsletter Type</Form.Label>
+            <Form.Select size="sm" value={campaignForm.category} onChange={(e) => handleCampaignCategoryChange(e.target.value as NewsletterCategory)}>
+              {NEWSLETTER_CATEGORIES.map((cat) => (
+                <option key={cat} value={cat}>{NEWSLETTER_CATEGORY_LABELS[cat]}</option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+          <Form.Group className="mb-2">
+            <Form.Label style={{ fontSize: '0.8rem' }}>Template</Form.Label>
+            <Form.Select size="sm" value={campaignForm.templateKey} onChange={(e) => handleCampaignTemplateChange(e.target.value)}>
+              {Object.entries(TEMPLATE_PRESETS[campaignForm.category]).map(([key, preset]) => (
+                <option key={key} value={key}>{preset.label}</option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+          <Form.Group className="mb-2">
+            <Form.Label style={{ fontSize: '0.8rem' }}>Subject</Form.Label>
+            <Form.Control size="sm" value={campaignForm.subject} onChange={(e) => setCampaignForm({ ...campaignForm, subject: e.target.value })} />
+          </Form.Group>
+          <Form.Group className="mb-2">
+            <Form.Label style={{ fontSize: '0.8rem' }}>Message ("(name)" is replaced with each recipient's first name)</Form.Label>
+            <Form.Control as="textarea" rows={5} size="sm" value={campaignForm.bodyText} onChange={(e) => setCampaignForm({ ...campaignForm, bodyText: e.target.value })} />
+          </Form.Group>
+          <Row>
+            <Col md={6}>
+              <Form.Group className="mb-2">
+                <Form.Label style={{ fontSize: '0.8rem' }}>Button Label (optional)</Form.Label>
+                <Form.Control size="sm" value={campaignForm.ctaLabel} onChange={(e) => setCampaignForm({ ...campaignForm, ctaLabel: e.target.value })} />
+              </Form.Group>
+            </Col>
+            <Col md={6}>
+              <Form.Group className="mb-2">
+                <Form.Label style={{ fontSize: '0.8rem' }}>Button Link (optional)</Form.Label>
+                <Form.Control size="sm" value={campaignForm.ctaUrl} onChange={(e) => setCampaignForm({ ...campaignForm, ctaUrl: e.target.value })} />
+              </Form.Group>
+            </Col>
+          </Row>
+          <Form.Group className="mb-2">
+            <Form.Label style={{ fontSize: '0.8rem' }}>Attach Files (optional — sent to every recipient)</Form.Label>
+            <Form.Control size="sm" type="file" multiple onChange={(e) => handleCampaignAttachmentChange((e.target as HTMLInputElement).files)} />
+            {campaignAttachments.length ? (
+              <div style={{ fontSize: '0.75rem', color: '#aaa', marginTop: '0.25rem' }}>{campaignAttachments.map((a) => a.filename).join(', ')}</div>
+            ) : null}
+            {(campaignForm.category === 'beats' || campaignForm.category === 'loops') ? (
+              <div style={{ fontSize: '0.7rem', color: '#666', marginTop: '0.25rem' }}>
+                The {campaignForm.category === 'beats' ? 'Beats' : 'Loops'} Terms of Usage PDF is attached automatically.
+              </div>
+            ) : null}
+          </Form.Group>
+          <Alert variant="secondary" style={{ fontSize: '0.85rem' }}>
+            This will send to <strong>{campaignRecipientCount}</strong> subscriber{campaignRecipientCount === 1 ? '' : 's'} currently interested in {NEWSLETTER_CATEGORY_LABELS[campaignForm.category]}.
+          </Alert>
+        </Modal.Body>
+        <Modal.Footer style={{ background: '#111', borderTop: '1px solid #2b2b2b' }}>
+          <Button variant="outline-light" size="sm" onClick={() => setShowCreateCampaign(false)} disabled={campaignSending}>Cancel</Button>
+          <Button variant="warning" size="sm" disabled={campaignSending || !campaignForm.subject || !campaignForm.bodyText || !campaignRecipientCount} onClick={handleSendCampaign}>
+            {campaignSending ? 'Sending...' : `Send Campaign to ${campaignRecipientCount}`}
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
       <h2 style={{ color: '#68FF00', marginTop: '2.5rem', marginBottom: '1rem' }}>Leads</h2>
       <p style={{ color: '#d4d4d4', marginBottom: '1rem' }}>

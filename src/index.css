@@ -121,6 +121,18 @@ button:disabled {
   opacity: 1;
 }
 
+/* Red variant — used on the email preview popup's close button so it stands
+   out against the modal's dark header instead of the near-invisible default
+   black X. */
+.btn-close.btn-close-danger {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23dc3545'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414z'/%3e%3c/svg%3e");
+  opacity: 0.9;
+}
+
+.btn-close.btn-close-danger:hover {
+  opacity: 1;
+}
+
 .alert-dismissible {
   padding-right: 3rem;
   position: relative;
@@ -299,6 +311,7 @@ button:disabled {
 
 .what-we-do{
   width: 100%;
+  margin-top: 6rem;
   padding: 3rem 1rem;
   text-align: center;
   display: flex;
