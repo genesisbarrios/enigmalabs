@@ -170,7 +170,7 @@ const NEWSLETTER_CATEGORIES: NewsletterCategory[] = ['beats', 'mixing', 'loopsTe
 const subscriberCategories = (subscriber: Subscriber): NewsletterCategory[] =>
   NEWSLETTER_CATEGORIES.filter((key) => subscriber[key]);
 
-type TemplatePreset = { label: string; subject: string; bodyText: string; ctaLabel?: string; ctaUrl?: string };
+type TemplatePreset = { label: string; subject: string; bodyText: string; ctaLabel?: string; ctaUrl?: string; imageUrl?: string };
 
 // Only "beats" has named presets today — every other category gets a single
 // free-form "Custom Message" composer.
@@ -201,7 +201,17 @@ const TEMPLATE_PRESETS: Record<NewsletterCategory, Record<string, TemplatePreset
     'custom-message': { label: 'Custom Message', subject: '', bodyText: '' }
   },
   mixing: { 'custom-message': { label: 'Custom Message', subject: '', bodyText: '' } },
-  loopsTemplates: { 'custom-message': { label: 'Custom Message', subject: '', bodyText: '' } },
+  loopsTemplates: {
+    'free-sample-pack': {
+      label: 'Free Sample Pack',
+      subject: 'A free sample pack for you 🎁',
+      bodyText: "Hey (name), thanks again for signing up! Here's a free sample pack to get you started — grab it below, and check out more loops and templates on BeatStars.",
+      ctaLabel: 'Get the Free Sample Pack',
+      ctaUrl: 'https://www.beatstars.com/genwav',
+      imageUrl: `${window.location.origin}/wav-pack-vol1.jpg`
+    },
+    'custom-message': { label: 'Custom Message', subject: '', bodyText: '' }
+  },
   web: { 'custom-message': { label: 'Custom Message', subject: '', bodyText: '' } },
   ads: { 'custom-message': { label: 'Custom Message', subject: '', bodyText: '' } }
 };
@@ -227,6 +237,9 @@ type NewsletterCampaign = {
   templateKey: string;
   subject: string;
   html: string;
+  ctaLabel?: string;
+  ctaUrl?: string;
+  imageUrl?: string;
   recipientCount: number;
   createdAt: string;
 };
@@ -343,7 +356,7 @@ const Admin = () => {
   const [subscriberPage, setSubscriberPage] = useState(1);
 
   // Contact panel (per-subscriber, inline "box underneath" the row)
-  const BLANK_CONTACT_FORM = { category: 'beats' as NewsletterCategory, templateKey: 'custom-message', subject: '', bodyText: '', ctaLabel: '', ctaUrl: '', resendCampaignId: '' };
+  const BLANK_CONTACT_FORM = { category: 'beats' as NewsletterCategory, templateKey: 'custom-message', subject: '', bodyText: '', ctaLabel: '', ctaUrl: '', imageUrl: '', resendCampaignId: '' };
   const [contactOpenId, setContactOpenId] = useState<string | null>(null);
   const [contactForm, setContactForm] = useState(BLANK_CONTACT_FORM);
   const [contactAttachments, setContactAttachments] = useState<FileAttachment[]>([]);
@@ -364,7 +377,7 @@ const Admin = () => {
 
   // Create Campaign modal
   const [showCreateCampaign, setShowCreateCampaign] = useState(false);
-  const BLANK_CAMPAIGN_FORM = { category: 'beats' as NewsletterCategory, templateKey: 'custom-message', subject: '', bodyText: '', ctaLabel: '', ctaUrl: '' };
+  const BLANK_CAMPAIGN_FORM = { category: 'beats' as NewsletterCategory, templateKey: 'custom-message', subject: '', bodyText: '', ctaLabel: '', ctaUrl: '', imageUrl: '' };
   const [campaignForm, setCampaignForm] = useState(BLANK_CAMPAIGN_FORM);
   const [campaignAttachments, setCampaignAttachments] = useState<FileAttachment[]>([]);
   const [campaignSending, setCampaignSending] = useState(false);
@@ -506,13 +519,13 @@ const Admin = () => {
   const handleContactCategoryChange = (category: NewsletterCategory) => {
     const templateKey = 'custom-message';
     const preset = TEMPLATE_PRESETS[category][templateKey];
-    setContactForm({ ...contactForm, category, templateKey, subject: preset.subject, bodyText: preset.bodyText, ctaLabel: preset.ctaLabel || '', ctaUrl: preset.ctaUrl || '', resendCampaignId: '' });
+    setContactForm({ ...contactForm, category, templateKey, subject: preset.subject, bodyText: preset.bodyText, ctaLabel: preset.ctaLabel || '', ctaUrl: preset.ctaUrl || '', imageUrl: preset.imageUrl || '', resendCampaignId: '' });
     loadCampaignsForCategory(category);
   };
 
   const handleContactTemplateChange = (templateKey: string) => {
     const preset = TEMPLATE_PRESETS[contactForm.category][templateKey];
-    setContactForm({ ...contactForm, templateKey, subject: preset.subject, bodyText: preset.bodyText, ctaLabel: preset.ctaLabel || '', ctaUrl: preset.ctaUrl || '', resendCampaignId: '' });
+    setContactForm({ ...contactForm, templateKey, subject: preset.subject, bodyText: preset.bodyText, ctaLabel: preset.ctaLabel || '', ctaUrl: preset.ctaUrl || '', imageUrl: preset.imageUrl || '', resendCampaignId: '' });
   };
 
   const handleContactResendCampaignChange = (campaignId: string) => {
@@ -547,6 +560,7 @@ const Admin = () => {
             bodyText: contactForm.bodyText,
             ctaLabel: contactForm.ctaLabel,
             ctaUrl: contactForm.ctaUrl,
+            imageUrl: contactForm.imageUrl,
             attachments: contactAttachments
           };
       const response = await axios.post(`${API_BASE_URL}/newsletter/subscribers/${subscriber._id}/send`, payload);
@@ -620,12 +634,12 @@ const Admin = () => {
   const handleCampaignCategoryChange = (category: NewsletterCategory) => {
     const templateKey = 'custom-message';
     const preset = TEMPLATE_PRESETS[category][templateKey];
-    setCampaignForm({ ...campaignForm, category, templateKey, subject: preset.subject, bodyText: preset.bodyText, ctaLabel: preset.ctaLabel || '', ctaUrl: preset.ctaUrl || '' });
+    setCampaignForm({ ...campaignForm, category, templateKey, subject: preset.subject, bodyText: preset.bodyText, ctaLabel: preset.ctaLabel || '', ctaUrl: preset.ctaUrl || '', imageUrl: preset.imageUrl || '' });
   };
 
   const handleCampaignTemplateChange = (templateKey: string) => {
     const preset = TEMPLATE_PRESETS[campaignForm.category][templateKey];
-    setCampaignForm({ ...campaignForm, templateKey, subject: preset.subject, bodyText: preset.bodyText, ctaLabel: preset.ctaLabel || '', ctaUrl: preset.ctaUrl || '' });
+    setCampaignForm({ ...campaignForm, templateKey, subject: preset.subject, bodyText: preset.bodyText, ctaLabel: preset.ctaLabel || '', ctaUrl: preset.ctaUrl || '', imageUrl: preset.imageUrl || '' });
   };
 
   const handleCampaignAttachmentChange = async (files: FileList | null) => {
@@ -652,6 +666,7 @@ const Admin = () => {
         bodyText: campaignForm.bodyText,
         ctaLabel: campaignForm.ctaLabel,
         ctaUrl: campaignForm.ctaUrl,
+        imageUrl: campaignForm.imageUrl,
         attachments: campaignAttachments
       });
       if (response.data?.ok) {
@@ -1834,6 +1849,13 @@ const Admin = () => {
                                 <Form.Label style={{ fontSize: '0.8rem' }}>Message ("(name)" is replaced with their first name)</Form.Label>
                                 <Form.Control as="textarea" rows={5} size="sm" value={contactForm.bodyText} onChange={(e) => setContactForm({ ...contactForm, bodyText: e.target.value })} />
                               </Form.Group>
+                              <Form.Group className="mb-2">
+                                <Form.Label style={{ fontSize: '0.8rem' }}>Image URL (optional — shown above the button)</Form.Label>
+                                <Form.Control size="sm" value={contactForm.imageUrl} onChange={(e) => setContactForm({ ...contactForm, imageUrl: e.target.value })} placeholder="https://..." />
+                                {contactForm.imageUrl ? (
+                                  <img src={contactForm.imageUrl} alt="" style={{ maxWidth: '160px', marginTop: '0.5rem', borderRadius: '6px', display: 'block' }} />
+                                ) : null}
+                              </Form.Group>
                               <Row>
                                 <Col md={6}>
                                   <Form.Group className="mb-2">
@@ -1866,9 +1888,31 @@ const Admin = () => {
                               </Form.Group>
                             </>
                           ) : (
-                            <p style={{ fontSize: '0.8rem', color: '#aaa' }}>
-                              This will resend the selected campaign's exact subject and message.
-                            </p>
+                            (() => {
+                              const campaign = contactCampaigns.find((c) => c._id === contactForm.resendCampaignId);
+                              if (!campaign) return null;
+                              return (
+                                <div style={{ background: '#0a0a0a', border: '1px solid #2b2b2b', borderRadius: '8px', padding: '1rem', marginBottom: '1rem' }}>
+                                  <p style={{ fontSize: '0.7rem', color: '#666', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                                    Preview — exact content that will be sent
+                                  </p>
+                                  <p style={{ fontWeight: 700, marginBottom: '0.5rem' }}>{campaign.subject}</p>
+                                  <p style={{ whiteSpace: 'pre-wrap', color: '#d4d4d4', fontSize: '0.85rem', marginBottom: campaign.imageUrl || campaign.ctaUrl ? '0.75rem' : 0 }}>
+                                    {campaign.html}
+                                  </p>
+                                  {campaign.imageUrl ? (
+                                    <img src={campaign.imageUrl} alt="" style={{ maxWidth: '100%', borderRadius: '8px', display: 'block', margin: '0 auto 0.75rem' }} />
+                                  ) : null}
+                                  {campaign.ctaUrl ? (
+                                    <div style={{ textAlign: 'center' }}>
+                                      <span style={{ background: '#68FF00', color: '#111', fontWeight: 700, padding: '8px 18px', borderRadius: '6px', fontSize: '0.8rem', display: 'inline-block' }}>
+                                        {campaign.ctaLabel || 'Learn more'}
+                                      </span>
+                                    </div>
+                                  ) : null}
+                                </div>
+                              );
+                            })()
                           )}
 
                           <Button size="sm" variant="success" disabled={contactSending || !contactForm.subject || !contactForm.bodyText} onClick={() => handleSendContact(subscriber)}>
@@ -1981,6 +2025,13 @@ const Admin = () => {
           <Form.Group className="mb-2">
             <Form.Label style={{ fontSize: '0.8rem' }}>Message ("(name)" is replaced with each recipient's first name)</Form.Label>
             <Form.Control as="textarea" rows={5} size="sm" value={campaignForm.bodyText} onChange={(e) => setCampaignForm({ ...campaignForm, bodyText: e.target.value })} />
+          </Form.Group>
+          <Form.Group className="mb-2">
+            <Form.Label style={{ fontSize: '0.8rem' }}>Image URL (optional — shown above the button)</Form.Label>
+            <Form.Control size="sm" value={campaignForm.imageUrl} onChange={(e) => setCampaignForm({ ...campaignForm, imageUrl: e.target.value })} placeholder="https://..." />
+            {campaignForm.imageUrl ? (
+              <img src={campaignForm.imageUrl} alt="" style={{ maxWidth: '160px', marginTop: '0.5rem', borderRadius: '6px', display: 'block' }} />
+            ) : null}
           </Form.Group>
           <Row>
             <Col md={6}>

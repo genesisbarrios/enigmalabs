@@ -105,9 +105,9 @@ function renderBrandedEmail({ greetingName, paragraphs, ctaLabel, ctaUrl, signOf
           ${ctaLabel || 'Learn more'}
         </a>
       </p>` : ''}
-      <p style="line-height: 1.6;">${signOff || 'Talk soon,<br/>Gen Barrios<br/>Enigma Labs'}</p>
+      <p style="line-height: 1.6;">${signOff || `Talk soon,<br/>Gen Barrios<br/><a href="${SITE_URL}" style="color:#111;">Enigma Labs</a>`}</p>
       <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
-        <img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" />
+        <a href="${SITE_URL}"><img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" /></a>
       </div>
       ${trackingPixelTag(leadId, type)}
     </div>
@@ -144,9 +144,9 @@ function buildMockupThankYouHtml(subscriber) {
           Book a time to review your mockup
         </a>
       </p>` : ''}
-      <p style="line-height: 1.6;">Talk soon,<br/>Gen Barrios<br/>Enigma Labs</p>
+      <p style="line-height: 1.6;">Talk soon,<br/>Gen Barrios<br/><a href="${SITE_URL}" style="color:#111;">Enigma Labs</a></p>
       <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
-        <img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" />
+        <a href="${SITE_URL}"><img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" /></a>
       </div>
       ${instagramFollowCta(ENIGMA_INSTAGRAM_URL, '@_enigmalabs')}
     </div>
@@ -184,9 +184,9 @@ function buildMusicInterestThankYouHtml(subscriber, sendId) {
         We'll get back to you shortly — in the meantime, feel free to check out our work on
         <a href="${newsletterTrackedUrl(sendId, `${SITE_URL}/Music`)}" style="color:#111; font-weight:bold;">our website</a>.
       </p>
-      <p style="line-height: 1.6;">Talk soon,<br/>Gen Barrios<br/>Enigma Labs</p>
+      <p style="line-height: 1.6;">Talk soon,<br/>Gen Barrios<br/><a href="${SITE_URL}" style="color:#111;">Enigma Labs</a></p>
       <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
-        <img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" />
+        <a href="${SITE_URL}"><img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" /></a>
       </div>
       ${instagramFollowCta(GENWAV_INSTAGRAM_URL, '@gen.wav')}
       ${newsletterTrackingPixelTag(sendId)}
@@ -216,9 +216,9 @@ function buildLoopsGiftEmailHtml(subscriber, sendId) {
           Get Wav Pack Volume 1 Free
         </a>
       </p>
-      <p style="line-height: 1.6;">Talk soon,<br/>Gen Barrios<br/>Enigma Labs</p>
+      <p style="line-height: 1.6;">Talk soon,<br/>Gen Barrios<br/><a href="${SITE_URL}" style="color:#111;">Enigma Labs</a></p>
       <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
-        <img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" />
+        <a href="${SITE_URL}"><img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" /></a>
       </div>
       ${instagramFollowCta(GENWAV_INSTAGRAM_URL, '@gen.wav')}
       ${newsletterTrackingPixelTag(sendId)}
@@ -244,9 +244,9 @@ function buildBeatsEmailHtml(subscriber, sendId) {
           Listen on BeatStars
         </a>
       </p>
-      <p style="line-height: 1.6;">Talk soon,<br/>Gen Barrios<br/>Enigma Labs</p>
+      <p style="line-height: 1.6;">Talk soon,<br/>Gen Barrios<br/><a href="${SITE_URL}" style="color:#111;">Enigma Labs</a></p>
       <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
-        <img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" />
+        <a href="${SITE_URL}"><img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" /></a>
       </div>
       ${instagramFollowCta(GENWAV_INSTAGRAM_URL, '@gen.wav')}
       ${newsletterTrackingPixelTag(sendId)}
@@ -276,9 +276,9 @@ function buildMixingTemplateEmailHtml(subscriber, sendId) {
           Get the Free R&amp;B Vocal Template
         </a>
       </p>
-      <p style="line-height: 1.6;">Talk soon,<br/>Gen Barrios<br/>Enigma Labs</p>
+      <p style="line-height: 1.6;">Talk soon,<br/>Gen Barrios<br/><a href="${SITE_URL}" style="color:#111;">Enigma Labs</a></p>
       <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
-        <img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" />
+        <a href="${SITE_URL}"><img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" /></a>
       </div>
       ${instagramFollowCta(GENWAV_INSTAGRAM_URL, '@gen.wav')}
       ${newsletterTrackingPixelTag(sendId)}
@@ -299,9 +299,9 @@ function buildServiceInterestThankYouHtml(subscriber, sendId) {
         We'll get back to you shortly — in the meantime, feel free to check out our work on
         <a href="${newsletterTrackedUrl(sendId, `${SITE_URL}/Tech`)}" style="color:#111; font-weight:bold;">our website</a>.
       </p>
-      <p style="line-height: 1.6;">Talk soon,<br/>Gen Barrios<br/>Enigma Labs</p>
+      <p style="line-height: 1.6;">Talk soon,<br/>Gen Barrios<br/><a href="${SITE_URL}" style="color:#111;">Enigma Labs</a></p>
       <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
-        <img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" />
+        <a href="${SITE_URL}"><img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" /></a>
       </div>
       ${instagramFollowCta(ENIGMA_INSTAGRAM_URL, '@_enigmalabs')}
       ${newsletterTrackingPixelTag(sendId)}
@@ -313,7 +313,7 @@ function buildServiceInterestThankYouHtml(subscriber, sendId) {
 // "Contact" sends and category-wide campaigns. `bodyText` is plain text
 // (newlines become <br/>); "(name)" is mail-merged with the recipient's
 // first name.
-function renderNewsletterEmail({ subscriber, subject, bodyText, ctaLabel, ctaUrl, sendId, instagramUrl, instagramLabel }) {
+function renderNewsletterEmail({ subscriber, subject, bodyText, ctaLabel, ctaUrl, imageUrl, sendId, instagramUrl, instagramLabel }) {
   const firstName = (subscriber.name || '').trim().split(' ')[0] || 'there';
   const mergedBody = (bodyText || '')
     .replace(/\(name\)/gi, firstName)
@@ -326,15 +326,19 @@ function renderNewsletterEmail({ subscriber, subject, bodyText, ctaLabel, ctaUrl
     <div style="font-family: Arial, Helvetica, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #111;">
       <h2 style="margin: 0 0 16px;">Hi ${firstName},</h2>
       ${mergedBody}
+      ${imageUrl ? `
+      <p style="text-align:center; margin:24px 0;">
+        <img src="${imageUrl}" alt="" width="400" style="max-width:100%; border-radius:8px; display:inline-block;" />
+      </p>` : ''}
       ${trackedCta ? `
       <p style="text-align: center; margin: 32px 0;">
         <a href="${trackedCta}" style="background:#68FF00; color:#111; text-decoration:none; font-weight:bold; padding:12px 24px; border-radius:6px; display:inline-block;">
           ${ctaLabel || 'Learn more'}
         </a>
       </p>` : ''}
-      <p style="line-height: 1.6;">Best,<br/>Gen Barrios<br/>Enigma Labs</p>
+      <p style="line-height: 1.6;">Best,<br/>Gen Barrios<br/><a href="${SITE_URL}" style="color:#111;">Enigma Labs</a></p>
       <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
-        <img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" />
+        <a href="${SITE_URL}"><img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" /></a>
       </div>
       ${instagramUrl ? instagramFollowCta(instagramUrl, instagramLabel) : ''}
       ${newsletterTrackingPixelTag(sendId)}
@@ -446,7 +450,7 @@ function buildMarketingAdsColdEmailHtml(lead) {
     ],
     ctaLabel: 'Schedule call',
     ctaUrl: trackedUrl(lead._id, CALENDAR_LINK, 'cold'),
-    signOff: 'Looking forward to hearing from you,<br/><br/>Gen Barrios<br/>enigma-labs.com'
+    signOff: `Looking forward to hearing from you,<br/><br/>Gen Barrios<br/><a href="${SITE_URL}" style="color:#111;">enigma-labs.com</a>`
   });
 }
 
@@ -466,7 +470,7 @@ function buildColdEmailHtml(lead) {
     ],
     ctaLabel: 'Schedule call',
     ctaUrl: trackedUrl(lead._id, CALENDAR_LINK, 'cold'),
-    signOff: 'Looking forward to hearing from you,<br/><br/>Gen Barrios<br/>enigma-labs.com'
+    signOff: `Looking forward to hearing from you,<br/><br/>Gen Barrios<br/><a href="${SITE_URL}" style="color:#111;">enigma-labs.com</a>`
   });
 }
 
@@ -486,7 +490,7 @@ function buildOutdatedWebsiteMockupEmailHtml(lead) {
     ],
     ctaLabel: 'Schedule call',
     ctaUrl: trackedUrl(lead._id, CALENDAR_LINK, 'outdatedMockup'),
-    signOff: 'Looking forward to hearing from you,<br/><br/>Gen Barrios<br/>enigma-labs.com'
+    signOff: `Looking forward to hearing from you,<br/><br/>Gen Barrios<br/><a href="${SITE_URL}" style="color:#111;">enigma-labs.com</a>`
   });
 }
 
@@ -545,6 +549,25 @@ async function sendLeadEmail(lead, { subject, buildHtml, statusField, statusAtFi
   lead[resendIdField] = resendId;
   await lead.save();
   return { ok: true, lead };
+}
+
+// Automatically pitches a new inbound web/ads-interested newsletter signup
+// with the same cold email a manually-added lead would get, and marks it
+// sent — so it doesn't need to be sent by hand from the Leads table. Skips
+// leads that already have it (e.g. resubmitting the newsletter form twice).
+async function autoSendColdEmailToLead(lead) {
+  if (!lead || lead.coldEmailSent || lead.declined || lead.convertedToClient) return;
+  await sendLeadEmail(lead, {
+    subject: lead.website
+      ? `A few content ideas for ${lead.businessName || 'your business'} 💡`
+      : `Free Website Mockup 🖥️ for ${lead.businessName || 'your business'}`,
+    buildHtml: buildColdEmailHtml,
+    statusField: 'coldEmailSent',
+    statusAtField: 'coldEmailSentAt',
+    htmlField: 'coldEmailHtml',
+    subjectField: 'coldEmailSubject',
+    resendIdField: 'coldEmailResendId'
+  });
 }
 
 function buildWebsiteReviewEmailHtml(client) {
@@ -764,6 +787,9 @@ const newsletterCampaignSchema = new mongoose.Schema({
   templateKey: String,
   subject: String,
   html: String,
+  ctaLabel: String,
+  ctaUrl: String,
+  imageUrl: String,
   recipientCount: { type: Number, default: 0 },
   createdAt: { type: Date, default: Date.now }
 });
@@ -1300,6 +1326,24 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       return res.status(201).json({ ok: true, message: 'Mockup request received.' });
     }
 
+    // Web/ads interest signups become an inbound lead and immediately get
+    // the same cold-email pitch a manually-added lead would get, marked
+    // sent automatically — no manual "Cold Email" click needed.
+    async function pitchServiceInterest(doc, category) {
+      await sendServiceInterestEmails(doc, category);
+      const lead = await upsertInboundLead({
+        businessName: doc.businessName,
+        contactName: doc.name,
+        email: doc.email,
+        phone: doc.phone,
+        instagram: doc.socialUrl,
+        googleBusinessUrl: doc.googleBusinessUrl,
+        city: doc.city,
+        submittedIp: getRequestIp(req)
+      });
+      await autoSendColdEmailToLead(lead);
+    }
+
     const existing = await NewsletterSubscriber.findOne({ email: payload.email });
     if (existing) {
       const isNewWebInterest = payload.web && !existing.web;
@@ -1323,40 +1367,16 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       existing.ads = existing.ads || payload.ads;
       await existing.save();
 
-      if (isNewWebInterest) {
-        await sendServiceInterestEmails(existing, 'web');
-        await upsertInboundLead({
-          businessName: existing.businessName,
-          contactName: existing.name,
-          email: existing.email,
-          phone: existing.phone,
-          instagram: existing.socialUrl,
-          googleBusinessUrl: existing.googleBusinessUrl,
-          city: existing.city,
-          submittedIp: getRequestIp(req)
-        });
-      }
-      if (isNewAdsInterest) await sendServiceInterestEmails(existing, 'ads');
+      if (isNewWebInterest) await pitchServiceInterest(existing, 'web');
+      if (isNewAdsInterest) await pitchServiceInterest(existing, 'ads');
       if (isNewMusicInterest) await sendMusicInterestThankYouEmail(existing);
 
       return res.status(200).json({ ok: true, subscriber: existing, message: 'Subscription updated.' });
     }
 
     const subscriber = await NewsletterSubscriber.create(payload);
-    if (subscriber.web) {
-      await sendServiceInterestEmails(subscriber, 'web');
-      await upsertInboundLead({
-        businessName: subscriber.businessName,
-        contactName: subscriber.name,
-        email: subscriber.email,
-        phone: subscriber.phone,
-        instagram: subscriber.socialUrl,
-        googleBusinessUrl: subscriber.googleBusinessUrl,
-        city: subscriber.city,
-        submittedIp: getRequestIp(req)
-      });
-    }
-    if (subscriber.ads) await sendServiceInterestEmails(subscriber, 'ads');
+    if (subscriber.web) await pitchServiceInterest(subscriber, 'web');
+    if (subscriber.ads) await pitchServiceInterest(subscriber, 'ads');
     if (subscriber.beats || subscriber.mixing || subscriber.loopsTemplates) await sendMusicInterestThankYouEmail(subscriber);
 
     res.status(201).json({ ok: true, subscriber });
@@ -1647,7 +1667,7 @@ function autoAttachmentsForCategory(category) {
 // blast as a reusable NewsletterCampaign so it can be resent later.
 app.post('/api/newsletter/campaigns', async (req, res) => {
   try {
-    const { category, templateKey, subject, bodyText, ctaLabel, ctaUrl, attachments: uploadedAttachments } = req.body;
+    const { category, templateKey, subject, bodyText, ctaLabel, ctaUrl, imageUrl, attachments: uploadedAttachments } = req.body;
     if (!NEWSLETTER_CATEGORIES.includes(category)) {
       return res.status(400).json({ ok: false, message: 'Unknown newsletter category.' });
     }
@@ -1665,6 +1685,9 @@ app.post('/api/newsletter/campaigns', async (req, res) => {
       templateKey: templateKey || 'custom-message',
       subject,
       html: bodyText, // stores the reusable plain-text body, not final rendered HTML — each send re-renders with its own tracking
+      ctaLabel: ctaLabel || '',
+      ctaUrl: ctaUrl || '',
+      imageUrl: imageUrl || '',
       recipientCount: recipients.length
     });
 
@@ -1680,7 +1703,7 @@ app.post('/api/newsletter/campaigns', async (req, res) => {
         category,
         templateKey: campaign.templateKey,
         subject,
-        buildHtml: (sendId) => renderNewsletterEmail({ subscriber, subject, bodyText, ctaLabel, ctaUrl, sendId, instagramUrl, instagramLabel }),
+        buildHtml: (sendId) => renderNewsletterEmail({ subscriber, subject, bodyText, ctaLabel, ctaUrl, imageUrl, sendId, instagramUrl, instagramLabel }),
         attachments
       });
       if (result.ok) sent += 1;
@@ -1705,7 +1728,7 @@ app.post('/api/newsletter/subscribers/:id/send', async (req, res) => {
       return res.status(400).json({ ok: false, message: 'This subscriber has no email address.' });
     }
 
-    let { category, templateKey, subject, bodyText, ctaLabel, ctaUrl, attachments: uploadedAttachments } = req.body;
+    let { category, templateKey, subject, bodyText, ctaLabel, ctaUrl, imageUrl, attachments: uploadedAttachments } = req.body;
     let campaignId;
 
     if (req.body.resendCampaignId) {
@@ -1715,6 +1738,9 @@ app.post('/api/newsletter/subscribers/:id/send', async (req, res) => {
       templateKey = campaign.templateKey;
       subject = campaign.subject;
       bodyText = campaign.html;
+      ctaLabel = campaign.ctaLabel;
+      ctaUrl = campaign.ctaUrl;
+      imageUrl = campaign.imageUrl;
       campaignId = campaign._id;
     }
 
@@ -1735,7 +1761,7 @@ app.post('/api/newsletter/subscribers/:id/send', async (req, res) => {
       category,
       templateKey: templateKey || 'custom-message',
       subject,
-      buildHtml: (sendId) => renderNewsletterEmail({ subscriber, subject, bodyText, ctaLabel, ctaUrl, sendId, instagramUrl, instagramLabel }),
+      buildHtml: (sendId) => renderNewsletterEmail({ subscriber, subject, bodyText, ctaLabel, ctaUrl, imageUrl, sendId, instagramUrl, instagramLabel }),
       attachments
     });
 
