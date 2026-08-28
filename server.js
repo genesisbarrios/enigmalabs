@@ -783,7 +783,12 @@ const NEWSLETTER_CATEGORIES = ['beats', 'mixing', 'loopsTemplates', 'web', 'ads'
 // it can be picked again later from the per-subscriber Contact panel
 // ("resend a previous campaign") without retyping it.
 const newsletterCampaignSchema = new mongoose.Schema({
+  // "category" drives the template/presets and auto-attached terms PDF.
+  // "recipientCategories" is who it actually goes to — usually just
+  // [category], but can be broadened to send one message to subscribers
+  // across several interests at once.
   category: { type: String, enum: NEWSLETTER_CATEGORIES, required: true },
+  recipientCategories: { type: [{ type: String, enum: NEWSLETTER_CATEGORIES }], default: undefined },
   templateKey: String,
   subject: String,
   html: String,
@@ -1675,13 +1680,24 @@ app.post('/api/newsletter/campaigns', async (req, res) => {
       return res.status(400).json({ ok: false, message: 'Subject and message body are required.' });
     }
 
-    const recipients = await NewsletterSubscriber.find({ [category]: true, email: { $ne: '' } });
+    const recipientCategories = Array.isArray(req.body.recipientCategories) && req.body.recipientCategories.length
+      ? req.body.recipientCategories
+      : [category];
+    if (recipientCategories.some((c) => !NEWSLETTER_CATEGORIES.includes(c))) {
+      return res.status(400).json({ ok: false, message: 'Unknown recipient interest.' });
+    }
+
+    const recipients = await NewsletterSubscriber.find({
+      $or: recipientCategories.map((c) => ({ [c]: true })),
+      email: { $ne: '' }
+    });
     if (!recipients.length) {
-      return res.status(400).json({ ok: false, message: `No subscribers are currently interested in ${category}.` });
+      return res.status(400).json({ ok: false, message: `No subscribers are currently interested in ${recipientCategories.join(', ')}.` });
     }
 
     const campaign = await NewsletterCampaign.create({
       category,
+      recipientCategories,
       templateKey: templateKey || 'custom-message',
       subject,
       html: bodyText, // stores the reusable plain-text body, not final rendered HTML — each send re-renders with its own tracking

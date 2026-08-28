@@ -356,6 +356,8 @@ const Admin = () => {
   const [subscriberPage, setSubscriberPage] = useState(1);
   const [subscriberSearchQuery, setSubscriberSearchQuery] = useState('');
   const [subscriberInterestFilter, setSubscriberInterestFilter] = useState('all');
+  const [newsletterMessage, setNewsletterMessage] = useState('');
+  const [newsletterError, setNewsletterError] = useState('');
 
   // Contact panel (per-subscriber, inline "box underneath" the row)
   const BLANK_CONTACT_FORM = { category: 'beats' as NewsletterCategory, templateKey: 'custom-message', subject: '', bodyText: '', ctaLabel: '', ctaUrl: '', imageUrl: '', resendCampaignId: '' };
@@ -379,7 +381,7 @@ const Admin = () => {
 
   // Create Campaign modal
   const [showCreateCampaign, setShowCreateCampaign] = useState(false);
-  const BLANK_CAMPAIGN_FORM = { category: 'beats' as NewsletterCategory, templateKey: 'custom-message', subject: '', bodyText: '', ctaLabel: '', ctaUrl: '', imageUrl: '' };
+  const BLANK_CAMPAIGN_FORM = { category: 'beats' as NewsletterCategory, templateKey: 'custom-message', subject: '', bodyText: '', ctaLabel: '', ctaUrl: '', imageUrl: '', recipientCategories: ['beats'] as NewsletterCategory[] };
   const [campaignForm, setCampaignForm] = useState(BLANK_CAMPAIGN_FORM);
   const [campaignAttachments, setCampaignAttachments] = useState<FileAttachment[]>([]);
   const [campaignSending, setCampaignSending] = useState(false);
@@ -439,7 +441,7 @@ const Admin = () => {
       }
     } catch (fetchError) {
       console.error(fetchError);
-      setError('Could not load newsletter subscribers.');
+      setNewsletterError('Could not load newsletter subscribers.');
     } finally {
       setLoadingSubscribers(false);
     }
@@ -448,45 +450,45 @@ const Admin = () => {
   const handleAddSubscriber = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!newSubscriber.email) {
-      setError('Email is required to add a subscriber.');
+      setNewsletterError('Email is required to add a subscriber.');
       return;
     }
     try {
       const response = await axios.post(`${API_BASE_URL}/newsletter/subscribers`, newSubscriber);
       if (response.data?.ok) {
-        setMessage(response.data.duplicate ? 'A subscriber with this email already exists.' : 'Subscriber added.');
+        setNewsletterMessage(response.data.duplicate ? 'A subscriber with this email already exists.' : 'Subscriber added.');
         setNewSubscriber(BLANK_SUBSCRIBER_FORM);
         setShowAddSubscriber(false);
         fetchSubscribers();
       } else {
-        setError(response.data?.message || 'Could not add subscriber.');
+        setNewsletterError(response.data?.message || 'Could not add subscriber.');
       }
     } catch (addError) {
       console.error(addError);
-      setError('Could not add subscriber.');
+      setNewsletterError('Could not add subscriber.');
     }
   };
 
   const handlePasteSubscribers = async () => {
     const parsed = parsePastedSubscribers(pasteSubscribersText);
     if (!parsed.length) {
-      setError('Could not detect any subscribers in the pasted text.');
+      setNewsletterError('Could not detect any subscribers in the pasted text.');
       return;
     }
     setImportingSubscribers(true);
     try {
       const response = await axios.post(`${API_BASE_URL}/newsletter/subscribers/import-bulk`, { subscribers: parsed });
       if (response.data?.ok) {
-        setMessage(`Imported ${response.data.created} subscriber${response.data.created === 1 ? '' : 's'}${response.data.skipped ? ` — skipped ${response.data.skipped} (duplicate or missing email)` : ''}.`);
+        setNewsletterMessage(`Imported ${response.data.created} subscriber${response.data.created === 1 ? '' : 's'}${response.data.skipped ? ` — skipped ${response.data.skipped} (duplicate or missing email)` : ''}.`);
         setPasteSubscribersText('');
         setShowPasteSubscribers(false);
         fetchSubscribers();
       } else {
-        setError(response.data?.message || 'Could not import subscribers.');
+        setNewsletterError(response.data?.message || 'Could not import subscribers.');
       }
     } catch (importError) {
       console.error(importError);
-      setError('Could not import subscribers.');
+      setNewsletterError('Could not import subscribers.');
     } finally {
       setImportingSubscribers(false);
     }
@@ -567,13 +569,13 @@ const Admin = () => {
           };
       const response = await axios.post(`${API_BASE_URL}/newsletter/subscribers/${subscriber._id}/send`, payload);
       if (response.data?.ok) {
-        setMessage(`Email sent to ${subscriber.email}.`);
+        setNewsletterMessage(`Email sent to ${subscriber.email}.`);
         setContactOpenId(null);
       } else {
-        setError(response.data?.message || 'Could not send email.');
+        setNewsletterError(response.data?.message || 'Could not send email.');
       }
     } catch (sendError: any) {
-      setError(sendError?.response?.data?.message || 'Could not send email.');
+      setNewsletterError(sendError?.response?.data?.message || 'Could not send email.');
     } finally {
       setContactSending(false);
     }
@@ -636,12 +638,22 @@ const Admin = () => {
   const handleCampaignCategoryChange = (category: NewsletterCategory) => {
     const templateKey = 'custom-message';
     const preset = TEMPLATE_PRESETS[category][templateKey];
-    setCampaignForm({ ...campaignForm, category, templateKey, subject: preset.subject, bodyText: preset.bodyText, ctaLabel: preset.ctaLabel || '', ctaUrl: preset.ctaUrl || '', imageUrl: preset.imageUrl || '' });
+    setCampaignForm({ ...campaignForm, category, templateKey, subject: preset.subject, bodyText: preset.bodyText, ctaLabel: preset.ctaLabel || '', ctaUrl: preset.ctaUrl || '', imageUrl: preset.imageUrl || '', recipientCategories: [category] });
   };
 
   const handleCampaignTemplateChange = (templateKey: string) => {
     const preset = TEMPLATE_PRESETS[campaignForm.category][templateKey];
     setCampaignForm({ ...campaignForm, templateKey, subject: preset.subject, bodyText: preset.bodyText, ctaLabel: preset.ctaLabel || '', ctaUrl: preset.ctaUrl || '', imageUrl: preset.imageUrl || '' });
+  };
+
+  const toggleCampaignRecipientCategory = (category: NewsletterCategory) => {
+    setCampaignForm((prev) => {
+      const has = prev.recipientCategories.includes(category);
+      const recipientCategories = has
+        ? prev.recipientCategories.filter((c) => c !== category)
+        : [...prev.recipientCategories, category];
+      return { ...prev, recipientCategories };
+    });
   };
 
   const handleCampaignAttachmentChange = async (files: FileList | null) => {
@@ -651,18 +663,20 @@ const Admin = () => {
   };
 
   const campaignRecipientCount = useMemo(
-    () => subscribers.filter((s) => s[campaignForm.category]).length,
-    [subscribers, campaignForm.category]
+    () => subscribers.filter((s) => campaignForm.recipientCategories.some((c) => s[c])).length,
+    [subscribers, campaignForm.recipientCategories]
   );
 
   const handleSendCampaign = async () => {
-    if (!window.confirm(`Send this to all ${campaignRecipientCount} subscriber(s) interested in ${NEWSLETTER_CATEGORY_LABELS[campaignForm.category]}?`)) {
+    const recipientLabel = campaignForm.recipientCategories.map((c) => NEWSLETTER_CATEGORY_LABELS[c]).join(', ');
+    if (!window.confirm(`Send this to all ${campaignRecipientCount} subscriber(s) interested in ${recipientLabel}?`)) {
       return;
     }
     setCampaignSending(true);
     try {
       const response = await axios.post(`${API_BASE_URL}/newsletter/campaigns`, {
         category: campaignForm.category,
+        recipientCategories: campaignForm.recipientCategories,
         templateKey: campaignForm.templateKey,
         subject: campaignForm.subject,
         bodyText: campaignForm.bodyText,
@@ -672,14 +686,14 @@ const Admin = () => {
         attachments: campaignAttachments
       });
       if (response.data?.ok) {
-        setMessage(`Campaign sent to ${response.data.sent} of ${response.data.total} subscribers.`);
+        setNewsletterMessage(`Campaign sent to ${response.data.sent} of ${response.data.total} subscribers.`);
         setShowCreateCampaign(false);
         if (showNewsletterAnalytics) loadCategoryAnalytics(analyticsCategory);
       } else {
-        setError(response.data?.message || 'Could not send campaign.');
+        setNewsletterError(response.data?.message || 'Could not send campaign.');
       }
     } catch (sendError: any) {
-      setError(sendError?.response?.data?.message || 'Could not send campaign.');
+      setNewsletterError(sendError?.response?.data?.message || 'Could not send campaign.');
     } finally {
       setCampaignSending(false);
     }
@@ -710,12 +724,12 @@ const Admin = () => {
   const handleSaveSubscriber = async (subscriberId: string) => {
     try {
       await axios.put(`${API_BASE_URL}/newsletter/subscribers/${subscriberId}`, subscriberEditForm);
-      setMessage('Subscriber updated.');
+      setNewsletterMessage('Subscriber updated.');
       setEditingSubscriberId(null);
       fetchSubscribers();
     } catch (saveError) {
       console.error(saveError);
-      setError('Could not update the subscriber.');
+      setNewsletterError('Could not update the subscriber.');
     }
   };
 
@@ -725,11 +739,11 @@ const Admin = () => {
 
     try {
       await axios.delete(`${API_BASE_URL}/newsletter/subscribers/${subscriberId}`);
-      setMessage('Subscriber deleted.');
+      setNewsletterMessage('Subscriber deleted.');
       fetchSubscribers();
     } catch (deleteError) {
       console.error(deleteError);
-      setError('Could not delete the subscriber.');
+      setNewsletterError('Could not delete the subscriber.');
     }
   };
 
@@ -1059,10 +1073,10 @@ const Admin = () => {
     const list = filteredSubscribers.map((subscriber) => subscriber.email).join('\n');
     try {
       await navigator.clipboard.writeText(list);
-      setMessage('Subscriber list copied to clipboard.');
+      setNewsletterMessage('Subscriber list copied to clipboard.');
     } catch (copyError) {
       console.error(copyError);
-      setError('Could not copy to clipboard.');
+      setNewsletterError('Could not copy to clipboard.');
     }
   };
 
@@ -1548,6 +1562,9 @@ const Admin = () => {
           </Button>
         </div>
       </div>
+
+      {newsletterMessage ? <Alert variant="success" onClose={() => setNewsletterMessage('')} dismissible>{newsletterMessage}</Alert> : null}
+      {newsletterError ? <Alert variant="danger" onClose={() => setNewsletterError('')} dismissible>{newsletterError}</Alert> : null}
 
       {showNewsletterAnalytics ? (
         <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', marginBottom: '1.25rem' }}>
@@ -2049,12 +2066,26 @@ const Admin = () => {
         </Modal.Header>
         <Modal.Body style={{ background: '#111', color: 'white' }}>
           <Form.Group className="mb-2">
-            <Form.Label style={{ fontSize: '0.8rem' }}>Newsletter Type</Form.Label>
+            <Form.Label style={{ fontSize: '0.8rem' }}>Newsletter Type (picks the template)</Form.Label>
             <Form.Select size="sm" value={campaignForm.category} onChange={(e) => handleCampaignCategoryChange(e.target.value as NewsletterCategory)}>
               {NEWSLETTER_CATEGORIES.map((cat) => (
                 <option key={cat} value={cat}>{NEWSLETTER_CATEGORY_LABELS[cat]}</option>
               ))}
             </Form.Select>
+          </Form.Group>
+          <Form.Group className="mb-2">
+            <Form.Label style={{ fontSize: '0.8rem' }}>Send to subscribers interested in</Form.Label>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              {NEWSLETTER_CATEGORIES.map((cat) => (
+                <Form.Check
+                  key={cat}
+                  type="checkbox"
+                  label={NEWSLETTER_CATEGORY_LABELS[cat]}
+                  checked={campaignForm.recipientCategories.includes(cat)}
+                  onChange={() => toggleCampaignRecipientCategory(cat)}
+                />
+              ))}
+            </div>
           </Form.Group>
           <Form.Group className="mb-2">
             <Form.Label style={{ fontSize: '0.8rem' }}>Template</Form.Label>
@@ -2106,7 +2137,11 @@ const Admin = () => {
             ) : null}
           </Form.Group>
           <Alert variant="secondary" style={{ fontSize: '0.85rem' }}>
-            This will send to <strong>{campaignRecipientCount}</strong> subscriber{campaignRecipientCount === 1 ? '' : 's'} currently interested in {NEWSLETTER_CATEGORY_LABELS[campaignForm.category]}.
+            {campaignForm.recipientCategories.length ? (
+              <>This will send to <strong>{campaignRecipientCount}</strong> subscriber{campaignRecipientCount === 1 ? '' : 's'} currently interested in {campaignForm.recipientCategories.map((c) => NEWSLETTER_CATEGORY_LABELS[c]).join(', ')}.</>
+            ) : (
+              'Select at least one interest to send to.'
+            )}
           </Alert>
         </Modal.Body>
         <Modal.Footer style={{ background: '#111', borderTop: '1px solid #2b2b2b' }}>
