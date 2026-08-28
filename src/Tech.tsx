@@ -105,6 +105,12 @@ const workPlaceholderStyle = {
 
 const workProjects = [
   {
+    name: "Pretty Kitty Miami Rescue",
+    url: "https://prettykittymiamirescue.org",
+    image: "/work/prettykittymiami.png",
+    alt: "Pretty Kitty Miami Rescue"
+  },
+  {
     name: "Photographer Portfolio Website",
     url: "https://www.cinemautographer.com/",
     image: "https://dl.dropboxusercontent.com/s/1jm89lj35tqm1qk0hp1yr/maury.gif?rlkey=tlzw5eq3vkz77q3vx5ol3hpt0&st=vhxcy8fv&dl=0",
@@ -127,12 +133,6 @@ const workProjects = [
     url: "https://nuralume.xyz",
     image: "https://dl.dropboxusercontent.com/s/11xwqvyuioco1etjdeu27/nuralume.png?rlkey=xuiz2krmjop7kegb099q4jocg&st=xs0f6rkn&dl=0",
     alt: "Nuralume"
-  },
-  {
-    name: "Pretty Kitty Miami Rescue",
-    url: "https://prettykittymiamirescue.org",
-    image: "/work/prettykittymiami.png",
-    alt: "Pretty Kitty Miami Rescue"
   }
 ];
 
