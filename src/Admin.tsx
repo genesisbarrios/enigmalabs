@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Badge, Button, Card, Col, Container, Form, ListGroup, Modal, Row, Table } from 'react-bootstrap';
+import { Alert, Badge, Button, Card, Col, Container, Form, ListGroup, Modal, Pagination, Row, Table } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
@@ -80,6 +80,8 @@ type WebsiteClient = {
   marketingEmailSentAt?: string | null;
   createdAt: string;
 };
+
+const SUBSCRIBER_PAGE_SIZE_OPTIONS = [25, 50, 100, 200];
 
 const INDUSTRY_OPTIONS = [
   'Restaurant / Food / Bar',
@@ -337,6 +339,8 @@ const Admin = () => {
   const [importingSubscribers, setImportingSubscribers] = useState(false);
   const [subscriberImportStatus, setSubscriberImportStatus] = useState('');
   const subscriberFileInputRef = useRef<HTMLInputElement>(null);
+  const [subscriberPageSize, setSubscriberPageSize] = useState(SUBSCRIBER_PAGE_SIZE_OPTIONS[0]);
+  const [subscriberPage, setSubscriberPage] = useState(1);
 
   // Contact panel (per-subscriber, inline "box underneath" the row)
   const BLANK_CONTACT_FORM = { category: 'beats' as NewsletterCategory, templateKey: 'custom-message', subject: '', bodyText: '', ctaLabel: '', ctaUrl: '', resendCampaignId: '' };
@@ -818,6 +822,21 @@ const Admin = () => {
       return matchesQuery && matchesPlan;
     });
   }, [agreements, searchQuery, planFilter]);
+
+  const totalSubscriberPages = Math.max(1, Math.ceil(subscribers.length / subscriberPageSize));
+
+  useEffect(() => {
+    setSubscriberPage(1);
+  }, [subscriberPageSize, subscribers.length]);
+
+  useEffect(() => {
+    if (subscriberPage > totalSubscriberPages) setSubscriberPage(totalSubscriberPages);
+  }, [subscriberPage, totalSubscriberPages]);
+
+  const paginatedSubscribers = useMemo(
+    () => subscribers.slice((subscriberPage - 1) * subscriberPageSize, subscriberPage * subscriberPageSize),
+    [subscribers, subscriberPage, subscriberPageSize]
+  );
 
   const handleLogin = (event: React.FormEvent) => {
     event.preventDefault();
@@ -1681,6 +1700,26 @@ const Admin = () => {
       {!loadingSubscribers && subscribers.length === 0 ? <Alert variant="secondary">No newsletter subscribers yet.</Alert> : null}
 
       {!loadingSubscribers && subscribers.length > 0 ? (
+        <Row className="mb-2 align-items-center">
+          <Col style={{ color: '#aaa', fontSize: '0.85rem' }}>
+            Showing {(subscriberPage - 1) * subscriberPageSize + 1}–{Math.min(subscriberPage * subscriberPageSize, subscribers.length)} of {subscribers.length}
+          </Col>
+          <Col xs="auto">
+            <Form.Select
+              size="sm"
+              value={subscriberPageSize}
+              onChange={(event) => setSubscriberPageSize(Number(event.target.value))}
+              style={{ width: 'auto' }}
+            >
+              {SUBSCRIBER_PAGE_SIZE_OPTIONS.map((size) => (
+                <option key={size} value={size}>{size} per page</option>
+              ))}
+            </Form.Select>
+          </Col>
+        </Row>
+      ) : null}
+
+      {!loadingSubscribers && subscribers.length > 0 ? (
         <Table striped bordered hover variant="dark" responsive>
           <thead>
             <tr>
@@ -1695,7 +1734,7 @@ const Admin = () => {
             </tr>
           </thead>
           <tbody>
-            {subscribers.map((subscriber) => {
+            {paginatedSubscribers.map((subscriber) => {
               const isEditing = editingSubscriberId === subscriber._id;
               if (isEditing) {
                 return (
@@ -1844,6 +1883,25 @@ const Admin = () => {
             })}
           </tbody>
         </Table>
+      ) : null}
+
+      {!loadingSubscribers && totalSubscriberPages > 1 ? (
+        <Pagination className="justify-content-center mt-3">
+          <Pagination.First onClick={() => setSubscriberPage(1)} disabled={subscriberPage === 1} />
+          <Pagination.Prev onClick={() => setSubscriberPage((page) => Math.max(1, page - 1))} disabled={subscriberPage === 1} />
+          {Array.from({ length: totalSubscriberPages }, (_, index) => index + 1)
+            .filter((page) => page === 1 || page === totalSubscriberPages || Math.abs(page - subscriberPage) <= 2)
+            .map((page, index, pages) => (
+              <span key={page} style={{ display: 'contents' }}>
+                {index > 0 && pages[index - 1] !== page - 1 ? <Pagination.Ellipsis disabled /> : null}
+                <Pagination.Item active={page === subscriberPage} onClick={() => setSubscriberPage(page)}>
+                  {page}
+                </Pagination.Item>
+              </span>
+            ))}
+          <Pagination.Next onClick={() => setSubscriberPage((page) => Math.min(totalSubscriberPages, page + 1))} disabled={subscriberPage === totalSubscriberPages} />
+          <Pagination.Last onClick={() => setSubscriberPage(totalSubscriberPages)} disabled={subscriberPage === totalSubscriberPages} />
+        </Pagination>
       ) : null}
 
       <Modal show={Boolean(analyticsSubscriber)} onHide={() => setAnalyticsSubscriber(null)} size="lg" centered>
