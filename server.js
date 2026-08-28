@@ -1273,6 +1273,43 @@ app.get('/api/onboarding/health', (_req, res) => {
   res.json({ ok: true, message: 'Onboarding API is running.' });
 });
 
+// TEMPORARY — backfills inbound leads for newsletter subscribers who marked
+// web/ads interest before the auto-lead-creation feature existed. Does NOT
+// send the cold email (avoids bulk-emailing existing subscribers at once) —
+// just creates the lead record so it's visible in the Leads table. Remove
+// this route once it's been run.
+app.post('/api/_backfill-service-interest-leads-2026', async (req, res) => {
+  if (req.headers['x-migration-key'] !== 'backfill-leads-2026-08-28') {
+    return res.status(401).json({ ok: false });
+  }
+  try {
+    const subscribers = await NewsletterSubscriber.find({ $or: [{ web: true }, { ads: true }] });
+    let created = 0;
+    let alreadyExisted = 0;
+    for (const doc of subscribers) {
+      const existingLead = await findDuplicateLead({ email: doc.email, phone: doc.phone });
+      if (existingLead) {
+        alreadyExisted += 1;
+        continue;
+      }
+      await upsertInboundLead({
+        businessName: doc.businessName,
+        contactName: doc.name,
+        email: doc.email,
+        phone: doc.phone,
+        instagram: doc.socialUrl,
+        googleBusinessUrl: doc.googleBusinessUrl,
+        city: doc.city
+      });
+      created += 1;
+    }
+    res.json({ ok: true, checked: subscribers.length, created, alreadyExisted });
+  } catch (error) {
+    console.error('Backfill failed', error);
+    res.status(500).json({ ok: false, message: String(error) });
+  }
+});
+
 app.post('/api/newsletter/subscribe', async (req, res) => {
   try {
     const payload = {
