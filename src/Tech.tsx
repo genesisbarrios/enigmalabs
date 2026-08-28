@@ -16,6 +16,8 @@ const Tech = () => {
   }, []);
 
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
   const [beats, setBeats] = useState(false);
   const [visuals, setVisuals] = useState(false);
   const [web, setWeb] = useState(false);
@@ -157,6 +159,8 @@ function handleSubmit() {
 
   const dataToSend = {
     email,
+    name,
+    phone,
     beats,
     visuals,
     web,
@@ -296,12 +300,30 @@ function handleSubmit() {
                     News, and discounts. No spam.
                   </p>
                   <input
+                    type="text"
+                    name="name"
+                    placeholder="Your name"
+                    style={newsletterInputStyle}
+                    onChange={(e) => {
+                      setName(e.target.value);
+                    }}
+                  ></input>
+                  <input
                     type="email"
                     name="e-mail"
                     placeholder="your@email.com"
                     style={newsletterInputStyle}
                     onChange={(e) => {
                       setEmail(e.target.value);
+                    }}
+                  ></input>
+                  <input
+                    type="tel"
+                    name="phone"
+                    placeholder="Phone number"
+                    style={newsletterInputStyle}
+                    onChange={(e) => {
+                      setPhone(e.target.value);
                     }}
                   ></input>
                   <label style={{ display: "block", color: "#d4d4d4", marginBottom: "0.5rem" }}>

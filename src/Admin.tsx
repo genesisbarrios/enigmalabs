@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Badge, Button, Card, Container, Form, ListGroup, Table } from 'react-bootstrap';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -121,18 +121,31 @@ type Subscriber = {
   visuals: boolean;
   web: boolean;
   ads: boolean;
+  vocalTemplates: boolean;
   freemockups?: boolean;
   createdAt: string;
 };
 
+const INTEREST_FIELDS: { key: 'beats' | 'loops' | 'visuals' | 'web' | 'ads' | 'vocalTemplates'; label: string }[] = [
+  { key: 'beats', label: 'Beats' },
+  { key: 'loops', label: 'Loops' },
+  { key: 'visuals', label: 'Visuals' },
+  { key: 'web', label: 'Web' },
+  { key: 'ads', label: 'Ads' },
+  { key: 'vocalTemplates', label: 'Vocal Templates' }
+];
+
+const emptySubscriberInterests = {
+  beats: false,
+  loops: false,
+  visuals: false,
+  web: false,
+  ads: false,
+  vocalTemplates: false
+};
+
 const subscriberInterestLabel = (subscriber: Subscriber) => {
-  const interests = [
-    subscriber.beats ? 'Beats' : null,
-    subscriber.loops ? 'Loops' : null,
-    subscriber.visuals ? 'Visuals' : null,
-    subscriber.web ? 'Web' : null,
-    subscriber.ads ? 'Ads' : null
-  ].filter(Boolean);
+  const interests = INTEREST_FIELDS.filter((field) => subscriber[field.key]).map((field) => field.label);
   return interests.length ? interests.join(', ') : '—';
 };
 
@@ -160,9 +173,11 @@ const Admin = () => {
   const [sendingMarketingEmail, setSendingMarketingEmail] = useState(false);
 
   const [showAddSubscriber, setShowAddSubscriber] = useState(false);
-  const [newSubscriber, setNewSubscriber] = useState({ email: '', name: '', phone: '', businessName: '' });
+  const [newSubscriber, setNewSubscriber] = useState({ email: '', name: '', phone: '', businessName: '', ...emptySubscriberInterests });
   const [editingSubscriberId, setEditingSubscriberId] = useState<string | null>(null);
-  const [subscriberEditForm, setSubscriberEditForm] = useState({ email: '', name: '', phone: '', businessName: '' });
+  const [subscriberEditForm, setSubscriberEditForm] = useState({ email: '', name: '', phone: '', businessName: '', ...emptySubscriberInterests });
+  const [subscriberImportStatus, setSubscriberImportStatus] = useState('');
+  const subscriberFileInputRef = useRef<HTMLInputElement>(null);
 
   const [searchQuery, setSearchQuery] = useState('');
   const [planFilter, setPlanFilter] = useState<'all' | Agreement['planType']>('all');
@@ -235,7 +250,7 @@ const Admin = () => {
       const response = await axios.post(`${API_BASE_URL}/newsletter/subscribers`, newSubscriber);
       if (response.data?.ok) {
         setMessage(response.data.duplicate ? 'A subscriber with this email already exists.' : 'Subscriber added.');
-        setNewSubscriber({ email: '', name: '', phone: '', businessName: '' });
+        setNewSubscriber({ email: '', name: '', phone: '', businessName: '', ...emptySubscriberInterests });
         setShowAddSubscriber(false);
         fetchSubscribers();
       } else {
@@ -253,13 +268,19 @@ const Admin = () => {
       email: subscriber.email || '',
       name: subscriber.name || '',
       phone: subscriber.phone || '',
-      businessName: subscriber.businessName || ''
+      businessName: subscriber.businessName || '',
+      beats: subscriber.beats || false,
+      loops: subscriber.loops || false,
+      visuals: subscriber.visuals || false,
+      web: subscriber.web || false,
+      ads: subscriber.ads || false,
+      vocalTemplates: subscriber.vocalTemplates || false
     });
   };
 
   const handleCancelEditSubscriber = () => {
     setEditingSubscriberId(null);
-    setSubscriberEditForm({ email: '', name: '', phone: '', businessName: '' });
+    setSubscriberEditForm({ email: '', name: '', phone: '', businessName: '', ...emptySubscriberInterests });
   };
 
   const handleSaveSubscriber = async (subscriberId: string) => {
@@ -285,6 +306,70 @@ const Admin = () => {
     } catch (deleteError) {
       console.error(deleteError);
       setError('Could not delete the subscriber.');
+    }
+  };
+
+  const findSubscriberField = (row: Record<string, any>, candidates: string[]) => {
+    const keys = Object.keys(row);
+    for (const candidate of candidates) {
+      const match = keys.find((k) => k.trim().toLowerCase() === candidate);
+      if (match) return row[match];
+    }
+    return undefined;
+  };
+
+  const toBoolField = (value: any) => {
+    if (typeof value === 'boolean') return value;
+    const normalized = String(value ?? '').trim().toLowerCase();
+    return normalized === 'yes' || normalized === 'true' || normalized === '1' || normalized === 'x';
+  };
+
+  const handleImportSubscribersClick = () => subscriberFileInputRef.current?.click();
+
+  const handleImportSubscribersFile = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setSubscriberImportStatus('Reading file...');
+    try {
+      const buffer = await file.arrayBuffer();
+      const book = XLSX.read(buffer, { type: 'array' });
+      const sheet = book.Sheets[book.SheetNames[0]];
+      const rawRows: Record<string, any>[] = XLSX.utils.sheet_to_json(sheet);
+
+      const parsed = rawRows
+        .map((row) => ({
+          email: String(findSubscriberField(row, ['email', 'email address']) ?? '').trim(),
+          name: String(findSubscriberField(row, ['name', 'full name']) ?? '').trim(),
+          phone: String(findSubscriberField(row, ['phone', 'phone number']) ?? '').trim(),
+          businessName: String(findSubscriberField(row, ['businessname', 'business name']) ?? '').trim(),
+          beats: toBoolField(findSubscriberField(row, ['beats'])),
+          loops: toBoolField(findSubscriberField(row, ['loops'])),
+          visuals: toBoolField(findSubscriberField(row, ['visuals'])),
+          web: toBoolField(findSubscriberField(row, ['web'])),
+          ads: toBoolField(findSubscriberField(row, ['ads'])),
+          vocalTemplates: toBoolField(findSubscriberField(row, ['vocaltemplates', 'vocal templates']))
+        }))
+        .filter((row) => row.email);
+
+      if (parsed.length === 0) {
+        setSubscriberImportStatus('No rows with an email column found.');
+        return;
+      }
+
+      setSubscriberImportStatus(`Importing ${parsed.length} rows...`);
+      const response = await axios.post(`${API_BASE_URL}/newsletter/subscribers/import`, { subscribers: parsed });
+      if (response.data?.ok) {
+        setSubscriberImportStatus(`Imported ${response.data.insertedCount}, skipped ${response.data.skippedCount} duplicate(s).`);
+        fetchSubscribers();
+      } else {
+        setSubscriberImportStatus(response.data?.message || 'Import failed.');
+      }
+    } catch (importError) {
+      console.error(importError);
+      setSubscriberImportStatus('Import failed — check the file format and try again.');
+    } finally {
+      event.target.value = '';
     }
   };
 
@@ -537,7 +622,7 @@ const Admin = () => {
   };
 
   const handleExportSubscribersCsv = () => {
-    const header = ['Email', 'Beats', 'Loops', 'Visuals', 'Web', 'Ads', 'Subscribed At'];
+    const header = ['Email', 'Beats', 'Loops', 'Visuals', 'Web', 'Ads', 'Vocal Templates', 'Subscribed At'];
     const rows = subscribers.map((subscriber) => [
       subscriber.email,
       subscriber.beats ? 'Yes' : 'No',
@@ -545,6 +630,7 @@ const Admin = () => {
       subscriber.visuals ? 'Yes' : 'No',
       subscriber.web ? 'Yes' : 'No',
       subscriber.ads ? 'Yes' : 'No',
+      subscriber.vocalTemplates ? 'Yes' : 'No',
       new Date(subscriber.createdAt).toLocaleString()
     ]);
     const csv = [header, ...rows]
@@ -561,6 +647,7 @@ const Admin = () => {
       Visuals: subscriber.visuals ? 'Yes' : 'No',
       Web: subscriber.web ? 'Yes' : 'No',
       Ads: subscriber.ads ? 'Yes' : 'No',
+      'Vocal Templates': subscriber.vocalTemplates ? 'Yes' : 'No',
       'Subscribed At': new Date(subscriber.createdAt).toLocaleString()
     }));
     const worksheet = XLSX.utils.json_to_sheet(rows);
@@ -593,7 +680,7 @@ const Admin = () => {
   }
 
   return (
-    <Container style={{ paddingTop: '6rem', paddingBottom: '3rem' }}>
+    <Container style={{ paddingTop: '6rem', paddingBottom: '3rem', maxWidth: '1600px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
         <h1 style={{ color: '#68FF00', margin: 0 }}>Admin</h1>
         <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
@@ -1026,6 +1113,20 @@ const Admin = () => {
                 <Form.Label>Business Name</Form.Label>
                 <Form.Control value={newSubscriber.businessName} onChange={(e) => setNewSubscriber({ ...newSubscriber, businessName: e.target.value })} />
               </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Interests</Form.Label>
+                <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                  {INTEREST_FIELDS.map((field) => (
+                    <Form.Check
+                      key={field.key}
+                      type="checkbox"
+                      label={field.label}
+                      checked={newSubscriber[field.key]}
+                      onChange={(e) => setNewSubscriber({ ...newSubscriber, [field.key]: e.target.checked })}
+                    />
+                  ))}
+                </div>
+              </Form.Group>
               <Button type="submit" variant="success">Save Subscriber</Button>
             </Form>
           </Card.Body>
@@ -1042,7 +1143,19 @@ const Admin = () => {
         <Button size="sm" variant="outline-success" onClick={handleExportSubscribersXlsx} disabled={!subscribers.length}>
           Export XLSX
         </Button>
+        <Button size="sm" variant="success" onClick={handleImportSubscribersClick}>
+          Import CSV/XLSX
+        </Button>
+        <input
+          ref={subscriberFileInputRef}
+          type="file"
+          accept=".csv,.xlsx,.xls"
+          style={{ display: 'none' }}
+          onChange={handleImportSubscribersFile}
+        />
       </div>
+
+      {subscriberImportStatus ? <p style={{ color: '#d4d4d4', marginBottom: '1rem' }}>{subscriberImportStatus}</p> : null}
 
       {loadingSubscribers ? <p>Loading subscribers...</p> : null}
 
@@ -1071,7 +1184,19 @@ const Admin = () => {
                     <td><Form.Control size="sm" value={subscriberEditForm.name} onChange={(e) => setSubscriberEditForm({ ...subscriberEditForm, name: e.target.value })} /></td>
                     <td><Form.Control size="sm" value={subscriberEditForm.phone} onChange={(e) => setSubscriberEditForm({ ...subscriberEditForm, phone: e.target.value })} /></td>
                     <td><Form.Control size="sm" value={subscriberEditForm.businessName} onChange={(e) => setSubscriberEditForm({ ...subscriberEditForm, businessName: e.target.value })} /></td>
-                    <td>{subscriberInterestLabel(subscriber)}</td>
+                    <td>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        {INTEREST_FIELDS.map((field) => (
+                          <Form.Check
+                            key={field.key}
+                            type="checkbox"
+                            label={field.label}
+                            checked={subscriberEditForm[field.key]}
+                            onChange={(e) => setSubscriberEditForm({ ...subscriberEditForm, [field.key]: e.target.checked })}
+                          />
+                        ))}
+                      </div>
+                    </td>
                     <td>{new Date(subscriber.createdAt).toLocaleString()}</td>
                     <td>
                       <div style={{ display: 'flex', gap: '0.4rem' }}>

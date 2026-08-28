@@ -481,6 +481,7 @@ const newsletterSubscriberSchema = new mongoose.Schema({
   visuals: Boolean,
   web: Boolean,
   ads: Boolean,
+  vocalTemplates: Boolean,
   freemockups: Boolean,
   createdAt: { type: Date, default: Date.now }
 });
@@ -841,10 +842,11 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       visuals: Boolean(req.body.visuals),
       web: Boolean(req.body.web),
       ads: Boolean(req.body.ads),
+      vocalTemplates: Boolean(req.body.vocalTemplates),
       freemockups: Boolean(req.body.freemockups)
     };
 
-    const hasNewsletterInterest = payload.beats || payload.loops || payload.visuals || payload.web || payload.ads;
+    const hasNewsletterInterest = payload.beats || payload.loops || payload.visuals || payload.web || payload.ads || payload.vocalTemplates;
 
     // The free-mockup form is a lead-gen flow, not a newsletter signup —
     // keep mockup-only submissions out of the newsletter table entirely and
@@ -886,6 +888,7 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       existing.visuals = existing.visuals || payload.visuals;
       existing.web = existing.web || payload.web;
       existing.ads = existing.ads || payload.ads;
+      existing.vocalTemplates = existing.vocalTemplates || payload.vocalTemplates;
       await existing.save();
 
       if (isNewWebInterest) await sendWebInterestEmail(existing);
@@ -940,13 +943,51 @@ app.post('/api/newsletter/subscribers', async (req, res) => {
       loops: Boolean(req.body.loops),
       visuals: Boolean(req.body.visuals),
       web: Boolean(req.body.web),
-      ads: Boolean(req.body.ads)
+      ads: Boolean(req.body.ads),
+      vocalTemplates: Boolean(req.body.vocalTemplates)
     });
 
     res.status(201).json({ ok: true, subscriber });
   } catch (error) {
     console.error('Could not add newsletter subscriber', error);
     res.status(500).json({ ok: false, message: 'Could not add newsletter subscriber.' });
+  }
+});
+
+// Bulk import from the admin's CSV/XLSX upload — dedupes against existing
+// subscribers by email, same as the single-add endpoint above.
+app.post('/api/newsletter/subscribers/import', async (req, res) => {
+  try {
+    const rows = Array.isArray(req.body.subscribers) ? req.body.subscribers : [];
+    if (rows.length === 0) {
+      return res.status(400).json({ ok: false, message: 'A non-empty subscribers array is required.' });
+    }
+
+    const existingEmails = new Set(
+      (await NewsletterSubscriber.find({}, 'email')).map((s) => s.email)
+    );
+
+    const toInsert = rows
+      .map((row) => ({
+        email: (row.email || '').trim(),
+        name: (row.name || '').trim(),
+        phone: (row.phone || '').trim(),
+        businessName: (row.businessName || '').trim(),
+        beats: Boolean(row.beats),
+        loops: Boolean(row.loops),
+        visuals: Boolean(row.visuals),
+        web: Boolean(row.web),
+        ads: Boolean(row.ads),
+        vocalTemplates: Boolean(row.vocalTemplates)
+      }))
+      .filter((row) => row.email && !existingEmails.has(row.email));
+
+    const inserted = toInsert.length > 0 ? await NewsletterSubscriber.insertMany(toInsert) : [];
+
+    res.status(201).json({ ok: true, insertedCount: inserted.length, skippedCount: rows.length - inserted.length });
+  } catch (error) {
+    console.error('Newsletter subscriber import failed', error);
+    res.status(500).json({ ok: false, message: 'Could not import newsletter subscribers.' });
   }
 });
 
@@ -961,7 +1002,7 @@ app.put('/api/newsletter/subscribers/:id', async (req, res) => {
     fields.forEach((field) => {
       if (req.body[field] !== undefined) subscriber[field] = req.body[field];
     });
-    const boolFields = ['beats', 'loops', 'visuals', 'web', 'ads'];
+    const boolFields = ['beats', 'loops', 'visuals', 'web', 'ads', 'vocalTemplates'];
     boolFields.forEach((field) => {
       if (req.body[field] !== undefined) subscriber[field] = Boolean(req.body[field]);
     });

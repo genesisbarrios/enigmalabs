@@ -615,7 +615,6 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
               <th>Business</th>
               <th>Contact</th>
               <th>Phone</th>
-              <th>City</th>
               <th>Category</th>
               <th>Instagram</th>
               <th>Cold DM'd</th>
@@ -671,7 +670,6 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                     )}
                   </td>
                   <td>{lead.phone || '—'}</td>
-                  <td>{lead.city || '—'}</td>
                   <td>{lead.industry || '—'}</td>
                   <td>
                     {lead.instagram ? (
