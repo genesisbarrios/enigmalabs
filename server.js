@@ -740,7 +740,6 @@ const newsletterSubscriberSchema = new mongoose.Schema({
   visuals: Boolean,
   web: Boolean,
   ads: Boolean,
-  vocalTemplates: Boolean,
   freemockups: Boolean,
   createdAt: { type: Date, default: Date.now }
 });
@@ -1243,6 +1242,23 @@ app.get('/api/onboarding/health', (_req, res) => {
   res.json({ ok: true, message: 'Onboarding API is running.' });
 });
 
+// TEMPORARY — removes the retired vocalTemplates field from existing
+// subscriber documents. Remove this route once it's been run.
+app.post('/api/_migrate-remove-vocal-templates-2026', async (req, res) => {
+  if (req.headers['x-migration-key'] !== 'remove-vocal-2026-08-28') {
+    return res.status(401).json({ ok: false });
+  }
+  try {
+    const col = mongoose.connection.db.collection('newsletter');
+    const vocalCount = await col.countDocuments({ vocalTemplates: true });
+    const unsetResult = await col.updateMany({}, { $unset: { vocalTemplates: '' } });
+    res.json({ ok: true, vocalCount, unsetModified: unsetResult.modifiedCount });
+  } catch (error) {
+    console.error('Migration failed', error);
+    res.status(500).json({ ok: false, message: String(error) });
+  }
+});
+
 app.post('/api/newsletter/subscribe', async (req, res) => {
   try {
     const payload = {
@@ -1261,11 +1277,10 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       visuals: Boolean(req.body.visuals),
       web: Boolean(req.body.web),
       ads: Boolean(req.body.ads),
-      vocalTemplates: Boolean(req.body.vocalTemplates),
       freemockups: Boolean(req.body.freemockups)
     };
 
-    const hasNewsletterInterest = payload.beats || payload.loopsTemplates || payload.visuals || payload.web || payload.ads || payload.vocalTemplates;
+    const hasNewsletterInterest = payload.beats || payload.loopsTemplates || payload.visuals || payload.web || payload.ads;
 
     // The free-mockup form is a lead-gen flow, not a newsletter signup —
     // keep mockup-only submissions out of the newsletter table entirely and
@@ -1318,7 +1333,6 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       existing.visuals = existing.visuals || payload.visuals;
       existing.web = existing.web || payload.web;
       existing.ads = existing.ads || payload.ads;
-      existing.vocalTemplates = existing.vocalTemplates || payload.vocalTemplates;
       await existing.save();
 
       if (isNewWebInterest) await sendServiceInterestEmails(existing, 'web');
@@ -1377,8 +1391,7 @@ app.post('/api/newsletter/subscribers', async (req, res) => {
       loopsTemplates: Boolean(req.body.loopsTemplates),
       visuals: Boolean(req.body.visuals),
       web: Boolean(req.body.web),
-      ads: Boolean(req.body.ads),
-      vocalTemplates: Boolean(req.body.vocalTemplates)
+      ads: Boolean(req.body.ads)
     });
 
     res.status(201).json({ ok: true, subscriber });
@@ -1411,8 +1424,7 @@ app.post('/api/newsletter/subscribers/import', async (req, res) => {
         loopsTemplates: Boolean(row.loopsTemplates),
         visuals: Boolean(row.visuals),
         web: Boolean(row.web),
-        ads: Boolean(row.ads),
-        vocalTemplates: Boolean(row.vocalTemplates)
+        ads: Boolean(row.ads)
       }))
       .filter((row) => row.email && !existingEmails.has(row.email));
 
@@ -1480,7 +1492,7 @@ app.put('/api/newsletter/subscribers/:id', async (req, res) => {
     fields.forEach((field) => {
       if (req.body[field] !== undefined) subscriber[field] = req.body[field];
     });
-    const boolFields = ['beats', 'loopsTemplates', 'visuals', 'web', 'ads', 'vocalTemplates'];
+    const boolFields = ['beats', 'loopsTemplates', 'visuals', 'web', 'ads'];
     boolFields.forEach((field) => {
       if (req.body[field] !== undefined) subscriber[field] = Boolean(req.body[field]);
     });

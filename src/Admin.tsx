@@ -122,19 +122,17 @@ type Subscriber = {
   visuals: boolean;
   web: boolean;
   ads: boolean;
-  vocalTemplates: boolean;
   loopsTemplates: boolean;
   freemockups?: boolean;
   createdAt: string;
 };
 
-const INTEREST_FIELDS: { key: 'beats' | 'loopsTemplates' | 'visuals' | 'web' | 'ads' | 'vocalTemplates'; label: string }[] = [
-  { key: 'beats', label: 'Beats' },
+const INTEREST_FIELDS: { key: 'beats' | 'loopsTemplates' | 'visuals' | 'web' | 'ads'; label: string }[] = [
+  { key: 'beats', label: 'Beats & Mixing' },
   { key: 'loopsTemplates', label: 'Loops & Templates' },
   { key: 'visuals', label: 'Visuals' },
   { key: 'web', label: 'Web' },
-  { key: 'ads', label: 'Ads' },
-  { key: 'vocalTemplates', label: 'Vocal Templates' }
+  { key: 'ads', label: 'Ads' }
 ];
 
 const emptySubscriberInterests = {
@@ -142,8 +140,7 @@ const emptySubscriberInterests = {
   loopsTemplates: false,
   visuals: false,
   web: false,
-  ads: false,
-  vocalTemplates: false
+  ads: false
 };
 
 const subscriberInterestLabel = (subscriber: Subscriber) => {
@@ -158,7 +155,7 @@ const subscriberInterestLabel = (subscriber: Subscriber) => {
 type NewsletterCategory = 'beats' | 'loopsTemplates' | 'web' | 'ads';
 
 const NEWSLETTER_CATEGORY_LABELS: Record<NewsletterCategory, string> = {
-  beats: 'Beats',
+  beats: 'Beats & Mixing',
   loopsTemplates: 'Loops & Templates',
   web: 'Web Development',
   ads: 'Ads'
@@ -680,8 +677,7 @@ const Admin = () => {
       loopsTemplates: subscriber.loopsTemplates || false,
       visuals: subscriber.visuals || false,
       web: subscriber.web || false,
-      ads: subscriber.ads || false,
-      vocalTemplates: subscriber.vocalTemplates || false
+      ads: subscriber.ads || false
     });
   };
 
@@ -754,8 +750,7 @@ const Admin = () => {
           loopsTemplates: toBoolField(findSubscriberField(row, ['loopstemplates', 'loops & templates', 'loops and templates', 'loops'])),
           visuals: toBoolField(findSubscriberField(row, ['visuals'])),
           web: toBoolField(findSubscriberField(row, ['web'])),
-          ads: toBoolField(findSubscriberField(row, ['ads'])),
-          vocalTemplates: toBoolField(findSubscriberField(row, ['vocaltemplates', 'vocal templates']))
+          ads: toBoolField(findSubscriberField(row, ['ads']))
         }))
         .filter((row) => row.email);
 
@@ -1044,7 +1039,7 @@ const Admin = () => {
   };
 
   const handleExportSubscribersCsv = () => {
-    const header = ['Email', 'Beats', 'Loops & Templates', 'Visuals', 'Web', 'Ads', 'Vocal Templates', 'Subscribed At'];
+    const header = ['Email', 'Beats & Mixing', 'Loops & Templates', 'Visuals', 'Web', 'Ads', 'Subscribed At'];
     const rows = subscribers.map((subscriber) => [
       subscriber.email,
       subscriber.beats ? 'Yes' : 'No',
@@ -1052,7 +1047,6 @@ const Admin = () => {
       subscriber.visuals ? 'Yes' : 'No',
       subscriber.web ? 'Yes' : 'No',
       subscriber.ads ? 'Yes' : 'No',
-      subscriber.vocalTemplates ? 'Yes' : 'No',
       new Date(subscriber.createdAt).toLocaleString()
     ]);
     const csv = [header, ...rows]
@@ -1064,12 +1058,11 @@ const Admin = () => {
   const handleExportSubscribersXlsx = () => {
     const rows = subscribers.map((subscriber) => ({
       Email: subscriber.email,
-      Beats: subscriber.beats ? 'Yes' : 'No',
+      'Beats & Mixing': subscriber.beats ? 'Yes' : 'No',
       'Loops & Templates': subscriber.loopsTemplates ? 'Yes' : 'No',
       Visuals: subscriber.visuals ? 'Yes' : 'No',
       Web: subscriber.web ? 'Yes' : 'No',
       Ads: subscriber.ads ? 'Yes' : 'No',
-      'Vocal Templates': subscriber.vocalTemplates ? 'Yes' : 'No',
       'Subscribed At': new Date(subscriber.createdAt).toLocaleString()
     }));
     const worksheet = XLSX.utils.json_to_sheet(rows);
@@ -1860,7 +1853,7 @@ const Admin = () => {
                                 ) : null}
                                 {(contactForm.category === 'beats' || contactForm.category === 'loopsTemplates') ? (
                                   <div style={{ fontSize: '0.7rem', color: '#666', marginTop: '0.25rem' }}>
-                                    The {contactForm.category === 'beats' ? 'Beats' : 'Loops'} Terms of Usage PDF is attached automatically.
+                                    The {contactForm.category === 'beats' ? 'Beats & Mixing' : 'Loops & Templates'} Terms of Usage PDF is attached automatically.
                                   </div>
                                 ) : null}
                               </Form.Group>
@@ -2004,7 +1997,7 @@ const Admin = () => {
             ) : null}
             {(campaignForm.category === 'beats' || campaignForm.category === 'loopsTemplates') ? (
               <div style={{ fontSize: '0.7rem', color: '#666', marginTop: '0.25rem' }}>
-                The {campaignForm.category === 'beats' ? 'Beats' : 'Loops'} Terms of Usage PDF is attached automatically.
+                The {campaignForm.category === 'beats' ? 'Beats & Mixing' : 'Loops & Templates'} Terms of Usage PDF is attached automatically.
               </div>
             ) : null}
           </Form.Group>
