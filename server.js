@@ -2308,11 +2308,12 @@ app.post('/api/crm/leads/:id/send-cold-email', async (req, res) => {
     if (lead.inbound) {
       return res.status(400).json({ ok: false, message: 'Cold email is only for outbound leads.' });
     }
-    // First call for this lead is the original send; any call after that is
-    // a resend — allowed exactly once.
+    // Resends are unlimited as long as the lead hasn't engaged yet — once
+    // they've opened or clicked the email, they've seen the pitch, so
+    // further resends are blocked.
     if (lead.coldEmailSent) {
-      if (lead.coldEmailResentAt) {
-        return res.status(400).json({ ok: false, message: 'This cold email has already been resent once — no further resends allowed.' });
+      if (lead.coldEmailOpened || lead.coldEmailClicked) {
+        return res.status(400).json({ ok: false, message: 'This lead already opened or clicked the cold email — no further resends needed.' });
       }
       lead.coldEmailResentAt = new Date();
     }

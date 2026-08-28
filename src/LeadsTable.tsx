@@ -41,6 +41,8 @@ export type Lead = {
   inbound: boolean;
   coldEmailSent?: boolean;
   coldEmailSentAt?: string;
+  coldEmailOpened?: boolean;
+  coldEmailClicked?: boolean;
   coldEmailResentAt?: string;
   outdatedMockupSent?: boolean;
   outdatedMockupSentAt?: string;
@@ -787,7 +789,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                                   <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'cold')}>
                                     See Sent {lead.website ? 'Marketing / Ads ' : ''}Cold Email
                                   </Button>
-                                  {!lead.coldEmailResentAt ? (
+                                  {!lead.coldEmailOpened && !lead.coldEmailClicked ? (
                                     <Button
                                       size="sm"
                                       variant="outline-warning"
@@ -801,7 +803,9 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                                     >
                                       Resend Cold Email
                                     </Button>
-                                  ) : null}
+                                  ) : (
+                                    <small style={{ color: '#666' }}>Already {lead.coldEmailClicked ? 'clicked' : 'opened'} — no resend needed</small>
+                                  )}
                                 </>
                               ) : (
                                 <Button size="sm" variant="outline-warning" disabled={busy || lead.declined} onClick={() => handleSendColdEmail(lead)}>
