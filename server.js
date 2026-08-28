@@ -470,23 +470,50 @@ function buildColdEmailHtml(lead) {
   const business = lead.businessName ? `<strong>${lead.businessName}</strong>'s` : 'your';
   const businessFor = lead.businessName ? `<strong>${lead.businessName}</strong>` : 'your business';
   // Inbound leads already signed up wanting a mockup — skip the cold-outreach
-  // framing and just confirm we're on it.
-  const paragraphs = lead.inbound
-    ? [
-        `Thanks for signing up! We're already working on a custom homepage mockup for ${businessFor} and will have it ready within a couple hours.`,
-        `Feel free to schedule a quick call at your convenience so we can walk through it together once it's ready — there's no obligation, and it only takes about 5-10 minutes:`
-      ]
-    : [
-        `I came across ${business} business page and noticed you don't currently have a website to showcase your business and make it easier for customers to find you online.`,
-        `To give you an idea of what's possible, I went ahead and designed a custom homepage mockup specifically for your business. I'd love to show it to you — there's no obligation, and it only takes about 5-10 minutes.`,
-        `Would you be available for a quick call sometime in the next day or two? Here's my calendar link for you to schedule it at your convenience:`
-      ];
+  // framing and just confirm we're on it. Newsletter-sourced leads get a
+  // different ask — reply with details so the mockup can actually get made.
+  let paragraphs;
+  if (lead.source === 'newsletter') {
+    paragraphs = [
+      `Hi, thanks for signing up to our newsletter! We're currently offering free website mockups and would love to make one for ${businessFor}.`,
+      `Just reply with your business name, bio, logo, services, and any relevant images and we'll have it ready by the time you schedule your call:`
+    ];
+  } else if (lead.inbound) {
+    paragraphs = [
+      `Thanks for signing up! We're already working on a custom homepage mockup for ${businessFor} and will have it ready within a couple hours.`,
+      `Feel free to schedule a quick call at your convenience so we can walk through it together once it's ready:`
+    ];
+  } else {
+    paragraphs = [
+      `I came across ${business} business page and noticed you don't currently have a website to showcase your business and make it easier for customers to find you online.`,
+      `To give you an idea of what's possible, I went ahead and designed a custom homepage mockup specifically for your business. I'd love to show it to you — there's no obligation, and it only takes about 5-10 minutes.`,
+      `Would you be available for a quick call sometime in the next day or two? Here's my calendar link for you to schedule it at your convenience:`
+    ];
+  }
 
   return renderBrandedEmail({
     greetingName: lead.contactName,
     leadId: lead._id,
     type: 'cold',
     paragraphs,
+    ctaLabel: 'Schedule call',
+    ctaUrl: trackedUrl(lead._id, CALENDAR_LINK, 'cold'),
+    signOff: `Looking forward to hearing from you,<br/><br/>Gen Barrios<br/><a href="${SITE_URL}" style="color:#111;">enigma-labs.com</a>`
+  });
+}
+
+// Newsletter-source leads who replied but haven't clicked the calendar link
+// yet — the mockup is done, just need them to actually book the call. Uses
+// the "cold" tracking type so a click here satisfies the same
+// coldEmailClicked check the original email's button does.
+function buildReminderEmailHtml(lead) {
+  return renderBrandedEmail({
+    greetingName: lead.contactName,
+    leadId: lead._id,
+    type: 'cold',
+    paragraphs: [
+      `Just a quick update — we've finished your free mockup! Whenever you're ready to review it, feel free to schedule a call at your convenience:`
+    ],
     ctaLabel: 'Schedule call',
     ctaUrl: trackedUrl(lead._id, CALENDAR_LINK, 'cold'),
     signOff: `Looking forward to hearing from you,<br/><br/>Gen Barrios<br/><a href="${SITE_URL}" style="color:#111;">enigma-labs.com</a>`
@@ -1029,9 +1056,12 @@ const leadSchema = new mongoose.Schema({
   industry: String,
   notes: String,
   googleBusinessUrl: String,
-  // true when the lead came in through the public free-mockup signup form;
-  // false for anything sourced from the lead scraper or manual/file import.
+  // true when the lead came in through the public free-mockup signup form OR
+  // the newsletter (web/ads interest); false for anything sourced from the
+  // lead scraper or manual/file import. "source" is the more specific
+  // breakdown, driving which direction filter and cold-email copy applies.
   inbound: { type: Boolean, default: false },
+  source: { type: String, enum: ['outbound', 'mockup_form', 'newsletter'], default: 'outbound' },
   coldEmailSent: { type: Boolean, default: false },
   coldEmailSentAt: Date,
   // Set the one time the cold email is resent — once present, resending is
@@ -1058,6 +1088,13 @@ const leadSchema = new mongoose.Schema({
   outdatedMockupOpenedAt: Date,
   outdatedMockupClicked: { type: Boolean, default: false },
   outdatedMockupClickedAt: Date,
+  // Newsletter-source leads only: sent once they've replied but haven't
+  // clicked the calendar link yet — "the mockup's ready, schedule anytime."
+  reminderEmailSent: { type: Boolean, default: false },
+  reminderEmailSentAt: Date,
+  reminderEmailHtml: String,
+  reminderEmailSubject: String,
+  reminderEmailResendId: String,
   onboardingSent: { type: Boolean, default: false },
   onboardingSentAt: Date,
   onboardingHtml: String,
@@ -1175,11 +1212,12 @@ async function findDuplicateLead({ email, phone }) {
   return Lead.findOne({ $or: conditions });
 }
 
-async function upsertInboundLead({ businessName, contactName, email, phone, instagram, googleBusinessUrl, city, submittedIp }) {
+async function upsertInboundLead({ businessName, contactName, email, phone, instagram, googleBusinessUrl, city, submittedIp, source }) {
   try {
     const existing = await findDuplicateLead({ email, phone });
     if (existing) {
       existing.inbound = true;
+      if (source) existing.source = source;
       existing.businessName = businessName || existing.businessName;
       existing.contactName = contactName || existing.contactName;
       existing.instagram = instagram || existing.instagram;
@@ -1200,12 +1238,33 @@ async function upsertInboundLead({ businessName, contactName, email, phone, inst
       googleBusinessUrl: googleBusinessUrl || '',
       city: city || '',
       submittedIp: submittedIp || '',
-      inbound: true
+      inbound: true,
+      source: source || 'mockup_form'
     });
   } catch (error) {
     console.error('Could not upsert inbound lead', error);
     return null;
   }
+}
+
+// Web/ads interest signups become an inbound lead and immediately get the
+// same cold-email pitch a manually-added lead would get, marked sent
+// automatically — no manual "Cold Email" click needed. Used for both public
+// newsletter signups and the admin's manual "+ Add Subscriber" form.
+async function pitchServiceInterest(doc, category, submittedIp) {
+  await sendServiceInterestEmails(doc, category);
+  const lead = await upsertInboundLead({
+    businessName: doc.businessName,
+    contactName: doc.name,
+    email: doc.email,
+    phone: doc.phone,
+    instagram: doc.socialUrl,
+    googleBusinessUrl: doc.googleBusinessUrl,
+    city: doc.city,
+    submittedIp,
+    source: 'newsletter'
+  });
+  await autoSendColdEmailToLead(lead);
 }
 
 async function convertLeadIfMatches({ email, phone }) {
@@ -1297,6 +1356,28 @@ app.get('/api/onboarding/health', (_req, res) => {
   res.json({ ok: true, message: 'Onboarding API is running.' });
 });
 
+// TEMPORARY — classifies existing leads whose email matches a web/ads
+// interested newsletter subscriber as source: 'newsletter' (they predate
+// the "source" field, so they'd otherwise fall back to showing as plain
+// "Inbound"). Remove this route once it's been run.
+app.post('/api/_backfill-newsletter-lead-source-2026', async (req, res) => {
+  if (req.headers['x-migration-key'] !== 'newsletter-source-2026-08-28') {
+    return res.status(401).json({ ok: false });
+  }
+  try {
+    const subscribers = await NewsletterSubscriber.find({ $or: [{ web: true }, { ads: true }] }, 'email');
+    const emails = subscribers.map((s) => s.email).filter(Boolean);
+    const result = await Lead.updateMany(
+      { email: { $in: emails } },
+      { $set: { source: 'newsletter' } }
+    );
+    res.json({ ok: true, checked: emails.length, matched: result.matchedCount, modified: result.modifiedCount });
+  } catch (error) {
+    console.error('Migration failed', error);
+    res.status(500).json({ ok: false, message: String(error) });
+  }
+});
+
 app.post('/api/newsletter/subscribe', async (req, res) => {
   try {
     const payload = {
@@ -1339,7 +1420,8 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
         instagram: payload.socialUrl,
         googleBusinessUrl: payload.googleBusinessUrl,
         city: payload.city,
-        submittedIp: getRequestIp(req)
+        submittedIp: getRequestIp(req),
+        source: 'mockup_form'
       });
 
       if (isNewMockupRequest) {
@@ -1350,23 +1432,6 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       return res.status(201).json({ ok: true, message: 'Mockup request received.' });
     }
 
-    // Web/ads interest signups become an inbound lead and immediately get
-    // the same cold-email pitch a manually-added lead would get, marked
-    // sent automatically — no manual "Cold Email" click needed.
-    async function pitchServiceInterest(doc, category) {
-      await sendServiceInterestEmails(doc, category);
-      const lead = await upsertInboundLead({
-        businessName: doc.businessName,
-        contactName: doc.name,
-        email: doc.email,
-        phone: doc.phone,
-        instagram: doc.socialUrl,
-        googleBusinessUrl: doc.googleBusinessUrl,
-        city: doc.city,
-        submittedIp: getRequestIp(req)
-      });
-      await autoSendColdEmailToLead(lead);
-    }
 
     const existing = await NewsletterSubscriber.findOne({ email: payload.email });
     if (existing) {
@@ -1391,16 +1456,16 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       existing.ads = existing.ads || payload.ads;
       await existing.save();
 
-      if (isNewWebInterest) await pitchServiceInterest(existing, 'web');
-      if (isNewAdsInterest) await pitchServiceInterest(existing, 'ads');
+      if (isNewWebInterest) await pitchServiceInterest(existing, 'web', getRequestIp(req));
+      if (isNewAdsInterest) await pitchServiceInterest(existing, 'ads', getRequestIp(req));
       if (isNewMusicInterest) await sendMusicInterestThankYouEmail(existing);
 
       return res.status(200).json({ ok: true, subscriber: existing, message: 'Subscription updated.' });
     }
 
     const subscriber = await NewsletterSubscriber.create(payload);
-    if (subscriber.web) await pitchServiceInterest(subscriber, 'web');
-    if (subscriber.ads) await pitchServiceInterest(subscriber, 'ads');
+    if (subscriber.web) await pitchServiceInterest(subscriber, 'web', getRequestIp(req));
+    if (subscriber.ads) await pitchServiceInterest(subscriber, 'ads', getRequestIp(req));
     if (subscriber.beats || subscriber.mixing || subscriber.loopsTemplates) await sendMusicInterestThankYouEmail(subscriber);
 
     res.status(201).json({ ok: true, subscriber });
@@ -1450,6 +1515,9 @@ app.post('/api/newsletter/subscribers', async (req, res) => {
       web: Boolean(req.body.web),
       ads: Boolean(req.body.ads)
     });
+
+    if (subscriber.web) await pitchServiceInterest(subscriber, 'web', getRequestIp(req));
+    if (subscriber.ads) await pitchServiceInterest(subscriber, 'ads', getRequestIp(req));
 
     res.status(201).json({ ok: true, subscriber });
   } catch (error) {
@@ -2402,6 +2470,31 @@ app.post('/api/crm/leads/:id/send-cold-email', async (req, res) => {
   } catch (error) {
     console.error('Could not send cold email', error);
     res.status(500).json({ ok: false, message: 'Could not send cold email.' });
+  }
+});
+
+app.post('/api/crm/leads/:id/send-reminder-email', async (req, res) => {
+  try {
+    const lead = await Lead.findById(req.params.id);
+    if (!lead) {
+      return res.status(404).json({ ok: false, message: 'Lead not found.' });
+    }
+    if (lead.reminderEmailSent && (lead.coldEmailOpened || lead.coldEmailClicked)) {
+      return res.status(400).json({ ok: false, message: 'This lead already opened or clicked — no further reminders needed.' });
+    }
+    const result = await sendLeadEmail(lead, {
+      subject: 'Your free mockup is ready! 🎉',
+      buildHtml: buildReminderEmailHtml,
+      statusField: 'reminderEmailSent',
+      statusAtField: 'reminderEmailSentAt',
+      htmlField: 'reminderEmailHtml',
+      subjectField: 'reminderEmailSubject',
+      resendIdField: 'reminderEmailResendId'
+    });
+    res.status(result.ok ? 200 : 400).json(result);
+  } catch (error) {
+    console.error('Could not send reminder email', error);
+    res.status(500).json({ ok: false, message: 'Could not send reminder email.' });
   }
 });
 

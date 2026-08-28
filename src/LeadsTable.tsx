@@ -41,11 +41,14 @@ export type Lead = {
   notes?: string;
   googleBusinessUrl?: string;
   inbound: boolean;
+  source?: 'outbound' | 'mockup_form' | 'newsletter';
   coldEmailSent?: boolean;
   coldEmailSentAt?: string;
   coldEmailOpened?: boolean;
   coldEmailClicked?: boolean;
   coldEmailResentAt?: string;
+  reminderEmailSent?: boolean;
+  reminderEmailSentAt?: string;
   outdatedMockupSent?: boolean;
   outdatedMockupSentAt?: string;
   onboardingSent?: boolean;
@@ -124,7 +127,13 @@ const editFormFromLead = (lead: Lead): EditForm => ({
   notes: lead.notes || ''
 });
 
-type DirectionFilter = 'all' | 'inbound' | 'outbound';
+type DirectionFilter = 'all' | 'inbound' | 'newsletter' | 'outbound';
+
+// Existing leads created before "source" existed don't have it stored at
+// all — fall back to the old inbound boolean so they still classify
+// correctly instead of silently reading as "outbound".
+const leadSource = (lead: Lead): 'outbound' | 'mockup_form' | 'newsletter' =>
+  lead.source || (lead.inbound ? 'mockup_form' : 'outbound');
 type StatusFilter = 'all' | 'not_contacted' | 'cold_email' | 'onboarding';
 type EmailFilter = 'all' | 'has_email' | 'no_email';
 type SortOption = 'newest' | 'oldest' | 'name';
@@ -248,8 +257,9 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
 
       const matchesDirection =
         directionFilter === 'all' ||
-        (directionFilter === 'inbound' && lead.inbound) ||
-        (directionFilter === 'outbound' && !lead.inbound);
+        (directionFilter === 'inbound' && leadSource(lead) === 'mockup_form') ||
+        (directionFilter === 'newsletter' && leadSource(lead) === 'newsletter') ||
+        (directionFilter === 'outbound' && leadSource(lead) === 'outbound');
 
       const matchesStatus =
         statusFilter === 'all' ||
@@ -318,6 +328,22 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
       } catch (actionError) {
         console.error(actionError);
         setError('Could not send cold email.');
+      }
+    });
+
+  const handleSendReminderEmail = (lead: Lead) =>
+    runAction(lead, async () => {
+      try {
+        const response = await axios.post(`${API_BASE_URL}/crm/leads/${lead._id}/send-reminder-email`);
+        if (response.data?.ok) {
+          setMessage(`Reminder email sent to ${lead.businessName || lead.email}.`);
+          fetchLeads();
+        } else {
+          setError(response.data?.message || 'Could not send reminder email.');
+        }
+      } catch (actionError) {
+        console.error(actionError);
+        setError('Could not send reminder email.');
       }
     });
 
@@ -565,6 +591,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
           <Form.Select value={directionFilter} onChange={(event) => setDirectionFilter(event.target.value as DirectionFilter)}>
             <option value="all">All Leads</option>
             <option value="inbound">Inbound</option>
+            <option value="newsletter">Newsletter</option>
             <option value="outbound">Outbound</option>
           </Form.Select>
         </Col>
@@ -804,7 +831,16 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                                   <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'cold')}>
                                     See Sent {lead.website ? 'Marketing / Ads ' : ''}Cold Email
                                   </Button>
-                                  {!lead.coldEmailOpened && !lead.coldEmailClicked ? (
+                                  {leadSource(lead) === 'newsletter' && lead.responded && !lead.coldEmailClicked ? (
+                                    <Button
+                                      size="sm"
+                                      variant="outline-warning"
+                                      disabled={busy || lead.declined}
+                                      onClick={() => handleSendReminderEmail(lead)}
+                                    >
+                                      {lead.reminderEmailSent ? 'Resend Reminder Email' : 'Send Reminder Email'}
+                                    </Button>
+                                  ) : !lead.coldEmailOpened && !lead.coldEmailClicked ? (
                                     <Button
                                       size="sm"
                                       variant="outline-warning"

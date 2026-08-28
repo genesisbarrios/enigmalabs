@@ -66,6 +66,10 @@ const FreeMockup = () => {
       setMockupAlert('Please set an e-mail address~');
       return;
     }
+    if (!mockupBusinessName) {
+      setMockupAlert('Please set a business name~');
+      return;
+    }
 
     const dataToSend = {
       email: mockupEmail,
@@ -203,18 +207,6 @@ const FreeMockup = () => {
               ></input>
               <div style={mockupFieldGridStyle}>
                 <input
-                  type="text"
-                  name="name"
-                  placeholder="Your name"
-                  value={mockupName}
-                  required
-                  className="mockup-input"
-                  style={mockupGridInputStyle}
-                  onChange={(e) => {
-                    setMockupName(e.target.value);
-                  }}
-                ></input>
-                <input
                   type="email"
                   name="e-mail"
                   placeholder="your@email.com"
@@ -227,6 +219,29 @@ const FreeMockup = () => {
                   }}
                 ></input>
                 <input
+                  type="text"
+                  name="business-name"
+                  placeholder="Business name"
+                  value={mockupBusinessName}
+                  required
+                  className="mockup-input"
+                  style={mockupGridInputStyle}
+                  onChange={(e) => {
+                    setMockupBusinessName(e.target.value);
+                  }}
+                ></input>
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Your name (optional)"
+                  value={mockupName}
+                  className="mockup-input"
+                  style={mockupGridInputStyle}
+                  onChange={(e) => {
+                    setMockupName(e.target.value);
+                  }}
+                ></input>
+                <input
                   type="tel"
                   name="phone"
                   placeholder="Phone number (optional)"
@@ -235,17 +250,6 @@ const FreeMockup = () => {
                   style={mockupGridInputStyle}
                   onChange={(e) => {
                     setMockupPhone(e.target.value);
-                  }}
-                ></input>
-                <input
-                  type="text"
-                  name="business-name"
-                  placeholder="Business name (optional)"
-                  value={mockupBusinessName}
-                  className="mockup-input"
-                  style={mockupGridInputStyle}
-                  onChange={(e) => {
-                    setMockupBusinessName(e.target.value);
                   }}
                 ></input>
                 <input
