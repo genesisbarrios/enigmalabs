@@ -1242,23 +1242,6 @@ app.get('/api/onboarding/health', (_req, res) => {
   res.json({ ok: true, message: 'Onboarding API is running.' });
 });
 
-// TEMPORARY — removes the retired vocalTemplates field from existing
-// subscriber documents. Remove this route once it's been run.
-app.post('/api/_migrate-remove-vocal-templates-2026', async (req, res) => {
-  if (req.headers['x-migration-key'] !== 'remove-vocal-2026-08-28') {
-    return res.status(401).json({ ok: false });
-  }
-  try {
-    const col = mongoose.connection.db.collection('newsletter');
-    const vocalCount = await col.countDocuments({ vocalTemplates: true });
-    const unsetResult = await col.updateMany({}, { $unset: { vocalTemplates: '' } });
-    res.json({ ok: true, vocalCount, unsetModified: unsetResult.modifiedCount });
-  } catch (error) {
-    console.error('Migration failed', error);
-    res.status(500).json({ ok: false, message: String(error) });
-  }
-});
-
 app.post('/api/newsletter/subscribe', async (req, res) => {
   try {
     const payload = {
