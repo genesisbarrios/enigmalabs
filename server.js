@@ -2075,7 +2075,11 @@ const DEFAULT_INDUSTRY_OPTIONS = [
 app.get('/api/crm/leads/industries', async (_req, res) => {
   try {
     const used = await Lead.distinct('industry');
-    const industries = Array.from(new Set([...DEFAULT_INDUSTRY_OPTIONS, ...used.filter(Boolean)])).sort((a, b) =>
+    // Trim first — the same industry has ended up saved with inconsistent
+    // surrounding whitespace over time (" Cars", "Cars ", "Cars"), which
+    // would otherwise show as separate duplicate dropdown options.
+    const trimmedUsed = used.map((value) => (value || '').trim()).filter(Boolean);
+    const industries = Array.from(new Set([...DEFAULT_INDUSTRY_OPTIONS, ...trimmedUsed])).sort((a, b) =>
       a.localeCompare(b)
     );
     res.json({ ok: true, industries });
