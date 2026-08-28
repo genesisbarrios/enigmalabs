@@ -783,7 +783,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '150px' }}>
                         {lead.email ? (
                           <>
-                            {!lead.inbound && !lead.onboardingSent ? (
+                            {!lead.onboardingSent ? (
                               lead.coldEmailSent ? (
                                 <>
                                   <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'cold')}>

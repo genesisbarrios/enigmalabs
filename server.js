@@ -2321,9 +2321,6 @@ app.post('/api/crm/leads/:id/send-cold-email', async (req, res) => {
     if (!lead) {
       return res.status(404).json({ ok: false, message: 'Lead not found.' });
     }
-    if (lead.inbound) {
-      return res.status(400).json({ ok: false, message: 'Cold email is only for outbound leads.' });
-    }
     // Resends are unlimited as long as the lead hasn't engaged yet — once
     // they've opened or clicked the email, they've seen the pitch, so
     // further resends are blocked.
