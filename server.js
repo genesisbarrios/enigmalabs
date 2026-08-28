@@ -502,18 +502,37 @@ function buildColdEmailHtml(lead) {
   });
 }
 
-// Newsletter-source leads who replied but haven't clicked the calendar link
-// yet — the mockup is done, just need them to actually book the call. Uses
-// the "cold" tracking type so a click here satisfies the same
+// Follow-up sent either to newsletter-source leads who replied but haven't
+// clicked the calendar link yet, or to any lead manually marked
+// noActionTaken (opened/clicked the cold email but never actually booked a
+// call). Uses the "cold" tracking type so a click here satisfies the same
 // coldEmailClicked check the original email's button does.
 function buildReminderEmailHtml(lead) {
+  const businessFor = lead.businessName ? `<strong>${lead.businessName}</strong>` : 'your business';
+  let paragraphs;
+  if (lead.source === 'newsletter') {
+    paragraphs = [
+      `Just a quick update — we've finished your free mockup! Whenever you're ready to review it, feel free to schedule a call at your convenience:`
+    ];
+  } else if (lead.website) {
+    paragraphs = [
+      `Hey, just wanted to follow up — did you get a chance to check out the content and ads ideas I put together for ${businessFor}? Happy to hop on a call whenever works for you:`
+    ];
+  } else if (lead.inbound) {
+    paragraphs = [
+      `Hey, just wanted to let you know we've finished your homepage mockup! You can schedule a call whenever you're ready to take a look:`
+    ];
+  } else {
+    paragraphs = [
+      `Hey, I just wanted to follow up because we noticed ${businessFor} doesn't have a website, so I went ahead and built you one from scratch! I'd love to show it to you — feel free to schedule a quick call at your convenience:`
+    ];
+  }
+
   return renderBrandedEmail({
     greetingName: lead.contactName,
     leadId: lead._id,
     type: 'cold',
-    paragraphs: [
-      `Just a quick update — we've finished your free mockup! Whenever you're ready to review it, feel free to schedule a call at your convenience:`
-    ],
+    paragraphs,
     ctaLabel: 'Schedule call',
     ctaUrl: trackedUrl(lead._id, CALENDAR_LINK, 'cold'),
     signOff: `Looking forward to hearing from you,<br/><br/>Gen Barrios<br/><a href="${SITE_URL}" style="color:#111;">enigma-labs.com</a>`
@@ -1112,6 +1131,11 @@ const leadSchema = new mongoose.Schema({
   clickedAt: Date,
   responded: { type: Boolean, default: false },
   respondedAt: Date,
+  // Manually marked when the lead opened/clicked but never actually booked
+  // a call — unlocks the "Send Reminder Email" follow-up in place of a
+  // plain resend.
+  noActionTaken: { type: Boolean, default: false },
+  noActionTakenAt: Date,
   // Manual trackers — not sent via email, so there's nothing to automate;
   // the admin toggles these directly in the leads table.
   dmSent: { type: Boolean, default: false },
@@ -1354,28 +1378,6 @@ async function syncWebsiteClientFromOnboarding(source) {
 
 app.get('/api/onboarding/health', (_req, res) => {
   res.json({ ok: true, message: 'Onboarding API is running.' });
-});
-
-// TEMPORARY — classifies existing leads whose email matches a web/ads
-// interested newsletter subscriber as source: 'newsletter' (they predate
-// the "source" field, so they'd otherwise fall back to showing as plain
-// "Inbound"). Remove this route once it's been run.
-app.post('/api/_backfill-newsletter-lead-source-2026', async (req, res) => {
-  if (req.headers['x-migration-key'] !== 'newsletter-source-2026-08-28') {
-    return res.status(401).json({ ok: false });
-  }
-  try {
-    const subscribers = await NewsletterSubscriber.find({ $or: [{ web: true }, { ads: true }] }, 'email');
-    const emails = subscribers.map((s) => s.email).filter(Boolean);
-    const result = await Lead.updateMany(
-      { email: { $in: emails } },
-      { $set: { source: 'newsletter' } }
-    );
-    res.json({ ok: true, checked: emails.length, matched: result.matchedCount, modified: result.modifiedCount });
-  } catch (error) {
-    console.error('Migration failed', error);
-    res.status(500).json({ ok: false, message: String(error) });
-  }
 });
 
 app.post('/api/newsletter/subscribe', async (req, res) => {
@@ -2363,6 +2365,22 @@ app.patch('/api/crm/leads/:id/respond', async (req, res) => {
   }
 });
 
+app.patch('/api/crm/leads/:id/no-action', async (req, res) => {
+  try {
+    const lead = await Lead.findById(req.params.id);
+    if (!lead) {
+      return res.status(404).json({ ok: false, message: 'Lead not found.' });
+    }
+    lead.noActionTaken = Boolean(req.body.noActionTaken);
+    lead.noActionTakenAt = lead.noActionTaken ? new Date() : null;
+    await lead.save();
+    res.json({ ok: true, lead });
+  } catch (error) {
+    console.error('Could not update lead no-action status', error);
+    res.status(500).json({ ok: false, message: 'Could not update lead.' });
+  }
+});
+
 app.patch('/api/crm/leads/:id/dm-sent', async (req, res) => {
   try {
     const lead = await Lead.findById(req.params.id);
@@ -2482,8 +2500,11 @@ app.post('/api/crm/leads/:id/send-reminder-email', async (req, res) => {
     if (lead.reminderEmailSent && (lead.coldEmailOpened || lead.coldEmailClicked)) {
       return res.status(400).json({ ok: false, message: 'This lead already opened or clicked — no further reminders needed.' });
     }
+    const reminderSubject = lead.source === 'newsletter' || !lead.website
+      ? 'Your free mockup is ready! 🎉'
+      : 'Following up on your content & ads ideas';
     const result = await sendLeadEmail(lead, {
-      subject: 'Your free mockup is ready! 🎉',
+      subject: reminderSubject,
       buildHtml: buildReminderEmailHtml,
       statusField: 'reminderEmailSent',
       statusAtField: 'reminderEmailSentAt',

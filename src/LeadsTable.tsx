@@ -59,6 +59,8 @@ export type Lead = {
   clickedAt?: string;
   responded?: boolean;
   respondedAt?: string;
+  noActionTaken?: boolean;
+  noActionTakenAt?: string;
   dmSent?: boolean;
   dmSentAt?: string;
   called?: boolean;
@@ -451,6 +453,21 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
       }
     });
 
+  const handleToggleNoAction = (lead: Lead) =>
+    runAction(lead, async () => {
+      try {
+        const response = await axios.patch(`${API_BASE_URL}/crm/leads/${lead._id}/no-action`, { noActionTaken: !lead.noActionTaken });
+        if (response.data?.ok) {
+          fetchLeads();
+        } else {
+          setError(response.data?.message || 'Could not update no-action status.');
+        }
+      } catch (actionError) {
+        console.error(actionError);
+        setError('Could not update no-action status.');
+      }
+    });
+
   const handleToggleInstagramNotFound = (lead: Lead) =>
     runAction(lead, async () => {
       try {
@@ -816,6 +833,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                       <span style={{ color: lead.opened ? '#68FF00' : '#666' }}>{lead.opened ? '✓ Opened' : 'Not opened'}</span>
                       <span style={{ color: lead.clicked ? '#68FF00' : '#666' }}>{lead.clicked ? '✓ Clicked' : 'Not clicked'}</span>
                       <span style={{ color: lead.responded ? '#68FF00' : '#666' }}>{lead.responded ? '✓ Responded' : 'No response'}</span>
+                      {lead.noActionTaken ? <span style={{ color: '#ff4d4d' }}>✗ No Action Taken</span> : null}
                     </div>
                   </td>
                   <td>
@@ -831,7 +849,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                                   <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'cold')}>
                                     See Sent {lead.website ? 'Marketing / Ads ' : ''}Cold Email
                                   </Button>
-                                  {leadSource(lead) === 'newsletter' && lead.responded && !lead.coldEmailClicked ? (
+                                  {lead.noActionTaken || (leadSource(lead) === 'newsletter' && lead.responded && !lead.coldEmailClicked) ? (
                                     <Button
                                       size="sm"
                                       variant="outline-warning"
@@ -855,7 +873,17 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                                       Resend Cold Email
                                     </Button>
                                   ) : (
-                                    <small style={{ color: '#666' }}>Already {lead.coldEmailClicked ? 'clicked' : 'opened'} — no resend needed</small>
+                                    <>
+                                      <small style={{ color: '#666' }}>Already {lead.coldEmailClicked ? 'clicked' : 'opened'} — no resend needed</small>
+                                      <Button
+                                        size="sm"
+                                        variant="outline-danger"
+                                        disabled={busy || lead.declined}
+                                        onClick={() => handleToggleNoAction(lead)}
+                                      >
+                                        No Action
+                                      </Button>
+                                    </>
                                   )}
                                 </>
                               ) : (
