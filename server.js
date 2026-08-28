@@ -99,8 +99,9 @@ function buildMockupThankYouHtml(subscriber) {
     <div style="font-family: Arial, Helvetica, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #111;">
       <h2 style="margin: 0 0 16px;">Thanks for signing up, ${firstName}!</h2>
       <p style="line-height: 1.6;">
-        We received your request for a free website mockup${businessPhrase}. Our team is already
-        putting it together — the next step is a quick call to walk through it together.
+        We received your request for a free website mockup${businessPhrase}. We'll get back to you shortly —
+        in the meantime, feel free to check out our work on
+        <a href="${SITE_URL}/Tech" style="color:#111; font-weight:bold;">our website</a>.
       </p>
       ${CALENDAR_LINK ? `
       <p style="text-align: center; margin: 32px 0;">
@@ -132,6 +133,43 @@ async function sendMockupThankYouEmail(subscriber) {
     if (error) console.error('Could not send mockup thank-you email', error);
   } catch (error) {
     console.error('Could not send mockup thank-you email', error);
+  }
+}
+
+function buildMusicInterestThankYouHtml(subscriber) {
+  const firstName = (subscriber.name || '').trim().split(' ')[0] || 'there';
+
+  return `
+    <div style="font-family: Arial, Helvetica, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #111;">
+      <h2 style="margin: 0 0 16px;">Thanks for signing up, ${firstName}!</h2>
+      <p style="line-height: 1.6;">
+        We'll get back to you shortly — in the meantime, feel free to check out our work on
+        <a href="${SITE_URL}/Music" style="color:#111; font-weight:bold;">our website</a>.
+      </p>
+      <p style="line-height: 1.6;">Talk soon,<br/>Gen Barrios<br/>Enigma Labs</p>
+      <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+        <img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" />
+      </div>
+    </div>
+  `;
+}
+
+async function sendMusicInterestThankYouEmail(subscriber) {
+  if (!resend) {
+    console.warn('RESEND_API_KEY not set — skipping music-interest thank-you email.');
+    return;
+  }
+  if (!subscriber.email) return;
+  try {
+    const { error } = await resend.emails.send({
+      from: AGREEMENT_FROM_EMAIL,
+      to: subscriber.email,
+      subject: 'Thanks for signing up!',
+      html: buildMusicInterestThankYouHtml(subscriber)
+    });
+    if (error) console.error('Could not send music-interest thank-you email', error);
+  } catch (error) {
+    console.error('Could not send music-interest thank-you email', error);
   }
 }
 
@@ -942,6 +980,7 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
     const existing = await NewsletterSubscriber.findOne({ email: payload.email });
     if (existing) {
       const isNewWebInterest = payload.web && !existing.web;
+      const isNewMusicInterest = (payload.beats && !existing.beats) || (payload.loops && !existing.loops);
 
       existing.name = payload.name || existing.name;
       existing.phone = payload.phone || existing.phone;
@@ -957,12 +996,14 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       await existing.save();
 
       if (isNewWebInterest) await sendWebInterestEmail(existing);
+      if (isNewMusicInterest) await sendMusicInterestThankYouEmail(existing);
 
       return res.status(200).json({ ok: true, subscriber: existing, message: 'Subscription updated.' });
     }
 
     const subscriber = await NewsletterSubscriber.create(payload);
     if (subscriber.web) await sendWebInterestEmail(subscriber);
+    if (subscriber.beats || subscriber.loops) await sendMusicInterestThankYouEmail(subscriber);
 
     res.status(201).json({ ok: true, subscriber });
   } catch (error) {
