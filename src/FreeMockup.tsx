@@ -18,10 +18,10 @@ const workProjects = [
     alt: "Maury Ramos Peña Portfolio Website"
   },
   {
-    name: "Mars Miami Studios",
-    url: "https://www.marsmusicstudios.com/",
-    image: "/work/mars.png",
-    alt: "Mars Miami Studios"
+    name: "Nuralume",
+    url: "https://nuralume.xyz",
+    image: "/work/nuralume.png",
+    alt: "Nuralume"
   },
   {
     name: "Influanto | Music Marketing Platform",
@@ -30,10 +30,10 @@ const workProjects = [
     alt: "Influanto the all in one music marketing platform"
   },
   {
-    name: "Nuralume",
-    url: "https://nuralume.xyz",
-    image: "/work/nuralume.png",
-    alt: "Nuralume"
+    name: "Mars Miami Studios",
+    url: "https://www.marsmusicstudios.com/",
+    image: "/work/mars.png",
+    alt: "Mars Miami Studios"
   }
 ];
 
