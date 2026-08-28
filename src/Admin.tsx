@@ -354,6 +354,8 @@ const Admin = () => {
   const subscriberFileInputRef = useRef<HTMLInputElement>(null);
   const [subscriberPageSize, setSubscriberPageSize] = useState(SUBSCRIBER_PAGE_SIZE_OPTIONS[0]);
   const [subscriberPage, setSubscriberPage] = useState(1);
+  const [subscriberSearchQuery, setSubscriberSearchQuery] = useState('');
+  const [subscriberInterestFilter, setSubscriberInterestFilter] = useState('all');
 
   // Contact panel (per-subscriber, inline "box underneath" the row)
   const BLANK_CONTACT_FORM = { category: 'beats' as NewsletterCategory, templateKey: 'custom-message', subject: '', bodyText: '', ctaLabel: '', ctaUrl: '', imageUrl: '', resendCampaignId: '' };
@@ -838,19 +840,34 @@ const Admin = () => {
     });
   }, [agreements, searchQuery, planFilter]);
 
-  const totalSubscriberPages = Math.max(1, Math.ceil(subscribers.length / subscriberPageSize));
+  const filteredSubscribers = useMemo(() => {
+    const q = subscriberSearchQuery.trim().toLowerCase();
+    return subscribers.filter((subscriber) => {
+      const matchesQuery =
+        !q ||
+        (subscriber.email || '').toLowerCase().includes(q) ||
+        (subscriber.name || '').toLowerCase().includes(q) ||
+        (subscriber.phone || '').toLowerCase().includes(q) ||
+        (subscriber.businessName || '').toLowerCase().includes(q) ||
+        (subscriber.socialUrl || '').toLowerCase().includes(q);
+      const matchesInterest = subscriberInterestFilter === 'all' || subscriber[subscriberInterestFilter as keyof Subscriber];
+      return matchesQuery && matchesInterest;
+    });
+  }, [subscribers, subscriberSearchQuery, subscriberInterestFilter]);
+
+  const totalSubscriberPages = Math.max(1, Math.ceil(filteredSubscribers.length / subscriberPageSize));
 
   useEffect(() => {
     setSubscriberPage(1);
-  }, [subscriberPageSize, subscribers.length]);
+  }, [subscriberPageSize, subscriberSearchQuery, subscriberInterestFilter]);
 
   useEffect(() => {
     if (subscriberPage > totalSubscriberPages) setSubscriberPage(totalSubscriberPages);
   }, [subscriberPage, totalSubscriberPages]);
 
   const paginatedSubscribers = useMemo(
-    () => subscribers.slice((subscriberPage - 1) * subscriberPageSize, subscriberPage * subscriberPageSize),
-    [subscribers, subscriberPage, subscriberPageSize]
+    () => filteredSubscribers.slice((subscriberPage - 1) * subscriberPageSize, subscriberPage * subscriberPageSize),
+    [filteredSubscribers, subscriberPage, subscriberPageSize]
   );
 
   const handleLogin = (event: React.FormEvent) => {
@@ -1039,7 +1056,7 @@ const Admin = () => {
   };
 
   const handleCopySubscribers = async () => {
-    const list = subscribers.map((subscriber) => subscriber.email).join('\n');
+    const list = filteredSubscribers.map((subscriber) => subscriber.email).join('\n');
     try {
       await navigator.clipboard.writeText(list);
       setMessage('Subscriber list copied to clipboard.');
@@ -1060,7 +1077,7 @@ const Admin = () => {
 
   const handleExportSubscribersCsv = () => {
     const header = ['Email', 'Beats', 'Mixing', 'Loops & Templates', 'Visuals', 'Web', 'Ads', 'Subscribed At'];
-    const rows = subscribers.map((subscriber) => [
+    const rows = filteredSubscribers.map((subscriber) => [
       subscriber.email,
       subscriber.beats ? 'Yes' : 'No',
       subscriber.mixing ? 'Yes' : 'No',
@@ -1077,7 +1094,7 @@ const Admin = () => {
   };
 
   const handleExportSubscribersXlsx = () => {
-    const rows = subscribers.map((subscriber) => ({
+    const rows = filteredSubscribers.map((subscriber) => ({
       Email: subscriber.email,
       Beats: subscriber.beats ? 'Yes' : 'No',
       Mixing: subscriber.mixing ? 'Yes' : 'No',
@@ -1529,12 +1546,6 @@ const Admin = () => {
           <Button size="sm" variant="outline-warning" onClick={handleOpenCreateCampaign}>
             + Create Campaign
           </Button>
-          <Button size="sm" variant="outline-success" onClick={() => setShowPasteSubscribers((prev) => !prev)}>
-            {showPasteSubscribers ? 'Cancel' : '+ Paste From Excel'}
-          </Button>
-          <Button size="sm" variant="success" onClick={() => setShowAddSubscriber((prev) => !prev)}>
-            {showAddSubscriber ? 'Cancel' : '+ Add Subscriber'}
-          </Button>
         </div>
       </div>
 
@@ -1619,6 +1630,34 @@ const Admin = () => {
         {subscribers.length} newsletter subscriber{subscribers.length === 1 ? '' : 's'}.
       </p>
 
+      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
+        <Button size="sm" variant="outline-light" onClick={handleCopySubscribers} disabled={!filteredSubscribers.length}>
+          Copy List
+        </Button>
+        <Button size="sm" variant="outline-success" onClick={handleExportSubscribersCsv} disabled={!filteredSubscribers.length}>
+          Export CSV
+        </Button>
+        <Button size="sm" variant="outline-success" onClick={handleExportSubscribersXlsx} disabled={!filteredSubscribers.length}>
+          Export XLSX
+        </Button>
+        <Button size="sm" variant="success" onClick={handleImportSubscribersClick}>
+          Import CSV/XLSX
+        </Button>
+        <input
+          ref={subscriberFileInputRef}
+          type="file"
+          accept=".csv,.xlsx,.xls"
+          style={{ display: 'none' }}
+          onChange={handleImportSubscribersFile}
+        />
+        <Button size="sm" variant="outline-success" onClick={() => setShowPasteSubscribers((prev) => !prev)}>
+          {showPasteSubscribers ? 'Cancel' : '+ Paste From Excel'}
+        </Button>
+        <Button size="sm" variant="success" onClick={() => setShowAddSubscriber((prev) => !prev)}>
+          {showAddSubscriber ? 'Cancel' : '+ Add Subscriber'}
+        </Button>
+      </div>
+
       {showPasteSubscribers ? (
         <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', marginBottom: '1.25rem' }}>
           <Card.Body>
@@ -1686,28 +1725,6 @@ const Admin = () => {
         </Card>
       ) : null}
 
-      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
-        <Button size="sm" variant="outline-light" onClick={handleCopySubscribers} disabled={!subscribers.length}>
-          Copy List
-        </Button>
-        <Button size="sm" variant="outline-success" onClick={handleExportSubscribersCsv} disabled={!subscribers.length}>
-          Export CSV
-        </Button>
-        <Button size="sm" variant="outline-success" onClick={handleExportSubscribersXlsx} disabled={!subscribers.length}>
-          Export XLSX
-        </Button>
-        <Button size="sm" variant="success" onClick={handleImportSubscribersClick}>
-          Import CSV/XLSX
-        </Button>
-        <input
-          ref={subscriberFileInputRef}
-          type="file"
-          accept=".csv,.xlsx,.xls"
-          style={{ display: 'none' }}
-          onChange={handleImportSubscribersFile}
-        />
-      </div>
-
       {subscriberImportStatus ? <p style={{ color: '#d4d4d4', marginBottom: '1rem' }}>{subscriberImportStatus}</p> : null}
 
       {loadingSubscribers ? <p>Loading subscribers...</p> : null}
@@ -1715,9 +1732,38 @@ const Admin = () => {
       {!loadingSubscribers && subscribers.length === 0 ? <Alert variant="secondary">No newsletter subscribers yet.</Alert> : null}
 
       {!loadingSubscribers && subscribers.length > 0 ? (
+        <Row className="mb-2">
+          <Col md={6}>
+            <Form.Control
+              size="sm"
+              placeholder="Search by email, name, phone, business, Instagram..."
+              value={subscriberSearchQuery}
+              onChange={(event) => setSubscriberSearchQuery(event.target.value)}
+            />
+          </Col>
+          <Col md={4}>
+            <Form.Select
+              size="sm"
+              value={subscriberInterestFilter}
+              onChange={(event) => setSubscriberInterestFilter(event.target.value)}
+            >
+              <option value="all">All Interests</option>
+              {INTEREST_FIELDS.map((field) => (
+                <option key={field.key} value={field.key}>{field.label}</option>
+              ))}
+            </Form.Select>
+          </Col>
+        </Row>
+      ) : null}
+
+      {!loadingSubscribers && subscribers.length > 0 && filteredSubscribers.length === 0 ? (
+        <Alert variant="secondary">No subscribers match your search/filter.</Alert>
+      ) : null}
+
+      {!loadingSubscribers && filteredSubscribers.length > 0 ? (
         <Row className="mb-2 align-items-center">
           <Col style={{ color: '#aaa', fontSize: '0.85rem' }}>
-            Showing {(subscriberPage - 1) * subscriberPageSize + 1}–{Math.min(subscriberPage * subscriberPageSize, subscribers.length)} of {subscribers.length}
+            Showing {(subscriberPage - 1) * subscriberPageSize + 1}–{Math.min(subscriberPage * subscriberPageSize, filteredSubscribers.length)} of {filteredSubscribers.length}
           </Col>
           <Col xs="auto">
             <Form.Select
@@ -1734,7 +1780,7 @@ const Admin = () => {
         </Row>
       ) : null}
 
-      {!loadingSubscribers && subscribers.length > 0 ? (
+      {!loadingSubscribers && filteredSubscribers.length > 0 ? (
         <Table striped bordered hover variant="dark" responsive>
           <thead>
             <tr>
