@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, Button, Card, Col, Dropdown, DropdownButton, Form, Row, Table } from 'react-bootstrap';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
@@ -43,7 +43,9 @@ const emptyManualForm: ParsedLead = {
   declined: false
 };
 
-const INDUSTRY_OPTIONS = [
+// Shown until the real list loads from the database (which also includes
+// every industry ever typed/pasted in, not just these defaults).
+const DEFAULT_INDUSTRY_OPTIONS = [
   'Restaurant / Food / Bar',
   'Hospitality',
   'Entertainment',
@@ -355,6 +357,20 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
   const [exporting, setExporting] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [industryOptions, setIndustryOptions] = useState<string[]>(DEFAULT_INDUSTRY_OPTIONS);
+
+  const fetchIndustryOptions = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/crm/leads/industries`);
+      if (response.data?.ok) setIndustryOptions(response.data.industries || DEFAULT_INDUSTRY_OPTIONS);
+    } catch (fetchError) {
+      console.error(fetchError);
+    }
+  };
+
+  useEffect(() => {
+    fetchIndustryOptions();
+  }, []);
 
   const handleAddSingle = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -372,6 +388,7 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
         setMessage(response.data.duplicate ? 'That lead already exists — skipped.' : 'Lead added.');
         setManualForm(emptyManualForm);
         onImported();
+        fetchIndustryOptions();
       } else {
         setError(response.data?.message || 'Could not add lead.');
       }
@@ -430,6 +447,7 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
         setPreviewLeads([]);
         setPasteText('');
         onImported();
+        fetchIndustryOptions();
       } else {
         setError(response.data?.message || 'Could not import leads.');
       }
@@ -622,7 +640,7 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
                     list="industry-options"
                   />
                   <datalist id="industry-options">
-                    {INDUSTRY_OPTIONS.map((option) => (
+                    {industryOptions.map((option) => (
                       <option key={option} value={option} />
                     ))}
                   </datalist>
@@ -842,7 +860,7 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
                         onChange={(e) => updatePreviewLead(index, { industry: e.target.value })}
                       />
                       <datalist id="preview-industry-options">
-                        {INDUSTRY_OPTIONS.map((option) => (
+                        {industryOptions.map((option) => (
                           <option key={option} value={option} />
                         ))}
                       </datalist>

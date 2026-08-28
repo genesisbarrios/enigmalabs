@@ -2051,6 +2051,40 @@ app.get('/api/crm/leads', async (_req, res) => {
   }
 });
 
+// A few curated defaults so the dropdown isn't empty for a brand-new
+// database, merged with every industry value that's actually been used —
+// so anything typed/pasted in during import or manual entry shows up here
+// automatically, with no separate "save this as a type" step needed.
+const DEFAULT_INDUSTRY_OPTIONS = [
+  'Restaurant / Food / Bar',
+  'Hospitality',
+  'Entertainment',
+  'Tech',
+  'Finance',
+  'Plumbing / Electricity / HVAC',
+  'Marketing',
+  'Cars',
+  'Real Estate',
+  'Property Maintenance',
+  'Wholesale',
+  'Beauty / Hair',
+  'Healthcare',
+  'Construction'
+];
+
+app.get('/api/crm/leads/industries', async (_req, res) => {
+  try {
+    const used = await Lead.distinct('industry');
+    const industries = Array.from(new Set([...DEFAULT_INDUSTRY_OPTIONS, ...used.filter(Boolean)])).sort((a, b) =>
+      a.localeCompare(b)
+    );
+    res.json({ ok: true, industries });
+  } catch (error) {
+    console.error('Could not load industries', error);
+    res.status(500).json({ ok: false, message: 'Could not load industries.' });
+  }
+});
+
 app.put('/api/crm/leads/:id', async (req, res) => {
   try {
     const lead = await Lead.findById(req.params.id);

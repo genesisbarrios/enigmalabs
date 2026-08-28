@@ -4,7 +4,9 @@ import axios from 'axios';
 
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 
-const INDUSTRY_OPTIONS = [
+// Shown until the real list loads from the database (which also includes
+// every industry ever typed/pasted in, not just these defaults).
+const DEFAULT_INDUSTRY_OPTIONS = [
   'Restaurant / Food / Bar',
   'Hospitality',
   'Entertainment',
@@ -192,6 +194,8 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
   const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
   const [currentPage, setCurrentPage] = useState(1);
 
+  const [industryOptions, setIndustryOptions] = useState<string[]>(DEFAULT_INDUSTRY_OPTIONS);
+
   const fetchLeads = async () => {
     setLoading(true);
     try {
@@ -207,8 +211,18 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
     }
   };
 
+  const fetchIndustryOptions = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/crm/leads/industries`);
+      if (response.data?.ok) setIndustryOptions(response.data.industries || DEFAULT_INDUSTRY_OPTIONS);
+    } catch (fetchError) {
+      console.error(fetchError);
+    }
+  };
+
   useEffect(() => {
     fetchLeads();
+    fetchIndustryOptions();
   }, []);
 
   useImperativeHandle(ref, () => ({ reload: fetchLeads }));
@@ -495,6 +509,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
         setMessage('Lead updated.');
         closeEditModal();
         fetchLeads();
+        fetchIndustryOptions();
       } else {
         setEditError(response.data?.message || 'Could not update lead.');
       }
@@ -996,7 +1011,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                     list="lead-industry-options"
                   />
                   <datalist id="lead-industry-options">
-                    {INDUSTRY_OPTIONS.map((option) => (
+                    {industryOptions.map((option) => (
                       <option key={option} value={option} />
                     ))}
                   </datalist>
