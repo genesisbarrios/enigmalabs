@@ -432,7 +432,9 @@ button:disabled {
   }
   
   .servicesImg{
-    height:80% !important;
+    height:180px !important;
+    max-height:180px !important;
+    object-fit:cover !important;
   }
 
   .servicesCards{

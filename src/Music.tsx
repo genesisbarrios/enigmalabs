@@ -224,19 +224,19 @@ const Music = () => {
                   <iframe width="100%" height="220" src="https://www.youtube.com/embed/LJwhyKUX7SI?si=obJ4UiI4FysglOGY" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
                 </Col>
                 <Col sm={4}>
-                  <iframe width="100%" height="220" src="https://www.youtube.com/embed/Typo3NhLChY?si=s9PN9iUWQ0yf8JOD" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen style={{ minWidth: 0 }}></iframe>
+                 <iframe width="100%" height="220" src="https://www.youtube.com/embed/GN2xNbORvi8?si=POjqdPrWmx33gBb6" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
                 </Col>
                
               </Row>
             <Row style={rowStyle}>
                 <Col sm={4}>
-                  <iframe width="100%" height="220" src="https://www.youtube.com/embed/GN2xNbORvi8?si=POjqdPrWmx33gBb6" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
-                </Col>
-                <Col sm={4}>
                   <iframe width="100%" height="220" src="https://www.youtube.com/embed/W70uVdpZBxY?si=-gz8f2_oDLBXlWHW" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
                 </Col>
                 <Col sm={4}>
                   <iframe width="100%" height="220" src="https://www.youtube.com/embed/rA59UKIzpgo?si=ycJ388eF3ULM1IxE" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
+                </Col>
+                 <Col sm={4}>
+                  
                 </Col>
               </Row>
 
