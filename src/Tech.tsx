@@ -272,7 +272,8 @@ function handleSubmit() {
                 <ul style={{ marginBottom: 0 }}>
                   <li>$15/mo: Hosting, and general support</li>
                   <li>$40/mo: Unlimited edits and 24/7 support </li>
-                  <li>$500 for a Custom Blog / E-commerce Store</li>
+                  <li>$1000 for a Custom Blog</li>
+                  <li>$1000-1500 for an E-commerce Store</li>
                 </ul>
               </div>
             </Col>
