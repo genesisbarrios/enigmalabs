@@ -542,7 +542,7 @@ const Home = () => {
         <Row style={{ ...rowStyle, height: 'auto', marginBottom: '4rem' }} id="servicesContainerRow" className="d-flex align-items-center">
             <Col xs={12} md={4} >
               <Card style={serviceCardStyle} className="servicesCards">
-              <a href="https://influanto.com" target="_blank" rel="noreferrer"><img style={imgStyle} className="servicesImg" alt="influanto the all in one music marketing platform" src="/work/influanto.png" /></a>
+              <a href="https://www.prettykittymiamirescue.org" target="_blank" rel="noreferrer"><img style={imgStyle} className="servicesImg" alt="Pretty Kitty Miami Rescue website" src="/work/prettykittymiami.png" /></a>
                 <Card.Body>
                   <h5>Web Development</h5>
                   <Card.Text>
