@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
-import { Alert, Badge, Button, Col, Form, Modal, Pagination, Row, Table } from 'react-bootstrap';
+import { Alert, Badge, Button, Card, Col, Form, Modal, Pagination, Row, Table } from 'react-bootstrap';
 import axios from 'axios';
 
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
@@ -52,8 +52,12 @@ export type Lead = {
   reminderEmailSentAt?: string;
   outdatedMockupSent?: boolean;
   outdatedMockupSentAt?: string;
+  outdatedMockupOpened?: boolean;
+  outdatedMockupClicked?: boolean;
   onboardingSent?: boolean;
   onboardingSentAt?: string;
+  onboardingOpened?: boolean;
+  onboardingClicked?: boolean;
   opened?: boolean;
   openedAt?: string;
   clicked?: boolean;
@@ -248,6 +252,62 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
       if (lead.industry) categories.add(lead.industry);
     });
     return Array.from(categories).sort((a, b) => a.localeCompare(b));
+  }, [leads]);
+
+  // Every rate below is computed against the leads that actually got that
+  // email, not against every lead — "half of onboarding emails opened" only
+  // makes sense relative to onboarding emails sent.
+  const leadAnalytics = useMemo(() => {
+    const rateRow = (label: string, sent: Lead[], openedField?: keyof Lead, clickedField?: keyof Lead) => {
+      const opened = openedField ? sent.filter((l) => l[openedField]).length : null;
+      const clicked = clickedField ? sent.filter((l) => l[clickedField]).length : null;
+      return {
+        label,
+        sentCount: sent.length,
+        openedCount: opened,
+        openedRate: opened !== null && sent.length ? opened / sent.length : null,
+        clickedCount: clicked,
+        clickedRate: clicked !== null && sent.length ? clicked / sent.length : null
+      };
+    };
+
+    const mockupCold = leads.filter((l) => l.coldEmailSent && !l.website);
+    const marketingCold = leads.filter((l) => l.coldEmailSent && l.website);
+    const outdatedMockup = leads.filter((l) => l.outdatedMockupSent);
+    const onboardingEmails = leads.filter((l) => l.onboardingSent);
+    const reminderEmails = leads.filter((l) => l.reminderEmailSent);
+
+    const rows = [
+      rateRow('Mockup Cold Email', mockupCold, 'coldEmailOpened', 'coldEmailClicked'),
+      rateRow('Marketing / Ads Cold Email', marketingCold, 'coldEmailOpened', 'coldEmailClicked'),
+      rateRow('Outdated Website Mockup Email', outdatedMockup, 'outdatedMockupOpened', 'outdatedMockupClicked'),
+      rateRow('Onboarding Email', onboardingEmails, 'onboardingOpened', 'onboardingClicked'),
+      // Reminder emails reuse the original cold email's own tracking fields
+      // (same "cold" link type) rather than having their own, so there's no
+      // separate open/click number to attribute specifically to the reminder.
+      rateRow('Reminder Email', reminderEmails)
+    ];
+
+    const totalColdSent = mockupCold.length + marketingCold.length;
+    const totalColdOpened = [...mockupCold, ...marketingCold].filter((l) => l.coldEmailOpened).length;
+    const totalColdClicked = [...mockupCold, ...marketingCold].filter((l) => l.coldEmailClicked).length;
+
+    return {
+      rows,
+      total: leads.length,
+      onboardedCount: leads.filter((l) => l.convertedToClient).length,
+      declinedCount: leads.filter((l) => l.declined).length,
+      noActionCount: leads.filter((l) => l.noActionTaken).length,
+      respondedCount: leads.filter((l) => l.responded).length,
+      respondedRate: totalColdSent ? leads.filter((l) => l.responded).length / totalColdSent : 0,
+      overallOpenRate: totalColdSent ? totalColdOpened / totalColdSent : 0,
+      overallClickRate: totalColdSent ? totalColdClicked / totalColdSent : 0,
+      bySource: {
+        outbound: leads.filter((l) => leadSource(l) === 'outbound').length,
+        mockup_form: leads.filter((l) => leadSource(l) === 'mockup_form').length,
+        newsletter: leads.filter((l) => leadSource(l) === 'newsletter').length
+      }
+    };
   }, [leads]);
 
   const filteredLeads = useMemo(() => {
@@ -963,6 +1023,85 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
           <Pagination.Last onClick={() => setCurrentPage(totalPages)} disabled={currentPage === totalPages} />
         </Pagination>
       ) : null}
+
+      <h2 style={{ color: '#68FF00', marginTop: '2.5rem', marginBottom: '1rem' }}>Lead Analytics</h2>
+      <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', marginBottom: '1.25rem' }}>
+        <Card.Body>
+          <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+            <div>
+              <div style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase' }}>Total Leads</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{leadAnalytics.total}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase' }}>Onboarded</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#68FF00' }}>{leadAnalytics.onboardedCount}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase' }}>Responded</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#38bdf8' }}>
+                {leadAnalytics.respondedCount} <small style={{ fontSize: '0.9rem', color: '#aaa' }}>({(leadAnalytics.respondedRate * 100).toFixed(0)}% of cold emails sent)</small>
+              </div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase' }}>No Action Taken</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#ff4d4d' }}>{leadAnalytics.noActionCount}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase' }}>Declined</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#666' }}>{leadAnalytics.declinedCount}</div>
+            </div>
+            <div>
+              <div style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase' }}>Overall Open / Click Rate</div>
+              <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>
+                {(leadAnalytics.overallOpenRate * 100).toFixed(0)}% <small style={{ fontSize: '0.9rem', color: '#aaa' }}>/</small> {(leadAnalytics.overallClickRate * 100).toFixed(0)}%
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1.5rem' }}>
+            <Badge bg="secondary">Outbound: {leadAnalytics.bySource.outbound}</Badge>
+            <Badge bg="secondary">Inbound (Mockup Form): {leadAnalytics.bySource.mockup_form}</Badge>
+            <Badge bg="secondary">Newsletter: {leadAnalytics.bySource.newsletter}</Badge>
+          </div>
+
+          <Table striped bordered hover variant="dark" responsive size="sm" style={{ marginBottom: 0 }}>
+            <thead>
+              <tr>
+                <th>Email Type</th>
+                <th>Sent</th>
+                <th>Opened</th>
+                <th>Clicked</th>
+              </tr>
+            </thead>
+            <tbody>
+              {leadAnalytics.rows.map((row) => (
+                <tr key={row.label}>
+                  <td>{row.label}</td>
+                  <td>{row.sentCount}</td>
+                  <td>
+                    {row.openedCount === null ? (
+                      <span style={{ color: '#666' }}>—</span>
+                    ) : (
+                      <span style={{ color: '#68FF00' }}>
+                        {row.openedCount} <small style={{ color: '#aaa' }}>({((row.openedRate || 0) * 100).toFixed(0)}%)</small>
+                      </span>
+                    )}
+                  </td>
+                  <td>
+                    {row.clickedCount === null ? (
+                      <span style={{ color: '#666' }}>—</span>
+                    ) : (
+                      <span style={{ color: '#38bdf8' }}>
+                        {row.clickedCount} <small style={{ color: '#aaa' }}>({((row.clickedRate || 0) * 100).toFixed(0)}%)</small>
+                      </span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Card.Body>
+      </Card>
 
       <Modal show={Boolean(viewingEmail)} onHide={closeSentEmailModal} size="lg" centered>
         <Modal.Header style={{ background: '#111', color: 'white', borderBottom: '1px solid #2b2b2b' }}>
