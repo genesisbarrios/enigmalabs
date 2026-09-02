@@ -268,8 +268,8 @@ function handleSubmit() {
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Monthly Subscription</h6>
                 <ul style={{ marginBottom: 0 }}>
                   <li>$200/mo for a 10 Page Website</li>
-                  <li>Includes Unlimited Edits, 24/7 Support, Hosting & Maintenance</li>
                   <li>$100/mo for a 5 Page Website (General Support & Edits)</li>
+                  <li>Includes Unlimited Edits, 24/7 Support, Hosting & Admin Page</li>
                 </ul>
               </div>
             </Col>
@@ -277,7 +277,7 @@ function handleSubmit() {
               <div style={infoCardStyle}>
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Hosting & Support</h6>
                 <ul style={{ marginBottom: 0 }}>
-                  <li>$15/mo: Hosting, General Support & Admin Screen to manage & contact subscribers</li>
+                  <li>$15/mo: Hosting, General Support & Admin Page to manage & contact subscribers</li>
                   <li>$40/mo: Unlimited edits and 24/7 support </li>
                   <li>$1000 for a Custom Blog</li>
                   <li>$1000-1500 for an E-Commerce Store</li>
@@ -285,8 +285,6 @@ function handleSubmit() {
               </div>
             </Col>
             </Row>
-
-        
 
           <hr style={{backgroundColor:"white", marginTop: "3%"}}/>
 
