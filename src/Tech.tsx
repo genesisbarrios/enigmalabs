@@ -280,7 +280,7 @@ function handleSubmit() {
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Add Ons</h6>
                 <ul style={{ marginBottom: 0 }}>
                   <li>$1000 - Custom Blog</li>
-                  <li>$1000 - E-Commerce Store + Shopify Backend</li>
+                  <li>$1000 - E-Commerce Store + Shopify/Printify Backend</li>
                   <li>$1500 - Fully Custom E-Commerce Store</li>
                 </ul>
               </div>
