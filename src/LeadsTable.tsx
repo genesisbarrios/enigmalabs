@@ -1210,7 +1210,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                 <Form.Group className="mb-2">
                   <Form.Check
                     type="checkbox"
-                    label="Cold email sent (check this if you contacted/onboarded them another way, e.g. text — hides Send/Resend Cold Email and stops it from being sent automatically)"
+                    label="Cold email sent"
                     checked={editForm.coldEmailSent}
                     onChange={(e) => setEditForm({ ...editForm, coldEmailSent: e.target.checked })}
                   />
