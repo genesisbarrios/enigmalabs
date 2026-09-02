@@ -858,7 +858,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                                     >
                                       {lead.reminderEmailSent ? 'Resend Reminder Email' : 'Send Reminder Email'}
                                     </Button>
-                                  ) : !lead.coldEmailOpened && !lead.coldEmailClicked ? (
+                                  ) : !lead.coldEmailClicked ? (
                                     <Button
                                       size="sm"
                                       variant="outline-warning"
@@ -874,7 +874,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                                     </Button>
                                   ) : (
                                     <>
-                                      <small style={{ color: '#666' }}>Already {lead.coldEmailClicked ? 'clicked' : 'opened'} — no resend needed</small>
+                                      <small style={{ color: '#666' }}>Already clicked — no resend needed</small>
                                       <Button
                                         size="sm"
                                         variant="outline-danger"

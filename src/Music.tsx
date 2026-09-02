@@ -26,6 +26,11 @@ const Music = () => {
   const [ads, setAds] = useState(false);
   const [message, setMessage] = useState("");
   const [alert, setAlert] = useState("");
+  // Honeypot — real users never see or fill this; bots that auto-fill every
+  // input on the page do. Combined with formLoadedAt (a timing trap: humans
+  // take at least a few seconds to fill the form) on the backend.
+  const [honeypot, setHoneypot] = useState("");
+  const [formLoadedAt] = useState(() => Date.now());
 
   const rowStyle = {
     margin: '1%'
@@ -131,7 +136,9 @@ const Music = () => {
       loopsTemplates,
       visuals,
       web,
-      ads
+      ads,
+      website: honeypot,
+      formLoadedAt
     };
   
     // Make a POST request using Axios
@@ -316,6 +323,17 @@ const Music = () => {
                   <p style={{ color: "#aaa", fontSize: "0.9rem", marginBottom: "1.5rem" }}>
                     Beats, Freebies, and discounts. No spam.
                   </p>
+                  {/* Honeypot — hidden from real users, tempting for bots that auto-fill every field */}
+                  <input
+                    type="text"
+                    name="website"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                    tabIndex={-1}
+                    autoComplete="off"
+                    aria-hidden="true"
+                    style={{ position: "absolute", left: "-9999px", width: "1px", height: "1px", opacity: 0 }}
+                  ></input>
                   <input
                     type="text"
                     name="name"

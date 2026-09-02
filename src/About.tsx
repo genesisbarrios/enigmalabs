@@ -27,6 +27,11 @@ const About = () => {
   const [ads, setAds] = useState(false);
   const [message, setMessage] = useState("");
   const [alert, setAlert] = useState("");
+  // Honeypot — real users never see or fill this; bots that auto-fill every
+  // input on the page do. Combined with formLoadedAt (a timing trap: humans
+  // take at least a few seconds to fill the form) on the backend.
+  const [honeypot, setHoneypot] = useState("");
+  const [formLoadedAt] = useState(() => Date.now());
 
   const newsletterCardStyle = {
     backgroundColor: "#111",
@@ -100,7 +105,9 @@ const About = () => {
       beats,
       visuals,
       web,
-      ads
+      ads,
+      website: honeypot,
+      formLoadedAt
     };
 
     axios.post(`${API_BASE_URL}/newsletter/subscribe`, dataToSend, {
@@ -175,6 +182,17 @@ const About = () => {
                   <p style={{ color: "#aaa", fontSize: "0.9rem", marginBottom: "1.5rem" }}>
                     News, freebies, and discounts. No spam.
                   </p>
+                  {/* Honeypot — hidden from real users, tempting for bots that auto-fill every field */}
+                  <input
+                    type="text"
+                    name="website"
+                    value={honeypot}
+                    onChange={(e) => setHoneypot(e.target.value)}
+                    tabIndex={-1}
+                    autoComplete="off"
+                    aria-hidden="true"
+                    style={{ position: "absolute", left: "-9999px", width: "1px", height: "1px", opacity: 0 }}
+                  ></input>
                   <input
                     type="text"
                     name="name"

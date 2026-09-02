@@ -1190,7 +1190,7 @@ function isUrlLike(value) {
 const SOCIAL_HOST_RE = /instagram\.com|instagr\.am|facebook\.com|fb\.com|fb\.me/i;
 const GOOGLE_HOST_RE = /google\.com|g\.page|goo\.gl/i;
 
-async function isLikelySpamMockupSubmission(payload, req) {
+async function isLikelySpamSubmission(payload, req) {
   // Honeypot: a hidden field real users never see or fill; bots that
   // auto-fill every input on the page populate it.
   if (payload.honeypot) return true;
@@ -1396,21 +1396,29 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       visuals: Boolean(req.body.visuals),
       web: Boolean(req.body.web),
       ads: Boolean(req.body.ads),
-      freemockups: Boolean(req.body.freemockups)
+      freemockups: Boolean(req.body.freemockups),
+      // Honeypot + timing trap, sent by every newsletter/mockup form on the
+      // site (see isLikelySpamSubmission below) — carried through here so
+      // the check below actually sees them instead of always reading
+      // undefined.
+      honeypot: req.body.website || req.body.honeypot || '',
+      formLoadedAt: req.body.formLoadedAt
     };
 
     const hasNewsletterInterest = payload.beats || payload.mixing || payload.loopsTemplates || payload.visuals || payload.web || payload.ads;
+
+    // Spam responds identically to a real success so scripted abuse gets no
+    // feedback to adapt to — it just silently never becomes a subscriber or
+    // a lead. Applies to every submission type (mockup request, music/web/ads
+    // newsletter interest) since bots hit all of them.
+    if (await isLikelySpamSubmission(payload, req)) {
+      return res.status(201).json({ ok: true, message: 'Subscription received.' });
+    }
 
     // The free-mockup form is a lead-gen flow, not a newsletter signup —
     // keep mockup-only submissions out of the newsletter table entirely and
     // route them straight into the leads CRM instead.
     if (payload.freemockups && !hasNewsletterInterest) {
-      // Spam responds identically to a real success so scripted abuse gets
-      // no feedback to adapt to — it just silently never becomes a lead.
-      if (await isLikelySpamMockupSubmission(payload, req)) {
-        return res.status(201).json({ ok: true, message: 'Mockup request received.' });
-      }
-
       const existingLead = await findDuplicateLead({ email: payload.email, phone: payload.phone });
       const isNewMockupRequest = !existingLead || !existingLead.inbound;
 
@@ -2464,12 +2472,13 @@ app.post('/api/crm/leads/:id/send-cold-email', async (req, res) => {
     if (!lead) {
       return res.status(404).json({ ok: false, message: 'Lead not found.' });
     }
-    // Resends are unlimited as long as the lead hasn't engaged yet — once
-    // they've opened or clicked the email, they've seen the pitch, so
-    // further resends are blocked.
+    // Resends are unlimited as long as the lead hasn't clicked through yet —
+    // an open alone doesn't mean they've actually seen the pitch, but a
+    // click does, so only that blocks further resends (the "No Action"
+    // button then takes over for a differently-worded follow-up).
     if (lead.coldEmailSent) {
-      if (lead.coldEmailOpened || lead.coldEmailClicked) {
-        return res.status(400).json({ ok: false, message: 'This lead already opened or clicked the cold email — no further resends needed.' });
+      if (lead.coldEmailClicked) {
+        return res.status(400).json({ ok: false, message: 'This lead already clicked the cold email — no further resends needed.' });
       }
       lead.coldEmailResentAt = new Date();
     }

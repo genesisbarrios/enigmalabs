@@ -40,6 +40,11 @@ const Home = () => {
   const [ads, setAds] = useState(false);
   const [message, setMessage] = useState("");
   const [alert, setAlert] = useState("");
+  // Honeypot — real users never see or fill this; bots that auto-fill every
+  // input on the page do. Combined with formLoadedAt (a timing trap: humans
+  // take at least a few seconds to fill the form) on the backend.
+  const [honeypot, setHoneypot] = useState("");
+  const [formLoadedAt] = useState(() => Date.now());
 
   const [mockupName, setMockupName] = useState("");
   const [mockupEmail, setMockupEmail] = useState("");
@@ -50,6 +55,8 @@ const Home = () => {
   const [mockupGoogleBusinessUrl, setMockupGoogleBusinessUrl] = useState("");
   const [mockupMessage, setMockupMessage] = useState("");
   const [mockupAlert, setMockupAlert] = useState("");
+  const [mockupHoneypot, setMockupHoneypot] = useState("");
+  const [mockupFormLoadedAt] = useState(() => Date.now());
 
   const [introVisible, setIntroVisible] = useState(false);
   const introRef = useRef<HTMLDivElement | null>(null);
@@ -281,7 +288,9 @@ const Home = () => {
       mixing: beats,
       visuals,
       web,
-      ads
+      ads,
+      website: honeypot,
+      formLoadedAt
     };
 
     // Make a POST request using Axios
