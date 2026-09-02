@@ -249,7 +249,7 @@ function handleSubmit() {
             </Col>
             <Col sm={6} style={{ marginBottom: '1.5rem' }}>
               <div style={infoCardStyle}>
-                <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Pay Up Front - High Converting Website</h6>
+                <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Pay Up Front - Custom Website</h6>
                 <ul style={{ marginBottom: 0 }}>
                   <li>$1000 for a 5 page website</li>
                   <li>$2000 for a 10 page website</li>
@@ -261,8 +261,8 @@ function handleSubmit() {
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Monthly Subscription</h6>
                 <ul style={{ marginBottom: 0 }}>
                   <li>$200/mo for a 10 Page Website</li>
-                  <li>$100/mo for a 5 Page Website (General Support & Edits)</li>
                   <li>Includes Unlimited Edits, 24/7 Support, Hosting & Admin Page</li>
+                  <li>$100/mo for a 5 Page Website (Hosting,General Support & Admin Page)</li>
                 </ul>
               </div>
             </Col>
@@ -271,7 +271,7 @@ function handleSubmit() {
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Hosting & Support</h6>
                 <ul style={{ marginBottom: 0 }}>
                   <li>$15/mo: Hosting, General Support & Admin Page to contact subscribers</li>
-                  <li>$40/mo: Unlimited edits and 24/7 support </li>
+                  <li>$40/mo: Unlimited edits, 24/7 Support & Admin Page </li>
                 </ul>
               </div>
             </Col>
