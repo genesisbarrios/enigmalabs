@@ -211,7 +211,7 @@ function handleSubmit() {
               <h5 className="subsection-title" style={{marginTop: "5%"}}>Services</h5>
               <ul>
                 <li>Web Design & Web Development, Google Business Setup, SEO</li>
-                <li>Support & Maintenance: Hosting, Domain Setup, Updates, etc. </li>
+                <li>Support & Maintenance: Hosting, Domain Setup, Updates, Admin Screen, etc. </li>
                 <li>Graphic Design & Marketing: Logos, Branding, & Ads</li>
               </ul>
             </Col>
@@ -277,7 +277,7 @@ function handleSubmit() {
               <div style={infoCardStyle}>
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Hosting & Support</h6>
                 <ul style={{ marginBottom: 0 }}>
-                  <li>$15/mo: Hosting, and general support</li>
+                  <li>$15/mo: Hosting, General Support & Admin Screen to manage & contact subscribers</li>
                   <li>$40/mo: Unlimited edits and 24/7 support </li>
                   <li>$1000 for a Custom Blog</li>
                   <li>$1000-1500 for an E-Commerce Store</li>
