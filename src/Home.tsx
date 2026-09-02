@@ -521,7 +521,7 @@ const Home = () => {
 
   return (
     <Container id="top">
-      <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
+      <div className="hero-canvas-wrap" style={{ position: 'relative', width: '100%', height: '100vh' }}>
         <canvas style={canvasStyle} id="canv"></canvas>
         <h1 id="title-mobile-overlay" style={{textAlign:"center"}}>the right formula.</h1>
       </div>
@@ -595,7 +595,7 @@ const Home = () => {
             </Col>
         </Row>
 
-        <Row style={{ ...mockupSectionStyle, justifyContent: "center" }}>
+        <Row className="mobile-center-row" style={{ ...mockupSectionStyle, justifyContent: "center" }}>
           <Col xs={12} md={8} style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
             <div style={{ ...newsletterCardStyle, maxWidth: "600px" }}>
               <form style={{ textAlign: "center", width: "100%", maxWidth: "560px", margin: "0 auto" }}>
@@ -706,7 +706,7 @@ const Home = () => {
             <h1 className="section-title-left" id="newsletter-heading" style={{marginTop:"10%"}}>NEWSLETTER</h1>
           </Col>
         </Row>
-        <Row style={newsletterSectionStyle}>
+        <Row className="mobile-center-row" style={{ ...newsletterSectionStyle, justifyContent: "center" }}>
           <Col xs={12} md={6} style={{ display: "flex", justifyContent: "center", alignItems: "center", order: 1 }}>
             <div style={newsletterCardStyle}>
               <form style={{ textAlign: "center", width: "100%", maxWidth: "420px", margin: "0 auto" }}>

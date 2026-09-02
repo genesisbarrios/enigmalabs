@@ -355,7 +355,11 @@ button:disabled {
 
 @media only screen and (max-width: 768px) {
   .what-we-do{
-    min-height: 50vh;
+    /* Was min-height: 50vh with this centered via justify-content —
+       fine on desktop where the box is content-sized, but on mobile it
+       left a huge block of empty space above the text since it's
+       vertically centered inside a box half the screen tall. */
+    margin-top: 2rem;
   }
   .what-we-do-text{
     font-size: 1.5rem;
@@ -405,8 +409,12 @@ button:disabled {
 }
 
 @media only screen and (max-width: 900px) {
+  /* This used to pull HomeContainer up to compensate for .hero-row's
+     100vh height on mobile — that row is collapsed now that #title
+     inside it is hidden (replaced by the canvas overlay title), so
+     there's nothing left to compensate for. */
   .HomeContainer{
-    margin-top:-130% !important;
+    margin-top: 0 !important;
   }
 
   #services{
@@ -426,8 +434,9 @@ button:disabled {
 
 
 @media only screen and (max-width: 600px) {
+  /* See the 900px breakpoint above — same reasoning. */
   .HomeContainer{
-    margin-top:-160% !important;
+    margin-top: 0 !important;
     font-size:1.5em;
   }
   

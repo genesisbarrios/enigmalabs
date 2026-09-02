@@ -1,3 +1,10 @@
+:root {
+  /* Actual rendered height of the fixed-top navbar on mobile (Navbar.Brand
+     logo + default Bootstrap navbar padding) — used to center hero content
+     in the space actually visible below it, not behind it. */
+  --mobile-nav-height: 64px;
+}
+
 body {
 	margin: 0;
 	padding: 0;
@@ -47,9 +54,54 @@ body {
 }
 
 @media (max-width: 1170px) {
+  /* Bootstrap 4's .row has -15px margins on each side to cancel its
+     parent's 15px gutter padding, but width:auto here resolves to
+     exactly the parent's content width rather than expanding to absorb
+     both margins — so only margin-left visibly shifts it, throwing off
+     horizontal centering. Forcing the width to include that 30px
+     restores the symmetric bleed Bootstrap's gutter math actually
+     intends. Scoped to .mobile-center-row (the mockup + newsletter
+     sections) rather than every .row, since rows that already zero out
+     their own margin inline (e.g. the tagline row) don't have this
+     problem and would be thrown off-center by the same fix. */
+  .mobile-center-row {
+    width: calc(100% + 30px) !important;
+  }
+
+  /* 100vh on mobile is measured against the largest possible viewport
+     (as if the browser's address bar were hidden), which is taller than
+     what's actually on screen on load — 100dvh tracks the real visible
+     height instead, so the hero doesn't render shorter than expected. */
+  .hero-canvas-wrap {
+    height: 100dvh !important;
+  }
+
+  /* #title is hidden below and replaced by the #title-mobile-overlay
+     inside the canvas hero — this row's only content is gone, so it
+     should collapse instead of still reserving a full extra screen of
+     empty space (it used to hold #title itself, back when both shared
+     this row). */
   .hero-row {
-    height: 100vh !important;
+    height: 0 !important;
+    min-height: 0 !important;
     margin-top: 0 !important;
+    overflow: hidden;
+  }
+
+  /* Same reasoning as index.css's 900px/600px .HomeContainer overrides,
+     extended to the rest of this breakpoint's range — nothing left for
+     the negative margin to compensate for once .hero-row is collapsed. */
+  .HomeContainer {
+    margin-top: 0 !important;
+    /* .HomeContainer is a plain div, not a Bootstrap Container, so it has
+       no padding of its own — but every Row inside it still carries
+       Bootstrap's standard -15px gutter margins, which expect a 15px
+       padding to cancel out. Without it, each Row's left edge shifts
+       15px further left than its right edge, throwing off horizontal
+       centering for everything inside (mockup form, newsletter card,
+       etc). Restoring the padding here fixes it for all of them at once. */
+    padding-left: 15px;
+    padding-right: 15px;
   }
 
   #title {
@@ -58,9 +110,12 @@ body {
 
   #title-mobile-overlay {
     display: block;
-    font-size: 1.4em;
+    font-size: 2.4rem;
+    font-weight: 700;
     position: absolute;
-    top: 50%;
+    /* Centers within the space actually visible below the fixed navbar
+       (--mobile-nav-height), not the full 100dvh box behind it. */
+    top: calc(50% + var(--mobile-nav-height, 64px) / 2);
     left: 50%;
     width: 90vw;
     transform: translate(-50%, -50%);
