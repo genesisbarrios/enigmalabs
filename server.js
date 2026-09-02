@@ -2181,6 +2181,18 @@ app.put('/api/crm/leads/:id', async (req, res) => {
     if (req.body.outdatedWebsite !== undefined) {
       lead.outdatedWebsite = Boolean(req.body.outdatedWebsite);
     }
+    // Manual override for leads contacted outside the email flow (e.g. text,
+    // in person) — doesn't touch coldEmailHtml/Subject/ResendId, since there
+    // was no actual email sent through the system to snapshot.
+    if (req.body.coldEmailSent !== undefined) {
+      const coldEmailSent = Boolean(req.body.coldEmailSent);
+      lead.coldEmailSent = coldEmailSent;
+      if (coldEmailSent && !lead.coldEmailSentAt) {
+        lead.coldEmailSentAt = new Date();
+      } else if (!coldEmailSent) {
+        lead.coldEmailSentAt = undefined;
+      }
+    }
 
     await lead.save();
     res.json({ ok: true, lead });

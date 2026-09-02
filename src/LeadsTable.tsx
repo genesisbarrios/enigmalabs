@@ -44,6 +44,7 @@ export type Lead = {
   source?: 'outbound' | 'mockup_form' | 'newsletter';
   coldEmailSent?: boolean;
   coldEmailSentAt?: string;
+  coldEmailHtml?: string;
   coldEmailOpened?: boolean;
   coldEmailClicked?: boolean;
   coldEmailResentAt?: string;
@@ -101,6 +102,7 @@ type EditForm = {
   city: string;
   industry: string;
   notes: string;
+  coldEmailSent: boolean;
 };
 
 const emptyEditForm: EditForm = {
@@ -113,7 +115,8 @@ const emptyEditForm: EditForm = {
   outdatedWebsite: false,
   city: '',
   industry: '',
-  notes: ''
+  notes: '',
+  coldEmailSent: false
 };
 
 const editFormFromLead = (lead: Lead): EditForm => ({
@@ -126,7 +129,8 @@ const editFormFromLead = (lead: Lead): EditForm => ({
   outdatedWebsite: lead.outdatedWebsite || false,
   city: lead.city || '',
   industry: lead.industry || '',
-  notes: lead.notes || ''
+  notes: lead.notes || '',
+  coldEmailSent: lead.coldEmailSent || false
 });
 
 type DirectionFilter = 'all' | 'inbound' | 'newsletter' | 'outbound';
@@ -844,7 +848,11 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                         {lead.email ? (
                           <>
                             {!lead.onboardingSent ? (
-                              lead.coldEmailSent ? (
+                              lead.coldEmailSent && !lead.coldEmailHtml ? (
+                                // Marked manually (e.g. contacted by text) rather than an
+                                // actual email being sent — no real content to view/resend.
+                                <small style={{ color: '#666' }}>Marked as contacted — not via email</small>
+                              ) : lead.coldEmailSent ? (
                                 <>
                                   <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'cold')}>
                                     See Sent {lead.website ? 'Marketing / Ads ' : ''}Cold Email
@@ -1056,6 +1064,16 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                     label="Website is outdated"
                     checked={editForm.outdatedWebsite}
                     onChange={(e) => setEditForm({ ...editForm, outdatedWebsite: e.target.checked })}
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={12} className="d-flex align-items-end">
+                <Form.Group className="mb-2">
+                  <Form.Check
+                    type="checkbox"
+                    label="Cold email sent (check this if you contacted/onboarded them another way, e.g. text — hides Send/Resend Cold Email and stops it from being sent automatically)"
+                    checked={editForm.coldEmailSent}
+                    onChange={(e) => setEditForm({ ...editForm, coldEmailSent: e.target.checked })}
                   />
                 </Form.Group>
               </Col>
