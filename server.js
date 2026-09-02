@@ -134,9 +134,9 @@ function buildMockupThankYouHtml(subscriber) {
     <div style="font-family: Arial, Helvetica, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #111;">
       <h2 style="margin: 0 0 16px;">Thanks for signing up, ${firstName}!</h2>
       <p style="line-height: 1.6;">
-        We received your request for a free website mockup${businessPhrase}. We'll get back to you shortly —
-        in the meantime, feel free to check out our work on
-        <a href="${SITE_URL}/Tech" style="color:#111; font-weight:bold;">our website</a>.
+        We received your request for a free website mockup${businessPhrase}. Feel free to reply to this
+        email with any details and images you'd like us to use, and schedule our review call below —
+        it'll be ready by then!
       </p>
       ${CALENDAR_LINK ? `
       <p style="text-align: center; margin: 32px 0;">
