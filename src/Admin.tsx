@@ -70,6 +70,7 @@ type WebsiteClient = {
   _id: string;
   name: string;
   email: string;
+  phone?: string;
   address: string;
   socialMediaLinks: string;
   businessType: string;
@@ -78,6 +79,9 @@ type WebsiteClient = {
   logo?: { mimeType?: string } | null;
   websiteReviewSentAt?: string | null;
   marketingEmailSentAt?: string | null;
+  paymentReminderSentAt?: string | null;
+  subscriptionReminderSentAt?: string | null;
+  lastCustomEmailSentAt?: string | null;
   createdAt: string;
 };
 
@@ -103,6 +107,7 @@ const INDUSTRY_OPTIONS = [
 const emptyWebsiteClientForm = {
   name: '',
   email: '',
+  phone: '',
   address: '',
   socialMediaLinks: '',
   businessType: '',
@@ -341,6 +346,13 @@ const Admin = () => {
   const [selectedWebsiteClientIds, setSelectedWebsiteClientIds] = useState<Set<string>>(new Set());
   const [sendingReview, setSendingReview] = useState(false);
   const [sendingMarketingEmail, setSendingMarketingEmail] = useState(false);
+  const [sendingPaymentReminder, setSendingPaymentReminder] = useState(false);
+  const [sendingSubscriptionReminder, setSendingSubscriptionReminder] = useState(false);
+  const [sendingCustomEmail, setSendingCustomEmail] = useState(false);
+  const [showCustomClientEmail, setShowCustomClientEmail] = useState(false);
+  const [customClientEmailTargetIds, setCustomClientEmailTargetIds] = useState<string[]>([]);
+  const [customClientEmailSubject, setCustomClientEmailSubject] = useState('');
+  const [customClientEmailBody, setCustomClientEmailBody] = useState('');
 
   const [showAddSubscriber, setShowAddSubscriber] = useState(false);
   const BLANK_SUBSCRIBER_FORM = { email: '', name: '', phone: '', businessName: '', socialUrl: '', ...emptySubscriberInterests };
@@ -1012,6 +1024,7 @@ const Admin = () => {
     setWebsiteClientEditForm({
       name: client.name || '',
       email: client.email || '',
+      phone: client.phone || '',
       address: client.address || '',
       socialMediaLinks: client.socialMediaLinks || '',
       businessType: client.businessType || '',
@@ -1109,6 +1122,88 @@ const Admin = () => {
       setError('Could not send marketing emails.');
     } finally {
       setSendingMarketingEmail(false);
+    }
+  };
+
+  const handleSendPaymentReminder = async (clientIds: string[]) => {
+    if (!clientIds.length) return;
+    setSendingPaymentReminder(true);
+    setMessage('');
+    setError('');
+    try {
+      const response = await axios.post(`${API_BASE_URL}/website-clients/send-payment-reminder`, { ids: clientIds });
+      if (response.data?.ok) {
+        setMessage(`Sent payment reminder to ${response.data.sentCount} of ${clientIds.length} client${clientIds.length === 1 ? '' : 's'}.`);
+        setSelectedWebsiteClientIds(new Set());
+        fetchWebsiteClients();
+      } else {
+        setError(response.data?.message || 'Could not send payment reminder emails.');
+      }
+    } catch (sendError) {
+      console.error(sendError);
+      setError('Could not send payment reminder emails.');
+    } finally {
+      setSendingPaymentReminder(false);
+    }
+  };
+
+  const handleSendSubscriptionReminder = async (clientIds: string[]) => {
+    if (!clientIds.length) return;
+    setSendingSubscriptionReminder(true);
+    setMessage('');
+    setError('');
+    try {
+      const response = await axios.post(`${API_BASE_URL}/website-clients/send-subscription-reminder`, { ids: clientIds });
+      if (response.data?.ok) {
+        setMessage(`Sent subscription reminder to ${response.data.sentCount} of ${clientIds.length} client${clientIds.length === 1 ? '' : 's'}.`);
+        setSelectedWebsiteClientIds(new Set());
+        fetchWebsiteClients();
+      } else {
+        setError(response.data?.message || 'Could not send subscription reminder emails.');
+      }
+    } catch (sendError) {
+      console.error(sendError);
+      setError('Could not send subscription reminder emails.');
+    } finally {
+      setSendingSubscriptionReminder(false);
+    }
+  };
+
+  const openCustomClientEmail = (clientIds: string[]) => {
+    if (!clientIds.length) return;
+    setCustomClientEmailTargetIds(clientIds);
+    setCustomClientEmailSubject('');
+    setCustomClientEmailBody('');
+    setShowCustomClientEmail(true);
+  };
+
+  const handleSendCustomClientEmail = async () => {
+    if (!customClientEmailSubject.trim() || !customClientEmailBody.trim()) {
+      setError('Subject and message body are required.');
+      return;
+    }
+    setSendingCustomEmail(true);
+    setMessage('');
+    setError('');
+    try {
+      const response = await axios.post(`${API_BASE_URL}/website-clients/send-custom-email`, {
+        ids: customClientEmailTargetIds,
+        subject: customClientEmailSubject,
+        bodyText: customClientEmailBody
+      });
+      if (response.data?.ok) {
+        setMessage(`Sent custom email to ${response.data.sentCount} of ${customClientEmailTargetIds.length} client${customClientEmailTargetIds.length === 1 ? '' : 's'}.`);
+        setSelectedWebsiteClientIds(new Set());
+        setShowCustomClientEmail(false);
+        fetchWebsiteClients();
+      } else {
+        setError(response.data?.message || 'Could not send the custom email.');
+      }
+    } catch (sendError) {
+      console.error(sendError);
+      setError('Could not send the custom email.');
+    } finally {
+      setSendingCustomEmail(false);
     }
   };
 
@@ -1365,6 +1460,10 @@ const Admin = () => {
                 <Form.Control type="email" value={newWebsiteClient.email} onChange={(e) => setNewWebsiteClient({ ...newWebsiteClient, email: e.target.value })} required />
               </Form.Group>
               <Form.Group className="mb-3">
+                <Form.Label>Phone</Form.Label>
+                <Form.Control value={newWebsiteClient.phone} onChange={(e) => setNewWebsiteClient({ ...newWebsiteClient, phone: e.target.value })} />
+              </Form.Group>
+              <Form.Group className="mb-3">
                 <Form.Label>Address</Form.Label>
                 <Form.Control value={newWebsiteClient.address} onChange={(e) => setNewWebsiteClient({ ...newWebsiteClient, address: e.target.value })} />
               </Form.Group>
@@ -1429,6 +1528,30 @@ const Admin = () => {
           >
             {sendingMarketingEmail ? 'Sending...' : `Send Marketing Email${selectedWebsiteClientIds.size > 0 ? ` (${selectedWebsiteClientIds.size} selected)` : ''}`}
           </Button>
+          <Button
+            size="sm"
+            variant="outline-warning"
+            disabled={selectedWebsiteClientIds.size === 0 || sendingPaymentReminder}
+            onClick={() => handleSendPaymentReminder(Array.from(selectedWebsiteClientIds))}
+          >
+            {sendingPaymentReminder ? 'Sending...' : `Send Payment Reminder${selectedWebsiteClientIds.size > 0 ? ` (${selectedWebsiteClientIds.size} selected)` : ''}`}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline-warning"
+            disabled={selectedWebsiteClientIds.size === 0 || sendingSubscriptionReminder}
+            onClick={() => handleSendSubscriptionReminder(Array.from(selectedWebsiteClientIds))}
+          >
+            {sendingSubscriptionReminder ? 'Sending...' : `Send Subscription Reminder${selectedWebsiteClientIds.size > 0 ? ` (${selectedWebsiteClientIds.size} selected)` : ''}`}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline-light"
+            disabled={selectedWebsiteClientIds.size === 0}
+            onClick={() => openCustomClientEmail(Array.from(selectedWebsiteClientIds))}
+          >
+            {`Send Custom Email${selectedWebsiteClientIds.size > 0 ? ` (${selectedWebsiteClientIds.size} selected)` : ''}`}
+          </Button>
         </div>
       ) : null}
 
@@ -1446,6 +1569,10 @@ const Admin = () => {
                 <Form.Group className="mb-3">
                   <Form.Label>Email</Form.Label>
                   <Form.Control type="email" value={websiteClientEditForm.email} onChange={(e) => setWebsiteClientEditForm({ ...websiteClientEditForm, email: e.target.value })} />
+                </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Label>Phone</Form.Label>
+                  <Form.Control value={websiteClientEditForm.phone} onChange={(e) => setWebsiteClientEditForm({ ...websiteClientEditForm, phone: e.target.value })} />
                 </Form.Group>
                 <Form.Group className="mb-3">
                   <Form.Label>Address</Form.Label>
@@ -1537,6 +1664,9 @@ const Admin = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flexShrink: 0 }}>
               {client.websiteReviewSentAt ? <Badge bg="success">Review Sent</Badge> : null}
               {client.marketingEmailSentAt ? <Badge bg="primary">Marketing Sent</Badge> : null}
+              {client.paymentReminderSentAt ? <Badge bg="warning" text="dark">Payment Reminder Sent</Badge> : null}
+              {client.subscriptionReminderSentAt ? <Badge bg="warning" text="dark">Subscription Reminder Sent</Badge> : null}
+              {client.lastCustomEmailSentAt ? <Badge bg="secondary">Custom Email Sent</Badge> : null}
             </div>
             <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0, flexWrap: 'wrap' }}>
               {!client.hasExistingWebsite ? (
@@ -1546,6 +1676,15 @@ const Admin = () => {
               ) : null}
               <Button size="sm" variant="outline-primary" disabled={sendingMarketingEmail} onClick={() => handleSendMarketingEmail([client._id])}>
                 Send Marketing Email
+              </Button>
+              <Button size="sm" variant="outline-warning" disabled={sendingPaymentReminder} onClick={() => handleSendPaymentReminder([client._id])}>
+                Payment Reminder
+              </Button>
+              <Button size="sm" variant="outline-warning" disabled={sendingSubscriptionReminder} onClick={() => handleSendSubscriptionReminder([client._id])}>
+                Subscription Reminder
+              </Button>
+              <Button size="sm" variant="outline-light" onClick={() => openCustomClientEmail([client._id])}>
+                Custom Email
               </Button>
               <Button size="sm" variant="outline-light" onClick={() => handleStartEditWebsiteClient(client)}>Edit</Button>
               <Button size="sm" variant="outline-danger" onClick={() => handleDeleteWebsiteClient(client._id)}>Delete</Button>
@@ -2258,6 +2397,47 @@ const Admin = () => {
               {campaignSending ? 'Sending...' : `Send Campaign to ${campaignRecipientCount}`}
             </Button>
           )}
+        </Modal.Footer>
+      </Modal>
+
+      <Modal show={showCustomClientEmail} onHide={() => setShowCustomClientEmail(false)} size="lg" centered>
+        <Modal.Header style={{ background: '#111', color: 'white', borderBottom: '1px solid #2b2b2b' }}>
+          <Modal.Title>
+            Custom Email {customClientEmailTargetIds.length > 0 ? `(${customClientEmailTargetIds.length} recipient${customClientEmailTargetIds.length === 1 ? '' : 's'})` : ''}
+          </Modal.Title>
+          <button type="button" className="btn-close btn-close-danger" aria-label="Close" onClick={() => setShowCustomClientEmail(false)} />
+        </Modal.Header>
+        <Modal.Body style={{ background: '#111', color: 'white' }}>
+          <Form.Group className="mb-2">
+            <Form.Label style={{ fontSize: '0.8rem' }}>Subject</Form.Label>
+            <Form.Control
+              size="sm"
+              value={customClientEmailSubject}
+              onChange={(e) => setCustomClientEmailSubject(e.target.value)}
+              placeholder="Subject"
+            />
+          </Form.Group>
+          <Form.Group className="mb-2">
+            <Form.Label style={{ fontSize: '0.8rem' }}>Message</Form.Label>
+            <Form.Control
+              as="textarea"
+              rows={8}
+              value={customClientEmailBody}
+              onChange={(e) => setCustomClientEmailBody(e.target.value)}
+              placeholder="One paragraph per line..."
+            />
+          </Form.Group>
+        </Modal.Body>
+        <Modal.Footer style={{ background: '#111', borderTop: '1px solid #2b2b2b' }}>
+          <Button variant="outline-light" size="sm" onClick={() => setShowCustomClientEmail(false)} disabled={sendingCustomEmail}>Cancel</Button>
+          <Button
+            variant="warning"
+            size="sm"
+            disabled={sendingCustomEmail || !customClientEmailSubject.trim() || !customClientEmailBody.trim()}
+            onClick={handleSendCustomClientEmail}
+          >
+            {sendingCustomEmail ? 'Sending...' : `Send to ${customClientEmailTargetIds.length}`}
+          </Button>
         </Modal.Footer>
       </Modal>
 

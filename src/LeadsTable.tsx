@@ -54,10 +54,17 @@ export type Lead = {
   outdatedMockupSentAt?: string;
   outdatedMockupOpened?: boolean;
   outdatedMockupClicked?: boolean;
+  closedWebDevClient?: boolean;
+  closedWebDevClientAt?: string;
   onboardingSent?: boolean;
   onboardingSentAt?: string;
   onboardingOpened?: boolean;
   onboardingClicked?: boolean;
+  onboardingReminderSent?: boolean;
+  onboardingReminderSentAt?: string;
+  onboardingReminderHtml?: string;
+  onboardingReminderOpened?: boolean;
+  onboardingReminderClicked?: boolean;
   opened?: boolean;
   openedAt?: string;
   clicked?: boolean;
@@ -77,11 +84,12 @@ export type Lead = {
   createdAt: string;
 };
 
-type EmailType = 'cold' | 'onboarding' | 'outdatedMockup';
+type EmailType = 'cold' | 'onboarding' | 'onboardingReminder' | 'outdatedMockup';
 
 const EMAIL_TYPE_LABELS: Record<EmailType, string> = {
   cold: 'Cold Email',
   onboarding: 'Onboarding Email',
+  onboardingReminder: 'Onboarding Reminder',
   outdatedMockup: 'Mockup Cold Email'
 };
 
@@ -107,6 +115,7 @@ type EditForm = {
   industry: string;
   notes: string;
   coldEmailSent: boolean;
+  closedWebDevClient: boolean;
 };
 
 const emptyEditForm: EditForm = {
@@ -120,7 +129,8 @@ const emptyEditForm: EditForm = {
   city: '',
   industry: '',
   notes: '',
-  coldEmailSent: false
+  coldEmailSent: false,
+  closedWebDevClient: false
 };
 
 const editFormFromLead = (lead: Lead): EditForm => ({
@@ -134,7 +144,8 @@ const editFormFromLead = (lead: Lead): EditForm => ({
   city: lead.city || '',
   industry: lead.industry || '',
   notes: lead.notes || '',
-  coldEmailSent: lead.coldEmailSent || false
+  coldEmailSent: lead.coldEmailSent || false,
+  closedWebDevClient: lead.closedWebDevClient || false
 });
 
 type DirectionFilter = 'all' | 'inbound' | 'newsletter' | 'outbound';
@@ -462,6 +473,22 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
     });
   };
 
+  const handleSendOnboardingReminder = (lead: Lead) =>
+    runAction(lead, async () => {
+      try {
+        const response = await axios.post(`${API_BASE_URL}/crm/leads/${lead._id}/send-onboarding-reminder`);
+        if (response.data?.ok) {
+          setMessage(`Onboarding reminder sent to ${lead.businessName || lead.email}.`);
+          fetchLeads();
+        } else {
+          setError(response.data?.message || 'Could not send onboarding reminder.');
+        }
+      } catch (actionError) {
+        console.error(actionError);
+        setError('Could not send onboarding reminder.');
+      }
+    });
+
   const handleToggleDecline = (lead: Lead) => {
     const nextDeclined = !lead.declined;
     if (nextDeclined) {
@@ -755,7 +782,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
             {paginatedLeads.map((lead) => {
               const busy = busyId === lead._id;
               return (
-                <tr key={lead._id} style={lead.declined || lead.convertedToClient ? { opacity: 0.5 } : undefined}>
+                <tr key={lead._id} style={lead.declined ? { opacity: 0.5 } : undefined}>
                   <td>{lead.businessName || '—'}</td>
                   <td>
                     <div>{lead.contactName || '—'}</div>
@@ -885,7 +912,8 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                   </td>
                   <td>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                      {lead.convertedToClient ? <Badge bg="success">Onboarded — See Client Table</Badge> : null}
+                      {lead.convertedToClient ? <Badge bg="success">WEB CLIENT</Badge> : null}
+                      {lead.closedWebDevClient ? <Badge bg="primary">Closed Web Dev Client</Badge> : null}
                       {lead.declined ? <Badge bg="danger">Declined / Inactive</Badge> : null}
                       {isNotContacted(lead) && !lead.declined && !lead.convertedToClient ? <Badge bg="secondary">Not Contacted</Badge> : null}
                       {lead.coldEmailSent ? <Badge bg="success">Cold Email Sent</Badge> : null}
@@ -901,18 +929,14 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                     </div>
                   </td>
                   <td>
-                    {lead.convertedToClient ? (
-                      <small style={{ color: '#aaa' }}>Already a client — manage them in Website Clients below.</small>
-                    ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '150px' }}>
-                        {lead.email ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '150px' }}>
+                      {lead.convertedToClient ? (
+                        <small style={{ color: '#aaa' }}>Also a WEB CLIENT — manage subscription/payment contact in Website Clients below.</small>
+                      ) : null}
+                      {lead.email ? (
                           <>
                             {!lead.onboardingSent ? (
-                              lead.coldEmailSent && !lead.coldEmailHtml ? (
-                                // Marked manually (e.g. contacted by text) rather than an
-                                // actual email being sent — no real content to view/resend.
-                                <small style={{ color: '#666' }}>Marked as contacted — not via email</small>
-                              ) : lead.coldEmailSent ? (
+                              lead.coldEmailSent ? (
                                 <>
                                   <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'cold')}>
                                     See Sent {lead.website ? 'Marketing / Ads ' : ''}Cold Email
@@ -973,13 +997,20 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                             ) : null}
                             {!lead.website || lead.outdatedWebsite ? (
                               lead.onboardingSent ? (
-                                <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'onboarding')}>
-                                  See Sent Onboarding Email
-                                </Button>
-                              ) : (
+                                <>
+                                  <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'onboarding')}>
+                                    See Sent Onboarding Email
+                                  </Button>
+                                  <Button size="sm" variant="outline-warning" disabled={busy || lead.declined} onClick={() => handleSendOnboardingReminder(lead)}>
+                                    {lead.onboardingReminderSent ? 'Resend Reminder' : 'Send Reminder'}
+                                  </Button>
+                                </>
+                              ) : lead.closedWebDevClient ? (
                                 <Button size="sm" variant="outline-success" disabled={busy || lead.declined} onClick={() => handleSendOnboarding(lead)}>
                                   Send Onboarding
                                 </Button>
+                              ) : (
+                                <small style={{ color: '#666' }}>Mark Closed Web Dev Client to send onboarding</small>
                               )
                             ) : null}
                           </>
@@ -996,7 +1027,6 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                           Edit
                         </Button>
                       </div>
-                    )}
                   </td>
                 </tr>
               );
@@ -1206,13 +1236,23 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                   />
                 </Form.Group>
               </Col>
-              <Col md={12} className="d-flex align-items-end">
+              <Col md={6} className="d-flex align-items-end">
                 <Form.Group className="mb-2">
                   <Form.Check
                     type="checkbox"
                     label="Cold email sent"
                     checked={editForm.coldEmailSent}
                     onChange={(e) => setEditForm({ ...editForm, coldEmailSent: e.target.checked })}
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6} className="d-flex align-items-end">
+                <Form.Group className="mb-2">
+                  <Form.Check
+                    type="checkbox"
+                    label="Closed Web Dev Client (deal made — unlocks Send Onboarding)"
+                    checked={editForm.closedWebDevClient}
+                    onChange={(e) => setEditForm({ ...editForm, closedWebDevClient: e.target.checked })}
                   />
                 </Form.Group>
               </Col>

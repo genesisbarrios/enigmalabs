@@ -572,6 +572,21 @@ function buildOnboardingEmailHtml(lead) {
   });
 }
 
+// Nudge for a closed client who was sent onboarding but hasn't paid or
+// filled out their details yet.
+function buildOnboardingReminderEmailHtml(lead) {
+  return renderBrandedEmail({
+    greetingName: lead.contactName,
+    leadId: lead._id,
+    type: 'onboardingReminder',
+    paragraphs: [
+      `Just a friendly reminder to complete your onboarding — we still need your payment and a few details from you (branding, business info, preferences) before we can get started on your new website.`
+    ],
+    ctaLabel: 'Complete onboarding',
+    ctaUrl: trackedUrl(lead._id, `${SITE_URL}/onboard`, 'onboardingReminder')
+  });
+}
+
 async function sendLeadEmail(lead, { subject, buildHtml, statusField, statusAtField, htmlField, subjectField, resendIdField }) {
   if (!resend) {
     return { ok: false, message: 'RESEND_API_KEY not set — email delivery is not configured.' };
@@ -581,9 +596,6 @@ async function sendLeadEmail(lead, { subject, buildHtml, statusField, statusAtFi
   }
   if (lead.declined) {
     return { ok: false, message: 'This lead has been declined and can no longer be contacted.' };
-  }
-  if (lead.convertedToClient) {
-    return { ok: false, message: 'This lead is already a client — contact them from the Website Clients table instead.' };
   }
 
   const html = buildHtml(lead);
@@ -737,6 +749,136 @@ async function sendClientMarketingEmail(client) {
   }
 
   client.marketingEmailSentAt = new Date();
+  await client.save();
+  return { ok: true, client };
+}
+
+function buildPaymentReminderEmailHtml(client) {
+  const business = client.name ? `<strong>${client.name}</strong>` : 'your account';
+
+  return renderBrandedEmail({
+    // Website clients only have a single `name` field, which is usually the
+    // business name, not a person — don't guess a "first name" out of it.
+    greetingName: undefined,
+    paragraphs: [
+      `Just a friendly reminder that payment is still outstanding for ${business}. Let us know if you have any questions, or reply to this email whenever you're ready to take care of it.`
+    ]
+  });
+}
+
+// Distinct from buildPaymentReminderEmailHtml on purpose — this is for the
+// recurring $15/$40/mo hosting & support plan, not a one-off project
+// payment, so the copy shouldn't imply something is overdue by default.
+function buildSubscriptionReminderEmailHtml(client) {
+  const business = client.name ? `<strong>${client.name}</strong>` : 'your account';
+
+  return renderBrandedEmail({
+    greetingName: undefined,
+    paragraphs: [
+      `This is a reminder that your monthly hosting & support subscription payment for ${business} is due. Reply to this email if you have any questions!`
+    ]
+  });
+}
+
+// Plain text typed by the admin, split into paragraphs the same way the
+// prettykitty/enigmalabs newsletter composers do — one <p> per non-empty
+// line.
+function buildCustomClientEmailHtml(bodyText) {
+  return renderBrandedEmail({
+    greetingName: undefined,
+    paragraphs: (bodyText || '')
+      .split('\n')
+      .filter((line) => line.trim())
+      .map((line) => line.trim())
+  });
+}
+
+async function sendPaymentReminderEmail(client) {
+  if (!resend) {
+    return { ok: false, message: 'RESEND_API_KEY not set — email delivery is not configured.' };
+  }
+  if (!client.email) {
+    return { ok: false, message: 'This client has no email address on file.' };
+  }
+
+  try {
+    const { error } = await resend.emails.send({
+      from: AGREEMENT_FROM_EMAIL,
+      to: client.email,
+      subject: `Payment reminder — ${client.name || 'your project'}`,
+      html: buildPaymentReminderEmailHtml(client)
+    });
+    if (error) {
+      console.error('Could not send payment reminder email', error);
+      return { ok: false, message: 'Failed to send the email.' };
+    }
+  } catch (error) {
+    console.error('Could not send payment reminder email', error);
+    return { ok: false, message: 'Failed to send the email.' };
+  }
+
+  client.paymentReminderSentAt = new Date();
+  await client.save();
+  return { ok: true, client };
+}
+
+async function sendSubscriptionReminderEmail(client) {
+  if (!resend) {
+    return { ok: false, message: 'RESEND_API_KEY not set — email delivery is not configured.' };
+  }
+  if (!client.email) {
+    return { ok: false, message: 'This client has no email address on file.' };
+  }
+
+  try {
+    const { error } = await resend.emails.send({
+      from: AGREEMENT_FROM_EMAIL,
+      to: client.email,
+      subject: `Monthly subscription payment reminder — ${client.name || 'your account'}`,
+      html: buildSubscriptionReminderEmailHtml(client)
+    });
+    if (error) {
+      console.error('Could not send subscription reminder email', error);
+      return { ok: false, message: 'Failed to send the email.' };
+    }
+  } catch (error) {
+    console.error('Could not send subscription reminder email', error);
+    return { ok: false, message: 'Failed to send the email.' };
+  }
+
+  client.subscriptionReminderSentAt = new Date();
+  await client.save();
+  return { ok: true, client };
+}
+
+async function sendCustomClientEmail(client, { subject, bodyText }) {
+  if (!resend) {
+    return { ok: false, message: 'RESEND_API_KEY not set — email delivery is not configured.' };
+  }
+  if (!client.email) {
+    return { ok: false, message: 'This client has no email address on file.' };
+  }
+  if (!subject || !bodyText) {
+    return { ok: false, message: 'Subject and message body are required.' };
+  }
+
+  try {
+    const { error } = await resend.emails.send({
+      from: AGREEMENT_FROM_EMAIL,
+      to: client.email,
+      subject,
+      html: buildCustomClientEmailHtml(bodyText)
+    });
+    if (error) {
+      console.error('Could not send custom client email', error);
+      return { ok: false, message: 'Failed to send the email.' };
+    }
+  } catch (error) {
+    console.error('Could not send custom client email', error);
+    return { ok: false, message: 'Failed to send the email.' };
+  }
+
+  client.lastCustomEmailSentAt = new Date();
   await client.save();
   return { ok: true, client };
 }
@@ -1027,6 +1169,7 @@ const WebDevAgreement = mongoose.model('WebDevAgreement', webDevAgreementSchema,
 const websiteClientSchema = new mongoose.Schema({
   name: String,
   email: String,
+  phone: String,
   address: String,
   socialMediaLinks: String,
   businessType: String,
@@ -1044,6 +1187,9 @@ const websiteClientSchema = new mongoose.Schema({
   },
   websiteReviewSentAt: Date,
   marketingEmailSentAt: Date,
+  paymentReminderSentAt: Date,
+  subscriptionReminderSentAt: Date,
+  lastCustomEmailSentAt: Date,
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -1114,6 +1260,11 @@ const leadSchema = new mongoose.Schema({
   reminderEmailHtml: String,
   reminderEmailSubject: String,
   reminderEmailResendId: String,
+  // Manually marked once a web dev deal is actually closed (verbally, DM,
+  // etc.) — the signal that it's time to click Send Onboarding, and what
+  // gates that button from showing up before the deal is real.
+  closedWebDevClient: { type: Boolean, default: false },
+  closedWebDevClientAt: Date,
   onboardingSent: { type: Boolean, default: false },
   onboardingSentAt: Date,
   onboardingHtml: String,
@@ -1123,6 +1274,17 @@ const leadSchema = new mongoose.Schema({
   onboardingOpenedAt: Date,
   onboardingClicked: { type: Boolean, default: false },
   onboardingClickedAt: Date,
+  // Nudges a closed client who was sent onboarding but hasn't paid/filled
+  // out their details yet.
+  onboardingReminderSent: { type: Boolean, default: false },
+  onboardingReminderSentAt: Date,
+  onboardingReminderHtml: String,
+  onboardingReminderSubject: String,
+  onboardingReminderResendId: String,
+  onboardingReminderOpened: { type: Boolean, default: false },
+  onboardingReminderOpenedAt: Date,
+  onboardingReminderClicked: { type: Boolean, default: false },
+  onboardingReminderClickedAt: Date,
   // Overall "did they engage with any outreach email" flags, kept for the
   // leads table summary column.
   opened: { type: Boolean, default: false },
@@ -1145,8 +1307,10 @@ const leadSchema = new mongoose.Schema({
   declined: { type: Boolean, default: false },
   declinedAt: Date,
   // Set automatically when a matching onboarded/website client shows up
-  // (same email or phone) — the lead is retired so it can't be double
-  // contacted; ongoing communication happens through the client record.
+  // (same email or phone) — shown as "WEB CLIENT" in the leads table.
+  // Stays fully active there (cold/marketing emails still send normally)
+  // since it's also copied into the Website Clients table for ongoing
+  // client-specific contact (payment reminders, etc), not a replacement.
   convertedToClient: { type: Boolean, default: false },
   convertedToClientAt: Date,
   // Only set for inbound (public form) leads — used to rate-limit spam floods
@@ -1337,6 +1501,7 @@ async function upsertWebsiteClient({ name, email, address, socialMediaLinks, bus
     const existing = await WebsiteClient.findOne({ email });
     if (existing) {
       if (name) existing.name = name;
+      if (phone) existing.phone = phone;
       if (address) existing.address = address;
       if (socialMediaLinks) existing.socialMediaLinks = socialMediaLinks;
       if (businessType) existing.businessType = businessType;
@@ -1347,6 +1512,7 @@ async function upsertWebsiteClient({ name, email, address, socialMediaLinks, bus
       await WebsiteClient.create({
         name: name || '',
         email,
+        phone: phone || '',
         address: address || '',
         socialMediaLinks: socialMediaLinks || '',
         businessType: businessType || '',
@@ -1355,7 +1521,9 @@ async function upsertWebsiteClient({ name, email, address, socialMediaLinks, bus
       });
     }
     // This person is now a client — if they were also sitting in the leads
-    // table, retire that lead so it can't be double contacted.
+    // table, mark it as a WEB CLIENT there too (see convertLeadIfMatches;
+    // it stays fully contactable from the leads table, this just links it
+    // to the copy here for ongoing client-specific contact).
     await convertLeadIfMatches({ email, phone });
   } catch (error) {
     console.error('Could not save website client record', error);
@@ -2014,20 +2182,21 @@ app.get('/api/website-clients/:id/logo', async (req, res) => {
 
 app.post('/api/website-clients', async (req, res) => {
   try {
-    const { name, email, address, socialMediaLinks, businessType, website, hasExistingWebsite } = req.body;
+    const { name, email, phone, address, socialMediaLinks, businessType, website, hasExistingWebsite } = req.body;
     if (!name || !email) {
       return res.status(400).json({ ok: false, message: 'Name and email are required.' });
     }
     const client = await WebsiteClient.create({
       name,
       email,
+      phone: phone || '',
       address: address || '',
       socialMediaLinks: socialMediaLinks || '',
       businessType: businessType || '',
       website: website || '',
       hasExistingWebsite: hasExistingWebsite === undefined ? true : Boolean(hasExistingWebsite)
     });
-    await convertLeadIfMatches({ email });
+    await convertLeadIfMatches({ email, phone });
     res.status(201).json({ ok: true, client });
   } catch (error) {
     console.error('Could not create website client', error);
@@ -2042,7 +2211,7 @@ app.put('/api/website-clients/:id', async (req, res) => {
       return res.status(404).json({ ok: false, message: 'Website client not found.' });
     }
 
-    const fields = ['name', 'email', 'address', 'socialMediaLinks', 'businessType', 'website'];
+    const fields = ['name', 'email', 'phone', 'address', 'socialMediaLinks', 'businessType', 'website'];
     fields.forEach((field) => {
       if (req.body[field] !== undefined) {
         client[field] = req.body[field];
@@ -2114,6 +2283,77 @@ app.post('/api/website-clients/send-marketing-email', async (req, res) => {
   } catch (error) {
     console.error('Could not send marketing emails', error);
     res.status(500).json({ ok: false, message: 'Could not send marketing emails.' });
+  }
+});
+
+app.post('/api/website-clients/send-payment-reminder', async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body.ids) ? req.body.ids : [];
+    if (!ids.length) {
+      return res.status(400).json({ ok: false, message: 'At least one client id is required.' });
+    }
+
+    const clients = await WebsiteClient.find({ _id: { $in: ids } });
+    const results = [];
+    for (const client of clients) {
+      const result = await sendPaymentReminderEmail(client);
+      results.push({ id: client._id, ok: result.ok, message: result.message });
+    }
+
+    const sentCount = results.filter((r) => r.ok).length;
+    res.json({ ok: true, sentCount, results });
+  } catch (error) {
+    console.error('Could not send payment reminder emails', error);
+    res.status(500).json({ ok: false, message: 'Could not send payment reminder emails.' });
+  }
+});
+
+app.post('/api/website-clients/send-subscription-reminder', async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body.ids) ? req.body.ids : [];
+    if (!ids.length) {
+      return res.status(400).json({ ok: false, message: 'At least one client id is required.' });
+    }
+
+    const clients = await WebsiteClient.find({ _id: { $in: ids } });
+    const results = [];
+    for (const client of clients) {
+      const result = await sendSubscriptionReminderEmail(client);
+      results.push({ id: client._id, ok: result.ok, message: result.message });
+    }
+
+    const sentCount = results.filter((r) => r.ok).length;
+    res.json({ ok: true, sentCount, results });
+  } catch (error) {
+    console.error('Could not send subscription reminder emails', error);
+    res.status(500).json({ ok: false, message: 'Could not send subscription reminder emails.' });
+  }
+});
+
+app.post('/api/website-clients/send-custom-email', async (req, res) => {
+  try {
+    const ids = Array.isArray(req.body.ids) ? req.body.ids : [];
+    const subject = (req.body.subject || '').trim();
+    const bodyText = (req.body.bodyText || '').trim();
+    if (!ids.length) {
+      return res.status(400).json({ ok: false, message: 'At least one client id is required.' });
+    }
+    if (!subject || !bodyText) {
+      return res.status(400).json({ ok: false, message: 'Subject and message body are required.' });
+    }
+
+    const clients = await WebsiteClient.find({ _id: { $in: ids } });
+    const results = [];
+    for (const client of clients) {
+      const result = await sendCustomClientEmail(client, { subject, bodyText });
+      results.push({ id: client._id, ok: result.ok, message: result.message });
+    }
+
+    const sentCount = results.filter((r) => r.ok).length;
+    res.json({ ok: true, sentCount, results });
+  } catch (error) {
+    console.error('Could not send custom client emails', error);
+    res.status(500).json({ ok: false, message: 'Could not send custom client emails.' });
   }
 });
 
@@ -2191,6 +2431,15 @@ app.put('/api/crm/leads/:id', async (req, res) => {
         lead.coldEmailSentAt = new Date();
       } else if (!coldEmailSent) {
         lead.coldEmailSentAt = undefined;
+      }
+    }
+    if (req.body.closedWebDevClient !== undefined) {
+      const closedWebDevClient = Boolean(req.body.closedWebDevClient);
+      lead.closedWebDevClient = closedWebDevClient;
+      if (closedWebDevClient && !lead.closedWebDevClientAt) {
+        lead.closedWebDevClientAt = new Date();
+      } else if (!closedWebDevClient) {
+        lead.closedWebDevClientAt = undefined;
       }
     }
 
@@ -2657,9 +2906,32 @@ app.post('/api/crm/leads/:id/send-onboarding', async (req, res) => {
   }
 });
 
+app.post('/api/crm/leads/:id/send-onboarding-reminder', async (req, res) => {
+  try {
+    const lead = await Lead.findById(req.params.id);
+    if (!lead) {
+      return res.status(404).json({ ok: false, message: 'Lead not found.' });
+    }
+    const result = await sendLeadEmail(lead, {
+      subject: `Reminder — let's finish getting your website started`,
+      buildHtml: buildOnboardingReminderEmailHtml,
+      statusField: 'onboardingReminderSent',
+      statusAtField: 'onboardingReminderSentAt',
+      htmlField: 'onboardingReminderHtml',
+      subjectField: 'onboardingReminderSubject',
+      resendIdField: 'onboardingReminderResendId'
+    });
+    res.status(result.ok ? 200 : 400).json(result);
+  } catch (error) {
+    console.error('Could not send onboarding reminder email', error);
+    res.status(500).json({ ok: false, message: 'Could not send onboarding reminder email.' });
+  }
+});
+
 const EMAIL_TYPE_FIELD_PREFIX = {
   cold: 'coldEmail',
   onboarding: 'onboarding',
+  onboardingReminder: 'onboardingReminder',
   outdatedMockup: 'outdatedMockup'
 };
 
