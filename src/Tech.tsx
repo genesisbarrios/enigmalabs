@@ -291,10 +291,7 @@ function handleSubmit() {
                 Share a few details through our onboarding form and we’ll take it from there.
               </p>
               <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginTop: "1rem" }}>
-                <Link to="/payment" style={{ display: "inline-block", backgroundColor: "#68FF00", color: "#000", border: "none", borderRadius: "2rem", fontWeight: 700, padding: "0.6rem 1.5rem", textDecoration: "none" }}>
-                  Pay for your website
-                </Link>
-                <Link to="/onboard" style={{ display: "inline-block", backgroundColor: "transparent", color: "#68FF00", border: "1px solid #68FF00", borderRadius: "2rem", fontWeight: 700, padding: "0.6rem 1.5rem", textDecoration: "none" }}>
+                <Link to="/onboard" style={{ display: "inline-block", backgroundColor: "#68FF00", color: "#000", border: "none", borderRadius: "2rem", fontWeight: 700, padding: "0.6rem 1.5rem", textDecoration: "none" }}>
                   Start your onboarding journey →
                 </Link>
               </div>
