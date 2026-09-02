@@ -285,6 +285,39 @@ function splitCsvLine(line: string): string[] {
   return fields;
 }
 
+// Comma-separated paste text breaks the moment a value itself contains an
+// unquoted comma — almost always "City, ST" in the Location column, the one
+// place this shows up constantly in these lead sheets (see CITY_STATE_REGEX
+// above). Left alone, that single comma shifts every column after it by
+// one — Industry receives half the city, Instagram receives the real
+// industry, Email receives the real Instagram handle, and so on. When a row
+// has more fields than the header row, assume that's what happened: merge
+// the overflow back into the City/Location column first (a mid-row comma is
+// almost always there), then collapse any leftover overflow into the last
+// column (a trailing comma, e.g. inside Comments, doesn't shift anything
+// after it, so it's always safe to merge there last).
+function reconcileRowOverflow(row: string[], headerCount: number, cityIdx: number): string[] {
+  let result = row;
+
+  if (result.length > headerCount && cityIdx >= 0 && cityIdx < result.length - 1) {
+    const overflow = result.length - headerCount;
+    if (cityIdx + overflow < result.length) {
+      result = [
+        ...result.slice(0, cityIdx),
+        result.slice(cityIdx, cityIdx + overflow + 1).join(', ').trim(),
+        ...result.slice(cityIdx + overflow + 1)
+      ];
+    }
+  }
+
+  if (result.length > headerCount) {
+    const tailStart = headerCount - 1;
+    result = [...result.slice(0, tailStart), result.slice(tailStart).join(', ').trim()];
+  }
+
+  return result;
+}
+
 function parsePastedLeads(text: string): ParsedLead[] {
   const lines = text.split('\n').map((line) => line.trim()).filter(Boolean);
   if (!lines.length) return [];
@@ -294,7 +327,12 @@ function parsePastedLeads(text: string): ParsedLead[] {
   const looksLikeHeader = firstRowTokens.filter((token) => HEADER_HINT_REGEX.test(token)).length >= 2;
 
   if (looksLikeHeader) {
-    const grid = lines.map((line) => splitLine(line));
+    const headers = firstRowTokens;
+    const cityIdx = headers.findIndex((header) => /city|location/i.test(header));
+    const grid = [
+      headers,
+      ...lines.slice(1).map((line) => reconcileRowOverflow(splitLine(line), headers.length, cityIdx))
+    ];
     return extractLeadsFromGrid(grid);
   }
 
