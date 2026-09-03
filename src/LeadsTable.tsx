@@ -1009,9 +1009,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
                                 <Button size="sm" variant="outline-success" disabled={busy || lead.declined} onClick={() => handleSendOnboarding(lead)}>
                                   Send Onboarding
                                 </Button>
-                              ) : (
-                                <small style={{ color: '#666' }}>Mark Closed Web Dev Client to send onboarding</small>
-                              )
+                              ) : null
                             ) : null}
                           </>
                         ) : null}
