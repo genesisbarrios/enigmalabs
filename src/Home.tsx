@@ -536,7 +536,8 @@ const Home = () => {
           <Col xs={12}>
             <div ref={introRef} className={`what-we-do${introVisible ? ' is-visible' : ''}`}>
               <p className="what-we-do-text">
-                We help businesses generate more customers through{' \n'}
+                We help businesses generate more customers through
+                <br />
                 <span className="what-we-do-highlight">high-converting websites,</span>{' '}
                 <span className="what-we-do-highlight">branding, content & ads.</span>
               </p>
