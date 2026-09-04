@@ -170,11 +170,6 @@ const About = () => {
           </Row>
 
           <Row style={{ ...rowStyle, marginTop: "6%", marginBottom: "6%" }}>
-            <Col xs={12} md={6} >
-              <h4 className="mt-5">Email Us</h4>
-              <a href="mailto:info@enigma-labs.com" className="text-white">info@enigma-labs.com</a>
-              <div style={{marginBottom:"3%"}}></div>
-            </Col>
             <Col xs={12} md={6} className="mt-4 mt-md-0" style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
               <div style={newsletterCardStyle}>
                 <form style={{ textAlign: "center", width: "100%", maxWidth: "420px", margin: "0 auto" }}>
@@ -257,6 +252,11 @@ const About = () => {
                   {alert && <Alert style={{ marginTop: "1.5rem", backgroundColor: "#2a0000", borderColor: "#ff4d4d", color: "#ff9d9d" }}>{alert.toString()}</Alert>}
                 </form>
               </div>
+            </Col>
+             <Col xs={12} md={6} >
+              <h4 className="mt-5">Email Us</h4>
+              <a href="mailto:info@enigma-labs.com" className="text-white">info@enigma-labs.com</a>
+              <div style={{marginBottom:"3%"}}></div>
             </Col>
           </Row>
         </Container>
