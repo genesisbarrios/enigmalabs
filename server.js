@@ -480,7 +480,7 @@ function buildColdEmailHtml(lead) {
     ];
   } else if (lead.inbound) {
     paragraphs = [
-      `Thanks for signing up! We're already working on the custom website mockup for ${businessFor} and will have it ready within a couple hours.`,
+      `Thanks for signing up! We're already working on your custom website mockup for ${businessFor} and will have it ready within a couple hours.`,
       `Feel free to schedule a quick call at your convenience so we can walk through it together once it's ready:`
     ];
   } else {
