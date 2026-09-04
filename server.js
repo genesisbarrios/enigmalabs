@@ -480,13 +480,13 @@ function buildColdEmailHtml(lead) {
     ];
   } else if (lead.inbound) {
     paragraphs = [
-      `Thanks for signing up! We're already working on a custom homepage mockup for ${businessFor} and will have it ready within a couple hours.`,
+      `Thanks for signing up! We're already working on the custom website mockup for ${businessFor} and will have it ready within a couple hours.`,
       `Feel free to schedule a quick call at your convenience so we can walk through it together once it's ready:`
     ];
   } else {
     paragraphs = [
       `I came across ${business} business page and noticed you don't currently have a website to showcase your business and make it easier for customers to find you online.`,
-      `To give you an idea of what's possible, I went ahead and designed a custom homepage mockup specifically for your business. I'd love to show it to you — there's no obligation, and it only takes about 5-10 minutes.`,
+      `To give you an idea of what's possible, I went ahead and built you a custom website for your business. I'd love to show it to you — there's no obligation, and it only takes about 5-10 minutes.`,
       `Would you be available for a quick call sometime in the next day or two? Here's my calendar link for you to schedule it at your convenience:`
     ];
   }
