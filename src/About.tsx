@@ -253,7 +253,7 @@ const About = () => {
                 </form>
               </div>
             </Col>
-             <Col xs={12} md={6} >
+             <Col xs={12} md={6} className="text-center" style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
               <h4 className="mt-5">Email Us</h4>
               <a href="mailto:info@enigma-labs.com" className="text-white">info@enigma-labs.com</a>
               <div style={{marginBottom:"3%"}}></div>
