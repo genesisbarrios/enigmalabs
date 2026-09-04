@@ -153,7 +153,6 @@ const About = () => {
               <h5>CEO, Genesis Barrios</h5>
               <p> Software Engineer, Music Producer & Audio Engineer, Content Creator </p>
               <a  className="socialLinks" href="https://linkedin.com/in/genesis-barrios" target="_blank">LinkedIn</a>
-              <a  className="socialLinks" href="https://g.page/r/CXjkqbx6HecREAI/review" target="_blank">Review Our Business</a>
               <a  className="socialLinks" href="https://genesisbarrios.xyz" target="_blank">Programming Portfolio</a>
               <a  className="socialLinks" href="https://github.com/genesisbarrios" target="_blank">Github</a>
               <a  className="socialLinks" href="https://instagram.com/@gen.wav" target="_blank">Instagram</a>
