@@ -34,6 +34,9 @@ const Home = () => {
   }, []);
 
   const [email, setEmail] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [socialUrl, setSocialUrl] = useState("");
   const [beats, setBeats] = useState(false);
   const [visuals, setVisuals] = useState(false);
   const [web, setWeb] = useState(false);
@@ -284,6 +287,9 @@ const Home = () => {
 
     const dataToSend = {
       email,
+      name,
+      phone,
+      socialUrl,
       beats,
       mixing: beats,
       visuals,
@@ -715,6 +721,26 @@ const Home = () => {
                 <p style={{ color: "#aaa", fontSize: "0.9rem", marginBottom: "1.5rem" }}>
                   News, tips and discounts. No spam.
                 </p>
+                {/* Honeypot — hidden from real users, tempting for bots that auto-fill every field */}
+                <input
+                  type="text"
+                  name="website"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                  tabIndex={-1}
+                  autoComplete="off"
+                  aria-hidden="true"
+                  style={{ position: "absolute", left: "-9999px", width: "1px", height: "1px", opacity: 0 }}
+                ></input>
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Your name"
+                  style={newsletterInputStyle}
+                  onChange={(e) => {
+                    setName(e.target.value);
+                  }}
+                ></input>
                 <input
                   type="email"
                   name="e-mail"
@@ -722,6 +748,24 @@ const Home = () => {
                   style={newsletterInputStyle}
                   onChange={(e) => {
                     setEmail(e.target.value);
+                  }}
+                ></input>
+                <input
+                  type="tel"
+                  name="phone"
+                  placeholder="Phone number"
+                  style={newsletterInputStyle}
+                  onChange={(e) => {
+                    setPhone(e.target.value);
+                  }}
+                ></input>
+                <input
+                  type="text"
+                  name="social-url"
+                  placeholder="Instagram handle (optional)"
+                  style={newsletterInputStyle}
+                  onChange={(e) => {
+                    setSocialUrl(e.target.value);
                   }}
                 ></input>
                 <label style={{ display: "block", color: "#d4d4d4", marginBottom: "0.5rem" }}>

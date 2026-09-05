@@ -16,6 +16,7 @@ const Newsletter = () => {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [socialUrl, setSocialUrl] = useState("");
   const [beats, setBeats] = useState(false);
   const [visuals, setVisuals] = useState(false);
   const [web, setWeb] = useState(false);
@@ -97,6 +98,7 @@ const Newsletter = () => {
       email,
       name,
       phone,
+      socialUrl,
       beats,
       visuals,
       web,
@@ -181,6 +183,15 @@ const Newsletter = () => {
                 style={newsletterInputStyle}
                 onChange={(e) => {
                   setPhone(e.target.value);
+                }}
+              ></input>
+              <input
+                type="text"
+                name="social-url"
+                placeholder="Instagram handle (optional)"
+                style={newsletterInputStyle}
+                onChange={(e) => {
+                  setSocialUrl(e.target.value);
                 }}
               ></input>
               <label style={{ display: "block", color: "#d4d4d4", marginBottom: "0.5rem" }}>
