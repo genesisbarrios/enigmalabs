@@ -83,7 +83,7 @@ const Newsletter = () => {
 
   const interestOptions: { key: string; label: string; active: boolean; toggle: () => void }[] = [
     { key: "beats", label: "Music", active: beats, toggle: () => setBeats(!beats) },
-    { key: "visuals", label: "Visuals", active: visuals, toggle: () => setVisuals(!visuals) },
+    { key: "visuals", label: "Branding", active: visuals, toggle: () => setVisuals(!visuals) },
     { key: "web", label: "Web Development", active: web, toggle: () => setWeb(!web) },
     { key: "ads", label: "Ads", active: ads, toggle: () => setAds(!ads) }
   ];
@@ -136,7 +136,7 @@ const Newsletter = () => {
           </h2>
           <p style={{ maxWidth: "560px", lineHeight: 1.7, color: "#d4d4d4" }}>
             Sign up for updates, tips, and offers from Enigma Labs — pick
-            whichever you're into: music, visuals, web development, or marketing(ads).
+            whichever you're into: web development, branding, marketing(ads), or music.
             No spam, unsubscribe anytime.
           </p>
         </Col>
