@@ -196,11 +196,8 @@ const FreeAudit = () => {
 
       <Row style={{ ...rowStyle, marginTop: "3%", alignItems: "center" }}>
         <Col xs={12} md={6} className="d-none d-md-block">
-          <h2 className="subsection-title" style={{ color: "#68FF00", marginBottom: "0.15rem" }}>
-            Website & App Audit
-          </h2>
-          <h2 className="subsection-title" style={{ color: "#d4d4d4", fontSize: "1.4rem", marginTop: 0, marginBottom: "1.1rem" }}>
-            or an Online Presence Audit
+          <h2 className="subsection-title" style={{ color: "#68FF00" }}>
+            Website Audit / Online Presence Audit
           </h2>
           <p style={{ maxWidth: "560px", lineHeight: 1.7, color: "#d4d4d4" }}>
             Have a live website, an app, or a vibe-coded project from Lovable,
@@ -273,7 +270,7 @@ const FreeAudit = () => {
                   placeholder="Business name (optional)"
                   value={auditBusinessName}
                   className="mockup-input"
-                  style={{ ...auditGridInputStyle, gridColumn: "1 / -1" }}
+                  style={auditGridInputStyle}
                   onChange={(e) => {
                     setAuditBusinessName(e.target.value);
                   }}
