@@ -17,6 +17,7 @@ import LeadScraper from './LeadScraper';
 import Wallpapers from './wallpapers';
 import FreeMockup from './FreeMockup';
 import FreeAudit from './FreeAudit';
+import Newsletter from './Newsletter';
 import {Route, Routes} from 'react-router-dom';
 import {BrowserRouter as Router} from 'react-router-dom';
 const App = () => {
@@ -40,6 +41,7 @@ const App = () => {
          <Route path="/Wallpapers" element={<Wallpapers/>}/>
          <Route path="/mockup" element={<FreeMockup/>}/>
          <Route path="/audit" element={<FreeAudit/>}/>
+         <Route path="/newsletter" element={<Newsletter/>}/>
          <Route path="/onboard" element={<OnboardingLanding/>}/>
          <Route path="/onboard/agreement" element={<OnboardingAgreement/>}/>
          <Route path="/onboard/form" element={<Onboarding/>}/>
