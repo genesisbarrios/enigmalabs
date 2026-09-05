@@ -21,6 +21,7 @@ const About = () => {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [socialUrl, setSocialUrl] = useState("");
   const [beats, setBeats] = useState(false);
   const [visuals, setVisuals] = useState(false);
   const [web, setWeb] = useState(false);
@@ -87,7 +88,7 @@ const About = () => {
 
   const interestOptions: { key: string; label: string; active: boolean; toggle: () => void }[] = [
     { key: "beats", label: "Music", active: beats, toggle: () => setBeats(!beats) },
-    { key: "visuals", label: "Visuals", active: visuals, toggle: () => setVisuals(!visuals) },
+    { key: "visuals", label: "Branding", active: visuals, toggle: () => setVisuals(!visuals) },
     { key: "web", label: "Web Development", active: web, toggle: () => setWeb(!web) },
     { key: "ads", label: "Ads", active: ads, toggle: () => setAds(!ads) }
   ];
@@ -102,6 +103,7 @@ const About = () => {
       email,
       name,
       phone,
+      socialUrl,
       beats,
       visuals,
       web,
@@ -213,6 +215,15 @@ const About = () => {
                     style={newsletterInputStyle}
                     onChange={(e) => {
                       setPhone(e.target.value);
+                    }}
+                  ></input>
+                  <input
+                    type="text"
+                    name="social-url"
+                    placeholder="Instagram handle (optional)"
+                    style={newsletterInputStyle}
+                    onChange={(e) => {
+                      setSocialUrl(e.target.value);
                     }}
                   ></input>
                   <label style={{ display: "block", color: "#d4d4d4", marginBottom: "0.5rem" }}>

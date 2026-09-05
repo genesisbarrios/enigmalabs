@@ -456,7 +456,7 @@ const Home = () => {
   const interestOptions: { key: string; label: string; active: boolean; toggle: () => void }[] = [
     { key: "web", label: "Web Development", active: web, toggle: () => setWeb(!web) },
     { key: "ads", label: "Ads", active: ads, toggle: () => setAds(!ads) },
-    { key: "visuals", label: "Visuals", active: visuals, toggle: () => setVisuals(!visuals) },
+    { key: "visuals", label: "Branding", active: visuals, toggle: () => setVisuals(!visuals) },
     { key: "beats", label: "Beats & Mixing", active: beats, toggle: () => setBeats(!beats) },
   ];
 
