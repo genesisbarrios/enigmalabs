@@ -38,8 +38,8 @@ const App = () => {
          <Route path="/Music" element={<Music/>}/>
          <Route path="/Visuals" element={<Visuals/>}/>
          <Route path="/Wallpapers" element={<Wallpapers/>}/>
-         <Route path="/free-mockup" element={<FreeMockup/>}/>
-         <Route path="/free-audit" element={<FreeAudit/>}/>
+         <Route path="/mockup" element={<FreeMockup/>}/>
+         <Route path="/audit" element={<FreeAudit/>}/>
          <Route path="/onboard" element={<OnboardingLanding/>}/>
          <Route path="/onboard/agreement" element={<OnboardingAgreement/>}/>
          <Route path="/onboard/form" element={<Onboarding/>}/>
