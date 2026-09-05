@@ -3,6 +3,7 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 const multer = require('multer');
 const AdmZip = require('adm-zip');
+const axios = require('axios');
 const dotenv = require('dotenv');
 const fs = require('fs');
 const path = require('path');
@@ -460,6 +461,180 @@ async function sendFreeAuditThankYouEmail(subscriber) {
     subject: "We're already working on your free audit 🔍",
     buildHtml: (sendId) => buildFreeAuditThankYouHtml(subscriber, sendId)
   });
+}
+
+// ── Automated online-presence audit ─────────────────────────────────────────
+// Rule-based, not a real LLM call (no AI API key is configured for this
+// project) — it fetches whatever links the lead gave us and runs the same
+// checks a human would eyeball first, so there's a starting point on the
+// call instead of a blank page. Safe to swap the summary-building step for
+// a real model call later without touching the per-channel checks.
+const AUDIT_USER_AGENT = 'Mozilla/5.0 (compatible; EnigmaLabsAuditBot/1.0; +https://enigma-labs.com)';
+const AUDIT_TIMEOUT_MS = 8000;
+
+function normalizeAuditUrl(value, host) {
+  const trimmed = (value || '').trim();
+  if (!trimmed) return null;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  // A bare handle like "@studioname" or "studioname" — build a profile URL.
+  if (host && !trimmed.includes('.')) return `https://${host}/${trimmed.replace(/^@/, '')}`;
+  return `https://${trimmed.replace(/^@/, '')}`;
+}
+
+async function fetchAuditUrl(url) {
+  const startedAt = Date.now();
+  const response = await axios.get(url, {
+    timeout: AUDIT_TIMEOUT_MS,
+    maxRedirects: 5,
+    validateStatus: () => true,
+    headers: { 'User-Agent': AUDIT_USER_AGENT, Accept: 'text/html,*/*' },
+    responseType: 'text'
+  });
+  return {
+    status: response.status,
+    finalUrl: response.request?.res?.responseUrl || url,
+    responseTimeMs: Date.now() - startedAt,
+    html: typeof response.data === 'string' ? response.data : ''
+  };
+}
+
+async function auditWebsite(rawUrl) {
+  const url = normalizeAuditUrl(rawUrl);
+  if (!url) return null;
+
+  const findings = [];
+  try {
+    const { status, finalUrl, responseTimeMs, html } = await fetchAuditUrl(url);
+
+    if (status >= 400 || status === 0) {
+      findings.push(`Website returned an error (status ${status || 'unreachable'}) — double check the link still works.`);
+      return { url, reachable: false, status, findings };
+    }
+
+    const hasTitle = /<title[^>]*>\s*[^<\s][^<]*<\/title>/i.test(html);
+    const hasMetaDescription = /<meta[^>]+name=["']description["'][^>]+content=["'][^"']+["']/i.test(html);
+    const hasViewport = /<meta[^>]+name=["']viewport["']/i.test(html);
+    const isHttps = /^https:/i.test(finalUrl);
+    const pageSizeKb = Math.round(Buffer.byteLength(html || '', 'utf8') / 1024);
+
+    if (!hasTitle) findings.push('Missing a page title — hurts how the site shows up in search and browser tabs.');
+    if (!hasMetaDescription) findings.push('Missing a meta description — search engines will show a random snippet instead.');
+    if (!hasViewport) findings.push('No mobile viewport tag found — the site may not be optimized for phones.');
+    if (!isHttps) findings.push('Not served over HTTPS — browsers will flag it as "Not secure".');
+    if (pageSizeKb > 3000) findings.push(`Heavy page (~${pageSizeKb}KB) — could be slowing down load times.`);
+    if (responseTimeMs > 3000) findings.push(`Slow server response (${responseTimeMs}ms) — worth investigating hosting/performance.`);
+
+    if (findings.length === 0) {
+      findings.push('Website fundamentals look solid — title, meta description, mobile viewport, and HTTPS are all in place.');
+    }
+
+    return { url, reachable: true, status, responseTimeMs, pageSizeKb, isHttps, hasTitle, hasMetaDescription, hasViewport, findings };
+  } catch (error) {
+    findings.push('Could not reach the website — it may be down, or blocking automated checks.');
+    return { url, reachable: false, error: error.message, findings };
+  }
+}
+
+async function auditSocialProfile(label, rawValue, host) {
+  const url = normalizeAuditUrl(rawValue, host);
+  if (!url) return null;
+
+  const findings = [];
+  try {
+    const { status } = await fetchAuditUrl(url);
+    if (status === 404) {
+      findings.push(`${label} link looks broken (404) — double check the handle/URL.`);
+      return { url, reachable: false, status, findings };
+    }
+    if (status >= 400) {
+      // 401/403/999 etc. are typical of platforms blocking bots, not proof the
+      // profile is actually down — so this stays a note, not a hard failure.
+      findings.push(`${label} blocks automated checks (status ${status}) — take a manual look at content and posting activity.`);
+      return { url, reachable: true, status, blocked: true, findings };
+    }
+    findings.push(`${label} link is reachable — worth a manual look at bio, content quality, and posting consistency.`);
+    return { url, reachable: true, status, findings };
+  } catch (error) {
+    findings.push(`Could not verify the ${label} link automatically — take a manual look.`);
+    return { url, reachable: false, error: error.message, findings };
+  }
+}
+
+function scoreFromChecks(checks) {
+  const attempted = Object.values(checks).filter(Boolean);
+  if (attempted.length === 0) return 'Needs Work';
+
+  const website = checks.website;
+  if (website && !website.reachable) return 'Poor';
+
+  const issueCount = attempted.reduce((total, check) => {
+    const realIssues = (check.findings || []).filter((finding) => !/looks solid|is reachable —/i.test(finding));
+    return total + realIssues.length;
+  }, 0);
+
+  if (issueCount === 0) return 'Good';
+  if (issueCount <= 2) return 'Needs Work';
+  return 'Poor';
+}
+
+function buildAuditSummary(checks, score) {
+  const lines = [];
+  if (checks.website) lines.push(...checks.website.findings);
+  if (checks.instagram) lines.push(...checks.instagram.findings);
+  if (checks.facebook) lines.push(...checks.facebook.findings);
+  if (checks.googleBusiness) lines.push(...checks.googleBusiness.findings);
+
+  if (lines.length === 0) {
+    return "No links were provided to check yet — everything here will need a manual review on the call.";
+  }
+
+  const intro = {
+    Good: 'Overall online presence looks strong.',
+    'Needs Work': 'Overall online presence is solid but has a few gaps worth fixing.',
+    Poor: 'Overall online presence needs real attention before it starts converting well.'
+  }[score] || 'Automated review complete.';
+
+  return `${intro} ${lines.join(' ')}`;
+}
+
+// Runs every check the lead gave us a link for, then saves the result onto
+// the subscriber document. Never throws — a failed audit just gets flagged
+// so it can be manually retried from the admin panel instead of silently
+// leaving the signup stuck on "pending" forever.
+async function runOnlinePresenceAudit(subscriberId) {
+  try {
+    const subscriber = await NewsletterSubscriber.findById(subscriberId);
+    if (!subscriber) return;
+
+    const [website, instagram, facebook, googleBusiness] = await Promise.all([
+      auditWebsite(subscriber.website || subscriber.projectUrl),
+      auditSocialProfile('Instagram', subscriber.instagram, 'instagram.com'),
+      auditSocialProfile('Facebook', subscriber.facebook, 'facebook.com'),
+      auditSocialProfile('Google Business Profile', subscriber.googleBusinessUrl)
+    ]);
+
+    const checks = { website, instagram, facebook, googleBusiness };
+    const score = scoreFromChecks(checks);
+    const summary = buildAuditSummary(checks, score);
+    const findings = [website, instagram, facebook, googleBusiness]
+      .filter(Boolean)
+      .flatMap((check) => check.findings);
+
+    subscriber.auditStatus = 'complete';
+    subscriber.auditScore = score;
+    subscriber.auditSummary = summary;
+    subscriber.auditFindings = findings;
+    subscriber.auditChecks = checks;
+    subscriber.auditCompletedAt = new Date();
+    await subscriber.save();
+  } catch (error) {
+    console.error('Online presence audit failed', error);
+    await NewsletterSubscriber.findByIdAndUpdate(subscriberId, {
+      auditStatus: 'failed',
+      auditSummary: 'The automated audit could not complete — try re-running it.',
+      auditCompletedAt: new Date()
+    }).catch(() => {});
+  }
 }
 
 const SERVICE_INTEREST_LABELS = { web: 'Web Development', ads: 'Ads' };
@@ -1028,6 +1203,22 @@ const newsletterSubscriberSchema = new mongoose.Schema({
   // handling), with projectUrl holding whatever link they want reviewed.
   freeaudit: Boolean,
   projectUrl: String,
+  // Per-channel links collected on the /audit form — every field optional
+  // since a lead may only have a website, only socials, or both. Feeds the
+  // automated online-presence audit below.
+  website: String,
+  instagram: String,
+  facebook: String,
+  // Automated online-presence audit — runs in the background right after a
+  // free-audit signup (see runOnlinePresenceAudit) so there's already
+  // something to show on a call before any human review happens.
+  auditStatus: { type: String, enum: ['pending', 'complete', 'failed'] },
+  auditScore: { type: String, enum: ['Good', 'Needs Work', 'Poor'] },
+  auditSummary: String,
+  auditFindings: [String],
+  auditChecks: mongoose.Schema.Types.Mixed,
+  auditRequestedAt: Date,
+  auditCompletedAt: Date,
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -1419,7 +1610,7 @@ async function isLikelySpamSubmission(payload, req) {
   // Both optional link fields stuffed with URLs unrelated to their stated
   // purpose (a garbage domain instead of an actual Instagram/Facebook or
   // Google Business link) is the exact pattern seen in real spam floods.
-  const social = payload.socialUrl || '';
+  const social = payload.socialUrl || payload.instagram || payload.facebook || '';
   const google = payload.googleBusinessUrl || '';
   const socialLooksBogus = social && isUrlLike(social) && !SOCIAL_HOST_RE.test(social);
   const googleLooksBogus = google && isUrlLike(google) && !GOOGLE_HOST_RE.test(google);
@@ -1619,12 +1810,18 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       freemockups: Boolean(req.body.freemockups),
       freeaudit: Boolean(req.body.freeaudit),
       projectUrl: req.body.projectUrl || '',
+      website: req.body.website || '',
+      instagram: req.body.instagram || '',
+      facebook: req.body.facebook || '',
       message: req.body.message || '',
       // Honeypot + timing trap, sent by every newsletter/mockup form on the
       // site (see isLikelySpamSubmission below) — carried through here so
       // the check below actually sees them instead of always reading
-      // undefined.
-      honeypot: req.body.website || req.body.honeypot || '',
+      // undefined. Most forms reuse "website" as the trap field name, but
+      // /audit has a real website field now, so it sends the trap under its
+      // own "honeypot" key instead — prefer that whenever it's explicitly
+      // present so a real website URL never gets mistaken for a filled trap.
+      honeypot: (req.body.honeypot !== undefined ? req.body.honeypot : req.body.website) || '',
       formLoadedAt: req.body.formLoadedAt
     };
 
@@ -1666,9 +1863,9 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
     }
 
     // The free-audit form is a newsletter signup, unlike the mockup form —
-    // it always lands in the newsletter table under web & ads (so it's part
-    // of those campaign segments going forward), plus an inbound lead so it
-    // shows up in the CRM ready for a follow-up call.
+    // it always lands in the newsletter table under web, branding (visuals)
+    // & ads (so it's part of those campaign segments going forward), plus an
+    // inbound lead so it shows up in the CRM ready for a follow-up call.
     if (payload.freeaudit) {
       const existingAuditSubscriber = await NewsletterSubscriber.findOne({ email: payload.email });
       const isNewAuditRequest = !existingAuditSubscriber || !existingAuditSubscriber.freeaudit;
@@ -1680,9 +1877,16 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
         existingAuditSubscriber.businessName = payload.businessName || existingAuditSubscriber.businessName;
         existingAuditSubscriber.socialUrl = payload.socialUrl || existingAuditSubscriber.socialUrl;
         existingAuditSubscriber.projectUrl = payload.projectUrl || existingAuditSubscriber.projectUrl;
+        existingAuditSubscriber.website = payload.website || existingAuditSubscriber.website;
+        existingAuditSubscriber.instagram = payload.instagram || existingAuditSubscriber.instagram;
+        existingAuditSubscriber.facebook = payload.facebook || existingAuditSubscriber.facebook;
+        existingAuditSubscriber.googleBusinessUrl = payload.googleBusinessUrl || existingAuditSubscriber.googleBusinessUrl;
         existingAuditSubscriber.web = true;
+        existingAuditSubscriber.visuals = true;
         existingAuditSubscriber.ads = true;
         existingAuditSubscriber.freeaudit = true;
+        existingAuditSubscriber.auditStatus = 'pending';
+        existingAuditSubscriber.auditRequestedAt = new Date();
         await existingAuditSubscriber.save();
         auditSubscriber = existingAuditSubscriber;
       } else {
@@ -1693,11 +1897,25 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
           businessName: payload.businessName,
           socialUrl: payload.socialUrl,
           projectUrl: payload.projectUrl,
+          website: payload.website,
+          instagram: payload.instagram,
+          facebook: payload.facebook,
+          googleBusinessUrl: payload.googleBusinessUrl,
           web: true,
+          visuals: true,
           ads: true,
-          freeaudit: true
+          freeaudit: true,
+          auditStatus: 'pending',
+          auditRequestedAt: new Date()
         });
       }
+
+      // Fire-and-forget — the signup response shouldn't wait on fetching
+      // three or four external sites. The admin panel polls/reloads to see
+      // the result land as "complete" a few seconds later.
+      runOnlinePresenceAudit(auditSubscriber._id).catch((error) => {
+        console.error('Could not run online presence audit', error);
+      });
 
       if (isNewAuditRequest) {
         await sendFreeAuditSignupEmail({ ...auditSubscriber.toObject(), message: payload.message });
@@ -1707,7 +1925,8 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
           contactName: auditSubscriber.name,
           email: auditSubscriber.email,
           phone: auditSubscriber.phone,
-          instagram: auditSubscriber.socialUrl,
+          instagram: auditSubscriber.instagram || auditSubscriber.socialUrl,
+          googleBusinessUrl: auditSubscriber.googleBusinessUrl,
           submittedIp: getRequestIp(req),
           source: 'free_audit_form'
         });
@@ -1927,6 +2146,28 @@ app.delete('/api/newsletter/subscribers/:id', async (req, res) => {
   }
 });
 
+// Manual retry from the admin Audits table — for a signup whose audit
+// failed (site was down, request timed out, etc.) or just to refresh it.
+app.post('/api/newsletter/subscribers/:id/run-audit', async (req, res) => {
+  try {
+    const subscriber = await NewsletterSubscriber.findById(req.params.id);
+    if (!subscriber) {
+      return res.status(404).json({ ok: false, message: 'Subscriber not found.' });
+    }
+    subscriber.auditStatus = 'pending';
+    subscriber.auditRequestedAt = new Date();
+    await subscriber.save();
+
+    await runOnlinePresenceAudit(subscriber._id);
+
+    const updated = await NewsletterSubscriber.findById(req.params.id);
+    res.json({ ok: true, subscriber: updated });
+  } catch (error) {
+    console.error('Could not run online presence audit', error);
+    res.status(500).json({ ok: false, message: 'Could not run the audit.' });
+  }
+});
+
 // ── Newsletter email tracking ──
 
 app.get('/api/newsletter/sends/:id/track/open', async (req, res) => {
@@ -2005,6 +2246,65 @@ app.get('/api/newsletter/analytics', async (req, res) => {
   } catch (error) {
     console.error('Could not load newsletter analytics', error);
     res.status(500).json({ ok: false, message: 'Could not load analytics.' });
+  }
+});
+
+// Outreach analytics for the admin screen — splits every logged send into
+// "personal" (one-off Contact-panel sends and signup thank-yous, not part of
+// a blast) vs "campaigns" (a NewsletterCampaign blast), plus a per-campaign
+// breakdown, so the Newsletter Subscribers table has real send performance
+// underneath it instead of just per-category totals.
+function summarizeSends(sends) {
+  const sent = sends.length;
+  const opened = sends.filter((s) => s.opened).length;
+  const clicked = sends.filter((s) => s.clicked).length;
+  return { sent, opened, clicked, openRate: sent ? opened / sent : 0, clickRate: sent ? clicked / sent : 0 };
+}
+
+app.get('/api/newsletter/outreach-analytics', async (_req, res) => {
+  try {
+    const sends = await NewsletterSend.find().sort({ sentAt: -1 });
+
+    const signupSends = sends.filter((s) => s.category === 'signup');
+    const campaignSends = sends.filter((s) => s.campaignId);
+    const personalSends = sends.filter((s) => !s.campaignId && s.category !== 'signup');
+
+    const campaignIds = [...new Set(campaignSends.map((s) => String(s.campaignId)))];
+    const campaignDocs = campaignIds.length
+      ? await NewsletterCampaign.find({ _id: { $in: campaignIds } })
+      : [];
+    const campaignById = new Map(campaignDocs.map((c) => [String(c._id), c]));
+
+    const sendsByCampaign = new Map();
+    campaignSends.forEach((send) => {
+      const key = String(send.campaignId);
+      if (!sendsByCampaign.has(key)) sendsByCampaign.set(key, []);
+      sendsByCampaign.get(key).push(send);
+    });
+
+    const campaigns = [...sendsByCampaign.entries()]
+      .map(([id, campaignSendRows]) => {
+        const campaign = campaignById.get(id);
+        return {
+          id,
+          category: campaign?.category || campaignSendRows[0]?.category,
+          subject: campaign?.subject || campaignSendRows[0]?.subject,
+          sentAt: campaign?.createdAt || campaignSendRows[0]?.sentAt,
+          ...summarizeSends(campaignSendRows)
+        };
+      })
+      .sort((a, b) => new Date(b.sentAt) - new Date(a.sentAt));
+
+    res.json({
+      ok: true,
+      personal: summarizeSends(personalSends),
+      signup: summarizeSends(signupSends),
+      campaignsSummary: { totalCampaigns: campaigns.length, ...summarizeSends(campaignSends) },
+      campaigns: campaigns.slice(0, 20)
+    });
+  } catch (error) {
+    console.error('Could not load outreach analytics', error);
+    res.status(500).json({ ok: false, message: 'Could not load outreach analytics.' });
   }
 });
 

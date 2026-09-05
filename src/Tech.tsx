@@ -158,7 +158,7 @@ const newsletterChipStyle = (active: boolean) => ({
 
 const interestOptions: { key: string; label: string; active: boolean; toggle: () => void }[] = [
   { key: "web", label: "Web Development", active: web, toggle: () => setWeb(!web) },
-  { key: "visuals", label: "Visuals", active: visuals, toggle: () => setVisuals(!visuals) },
+  { key: "visuals", label: "Branding", active: visuals, toggle: () => setVisuals(!visuals) },
   { key: "ads", label: "Ads", active: ads, toggle: () => setAds(!ads) }
 ];
 

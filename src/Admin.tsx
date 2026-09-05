@@ -85,7 +85,9 @@ type WebsiteClient = {
   createdAt: string;
 };
 
-const SUBSCRIBER_PAGE_SIZE_OPTIONS = [25, 50, 100, 200];
+const SUBSCRIBER_PAGE_SIZE_OPTIONS = [5, 10, 25, 50, 100, 200];
+const AUDIT_PAGE_SIZE_OPTIONS = [5, 10, 25, 50, 100, 200];
+const LEADS_ON_NEWSLETTER_PAGE_DEFAULT_SIZE = 10;
 
 const INDUSTRY_OPTIONS = [
   'Restaurant / Food / Bar',
@@ -115,6 +117,21 @@ const emptyWebsiteClientForm = {
   hasExistingWebsite: true
 };
 
+type AuditChannelResult = {
+  url?: string;
+  reachable?: boolean;
+  status?: number;
+  blocked?: boolean;
+  findings?: string[];
+};
+
+type AuditChecks = {
+  website?: AuditChannelResult | null;
+  instagram?: AuditChannelResult | null;
+  facebook?: AuditChannelResult | null;
+  googleBusiness?: AuditChannelResult | null;
+};
+
 type Subscriber = {
   _id: string;
   email: string;
@@ -132,6 +149,16 @@ type Subscriber = {
   freemockups?: boolean;
   freeaudit?: boolean;
   projectUrl?: string;
+  website?: string;
+  instagram?: string;
+  facebook?: string;
+  auditStatus?: 'pending' | 'complete' | 'failed';
+  auditScore?: 'Good' | 'Needs Work' | 'Poor';
+  auditSummary?: string;
+  auditFindings?: string[];
+  auditChecks?: AuditChecks;
+  auditRequestedAt?: string;
+  auditCompletedAt?: string;
   createdAt: string;
 };
 
@@ -251,6 +278,15 @@ type NewsletterCampaign = {
   createdAt: string;
 };
 
+type SendStats = { sent: number; opened: number; clicked: number; openRate: number; clickRate: number };
+
+type OutreachAnalytics = {
+  personal: SendStats;
+  signup: SendStats;
+  campaignsSummary: SendStats & { totalCampaigns: number };
+  campaigns: (SendStats & { id: string; category?: string; subject?: string; sentAt?: string })[];
+};
+
 type FileAttachment = { filename: string; content: string };
 
 function readFileAsAttachment(file: File): Promise<FileAttachment> {
@@ -338,6 +374,10 @@ const Admin = () => {
   const [loadingWebsiteClients, setLoadingWebsiteClients] = useState(true);
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [loadingSubscribers, setLoadingSubscribers] = useState(true);
+  const [auditPage, setAuditPage] = useState(1);
+  const [auditPageSize, setAuditPageSize] = useState(AUDIT_PAGE_SIZE_OPTIONS[0]);
+  const [runningAuditId, setRunningAuditId] = useState<string | null>(null);
+  const [expandedAuditId, setExpandedAuditId] = useState<string | null>(null);
   const [password, setPassword] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
@@ -392,6 +432,11 @@ const Admin = () => {
   const [categoryStats, setCategoryStats] = useState<{ totalSent: number; totalOpened: number; totalClicked: number; openRate: number; clickRate: number } | null>(null);
   const [categorySends, setCategorySends] = useState<NewsletterSend[]>([]);
   const [loadingCategoryAnalytics, setLoadingCategoryAnalytics] = useState(false);
+
+  // Outreach analytics — personal (one-off Contact-panel) sends vs campaign
+  // blasts, shown underneath the Newsletter Subscribers table.
+  const [outreachAnalytics, setOutreachAnalytics] = useState<OutreachAnalytics | null>(null);
+  const [loadingOutreachAnalytics, setLoadingOutreachAnalytics] = useState(true);
 
   // Create Campaign modal
   const [showCreateCampaign, setShowCreateCampaign] = useState(false);
@@ -467,6 +512,35 @@ const Admin = () => {
       setNewsletterError('Could not load newsletter subscribers.');
     } finally {
       setLoadingSubscribers(false);
+    }
+  };
+
+  const fetchOutreachAnalytics = async () => {
+    setLoadingOutreachAnalytics(true);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/newsletter/outreach-analytics`);
+      if (response.data?.ok) {
+        setOutreachAnalytics(response.data);
+      }
+    } catch (fetchError) {
+      console.error(fetchError);
+    } finally {
+      setLoadingOutreachAnalytics(false);
+    }
+  };
+
+  const handleRunAudit = async (subscriberId: string) => {
+    setRunningAuditId(subscriberId);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/newsletter/subscribers/${subscriberId}/run-audit`);
+      if (response.data?.ok) {
+        setSubscribers((prev) => prev.map((s) => (s._id === subscriberId ? response.data.subscriber : s)));
+      }
+    } catch (runError) {
+      console.error(runError);
+      setNewsletterError('Could not run the audit.');
+    } finally {
+      setRunningAuditId(null);
     }
   };
 
@@ -765,6 +839,7 @@ const Admin = () => {
         setNewsletterMessage(`Campaign sent to ${response.data.sent} of ${response.data.total} subscribers.`);
         setShowCreateCampaign(false);
         if (showNewsletterAnalytics) loadCategoryAnalytics(analyticsCategory);
+        fetchOutreachAnalytics();
       } else {
         setNewsletterError(response.data?.message || 'Could not send campaign.');
       }
@@ -893,6 +968,7 @@ const Admin = () => {
       fetchAgreements();
       fetchWebsiteClients();
       fetchSubscribers();
+      fetchOutreachAnalytics();
     }
   }, [isAuthenticated]);
 
@@ -959,6 +1035,31 @@ const Admin = () => {
     () => filteredSubscribers.slice((subscriberPage - 1) * subscriberPageSize, subscriberPage * subscriberPageSize),
     [filteredSubscribers, subscriberPage, subscriberPageSize]
   );
+
+  const auditSignups = useMemo(
+    () =>
+      subscribers
+        .filter((s) => s.freeaudit)
+        .sort((a, b) => new Date(b.auditRequestedAt || b.createdAt).getTime() - new Date(a.auditRequestedAt || a.createdAt).getTime()),
+    [subscribers]
+  );
+
+  const totalAuditPages = Math.max(1, Math.ceil(auditSignups.length / auditPageSize));
+
+  useEffect(() => {
+    setAuditPage(1);
+  }, [auditPageSize]);
+
+  useEffect(() => {
+    if (auditPage > totalAuditPages) setAuditPage(totalAuditPages);
+  }, [auditPage, totalAuditPages]);
+
+  const paginatedAuditSignups = useMemo(
+    () => auditSignups.slice((auditPage - 1) * auditPageSize, auditPage * auditPageSize),
+    [auditSignups, auditPage, auditPageSize]
+  );
+
+  const AUDIT_SCORE_VARIANT: Record<string, string> = { Good: 'success', 'Needs Work': 'warning', Poor: 'danger' };
 
   const handleLogin = (event: React.FormEvent) => {
     event.preventDefault();
@@ -1754,6 +1855,150 @@ const Admin = () => {
         </div>
       ))}
 
+      <div style={{ marginTop: '2.5rem', marginBottom: '1rem' }}>
+        <h2 style={{ color: '#68FF00', margin: 0 }}>Audits</h2>
+        <p style={{ color: '#d4d4d4', marginTop: '0.4rem', marginBottom: 0 }}>
+          Free-audit signups and their automated online-presence review (website, Instagram, Facebook, Google Business).
+          Rule-based, not a human read yet — use "Re-run" if a link failed to load.
+        </p>
+      </div>
+
+      {!loadingSubscribers && auditSignups.length === 0 ? <Alert variant="secondary">No audit requests yet.</Alert> : null}
+
+      {auditSignups.length > 0 ? (
+        <>
+          <Row className="mb-2 align-items-center">
+            <Col style={{ color: '#aaa', fontSize: '0.85rem' }}>
+              Showing {(auditPage - 1) * auditPageSize + 1}–{Math.min(auditPage * auditPageSize, auditSignups.length)} of {auditSignups.length}
+            </Col>
+            <Col xs="auto">
+              <Form.Select
+                size="sm"
+                value={auditPageSize}
+                onChange={(event) => setAuditPageSize(Number(event.target.value))}
+                style={{ width: 'auto' }}
+              >
+                {AUDIT_PAGE_SIZE_OPTIONS.map((size) => (
+                  <option key={size} value={size}>{size} per page</option>
+                ))}
+              </Form.Select>
+            </Col>
+          </Row>
+
+          <Table striped bordered hover variant="dark" responsive>
+            <thead>
+              <tr>
+                <th>Lead</th>
+                <th>Channels</th>
+                <th>Score</th>
+                <th>Status</th>
+                <th>Summary</th>
+                <th>Requested</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedAuditSignups.map((subscriber) => {
+                const isRunning = runningAuditId === subscriber._id;
+                const isExpanded = expandedAuditId === subscriber._id;
+                const channelLinks: { label: string; value?: string }[] = [
+                  { label: 'Website', value: subscriber.website || subscriber.projectUrl },
+                  { label: 'IG', value: subscriber.instagram },
+                  { label: 'FB', value: subscriber.facebook },
+                  { label: 'GBP', value: subscriber.googleBusinessUrl }
+                ];
+                return (
+                  <Fragment key={subscriber._id}>
+                    <tr>
+                      <td>
+                        <strong>{subscriber.name || subscriber.businessName || subscriber.email}</strong>
+                        <br />
+                        <small style={{ color: '#aaa' }}>{subscriber.email}</small>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                          {channelLinks.map((channel) => {
+                            const badge = (
+                              <Badge key={channel.label} bg={channel.value ? 'secondary' : 'dark'} style={{ opacity: channel.value ? 1 : 0.4 }}>
+                                {channel.label}
+                              </Badge>
+                            );
+                            if (!channel.value) return badge;
+                            const href = /^https?:\/\//i.test(channel.value) ? channel.value : `https://${channel.value.replace(/^@/, '')}`;
+                            return (
+                              <a key={channel.label} href={href} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                                {badge}
+                              </a>
+                            );
+                          })}
+                        </div>
+                      </td>
+                      <td>
+                        {subscriber.auditScore ? (
+                          <Badge bg={AUDIT_SCORE_VARIANT[subscriber.auditScore] || 'secondary'}>{subscriber.auditScore}</Badge>
+                        ) : '—'}
+                      </td>
+                      <td>
+                        {subscriber.auditStatus === 'pending' ? <Badge bg="info">Pending...</Badge> : null}
+                        {subscriber.auditStatus === 'complete' ? <Badge bg="success">Complete</Badge> : null}
+                        {subscriber.auditStatus === 'failed' ? <Badge bg="danger">Failed</Badge> : null}
+                        {!subscriber.auditStatus ? '—' : null}
+                      </td>
+                      <td style={{ maxWidth: '360px' }}>
+                        <small>{subscriber.auditSummary ? `${subscriber.auditSummary.slice(0, 120)}${subscriber.auditSummary.length > 120 ? '...' : ''}` : '—'}</small>
+                      </td>
+                      <td><small>{new Date(subscriber.auditRequestedAt || subscriber.createdAt).toLocaleString()}</small></td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                          <Button size="sm" variant="outline-light" onClick={() => setExpandedAuditId(isExpanded ? null : subscriber._id)}>
+                            {isExpanded ? 'Hide' : 'Details'}
+                          </Button>
+                          <Button size="sm" variant="outline-info" disabled={isRunning} onClick={() => handleRunAudit(subscriber._id)}>
+                            {isRunning ? 'Running...' : 'Re-run'}
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                    {isExpanded ? (
+                      <tr>
+                        <td colSpan={7} style={{ background: '#0a0a0a' }}>
+                          <div style={{ padding: '1rem' }}>
+                            <p style={{ marginBottom: '0.75rem' }}>{subscriber.auditSummary || 'No summary yet.'}</p>
+                            {subscriber.auditFindings && subscriber.auditFindings.length > 0 ? (
+                              <ListGroup variant="flush">
+                                {subscriber.auditFindings.map((finding, index) => (
+                                  <ListGroup.Item key={index} style={{ background: 'transparent', color: '#d4d4d4', border: '1px solid #2b2b2b', fontSize: '0.85rem' }}>
+                                    {finding}
+                                  </ListGroup.Item>
+                                ))}
+                              </ListGroup>
+                            ) : null}
+                          </div>
+                        </td>
+                      </tr>
+                    ) : null}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </Table>
+
+          {totalAuditPages > 1 ? (
+            <Pagination className="justify-content-center mt-3">
+              <Pagination.First onClick={() => setAuditPage(1)} disabled={auditPage === 1} />
+              <Pagination.Prev onClick={() => setAuditPage((page) => Math.max(1, page - 1))} disabled={auditPage === 1} />
+              {Array.from({ length: totalAuditPages }, (_, i) => i + 1).map((page) => (
+                <Pagination.Item key={page} active={page === auditPage} onClick={() => setAuditPage(page)}>
+                  {page}
+                </Pagination.Item>
+              ))}
+              <Pagination.Next onClick={() => setAuditPage((page) => Math.min(totalAuditPages, page + 1))} disabled={auditPage === totalAuditPages} />
+              <Pagination.Last onClick={() => setAuditPage(totalAuditPages)} disabled={auditPage === totalAuditPages} />
+            </Pagination>
+          ) : null}
+        </>
+      ) : null}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginTop: '2.5rem', marginBottom: '1rem' }}>
         <h2 style={{ color: '#68FF00', margin: 0 }}>Newsletter Subscribers</h2>
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -2214,6 +2459,81 @@ const Admin = () => {
         </Pagination>
       ) : null}
 
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginTop: '2.5rem', marginBottom: '1rem' }}>
+        <h2 style={{ color: '#68FF00', margin: 0 }}>Outreach Analytics</h2>
+        <Button size="sm" variant="outline-info" onClick={fetchOutreachAnalytics}>Refresh</Button>
+      </div>
+
+      {loadingOutreachAnalytics ? <p>Loading outreach analytics...</p> : null}
+
+      {!loadingOutreachAnalytics && outreachAnalytics ? (
+        <>
+          <Row className="g-3 mb-3">
+            {[
+              { label: 'Personal Emails', stats: outreachAnalytics.personal, hint: 'One-off sends from the Contact panel' },
+              { label: 'Signup Thank-Yous', stats: outreachAnalytics.signup, hint: 'Automatic emails sent at signup' },
+              { label: 'Campaigns', stats: outreachAnalytics.campaignsSummary, hint: `${outreachAnalytics.campaignsSummary.totalCampaigns} campaign(s) sent` }
+            ].map((block) => (
+              <Col md={4} key={block.label}>
+                <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', height: '100%' }}>
+                  <Card.Body>
+                    <h5 style={{ fontSize: '0.95rem', color: '#aaa', marginBottom: '0.25rem' }}>{block.label}</h5>
+                    <small style={{ color: '#666' }}>{block.hint}</small>
+                    <div style={{ display: 'flex', gap: '1.25rem', marginTop: '0.75rem' }}>
+                      <div>
+                        <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{block.stats.sent}</div>
+                        <small style={{ color: '#888' }}>Sent</small>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#68FF00' }}>{(block.stats.openRate * 100).toFixed(0)}%</div>
+                        <small style={{ color: '#888' }}>Open rate</small>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{(block.stats.clickRate * 100).toFixed(0)}%</div>
+                        <small style={{ color: '#888' }}>Click rate</small>
+                      </div>
+                    </div>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+
+          {outreachAnalytics.campaigns.length > 0 ? (
+            <Table striped bordered hover variant="dark" responsive size="sm">
+              <thead>
+                <tr>
+                  <th>Subject</th>
+                  <th>Category</th>
+                  <th>Sent</th>
+                  <th>Opened</th>
+                  <th>Clicked</th>
+                  <th>Open Rate</th>
+                  <th>Click Rate</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {outreachAnalytics.campaigns.map((campaign) => (
+                  <tr key={campaign.id}>
+                    <td>{campaign.subject || '—'}</td>
+                    <td>{campaign.category ? NEWSLETTER_CATEGORY_LABELS[campaign.category as NewsletterCategory] || campaign.category : '—'}</td>
+                    <td>{campaign.sent}</td>
+                    <td>{campaign.opened}</td>
+                    <td>{campaign.clicked}</td>
+                    <td>{(campaign.openRate * 100).toFixed(0)}%</td>
+                    <td>{(campaign.clickRate * 100).toFixed(0)}%</td>
+                    <td><small>{campaign.sentAt ? new Date(campaign.sentAt).toLocaleDateString() : '—'}</small></td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          ) : (
+            <Alert variant="secondary">No campaigns sent yet.</Alert>
+          )}
+        </>
+      ) : null}
+
       <Modal show={Boolean(analyticsSubscriber)} onHide={() => setAnalyticsSubscriber(null)} size="lg" centered>
         <Modal.Header style={{ background: '#111', color: 'white', borderBottom: '1px solid #2b2b2b' }}>
           <Modal.Title>
@@ -2443,11 +2763,11 @@ const Admin = () => {
         </Modal.Footer>
       </Modal>
 
-      <h2 style={{ color: '#68FF00', marginTop: '2.5rem', marginBottom: '1rem' }}>Leads</h2>
+      <h2 style={{ color: '#68FF00', marginTop: '5rem', marginBottom: '1rem' }}>Leads</h2>
       <p style={{ color: '#d4d4d4', marginBottom: '1rem' }}>
         Inbound leads come from the free mockup signup form. Outbound leads come from the lead scraper or manual import.
       </p>
-      <LeadsTable />
+      <LeadsTable defaultPageSize={LEADS_ON_NEWSLETTER_PAGE_DEFAULT_SIZE} />
     </Container>
   );
 };

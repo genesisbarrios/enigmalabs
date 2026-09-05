@@ -339,7 +339,7 @@ const LeadScraper = () => {
         Inbound leads come from the free mockup signup form. Outbound leads come from the lead scraper below or manual import.
       </p>
 
-      <LeadsTable ref={leadsTableRef} />
+      <LeadsTable ref={leadsTableRef} defaultPageSize={25} />
 
       <ImportLeadsForm onImported={() => leadsTableRef.current?.reload()} />
 

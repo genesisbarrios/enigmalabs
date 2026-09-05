@@ -111,7 +111,7 @@ const newsletterChipStyle = (active: boolean) => ({
 });
 
 const interestOptions: { key: string; label: string; active: boolean; toggle: () => void }[] = [
-  { key: "visuals", label: "Visuals", active: visuals, toggle: () => setVisuals(!visuals) },
+  { key: "visuals", label: "Branding", active: visuals, toggle: () => setVisuals(!visuals) },
   { key: "web", label: "Web Development", active: web, toggle: () => setWeb(!web) },
   { key: "beats", label: "Beats & Mixing", active: beats, toggle: () => setBeats(!beats) },
   { key: "ads", label: "Ads", active: ads, toggle: () => setAds(!ads) },

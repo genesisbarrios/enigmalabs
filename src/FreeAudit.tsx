@@ -39,10 +39,10 @@ const workProjects = [
 
 const FreeAudit = () => {
   useEffect(() => {
-    document.title = "Enigma Labs | Free Website Audit";
+    document.title = "Enigma Labs | Free Audit";
     document.querySelector('meta[name="description"]')?.setAttribute(
       "content",
-      "Already have a website or a vibe-coded project? Get a free audit from Enigma Labs before we hop on a call."
+      "Get a free audit of your website, app, or online presence from Enigma Labs before we hop on a call."
     );
   }, []);
 
@@ -50,8 +50,10 @@ const FreeAudit = () => {
   const [auditEmail, setAuditEmail] = useState("");
   const [auditPhone, setAuditPhone] = useState("");
   const [auditBusinessName, setAuditBusinessName] = useState("");
-  const [auditProjectUrl, setAuditProjectUrl] = useState("");
-  const [auditSocialUrl, setAuditSocialUrl] = useState("");
+  const [auditWebsite, setAuditWebsite] = useState("");
+  const [auditInstagram, setAuditInstagram] = useState("");
+  const [auditFacebook, setAuditFacebook] = useState("");
+  const [auditGoogleBusinessUrl, setAuditGoogleBusinessUrl] = useState("");
   const [auditMessage, setAuditMessage] = useState("");
   const [auditResultMessage, setAuditResultMessage] = useState("");
   const [auditAlert, setAuditAlert] = useState("");
@@ -66,8 +68,8 @@ const FreeAudit = () => {
       setAuditAlert('Please set an e-mail address~');
       return;
     }
-    if (!auditProjectUrl) {
-      setAuditAlert('Please share a link to your website or project~');
+    if (!auditWebsite && !auditInstagram && !auditFacebook && !auditGoogleBusinessUrl) {
+      setAuditAlert('Please share a link to your website, app, or social profile~');
       return;
     }
 
@@ -76,11 +78,17 @@ const FreeAudit = () => {
       name: auditName,
       phone: auditPhone,
       businessName: auditBusinessName,
-      projectUrl: auditProjectUrl,
-      socialUrl: auditSocialUrl,
+      projectUrl: auditWebsite,
+      website: auditWebsite,
+      instagram: auditInstagram,
+      facebook: auditFacebook,
+      googleBusinessUrl: auditGoogleBusinessUrl,
       message: auditMessage,
       freeaudit: true,
-      website: auditHoneypot,
+      // The honeypot field is a hidden input also literally named "website"
+      // (see below) — sent as its own key so it doesn't collide with the
+      // real website URL above.
+      honeypot: auditHoneypot,
       formLoadedAt
     };
 
@@ -176,10 +184,11 @@ const FreeAudit = () => {
   };
 
   const pitchPoints = [
-    "A clear, honest look at what's working and what's costing you conversions",
-    "Design, copy, SEO, and performance flagged in plain English — no jargon",
-    "Ready before we ever get on a call, so we spend the time on solutions",
-    "No obligation — whether it's a live site or a vibe-coded prototype"
+    "A clear, honest look at what's working and what's costing you conversions or attention",
+    "Website/app: design, copy, SEO, and performance flagged in plain English — no jargon",
+    "Online presence: branding, content, and social consistency across Instagram and Facebook",
+    "Google Business Profile: how you show up in local search and maps results",
+    "Ready before we ever get on a call, so we spend the time on solutions"
   ];
 
   return (
@@ -187,13 +196,17 @@ const FreeAudit = () => {
 
       <Row style={{ ...rowStyle, marginTop: "3%", alignItems: "center" }}>
         <Col xs={12} md={6} className="d-none d-md-block">
-          <h2 className="subsection-title" style={{ color: "#68FF00" }}>
-            Already have a website or project? Let's see what it needs.
+          <h2 className="subsection-title" style={{ color: "#68FF00", marginBottom: "0.15rem" }}>
+            Website & App Audit
+          </h2>
+          <h2 className="subsection-title" style={{ color: "#d4d4d4", fontSize: "1.4rem", marginTop: 0, marginBottom: "1.1rem" }}>
+            or an Online Presence Audit
           </h2>
           <p style={{ maxWidth: "560px", lineHeight: 1.7, color: "#d4d4d4" }}>
-            Send over your website or whatever you've been building — even a
-            vibe-coded project from Lovable, Bolt, or v0 — and I'll put
-            together a free, no-obligation audit before we ever get on a call.
+            Have a live website, an app, or a vibe-coded project from Lovable,
+            Bolt, or v0? We'll audit that. Just running on Instagram,
+            Facebook, and Google Business? We'll audit that instead — same
+            free, no-obligation process, ready before we ever get on a call.
           </p>
           <ul style={{ lineHeight: 1.8, color: "#d4d4d4" }}>
             {pitchPoints.map((point) => (
@@ -206,7 +219,7 @@ const FreeAudit = () => {
             <form style={{ textAlign: "center", width: "100%", maxWidth: "560px", margin: "0 auto" }}>
               <h3 style={{ color: "#68FF00", marginBottom: "0.25rem" }}>Get a Free Audit 🔍</h3>
               <p style={{ color: "#aaa", fontSize: "0.9rem", marginBottom: "1.5rem" }}>
-                We'll review your site or project and have it ready before your call.
+                We'll review your website, app, or online presence and have it ready before your call.
               </p>
               {/* Honeypot — hidden from real users, tempting for bots that auto-fill every field */}
               <input
@@ -230,18 +243,6 @@ const FreeAudit = () => {
                   style={auditGridInputStyle}
                   onChange={(e) => {
                     setAuditEmail(e.target.value);
-                  }}
-                ></input>
-                <input
-                  type="text"
-                  name="project-url"
-                  placeholder="Website or project URL"
-                  value={auditProjectUrl}
-                  required
-                  className="mockup-input"
-                  style={auditGridInputStyle}
-                  onChange={(e) => {
-                    setAuditProjectUrl(e.target.value);
                   }}
                 ></input>
                 <input
@@ -272,20 +273,53 @@ const FreeAudit = () => {
                   placeholder="Business name (optional)"
                   value={auditBusinessName}
                   className="mockup-input"
-                  style={auditGridInputStyle}
+                  style={{ ...auditGridInputStyle, gridColumn: "1 / -1" }}
                   onChange={(e) => {
                     setAuditBusinessName(e.target.value);
                   }}
                 ></input>
                 <input
                   type="text"
-                  name="social-url"
-                  placeholder="Instagram/Facebook handle (optional)"
-                  value={auditSocialUrl}
+                  name="website-url"
+                  placeholder="Website or app URL (if you have one)"
+                  value={auditWebsite}
                   className="mockup-input"
                   style={auditGridInputStyle}
                   onChange={(e) => {
-                    setAuditSocialUrl(e.target.value);
+                    setAuditWebsite(e.target.value);
+                  }}
+                ></input>
+                <input
+                  type="text"
+                  name="google-business-url"
+                  placeholder="Google Business URL (if you have one)"
+                  value={auditGoogleBusinessUrl}
+                  className="mockup-input"
+                  style={auditGridInputStyle}
+                  onChange={(e) => {
+                    setAuditGoogleBusinessUrl(e.target.value);
+                  }}
+                ></input>
+                <input
+                  type="text"
+                  name="instagram"
+                  placeholder="Instagram handle or link"
+                  value={auditInstagram}
+                  className="mockup-input"
+                  style={auditGridInputStyle}
+                  onChange={(e) => {
+                    setAuditInstagram(e.target.value);
+                  }}
+                ></input>
+                <input
+                  type="text"
+                  name="facebook"
+                  placeholder="Facebook handle or link"
+                  value={auditFacebook}
+                  className="mockup-input"
+                  style={auditGridInputStyle}
+                  onChange={(e) => {
+                    setAuditFacebook(e.target.value);
                   }}
                 ></input>
               </div>

@@ -112,7 +112,7 @@ const Music = () => {
     { key: "beats", label: "Beats", active: beats, toggle: () => setBeats(!beats) },
     { key: "mixing", label: "Mixing", active: mixing, toggle: () => setMixing(!mixing) },
     { key: "loopsTemplates", label: "Loops & Templates", active: loopsTemplates, toggle: () => setLoopsTemplates(!loopsTemplates) },
-    { key: "visuals", label: "Visuals", active: visuals, toggle: () => setVisuals(!visuals) },
+    { key: "visuals", label: "Branding", active: visuals, toggle: () => setVisuals(!visuals) },
     { key: "web", label: "Web Development", active: web, toggle: () => setWeb(!web) },
     { key: "ads", label: "Ads", active: ads, toggle: () => setAds(!ads) }
   ];

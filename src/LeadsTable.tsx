@@ -159,7 +159,8 @@ type StatusFilter = 'all' | 'not_contacted' | 'cold_email' | 'onboarding';
 type EmailFilter = 'all' | 'has_email' | 'no_email';
 type SortOption = 'newest' | 'oldest' | 'name';
 
-const PAGE_SIZE_OPTIONS = [25, 50, 100, 200];
+const PAGE_SIZE_OPTIONS = [5, 10, 25, 50, 100, 200];
+const DEFAULT_PAGE_SIZE = 25;
 
 const isNotContacted = (lead: Lead) =>
   !lead.coldEmailSent && !lead.outdatedMockupSent && !lead.dmSent && !lead.called && !lead.onboardingSent;
@@ -196,8 +197,9 @@ const InstagramIcon = () => (
 );
 
 export type LeadsTableHandle = { reload: () => void };
+type LeadsTableProps = { defaultPageSize?: number };
 
-const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
+const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageSize }, ref) => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState('');
@@ -221,7 +223,7 @@ const LeadsTable = forwardRef<LeadsTableHandle>((_props, ref) => {
   const [emailFilter, setEmailFilter] = useState<EmailFilter>('all');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [sortOption, setSortOption] = useState<SortOption>('newest');
-  const [pageSize, setPageSize] = useState(PAGE_SIZE_OPTIONS[0]);
+  const [pageSize, setPageSize] = useState(defaultPageSize ?? DEFAULT_PAGE_SIZE);
   const [currentPage, setCurrentPage] = useState(1);
 
   const [industryOptions, setIndustryOptions] = useState<string[]>(DEFAULT_INDUSTRY_OPTIONS);
