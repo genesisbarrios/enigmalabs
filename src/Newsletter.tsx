@@ -134,7 +134,7 @@ const Newsletter = () => {
           </h2>
           <p style={{ maxWidth: "560px", lineHeight: 1.7, color: "#d4d4d4" }}>
             Sign up for updates, tips, and offers from Enigma Labs — pick
-            whichever you're into: music, visuals, web development, or ads.
+            whichever you're into: music, visuals, web development, or marketing(ads).
             No spam, unsubscribe anytime.
           </p>
         </Col>
