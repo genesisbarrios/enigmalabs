@@ -130,6 +130,8 @@ type Subscriber = {
   ads: boolean;
   loopsTemplates: boolean;
   freemockups?: boolean;
+  freeaudit?: boolean;
+  projectUrl?: string;
   createdAt: string;
 };
 

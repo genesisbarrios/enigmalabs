@@ -415,6 +415,53 @@ async function sendMockupSignupEmail(subscriber) {
   );
 }
 
+async function sendFreeAuditSignupEmail(subscriber) {
+  await sendAdminNotification(
+    `New free audit signup: ${subscriber.name || subscriber.email}`,
+    `New free audit request:\n\nName: ${subscriber.name || '—'}\nEmail: ${subscriber.email}\nPhone: ${subscriber.phone || '—'}\nBusiness Name: ${subscriber.businessName || '—'}\nProject/Website URL: ${subscriber.projectUrl || '—'}\nInstagram/Facebook: ${subscriber.socialUrl || '—'}\nMessage: ${subscriber.message || '—'}`
+  );
+}
+
+// Confirms the audit is already underway and points straight to the booking
+// link — this is a warm inbound lead, not a cold pitch, so the copy skips
+// any "here's why you should work with us" framing.
+function buildFreeAuditThankYouHtml(subscriber, sendId) {
+  const firstName = (subscriber.name || '').trim().split(' ')[0] || 'there';
+  const trackedCalendar = CALENDAR_LINK ? newsletterTrackedUrl(sendId, CALENDAR_LINK) : null;
+
+  return `
+    <div style="font-family: Arial, Helvetica, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px; color: #111;">
+      <h2 style="margin: 0 0 16px;">Thanks for signing up, ${firstName}!</h2>
+      <p style="line-height: 1.6;">
+        I'm already putting together your free audit${subscriber.projectUrl ? ` for <strong>${subscriber.projectUrl}</strong>` : ''} — it'll be ready to walk through by the time we get on a call.
+      </p>
+      ${trackedCalendar ? `
+      <p style="text-align: center; margin: 32px 0;">
+        <a href="${trackedCalendar}" style="background:#68FF00; color:#111; text-decoration:none; font-weight:bold; padding:12px 24px; border-radius:6px; display:inline-block;">
+          Schedule a call
+        </a>
+      </p>` : `
+      <p style="line-height: 1.6;">Reply to this email with a good time for a quick call and we'll get it on the calendar.</p>`}
+      <p style="line-height: 1.6;">Talk soon,<br/>Gen Barrios<br/><a href="${SITE_URL}" style="color:#111;">Enigma Labs</a></p>
+      <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #eee;">
+        <a href="${SITE_URL}"><img src="${SITE_URL}/logo.png" alt="Enigma Labs" width="150" style="display:inline-block;" /></a>
+      </div>
+      ${instagramFollowCta(ENIGMA_INSTAGRAM_URL, '@_enigmalabs')}
+      ${newsletterTrackingPixelTag(sendId)}
+    </div>
+  `;
+}
+
+async function sendFreeAuditThankYouEmail(subscriber) {
+  await sendAndLogNewsletterEmail({
+    subscriber,
+    category: 'web',
+    templateKey: 'free-audit-thank-you',
+    subject: "We're already working on your free audit 🔍",
+    buildHtml: (sendId) => buildFreeAuditThankYouHtml(subscriber, sendId)
+  });
+}
+
 const SERVICE_INTEREST_LABELS = { web: 'Web Development', ads: 'Ads' };
 
 async function sendServiceInterestEmails(subscriber, category) {
@@ -976,6 +1023,11 @@ const newsletterSubscriberSchema = new mongoose.Schema({
   web: Boolean,
   ads: Boolean,
   freemockups: Boolean,
+  // Free-audit signups ("I already have a site/vibe-coded project, review
+  // it") — always categorized under web & ads (see the /api/newsletter/subscribe
+  // handling), with projectUrl holding whatever link they want reviewed.
+  freeaudit: Boolean,
+  projectUrl: String,
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -1565,6 +1617,9 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       web: Boolean(req.body.web),
       ads: Boolean(req.body.ads),
       freemockups: Boolean(req.body.freemockups),
+      freeaudit: Boolean(req.body.freeaudit),
+      projectUrl: req.body.projectUrl || '',
+      message: req.body.message || '',
       // Honeypot + timing trap, sent by every newsletter/mockup form on the
       // site (see isLikelySpamSubmission below) — carried through here so
       // the check below actually sees them instead of always reading
@@ -1610,6 +1665,56 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       return res.status(201).json({ ok: true, message: 'Mockup request received.' });
     }
 
+    // The free-audit form is a newsletter signup, unlike the mockup form —
+    // it always lands in the newsletter table under web & ads (so it's part
+    // of those campaign segments going forward), plus an inbound lead so it
+    // shows up in the CRM ready for a follow-up call.
+    if (payload.freeaudit) {
+      const existingAuditSubscriber = await NewsletterSubscriber.findOne({ email: payload.email });
+      const isNewAuditRequest = !existingAuditSubscriber || !existingAuditSubscriber.freeaudit;
+
+      let auditSubscriber;
+      if (existingAuditSubscriber) {
+        existingAuditSubscriber.name = payload.name || existingAuditSubscriber.name;
+        existingAuditSubscriber.phone = payload.phone || existingAuditSubscriber.phone;
+        existingAuditSubscriber.businessName = payload.businessName || existingAuditSubscriber.businessName;
+        existingAuditSubscriber.socialUrl = payload.socialUrl || existingAuditSubscriber.socialUrl;
+        existingAuditSubscriber.projectUrl = payload.projectUrl || existingAuditSubscriber.projectUrl;
+        existingAuditSubscriber.web = true;
+        existingAuditSubscriber.ads = true;
+        existingAuditSubscriber.freeaudit = true;
+        await existingAuditSubscriber.save();
+        auditSubscriber = existingAuditSubscriber;
+      } else {
+        auditSubscriber = await NewsletterSubscriber.create({
+          email: payload.email,
+          name: payload.name,
+          phone: payload.phone,
+          businessName: payload.businessName,
+          socialUrl: payload.socialUrl,
+          projectUrl: payload.projectUrl,
+          web: true,
+          ads: true,
+          freeaudit: true
+        });
+      }
+
+      if (isNewAuditRequest) {
+        await sendFreeAuditSignupEmail({ ...auditSubscriber.toObject(), message: payload.message });
+        await sendFreeAuditThankYouEmail(auditSubscriber);
+        await upsertInboundLead({
+          businessName: auditSubscriber.businessName,
+          contactName: auditSubscriber.name,
+          email: auditSubscriber.email,
+          phone: auditSubscriber.phone,
+          instagram: auditSubscriber.socialUrl,
+          submittedIp: getRequestIp(req),
+          source: 'free_audit_form'
+        });
+      }
+
+      return res.status(201).json({ ok: true, subscriber: auditSubscriber, message: 'Audit request received.' });
+    }
 
     const existing = await NewsletterSubscriber.findOne({ email: payload.email });
     if (existing) {
