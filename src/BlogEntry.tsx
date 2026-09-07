@@ -1,115 +1,152 @@
-
-import { useEffect, useMemo, useState, Fragment, useLayoutEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import {db, app} from "./firebase-config";
-import { getDocs, collection, doc, getFirestore, query, limit, where } from "firebase/firestore";
-import { useCollection } from 'react-firebase-hooks/firestore';
-import Container from 'react-bootstrap/Container';
-import staticPosts from "./blogPosts";
-import {
-  BrowserRouter as Router,
-  Link,
-  Route,
-  Routes,
-  useParams,
-} from "react-router-dom";
-
+import { useEffect, useState, useLayoutEffect } from "react";
+import { Link, useParams } from "react-router-dom";
+import Container from "react-bootstrap/Container";
+import { db } from "./firebase-config";
+import { getDocs, collection } from "firebase/firestore";
+import staticPosts, { slugify, stripHtmlExcerpt, BlogPost } from "./blogPosts";
 
 import "./blogEntry.css";
 
-const BlogEntry = (props) => {
+const SITE_URL = "https://enigma-labs.com";
 
-  const { Title } = useParams();
-  const staticMatch = staticPosts.find((p) => p.Title === Title);
-  const [value, setValue] = useState<any>(staticMatch || {});
+function setMeta(selector: string, attr: string, value: string) {
+  document.querySelector(selector)?.setAttribute(attr, value);
+}
+
+const BlogEntry = () => {
+  const { Title: slug } = useParams();
+  const staticMatch = staticPosts.find((p) => slugify(p.Title) === slug);
+  const [post, setPost] = useState<(BlogPost & Record<string, any>) | undefined>(staticMatch);
+  const [notFound, setNotFound] = useState(false);
 
   useLayoutEffect(() => {
-    // Static posts (see blogPosts.ts) don't need a Firestore round-trip.
-    if (staticMatch) return;
-
-    const ref = collection(db, "blogs");
-    const q = query(ref, limit(1), where("Title", "==", Title));
-
-    const getBlogs = async () => {
-      const data = await getDocs(ref);
-      setValue( data.docs.map( (doc) => ({ ...doc.data()}) )[0] );
+    if (staticMatch) {
+      setPost(staticMatch);
+      setNotFound(false);
+      return;
     }
 
-    getBlogs();
-  }, []);
+    // Firestore posts have no stored slug — fetch everything and match by a
+    // slugified Title client-side (the collection is small; this mirrors
+    // what the old query-by-raw-Title code did, since it also fetched every
+    // doc rather than actually applying its own where() filter).
+    const ref = collection(db, "blogs");
+    getDocs(ref).then((data) => {
+      const match = data.docs
+        .map((doc) => doc.data())
+        .find((p) => slugify(p.Title) === slug) as (BlogPost & Record<string, any>) | undefined;
+      setPost(match);
+      setNotFound(!match);
+    });
+  }, [slug]);
 
+  useEffect(() => {
+    if (!post) return;
 
-  const hrStyle = {
-    backgroundColor: 'white',
-    marginBottom: "20px"
-  };
-  const topmargin = {
-    marginTop: '20px'
-  };
-  
-  const blogCard = {
-    width: "auto",
-    height: "auto",
-    backgroundColor: "rgb(250, 250, 250)",
-    color:"black",
-    boxShadow: "rgba(0, 0, 0, 0.24) 0px 3px 8px",
-    margin: "20px",
-    padding: "20px",
-    borderRadius: "15px"
-  };
-  
-  const blogHeader = {
-    display: "flex",
-    justifyContent: "center",
-    width: "100%"
-  };
-  
-  const blogtitle = {
-    flex: "50%"
-  };
-  
-  const blogbody = {
-    height: "auto",
-    width: "100%"
-  };
+    const title = `${post.Title} | Enigma Labs Blog`;
+    const description = post.Excerpt || stripHtmlExcerpt(post.Body || "");
+    const url = `${SITE_URL}/Blog/${slugify(post.Title)}`;
+    const image = post.Image?.startsWith("http") ? post.Image : `${SITE_URL}${post.Image}`;
 
-  const imgDiv = {
-    height: "20%",
-    maxHeight: "200px",
-    width: "100%",
-    overflow: "hidden"
-  };
+    document.title = title;
+    setMeta('meta[name="description"]', "content", description);
+    setMeta('link[rel="canonical"]', "href", url);
+    setMeta('meta[property="og:title"]', "content", title);
+    setMeta('meta[property="og:description"]', "content", description);
+    setMeta('meta[property="og:url"]', "content", url);
+    setMeta('meta[property="og:image"]', "content", image);
+    setMeta('meta[property="og:type"]', "content", "article");
+    setMeta('meta[name="twitter:title"]', "content", title);
+    setMeta('meta[name="twitter:description"]', "content", description);
+    setMeta('meta[name="twitter:image"]', "content", image);
 
-  const dateAuthorFooter = {
-    marginTop: "50px"
-  };
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.text = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      headline: post.Title,
+      description,
+      image,
+      author: { "@type": "Person", name: post.Author },
+      datePublished: post.datee,
+      publisher: {
+        "@type": "Organization",
+        name: "Enigma Labs",
+        logo: { "@type": "ImageObject", url: `${SITE_URL}/LOGO_100x400.png` },
+      },
+      mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    });
+    document.head.appendChild(script);
+
+    return () => {
+      document.head.removeChild(script);
+      // Restore the site-wide default so a back-navigation to another page
+      // does not keep this post's og:type="article" etc.
+      setMeta('meta[property="og:type"]', "content", "website");
+    };
+  }, [post]);
+
+  if (notFound) {
+    return (
+      <Container className="aboutContainer text-center" style={{ marginTop: "10%" }}>
+        <h1 className="subpage-title">Post not found</h1>
+        <p style={{ color: "#aaa" }}>That post does not exist, or the link is broken.</p>
+        <Link to="/Blog" className="socialLinks">← Back to Blog</Link>
+      </Container>
+    );
+  }
+
+  if (!post) {
+    return <Container style={{ marginTop: "10%" }} />;
+  }
 
   return (
-    <Container style={{marginTop:"10%"}}>
-      <div>
-        {value && (
-          <div>
-                <div style={blogCard}>
-                <div style={blogHeader}>
-                  <div style={blogtitle}>
-                    <h2> {value.Title} </h2>
-                  </div>
-                </div>
-                <div style={imgDiv}><img src={value.Image} id="coverImage"/></div>
-                <section style={blogbody} dangerouslySetInnerHTML={{ __html: value.Body}}
-                ></section>
-                <div style={dateAuthorFooter}>
-                  <p style={{marginBottom: "0"}}>@{value.Author}</p>
-                  <p style={{marginBottom: "0"}}>{value.datee}</p>
-                </div>
-              </div>
+    <Container className="aboutContainer" style={{ marginTop: "6%" }}>
+      <div style={{ maxWidth: "760px", margin: "0 auto 2rem" }}>
+        <Link to="/Blog" className="socialLinks" style={{ display: "inline-block", marginBottom: "1.5rem" }}>
+          ← Back to Blog
+        </Link>
+      </div>
+
+      <article
+        style={{
+          maxWidth: "760px",
+          margin: "0 auto",
+          backgroundColor: "rgb(250, 250, 250)",
+          color: "black",
+          boxShadow: "rgba(0, 0, 0, 0.24) 0px 3px 8px",
+          padding: "2rem",
+          borderRadius: "15px",
+        }}
+      >
+        {post.Category && (
+          <span
+            style={{
+              color: "#45ab01",
+              fontSize: "0.8rem",
+              fontWeight: 700,
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+            }}
+          >
+            {post.Category}
+          </span>
+        )}
+        <h1 style={{ marginTop: "0.5rem" }}>{post.Title}</h1>
+        {post.Image && (
+          <div style={{ width: "100%", maxHeight: "360px", overflow: "hidden", borderRadius: "10px", margin: "1rem 0" }}>
+            <img src={post.Image} alt={post.Title} id="coverImage" style={{ width: "100%", objectFit: "cover" }} />
           </div>
         )}
-      </div>
+        <section dangerouslySetInnerHTML={{ __html: post.Body }}></section>
+        <div style={{ marginTop: "50px", borderTop: "1px solid #ddd", paddingTop: "1rem" }}>
+          <p style={{ marginBottom: 0 }}>@{post.Author}</p>
+          <p style={{ marginBottom: 0, color: "#777" }}>{post.datee}</p>
+        </div>
+      </article>
     </Container>
   );
 };
-
-
 
 export default BlogEntry;

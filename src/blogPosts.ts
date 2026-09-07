@@ -14,6 +14,23 @@ export interface BlogPost {
   Image: string;
   datee: string;
   Body: string;
+  // Optional — Firestore-authored posts predate these fields, so both the
+  // listing cards and per-post SEO tags fall back to stripping/truncating
+  // Body when they are missing (see stripHtmlExcerpt in Blog.tsx/BlogEntry.tsx).
+  Excerpt?: string;
+  Category?: string;
+}
+
+// Clean, readable /Blog/:slug URLs instead of the raw (often long,
+// always space-filled) Title — derived consistently from Title everywhere
+// a link is built or matched (Blog.tsx, BlogEntry.tsx), for both these
+// static posts and whatever is in Firestore, so no stored slug field is
+// needed and no existing link scheme has to be migrated.
+export function slugify(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 function ctaBlock(question: string, href: string, label: string) {
@@ -36,6 +53,19 @@ const PRESENCE_AUDIT_CTA = ctaBlock(
   "/audit",
   "Get My Free Online Presence Audit"
 );
+
+// Fallback for posts with no explicit Excerpt (the one real Firestore post
+// predates that field) — strips tags/whitespace from Body and truncates on
+// a word boundary, used for both the preview cards and the meta-description
+// SEO tag on the entry page.
+export function stripHtmlExcerpt(html: string, maxLen = 160): string {
+  const text = html
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (text.length <= maxLen) return text;
+  return text.slice(0, text.lastIndexOf(" ", maxLen)) + "…";
+}
 
 function point(n: number, title: string, body: string) {
   return `<h3 style="margin-top:1.75rem;margin-bottom:0.25rem;">${n}. ${title}</h3><p class="pBlogBody">${body}</p>`;
@@ -159,6 +189,8 @@ const staticPosts: BlogPost[] = [
     Image: "/blog-vibe-coded-signs.png",
     datee: new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" }),
     Body: vibeCodedSignsBody,
+    Category: "Web Dev",
+    Excerpt: "“Vibe coded” isn't an insult, until a site ships straight from a first draft with nobody reviewing it. Here are 20 tells we see constantly.",
   },
   {
     Title: "4 Reasons Your Vibe Coded Site Could Get Hacked",
@@ -166,6 +198,8 @@ const staticPosts: BlogPost[] = [
     Image: "/blog-vibe-coded-hacked.png",
     datee: new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" }),
     Body: vibeCodedHackedBody,
+    Category: "Security",
+    Excerpt: "Shipping fast is a feature. Shipping fast without anyone checking the basics is how a side project ends up in a data breach headline.",
   },
   {
     Title: "Why Small Businesses Need a Website",
@@ -173,6 +207,8 @@ const staticPosts: BlogPost[] = [
     Image: "/blog-need-a-website.png",
     datee: new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" }),
     Body: needAWebsiteBody,
+    Category: "Website Basics",
+    Excerpt: "Around 1 in 5 small businesses still get by on a social profile instead of a website. Here is what a real website gives you that a social page cannot.",
   },
   {
     Title: "Still Running Your Business on Instagram in 2026?",
@@ -180,6 +216,8 @@ const staticPosts: BlogPost[] = [
     Image: "/blog-instagram-mistake.png",
     datee: new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" }),
     Body: instagramMistakeBody,
+    Category: "Social Media",
+    Excerpt: "If your entire online presence is an Instagram profile, you are one policy change or algorithm update away from losing it all.",
   },
   {
     Title: "Biggest Mistakes Small Business Owners Make on Social Media",
@@ -187,6 +225,8 @@ const staticPosts: BlogPost[] = [
     Image: "/blog-social-media-mistakes.png",
     datee: new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" }),
     Body: socialMediaMistakesBody,
+    Category: "Social Media",
+    Excerpt: "Being on social media is not the same as using it well. These are the mistakes we see most often from accounts that are active but not growing.",
   },
   {
     Title: "How to Optimize Your Social Media Profile",
@@ -194,6 +234,8 @@ const staticPosts: BlogPost[] = [
     Image: "/blog-optimize-social-media.png",
     datee: new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" }),
     Body: optimizeSocialMediaBody,
+    Category: "Social Media",
+    Excerpt: "An optimized profile does the selling before you ever say a word. Here is everything it needs, and why a website still matters too.",
   },
   {
     Title: "How to Optimize Your Google Business Profile",
@@ -201,6 +243,8 @@ const staticPosts: BlogPost[] = [
     Image: "/blog-google-business-profile.png",
     datee: new Date().toLocaleDateString("en-US", { month: "2-digit", day: "2-digit", year: "numeric" }),
     Body: googleBusinessProfileBody,
+    Category: "Local SEO",
+    Excerpt: "Your Google Business Profile is often the very first thing a potential customer sees about you. Here is how to make it work harder.",
   },
 ];
 

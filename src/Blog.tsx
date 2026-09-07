@@ -1,110 +1,151 @@
+import { useEffect, useState, useLayoutEffect } from "react";
+import Container from "react-bootstrap/Container";
+import Row from "react-bootstrap/Row";
+import Col from "react-bootstrap/Col";
+import { Link } from "react-router-dom";
+import { db } from "./firebase-config";
+import { getDocs, collection } from "firebase/firestore";
+import staticPosts, { slugify, stripHtmlExcerpt, BlogPost } from "./blogPosts";
 
-import { useEffect, useMemo, useState, useLayoutEffect } from "react";
-import Button from 'react-bootstrap/Button';
-import { useNavigate } from "react-router-dom";
-import {db, app} from "./firebase-config";
-import { getDocs, collection, deleteDoc, doc, getFirestore } from "firebase/firestore";
-import { useCollection } from 'react-firebase-hooks/firestore';
-import Container from 'react-bootstrap/Container';
-import staticPosts from "./blogPosts";
-import {
-  BrowserRouter as Router,
-  Route,
-  Routes,
-  Link,
-} from "react-router-dom";
+const cardStyle: React.CSSProperties = {
+  display: "block",
+  height: "100%",
+  backgroundColor: "#111",
+  border: "1px solid #262626",
+  borderRadius: "16px",
+  overflow: "hidden",
+  textDecoration: "none",
+  color: "#fff",
+  transition: "border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease",
+};
+
+const imgWrapStyle: React.CSSProperties = {
+  width: "100%",
+  aspectRatio: "1200 / 630",
+  overflow: "hidden",
+  backgroundColor: "#0a0a0a",
+};
+
+const imgStyle: React.CSSProperties = {
+  width: "100%",
+  height: "100%",
+  objectFit: "cover",
+};
+
+const bodyStyle: React.CSSProperties = {
+  padding: "1.25rem",
+};
+
+const categoryStyle: React.CSSProperties = {
+  color: "#68FF00",
+  fontSize: "0.75rem",
+  fontWeight: 700,
+  textTransform: "uppercase",
+  letterSpacing: "0.08em",
+  marginBottom: "0.5rem",
+  display: "block",
+};
+
+const titleStyle: React.CSSProperties = {
+  fontSize: "1.15rem",
+  fontWeight: 700,
+  marginBottom: "0.5rem",
+  color: "#fff",
+  display: "-webkit-box",
+  WebkitLineClamp: 2,
+  WebkitBoxOrient: "vertical",
+  overflow: "hidden",
+};
+
+const excerptStyle: React.CSSProperties = {
+  fontSize: "0.9rem",
+  color: "#aaa",
+  marginBottom: "1rem",
+  display: "-webkit-box",
+  WebkitLineClamp: 3,
+  WebkitBoxOrient: "vertical",
+  overflow: "hidden",
+};
+
+const metaRowStyle: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  fontSize: "0.8rem",
+  color: "#777",
+};
+
+// A BlogPost card class carries a hover rule (border glow + lift) that plain
+// inline styles cannot express — scoped to this component with a unique
+// class name instead of a separate stylesheet.
+const hoverStyleTag = `
+  .blog-card:hover {
+    border-color: #68FF00 !important;
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(104, 255, 0, 0.15);
+  }
+`;
+
+function excerptFor(post: BlogPost | Record<string, any>): string {
+  return post.Excerpt || stripHtmlExcerpt(post.Body || "");
+}
 
 const Blog = () => {
-  // Static posts (see blogPosts.ts for why) render alongside whatever's in
-  // Firestore — shown first since they're the newest.
-  const [value, setValue] = useState<any[]>(staticPosts);
+  // Static posts (see blogPosts.ts for why) render alongside whatever is in
+  // Firestore — shown first since they are the newest.
+  const [posts, setPosts] = useState<any[]>(staticPosts);
+
+  useEffect(() => {
+    document.title = "Blog | Enigma Labs";
+    document.querySelector('meta[name="description"]')?.setAttribute(
+      "content",
+      "Web development, marketing, and social media advice for small businesses from Enigma Labs."
+    );
+  }, []);
 
   useLayoutEffect(() => {
     const ref = collection(db, "blogs");
 
     const getBlogs = async () => {
       const data = await getDocs(ref);
-      setValue([...staticPosts, ...data.docs.map((doc) => ({ ...doc.data() }))]);
-    }
+      setPosts([...staticPosts, ...data.docs.map((doc) => ({ ...doc.data() }))]);
+    };
 
     getBlogs();
   }, []);
 
-
-
-  const hrStyle = {
-    backgroundColor: 'white',
-    marginBottom: "20px"
-  };
-  const topmargin = {
-    marginTop: '10%'
-  };
-  
-  const blogCard = {
-    width: "auto",
-    height: "auto",
-    maxHeight: "600px",
-    backgroundColor: "rgb(250, 250, 250)",
-    color:"black",
-    boxShadow: "rgba(0, 0, 0, 0.24) 0px 3px 8px",
-    margin: "20px",
-    padding: "20px",
-    borderRadius: "15px",
-    overflow: "scroll"
-  };
-  
-  const blogHeader = {
-    display: "flex",
-    justifyContent: "center",
-    width: "100%"
-  };
-  
-  const blogtitle = {
-    flex: "50%"
-  };
-  
-  const blogbody = {
-    height: "75%",
-    maxHeight: "600px",
-    width: "100%"
-  };
-
-  const imgDiv = {
-    height: "15%",
-    maxHeight: "200px",
-    width: "100%",
-    overflow: "hidden"
-  };
-
   return (
-    <Container>
-      
-      <h1 style={topmargin}>Blog</h1>
-      <hr style={hrStyle}></hr>
-      <div>
-        {value && (
-          <div>
-            {value.map((doc) => (
-              <div style={blogCard} key={doc.Title}>
-              <div style={blogHeader}>
-                <div style={blogtitle}>
-                  <Link to={`/Blog/${JSON.parse(JSON.stringify(doc.Title))}`}>{JSON.parse(JSON.stringify(doc.Title))}</Link>
-                 </div>
-              </div>
-              <div style={imgDiv}><img src={JSON.parse(JSON.stringify(doc.Image))} id="coverImage"/></div>
-              <section style={blogbody} dangerouslySetInnerHTML={{ __html: JSON.parse(JSON.stringify(doc.Body))}}
-              ></section>
-              <p id="author">@{JSON.parse(JSON.stringify(doc.Author))} </p>
-            </div>
-
-            ))}
-          </div>
-        )}
+    <Container className="aboutContainer">
+      <style>{hoverStyleTag}</style>
+      <div className="text-center mb-2">
+        <h1 className="subpage-title">Blog</h1>
+        <p style={{ color: "#aaa" }}>
+          Web development, marketing, and social media advice for small businesses.
+        </p>
       </div>
+
+      <Row style={{ margin: "2% 0" }}>
+        {posts.map((post) => (
+          <Col key={post.Title} xs={12} sm={6} lg={4} className="mb-4">
+            <Link to={`/Blog/${slugify(post.Title)}`} className="blog-card" style={cardStyle}>
+              <div style={imgWrapStyle}>
+                <img src={post.Image} alt={post.Title} style={imgStyle} />
+              </div>
+              <div style={bodyStyle}>
+                {post.Category && <span style={categoryStyle}>{post.Category}</span>}
+                <h2 style={titleStyle}>{post.Title}</h2>
+                <p style={excerptStyle}>{excerptFor(post)}</p>
+                <div style={metaRowStyle}>
+                  <span>@{post.Author}</span>
+                  <span style={{ color: "#68FF00", fontWeight: 600 }}>Read More →</span>
+                </div>
+              </div>
+            </Link>
+          </Col>
+        ))}
+      </Row>
     </Container>
   );
 };
-
-
 
 export default Blog;
