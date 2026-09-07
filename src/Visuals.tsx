@@ -162,7 +162,7 @@ function handleSubmit() {
           
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h1 className="subpage-title aboutTitle">Branding | Content | Ads</h1>
+              <h1 className="subpage-title aboutTitle">Marketing | Branding | Ads</h1>
             </Col>
           </Row>
           <Row style={rowStyle}>
