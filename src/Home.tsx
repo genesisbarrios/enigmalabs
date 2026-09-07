@@ -575,7 +575,7 @@ const Home = () => {
               <Card style={serviceCardStyle} className="servicesCards">
                 <img style={imgStyle} className="servicesImg" alt="video services" src="https://www.enigma-labs.com/portrait6.jpg" />
                 <Card.Body>
-                  <h5>Branding & Ads</h5>
+                  <h5>Marketing, Branding & Ads</h5>
                   <Card.Text>
                     Photography, Videography, Music Videos <br></br>
                     Content Creation, Social Media Management <br></br>
