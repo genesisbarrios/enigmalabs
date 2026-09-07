@@ -212,7 +212,7 @@ function handleSubmit() {
               <ul>
                 <li>Web Design & Web Development, Google Business Setup, SEO</li>
                 <li>Support & Maintenance: Hosting, Domain Setup, Updates, Admin Screen, etc. </li>
-                <li>Graphic Design & Marketing: Logos, Branding, & Ads</li>
+                <li>Digital Marketing, Branding & Ads</li> 
               </ul>
             </Col>
           </Row>

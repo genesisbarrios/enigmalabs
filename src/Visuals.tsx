@@ -170,8 +170,8 @@ function handleSubmit() {
               <h5 className="subsection-title" style={{marginTop: "5%"}}>Services</h5>
               <ul>
                 <li>Photography, Videography, Music Videos, Content Creation</li>
-                <li>Graphic Design: Logos, Branding, Album Covers, Stickers, Posters and more.</li>
-                <li>Social Media Management & Ads: Instagram, TikTok, YouTube, Facebook and more.</li>
+                <li>Graphic Design: Logos, Branding, Album Covers, Stickers, Posters + more.</li>
+                <li>Marketing, Social Media Management & Ads: Instagram, TikTok, YouTube, Facebook + more.</li>
               </ul>
             </Col>
           </Row>
