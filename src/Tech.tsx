@@ -281,7 +281,7 @@ function handleSubmit() {
                 <ul style={{ marginBottom: 0 }}>
                   <li>$1000 - Custom Blog</li>
                   <li>$1000 - Headless E-Commerce Store (Shopify/Printify or Stripe/Square Backend)</li>
-                  <li>$1500 - Fully Custom E-Commerce Store</li>
+                  <li>$1500 - E-Commerce Store with Custom Backend</li>
                 </ul>
               </div>
             </Col>
