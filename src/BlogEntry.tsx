@@ -5,12 +5,13 @@ import {db, app} from "./firebase-config";
 import { getDocs, collection, doc, getFirestore, query, limit, where } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
 import Container from 'react-bootstrap/Container';
+import staticPosts from "./blogPosts";
 import {
   BrowserRouter as Router,
   Link,
   Route,
   Routes,
-  useParams, 
+  useParams,
 } from "react-router-dom";
 
 
@@ -19,16 +20,19 @@ import "./blogEntry.css";
 const BlogEntry = (props) => {
 
   const { Title } = useParams();
-  const [value, setValue] = useState<any>({});
+  const staticMatch = staticPosts.find((p) => p.Title === Title);
+  const [value, setValue] = useState<any>(staticMatch || {});
 
   useLayoutEffect(() => {
+    // Static posts (see blogPosts.ts) don't need a Firestore round-trip.
+    if (staticMatch) return;
+
     const ref = collection(db, "blogs");
     const q = query(ref, limit(1), where("Title", "==", Title));
 
     const getBlogs = async () => {
       const data = await getDocs(ref);
       setValue( data.docs.map( (doc) => ({ ...doc.data()}) )[0] );
-      console.log(value);
     }
 
     getBlogs();

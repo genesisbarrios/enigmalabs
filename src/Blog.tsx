@@ -6,6 +6,7 @@ import {db, app} from "./firebase-config";
 import { getDocs, collection, deleteDoc, doc, getFirestore } from "firebase/firestore";
 import { useCollection } from 'react-firebase-hooks/firestore';
 import Container from 'react-bootstrap/Container';
+import staticPosts from "./blogPosts";
 import {
   BrowserRouter as Router,
   Route,
@@ -14,16 +15,16 @@ import {
 } from "react-router-dom";
 
 const Blog = () => {
-  const [value, setValue] = useState<any[]>([]);
+  // Static posts (see blogPosts.ts for why) render alongside whatever's in
+  // Firestore — shown first since they're the newest.
+  const [value, setValue] = useState<any[]>(staticPosts);
 
   useLayoutEffect(() => {
     const ref = collection(db, "blogs");
 
     const getBlogs = async () => {
       const data = await getDocs(ref);
-      console.log('getBlogs'+data);
-      setValue( data.docs.map( (doc) => ({ ...doc.data()}) ) );
-      console.log(value);
+      setValue([...staticPosts, ...data.docs.map((doc) => ({ ...doc.data() }))]);
     }
 
     getBlogs();
@@ -84,7 +85,7 @@ const Blog = () => {
         {value && (
           <div>
             {value.map((doc) => (
-              <div style={blogCard}>
+              <div style={blogCard} key={doc.Title}>
               <div style={blogHeader}>
                 <div style={blogtitle}>
                   <Link to={`/Blog/${JSON.parse(JSON.stringify(doc.Title))}`}>{JSON.parse(JSON.stringify(doc.Title))}</Link>
