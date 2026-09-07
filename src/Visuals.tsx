@@ -8,10 +8,10 @@ const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 //import image1 from "./image1.png";
 const Visuals = () => {
 useEffect(() => {
-  document.title = "Enigma Labs | Photography, Videography & Graphic Design";
+  document.title = "Enigma Labs | Branding, Marketing, Ads, Photography, Videography & Graphic Design";
   document.querySelector('meta[name="description"]')?.setAttribute(
     "content",
-    "Photography, videography, music videos, and graphic design services from Enigma Labs."
+    "Branding, Marketing, Ads, Social Media Marketing, Digital marketing, Photography, videography, music videos, and graphic design services from Enigma Labs."
   );
 }, []);
 
@@ -162,7 +162,7 @@ function handleSubmit() {
           
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h1 className="subpage-title aboutTitle">Marketing | Branding | Ads</h1>
+              <h1 className="subpage-title aboutTitle">Branding | Marketing | Ads</h1>
             </Col>
           </Row>
           <Row style={rowStyle}>

@@ -11,7 +11,7 @@ const Tech = () => {
     document.title = "Enigma Labs | Web Development & Web Design";
     document.querySelector('meta[name="description"]')?.setAttribute(
       "content",
-      "Web design and web development services from Enigma Labs — custom websites, hosting, and ongoing support."
+      "Web design and web development services from Enigma Labs — custom websites, hosting, seo, and ongoing support."
     );
   }, []);
 

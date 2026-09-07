@@ -15,7 +15,6 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "firebase": "^9.6.11",
-    "mongodb-memory-server": "^9.0.0",
     "mongoose": "^7.4.5",
     "multer": "^2.2.0",
     "pdfkit": "^0.19.1",
@@ -67,6 +66,7 @@
   "devDependencies": {
     "@types/react": "^19.2.15",
     "@types/react-signature-canvas": "^1.0.7",
-    "hardhat": "^2.8.3"
+    "hardhat": "^2.8.3",
+    "mongodb-memory-server": "^9.0.0"
   }
 }
