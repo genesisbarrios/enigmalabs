@@ -1,9 +1,4 @@
 {
-  "functions": {
-    "api/index.js": {
-      "excludeFiles": "{node_modules/mongodb-memory-server/**,node_modules/mongodb-memory-server-core/**,node_modules/.cache/mongodb-binaries/**}"
-    }
-  },
   "rewrites": [
     { "source": "/api/:path*", "destination": "/api" },
     { "source": "/(.*)", "destination": "/" }

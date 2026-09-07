@@ -7,7 +7,14 @@ const axios = require('axios');
 const dotenv = require('dotenv');
 const fs = require('fs');
 const path = require('path');
-const { MongoMemoryServer } = require('mongodb-memory-server');
+// mongodb-memory-server is intentionally NOT a dependency here (see the
+// lazy require() in connectDatabase's local-only fallback below) — it
+// bundles a real MongoDB binary that pushed the Vercel serverless function
+// past the 250mb uncompressed limit when it was merely require()'d at the
+// top of this file, even though the fallback path that uses it never runs
+// in production (isServerless short-circuits before it). Run
+// `npm install --no-save mongodb-memory-server` locally if you want that
+// fallback for local dev without a real MongoDB running.
 const { Resend } = require('resend');
 const { buildAgreementPdf } = require('./agreementPdf');
 
@@ -3679,6 +3686,13 @@ function connectDatabase() {
         throw error;
       }
       console.warn('Primary MongoDB connection failed. Trying in-memory fallback (local dev only).', error.message);
+      let MongoMemoryServer;
+      try {
+        ({ MongoMemoryServer } = require('mongodb-memory-server'));
+      } catch (requireError) {
+        console.error('In-memory MongoDB fallback unavailable — run `npm install --no-save mongodb-memory-server` locally, or set MONGO_URI to a real database.', requireError.message);
+        throw error;
+      }
       mongoServer = await MongoMemoryServer.create();
       await mongoose.connect(mongoServer.getUri(), { dbName: 'enigma' });
       console.log('Connected to in-memory MongoDB fallback.');
