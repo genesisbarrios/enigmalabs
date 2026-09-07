@@ -42,11 +42,20 @@ const ENIGMA_INSTAGRAM_URL = 'https://www.instagram.com/_enigmalabs/';
 
 // Terms-of-usage PDFs attached to every beats/loops signup email — read once
 // and cached in memory since these are static files bundled with the app.
+// Duplicated from public/ into server-assets/ (not read from public/
+// directly): the filename argument here is dynamic, so node-file-trace
+// cannot tell which file is actually needed and defensively bundles the
+// *entire* referenced directory into the Vercel serverless function.
+// public/ also holds every full-resolution photo/gif for the site itself
+// (a 40mb+ gif among them), which alone pushed the function past Vercel's
+// 250mb uncompressed limit and failed every deploy — server-assets/ holds
+// only these two ~100kb PDFs, so even the worst-case whole-directory
+// include costs nothing.
 const TERMS_PDF_CACHE = {};
 function loadTermsAttachment(filename) {
   if (TERMS_PDF_CACHE[filename]) return TERMS_PDF_CACHE[filename];
   try {
-    const buffer = fs.readFileSync(path.join(__dirname, 'public', filename));
+    const buffer = fs.readFileSync(path.join(__dirname, 'server-assets', filename));
     const attachment = { filename, content: buffer.toString('base64') };
     TERMS_PDF_CACHE[filename] = attachment;
     return attachment;
