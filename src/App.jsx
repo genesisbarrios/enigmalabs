@@ -7,6 +7,8 @@ import Visuals from "./Visuals";
 import Blog from "./Blog";
 import BlogEntry from './BlogEntry';
 import Navigation from './Navigation';
+import PrivacyPolicy from './PrivacyPolicy';
+import TermsOfService from './TermsOfService';
 import Onboarding from './Onboarding';
 import OnboardingLanding from './OnboardingLanding';
 import OnboardingAgreement from './OnboardingAgreement';
@@ -49,6 +51,8 @@ const App = () => {
          <Route path="/payment" element={<Payment/>}/>
          <Route path="/admin" element={<Admin/>}/>
          <Route path="/admin/leads" element={<LeadScraper/>}/>
+         <Route path="/PrivacyPolicy" element={<PrivacyPolicy/>}/>
+         <Route path="/TermsOfService" element={<TermsOfService/>}/>
 
       </Routes>
       </div>
