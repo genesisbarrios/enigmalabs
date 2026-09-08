@@ -131,7 +131,7 @@ const BlogEntry = () => {
 
   if (notFound) {
     return (
-      <Container className="aboutContainer text-center" style={{ marginTop: "10%" }}>
+      <Container className="aboutContainer blog-page text-center">
         <h1 className="subpage-title">Post not found</h1>
         <p style={{ color: "#aaa" }}>That post does not exist, or the link is broken.</p>
         <Link to="/Blog" className="socialLinks">← Back to Blog</Link>
@@ -140,7 +140,7 @@ const BlogEntry = () => {
   }
 
   if (!post) {
-    return <Container style={{ marginTop: "10%" }} />;
+    return <Container className="aboutContainer" />;
   }
 
   const readMinutes = estimateReadMinutes(post.Body || "");
@@ -150,55 +150,34 @@ const BlogEntry = () => {
     .slice(0, 2);
 
   return (
-    <Container className="aboutContainer" style={{ marginTop: "6%" }}>
-      <div style={{ maxWidth: "760px", margin: "0 auto" }}>
-        {post.Image ? (
-          <div className="blog-entry-hero">
-            <img src={post.Image} alt={post.Title} />
-            <div className="blog-entry-hero-overlay" />
-            <div className="blog-entry-hero-content">
-              <div className="blog-entry-breadcrumb">
-                <Link to="/Blog">← Blog</Link>
-                {post.Category && <span> / {post.Category}</span>}
-              </div>
-              <h1 className="blog-entry-title">{post.Title}</h1>
-              <p className="blog-entry-meta">
-                {post.datee} · {readMinutes} min read
-              </p>
+    <Container className="aboutContainer blog-page">
+      <div style={{ maxWidth: "960px", margin: "0 auto" }}>
+        <div className="blog-entry-hero blog-entry-hero--compact">
+          <img src="/blog-hero.jpg" alt="Enigma Labs Blog" />
+          <div className="blog-entry-hero-overlay" />
+          <div className="blog-entry-hero-content">
+            <div className="blog-entry-breadcrumb">
+              <Link to="/Blog">← Blog</Link>
+              {post.Category && <span> / {post.Category}</span>}
             </div>
-          </div>
-        ) : (
-          <div style={{ marginBottom: "1.5rem" }}>
-            <div className="blog-entry-breadcrumb" style={{ marginBottom: "0.75rem" }}>
-              <Link to="/Blog" style={{ color: "#68FF00" }}>← Blog</Link>
-              {post.Category && <span style={{ color: "#777" }}> / {post.Category}</span>}
-            </div>
-            <h1>{post.Title}</h1>
-            <p style={{ color: "#777", fontSize: "0.9rem" }}>
+            <h1 className="blog-entry-title">{post.Title}</h1>
+            <p className="blog-entry-meta">
               {post.datee} · {readMinutes} min read
             </p>
           </div>
-        )}
+        </div>
 
-        <article
-          style={{
-            backgroundColor: "rgb(250, 250, 250)",
-            color: "black",
-            boxShadow: "rgba(0, 0, 0, 0.24) 0px 3px 8px",
-            padding: "2rem",
-            borderRadius: "15px",
-          }}
-        >
+        <article className="blog-entry-article">
           <section className="blogArticleBody" dangerouslySetInnerHTML={{ __html: post.Body }}></section>
-          <div style={{ marginTop: "50px", borderTop: "1px solid #ddd", paddingTop: "1rem" }}>
+          <div style={{ marginTop: "50px", borderTop: "1px solid #333", paddingTop: "1rem" }}>
             <p style={{ marginBottom: 0 }}>@_enigmalabs</p>
-            <p style={{ marginBottom: 0, color: "#777" }}>{post.datee}</p>
+            <p style={{ marginBottom: 0, color: "#999" }}>{post.datee}</p>
           </div>
         </article>
       </div>
 
       {related.length > 0 && (
-        <div style={{ maxWidth: "760px", margin: "3rem auto 0" }}>
+        <div style={{ maxWidth: "960px", margin: "3rem auto 0" }}>
           <h2 style={{ fontSize: "1.1rem", color: "#fff", marginBottom: "1rem" }}>Keep Reading</h2>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
             {related.map((r) => (

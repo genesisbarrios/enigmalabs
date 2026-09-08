@@ -35,8 +35,8 @@ export function slugify(title: string): string {
 
 function ctaBlock(question: string, href: string, label: string) {
   return `
-  <div style="text-align:center;margin-top:2.5rem;padding-top:1.5rem;border-top:1px solid #ddd;">
-    <p class="pBlogBody" style="font-weight:600;margin-bottom:1rem;">${question}</p>
+  <div style="text-align:center;margin-top:2.5rem;padding-top:1.5rem;border-top:1px solid #333;">
+    <p class="pBlogBody" style="font-weight:600;margin-bottom:1rem;color:#fff;">${question}</p>
     <a href="${href}" style="display:inline-block;background-color:#68FF00;color:#000;border:none;border-radius:2rem;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;font-size:0.95rem;padding:0.85rem 2rem;text-decoration:none;">${label}</a>
   </div>
 `;

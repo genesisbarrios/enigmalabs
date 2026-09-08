@@ -10,8 +10,24 @@
       padding-bottom: 0px;
   }
 
-  /* Post hero: cover image with breadcrumb/title/meta overlaid at the
-     bottom, following the same layout used on the Influanto blog. */
+  /* The site body font (Bebas Neue) has no true lowercase letterforms — fine
+     for short nav/headline text, but it reads like forced all-caps on
+     long-form paragraphs. Blog content gets a normal readable font instead;
+     the single-word "Blog" page title is exempted below to keep the brand
+     look on that one short heading. */
+  .blog-page,
+  .blog-page * {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  .blog-page .subpage-title,
+  .blog-page .blog-title {
+    font-family: "Bebas Neue", sans-serif;
+  }
+
+  /* Post hero: the same banner image used at the top of /Blog, with the
+     breadcrumb/title/meta overlaid at the bottom — shorter here than on the
+     listing page so it doesn't dominate the article. */
   .blog-entry-hero {
     position: relative;
     width: 100%;
@@ -19,6 +35,10 @@
     border-radius: 16px;
     overflow: hidden;
     margin-bottom: 2rem;
+  }
+
+  .blog-entry-hero--compact {
+    aspect-ratio: 6 / 1;
   }
 
   .blog-entry-hero img {
@@ -66,9 +86,23 @@
     margin: 0;
   }
 
+  /* Article body — matches the dark card look used on the /Blog listing
+     page instead of the old light "paper" card. */
+  .blog-entry-article {
+    background-color: #111;
+    color: #fff;
+    border: 1px solid #262626;
+    box-shadow: rgba(0, 0, 0, 0.4) 0px 3px 8px;
+    padding: 2rem;
+    border-radius: 15px;
+  }
+
   @media only screen and (max-width: 900px) {
     .blog-entry-hero {
       aspect-ratio: 16 / 10;
+    }
+    .blog-entry-hero--compact {
+      aspect-ratio: 4 / 1;
     }
     .blog-entry-title {
       font-size: 1.6rem;
@@ -79,22 +113,15 @@
     .blog-entry-hero {
       aspect-ratio: 4 / 3;
     }
+    .blog-entry-hero--compact {
+      aspect-ratio: 2.5 / 1;
+    }
     .blog-entry-hero-content {
       padding: 1.25rem;
     }
     .blog-entry-title {
       font-size: 1.3rem;
     }
-  }
-
-  .blogArticleBody h3 {
-    border-top: 1px solid #e5e5e5;
-    padding-top: 1.5rem;
-  }
-
-  .blogArticleBody h3:first-of-type {
-    border-top: none;
-    padding-top: 0;
   }
 
   .keep-reading-card:hover {

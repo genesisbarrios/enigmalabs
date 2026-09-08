@@ -7,6 +7,8 @@ import { db } from "./firebase-config";
 import { getDocs, collection } from "firebase/firestore";
 import staticPosts, { slugify, stripHtmlExcerpt, BlogPost } from "./blogPosts";
 
+import "./blogEntry.css";
+
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ""}/api`;
 
 const cardStyle: React.CSSProperties = {
@@ -128,7 +130,7 @@ const Blog = () => {
   }, []);
 
   return (
-    <Container className="aboutContainer">
+    <Container className="aboutContainer blog-page">
       <style>{hoverStyleTag}</style>
 
       <div
