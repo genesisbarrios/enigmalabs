@@ -179,7 +179,7 @@ const BlogEntry = () => {
       {related.length > 0 && (
         <div style={{ maxWidth: "960px", margin: "3rem auto 0" }}>
           <h2 style={{ fontSize: "1.1rem", color: "#fff", marginBottom: "1rem" }}>Keep Reading</h2>
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", marginBottom: "3rem" }}>
             {related.map((r) => (
               <Link
                 key={r.Title}
@@ -204,7 +204,7 @@ const BlogEntry = () => {
                       {r.Category}
                     </div>
                   )}
-                  <span style={{ fontWeight: 600, fontSize: "0.95rem" }}>{r.Title}</span>
+                  <span style={{ fontWeight: 600, fontSize: "1.1rem" }}>{r.Title}</span>
                 </div>
                 <span style={{ color: "#68FF00", fontWeight: 600, whiteSpace: "nowrap" }}>Read →</span>
               </Link>
