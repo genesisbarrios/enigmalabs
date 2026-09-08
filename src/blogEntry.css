@@ -27,6 +27,20 @@
     #coverImage{
         height:100px!important;
         width:100%;
-    
+
       }
+  }
+
+  .blogArticleBody h3 {
+    border-top: 1px solid #e5e5e5;
+    padding-top: 1.5rem;
+  }
+
+  .blogArticleBody h3:first-of-type {
+    border-top: none;
+    padding-top: 0;
+  }
+
+  .keep-reading-card:hover {
+    border-color: #68FF00 !important;
   }

@@ -3,14 +3,35 @@ import { Link, useParams } from "react-router-dom";
 import Container from "react-bootstrap/Container";
 import { db } from "./firebase-config";
 import { getDocs, collection } from "firebase/firestore";
-import staticPosts, { slugify, stripHtmlExcerpt, BlogPost } from "./blogPosts";
+import staticPosts, { slugify, stripHtmlExcerpt, estimateReadMinutes, BlogPost } from "./blogPosts";
 
 import "./blogEntry.css";
 
 const SITE_URL = "https://enigma-labs.com";
 
+const originalTitle = document.title;
+const metaOriginals: Record<string, string | null> = {};
+
+// Capture each tag's true site-default value the first time it is ever
+// touched, so unmount can restore it exactly instead of guessing.
+function captureOriginal(selector: string, attr: string) {
+  const key = `${selector}::${attr}`;
+  if (!(key in metaOriginals)) {
+    metaOriginals[key] = document.querySelector(selector)?.getAttribute(attr) ?? null;
+  }
+}
+
 function setMeta(selector: string, attr: string, value: string) {
+  captureOriginal(selector, attr);
   document.querySelector(selector)?.setAttribute(attr, value);
+}
+
+function restoreMeta(selector: string, attr: string) {
+  const key = `${selector}::${attr}`;
+  const original = metaOriginals[key];
+  if (original != null) {
+    document.querySelector(selector)?.setAttribute(attr, original);
+  }
 }
 
 const BlogEntry = () => {
@@ -81,9 +102,20 @@ const BlogEntry = () => {
 
     return () => {
       document.head.removeChild(script);
-      // Restore the site-wide default so a back-navigation to another page
-      // does not keep this post's og:type="article" etc.
-      setMeta('meta[property="og:type"]', "content", "website");
+      // Restore every tag this effect touched to its true site-default
+      // value, not just og:type, so navigating away never leaves the
+      // last-viewed post's title/image/description behind.
+      document.title = originalTitle;
+      restoreMeta('meta[name="description"]', "content");
+      restoreMeta('link[rel="canonical"]', "href");
+      restoreMeta('meta[property="og:title"]', "content");
+      restoreMeta('meta[property="og:description"]', "content");
+      restoreMeta('meta[property="og:url"]', "content");
+      restoreMeta('meta[property="og:image"]', "content");
+      restoreMeta('meta[property="og:type"]', "content");
+      restoreMeta('meta[name="twitter:title"]', "content");
+      restoreMeta('meta[name="twitter:description"]', "content");
+      restoreMeta('meta[name="twitter:image"]', "content");
     };
   }, [post]);
 
@@ -101,12 +133,19 @@ const BlogEntry = () => {
     return <Container style={{ marginTop: "10%" }} />;
   }
 
+  const readMinutes = estimateReadMinutes(post.Body || "");
+  const related = staticPosts
+    .filter((p) => p.Title !== post.Title)
+    .sort((a, b) => (a.Category === post.Category ? -1 : 0) - (b.Category === post.Category ? -1 : 0))
+    .slice(0, 2);
+
   return (
     <Container className="aboutContainer" style={{ marginTop: "6%" }}>
-      <div style={{ maxWidth: "760px", margin: "0 auto 2rem" }}>
-        <Link to="/Blog" className="socialLinks" style={{ display: "inline-block", marginBottom: "1.5rem" }}>
-          ← Back to Blog
+      <div style={{ maxWidth: "760px", margin: "0 auto 1.25rem", fontSize: "0.9rem" }}>
+        <Link to="/Blog" className="socialLinks" style={{ color: "#68FF00" }}>
+          ← Blog
         </Link>
+        {post.Category && <span style={{ color: "#777" }}> / {post.Category}</span>}
       </div>
 
       <article
@@ -120,31 +159,58 @@ const BlogEntry = () => {
           borderRadius: "15px",
         }}
       >
-        {post.Category && (
-          <span
-            style={{
-              color: "#45ab01",
-              fontSize: "0.8rem",
-              fontWeight: 700,
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-            }}
-          >
-            {post.Category}
-          </span>
-        )}
-        <h1 style={{ marginTop: "0.5rem" }}>{post.Title}</h1>
+        <h1 style={{ marginTop: 0 }}>{post.Title}</h1>
+        <p style={{ color: "#777", fontSize: "0.9rem", marginBottom: "1.5rem" }}>
+          {post.datee} · {readMinutes} min read
+        </p>
         {post.Image && (
           <div style={{ width: "100%", maxHeight: "360px", overflow: "hidden", borderRadius: "10px", margin: "1rem 0" }}>
             <img src={post.Image} alt={post.Title} id="coverImage" style={{ width: "100%", objectFit: "cover" }} />
           </div>
         )}
-        <section dangerouslySetInnerHTML={{ __html: post.Body }}></section>
+        <section className="blogArticleBody" dangerouslySetInnerHTML={{ __html: post.Body }}></section>
         <div style={{ marginTop: "50px", borderTop: "1px solid #ddd", paddingTop: "1rem" }}>
-          <p style={{ marginBottom: 0 }}>@{post.Author}</p>
+          <p style={{ marginBottom: 0 }}>@_enigmalabs</p>
           <p style={{ marginBottom: 0, color: "#777" }}>{post.datee}</p>
         </div>
       </article>
+
+      {related.length > 0 && (
+        <div style={{ maxWidth: "760px", margin: "3rem auto 0" }}>
+          <h2 style={{ fontSize: "1.1rem", color: "#fff", marginBottom: "1rem" }}>Keep Reading</h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+            {related.map((r) => (
+              <Link
+                key={r.Title}
+                to={`/Blog/${slugify(r.Title)}`}
+                className="keep-reading-card"
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "1rem",
+                  padding: "1rem 1.25rem",
+                  backgroundColor: "#111",
+                  borderLeft: "3px solid #68FF00",
+                  border: "1px solid #262626",
+                  borderRadius: "12px",
+                  textDecoration: "none",
+                  color: "#fff",
+                }}
+              >
+                <div style={{ flex: 1 }}>
+                  {r.Category && (
+                    <div style={{ color: "#68FF00", fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.25rem" }}>
+                      {r.Category}
+                    </div>
+                  )}
+                  <span style={{ fontWeight: 600, fontSize: "0.95rem" }}>{r.Title}</span>
+                </div>
+                <span style={{ color: "#68FF00", fontWeight: 600, whiteSpace: "nowrap" }}>Read →</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </Container>
   );
 };

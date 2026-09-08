@@ -77,12 +77,27 @@ const metaRowStyle: React.CSSProperties = {
 
 // A BlogPost card class carries a hover rule (border glow + lift) that plain
 // inline styles cannot express — scoped to this component with a unique
-// class name instead of a separate stylesheet.
+// class name instead of a separate stylesheet. The blog-title rule is a
+// smaller, page-specific override so the shared .subpage-title size (used
+// by About, Wallpapers, etc.) stays untouched.
 const hoverStyleTag = `
   .blog-card:hover {
     border-color: #68FF00 !important;
     transform: translateY(-4px);
     box-shadow: 0 8px 30px rgba(104, 255, 0, 0.15);
+  }
+
+  .blog-title {
+    font-size: 2rem;
+    letter-spacing: -0.01em;
+  }
+
+  @media only screen and (max-width: 900px) {
+    .blog-title { font-size: 1.6rem; }
+  }
+
+  @media only screen and (max-width: 600px) {
+    .blog-title { font-size: 1.35rem; }
   }
 `;
 
@@ -117,8 +132,27 @@ const Blog = () => {
   return (
     <Container className="aboutContainer">
       <style>{hoverStyleTag}</style>
-      <div className="text-center mb-2">
-        <h1 className="subpage-title">Blog</h1>
+
+      <div
+        style={{
+          width: "100%",
+          aspectRatio: "3 / 1",
+          borderRadius: "20px",
+          overflow: "hidden",
+          border: "1px solid #262626",
+          marginTop: "2%",
+          position: "relative",
+        }}
+      >
+        <img
+          src="/blog-hero.jpg"
+          alt="Enigma Labs blog — web development and digital marketing insights"
+          style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+        />
+      </div>
+
+      <div className="text-center mb-2" style={{ marginTop: "2rem" }}>
+        <h1 className="subpage-title blog-title">Blog</h1>
         <p style={{ color: "#aaa" }}>
           Web development, marketing, and social media advice for small businesses.
         </p>
@@ -136,7 +170,7 @@ const Blog = () => {
                 <h2 style={titleStyle}>{post.Title}</h2>
                 <p style={excerptStyle}>{excerptFor(post)}</p>
                 <div style={metaRowStyle}>
-                  <span>@{post.Author}</span>
+                  <span>@_enigmalabs</span>
                   <span style={{ color: "#68FF00", fontWeight: 600 }}>Read More →</span>
                 </div>
               </div>

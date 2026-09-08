@@ -67,6 +67,14 @@ export function stripHtmlExcerpt(html: string, maxLen = 160): string {
   return text.slice(0, text.lastIndexOf(" ", maxLen)) + "…";
 }
 
+// Rough estimate at 200 words/minute, rounded up so a 1-minute post never
+// reads as "0 min read".
+export function estimateReadMinutes(html: string): number {
+  const text = html.replace(/<[^>]*>/g, " ").trim();
+  const words = text.length ? text.split(/\s+/).length : 0;
+  return Math.max(1, Math.ceil(words / 200));
+}
+
 function point(n: number, title: string, body: string) {
   return `<h3 style="margin-top:1.75rem;margin-bottom:0.25rem;">${n}. ${title}</h3><p class="pBlogBody">${body}</p>`;
 }
