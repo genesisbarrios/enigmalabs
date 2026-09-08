@@ -204,7 +204,7 @@ const BlogEntry = () => {
                       {r.Category}
                     </div>
                   )}
-                  <span style={{ fontWeight: 600, fontSize: "1.1rem" }}>{r.Title}</span>
+                  <span style={{ fontWeight: 600, fontSize: "0.95rem" }}>{r.Title}</span>
                 </div>
                 <span style={{ color: "#68FF00", fontWeight: 600, whiteSpace: "nowrap" }}>Read →</span>
               </Link>
