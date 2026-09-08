@@ -8,6 +8,7 @@ import staticPosts, { slugify, stripHtmlExcerpt, estimateReadMinutes, BlogPost }
 import "./blogEntry.css";
 
 const SITE_URL = "https://enigma-labs.com";
+const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ""}/api`;
 
 const originalTitle = document.title;
 const metaOriginals: Record<string, string | null> = {};
@@ -39,27 +40,36 @@ const BlogEntry = () => {
   const staticMatch = staticPosts.find((p) => slugify(p.Title) === slug);
   const [post, setPost] = useState<(BlogPost & Record<string, any>) | undefined>(staticMatch);
   const [notFound, setNotFound] = useState(false);
+  // Firestore + admin-authored (backend) posts, fetched once for "Keep
+  // Reading" enrichment and as a fallback match when the slug isn't one of
+  // the static posts. Neither source stores a slug — matched client-side
+  // the same way staticPosts is, via slugify(Title).
+  const [otherPosts, setOtherPosts] = useState<(BlogPost & Record<string, any>)[]>([]);
 
   useLayoutEffect(() => {
     if (staticMatch) {
       setPost(staticMatch);
       setNotFound(false);
-      return;
     }
 
-    // Firestore posts have no stored slug — fetch everything and match by a
-    // slugified Title client-side (the collection is small; this mirrors
-    // what the old query-by-raw-Title code did, since it also fetched every
-    // doc rather than actually applying its own where() filter).
     const ref = collection(db, "blogs");
-    getDocs(ref).then((data) => {
-      const match = data.docs
-        .map((doc) => doc.data())
-        .find((p) => slugify(p.Title) === slug) as (BlogPost & Record<string, any>) | undefined;
-      setPost(match);
-      setNotFound(!match);
-    });
-  }, [slug]);
+    Promise.allSettled([getDocs(ref), fetch(`${API_BASE_URL}/blog`).then((res) => res.json())]).then(
+      ([firestoreResult, backendResult]) => {
+        const firestorePosts =
+          firestoreResult.status === "fulfilled" ? firestoreResult.value.docs.map((doc) => doc.data()) : [];
+        const backendPosts =
+          backendResult.status === "fulfilled" && backendResult.value?.ok ? backendResult.value.posts : [];
+        const combined = [...backendPosts, ...firestorePosts] as (BlogPost & Record<string, any>)[];
+        setOtherPosts(combined);
+
+        if (!staticMatch) {
+          const match = combined.find((p) => slugify(p.Title) === slug);
+          setPost(match);
+          setNotFound(!match);
+        }
+      }
+    );
+  }, [slug, staticMatch]);
 
   useEffect(() => {
     if (!post) return;
@@ -134,46 +144,58 @@ const BlogEntry = () => {
   }
 
   const readMinutes = estimateReadMinutes(post.Body || "");
-  const related = staticPosts
+  const related = [...otherPosts, ...staticPosts]
     .filter((p) => p.Title !== post.Title)
     .sort((a, b) => (a.Category === post.Category ? -1 : 0) - (b.Category === post.Category ? -1 : 0))
     .slice(0, 2);
 
   return (
     <Container className="aboutContainer" style={{ marginTop: "6%" }}>
-      <div style={{ maxWidth: "760px", margin: "0 auto 1.25rem", fontSize: "0.9rem" }}>
-        <Link to="/Blog" className="socialLinks" style={{ color: "#68FF00" }}>
-          ← Blog
-        </Link>
-        {post.Category && <span style={{ color: "#777" }}> / {post.Category}</span>}
-      </div>
-
-      <article
-        style={{
-          maxWidth: "760px",
-          margin: "0 auto",
-          backgroundColor: "rgb(250, 250, 250)",
-          color: "black",
-          boxShadow: "rgba(0, 0, 0, 0.24) 0px 3px 8px",
-          padding: "2rem",
-          borderRadius: "15px",
-        }}
-      >
-        <h1 style={{ marginTop: 0 }}>{post.Title}</h1>
-        <p style={{ color: "#777", fontSize: "0.9rem", marginBottom: "1.5rem" }}>
-          {post.datee} · {readMinutes} min read
-        </p>
-        {post.Image && (
-          <div style={{ width: "100%", maxHeight: "360px", overflow: "hidden", borderRadius: "10px", margin: "1rem 0" }}>
-            <img src={post.Image} alt={post.Title} id="coverImage" style={{ width: "100%", objectFit: "cover" }} />
+      <div style={{ maxWidth: "760px", margin: "0 auto" }}>
+        {post.Image ? (
+          <div className="blog-entry-hero">
+            <img src={post.Image} alt={post.Title} />
+            <div className="blog-entry-hero-overlay" />
+            <div className="blog-entry-hero-content">
+              <div className="blog-entry-breadcrumb">
+                <Link to="/Blog">← Blog</Link>
+                {post.Category && <span> / {post.Category}</span>}
+              </div>
+              <h1 className="blog-entry-title">{post.Title}</h1>
+              <p className="blog-entry-meta">
+                {post.datee} · {readMinutes} min read
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div style={{ marginBottom: "1.5rem" }}>
+            <div className="blog-entry-breadcrumb" style={{ marginBottom: "0.75rem" }}>
+              <Link to="/Blog" style={{ color: "#68FF00" }}>← Blog</Link>
+              {post.Category && <span style={{ color: "#777" }}> / {post.Category}</span>}
+            </div>
+            <h1>{post.Title}</h1>
+            <p style={{ color: "#777", fontSize: "0.9rem" }}>
+              {post.datee} · {readMinutes} min read
+            </p>
           </div>
         )}
-        <section className="blogArticleBody" dangerouslySetInnerHTML={{ __html: post.Body }}></section>
-        <div style={{ marginTop: "50px", borderTop: "1px solid #ddd", paddingTop: "1rem" }}>
-          <p style={{ marginBottom: 0 }}>@_enigmalabs</p>
-          <p style={{ marginBottom: 0, color: "#777" }}>{post.datee}</p>
-        </div>
-      </article>
+
+        <article
+          style={{
+            backgroundColor: "rgb(250, 250, 250)",
+            color: "black",
+            boxShadow: "rgba(0, 0, 0, 0.24) 0px 3px 8px",
+            padding: "2rem",
+            borderRadius: "15px",
+          }}
+        >
+          <section className="blogArticleBody" dangerouslySetInnerHTML={{ __html: post.Body }}></section>
+          <div style={{ marginTop: "50px", borderTop: "1px solid #ddd", paddingTop: "1rem" }}>
+            <p style={{ marginBottom: 0 }}>@_enigmalabs</p>
+            <p style={{ marginBottom: 0, color: "#777" }}>{post.datee}</p>
+          </div>
+        </article>
+      </div>
 
       {related.length > 0 && (
         <div style={{ maxWidth: "760px", margin: "3rem auto 0" }}>

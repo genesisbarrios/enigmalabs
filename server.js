@@ -1454,6 +1454,29 @@ const websiteClientSchema = new mongoose.Schema({
 
 const WebsiteClient = mongoose.model('WebsiteClient', websiteClientSchema, 'websiteClients');
 
+// Admin-authored blog posts, merged client-side with the static posts in
+// blogPosts.ts and the legacy Firestore "blogs" collection (see Blog.tsx /
+// BlogEntry.tsx) — all three sources share the same capitalized field shape
+// (Title/Author/Image/Body/datee/Category/Excerpt) so the frontend can
+// concatenate them without a mapping step. No slug is stored; the frontend
+// derives one from Title with slugify() the same way it already does for
+// the other two sources.
+const blogPostSchema = new mongoose.Schema({
+  Title: { type: String, required: true },
+  Author: { type: String, default: '_enigmalabs' },
+  Category: String,
+  Excerpt: String,
+  Body: { type: String, required: true },
+  datee: { type: String, required: true },
+  coverImage: {
+    data: Buffer,
+    mimeType: String
+  },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const BlogPost = mongoose.model('BlogPost', blogPostSchema, 'blogPosts');
+
 const leadSchema = new mongoose.Schema({
   businessName: String,
   contactName: String,
@@ -2660,6 +2683,106 @@ app.delete('/api/website-clients/:id', async (req, res) => {
   } catch (error) {
     console.error('Could not delete website client', error);
     res.status(500).json({ ok: false, message: 'Could not delete website client.' });
+  }
+});
+
+// ── Blog posts (admin-authored) ─────────────────────────────────────────────
+// Returns a fully-qualified Image URL (rather than a bare id/path) so the
+// public Blog.tsx/BlogEntry.tsx components can use post.Image exactly like
+// they already do for the static and Firestore-backed posts, with no
+// source-specific branching.
+function blogPostToJson(req, post) {
+  return {
+    _id: post._id,
+    Title: post.Title,
+    Author: post.Author,
+    Category: post.Category || '',
+    Excerpt: post.Excerpt || '',
+    Body: post.Body,
+    datee: post.datee,
+    Image: post.coverImage && post.coverImage.mimeType ? `${req.protocol}://${req.get('host')}/api/blog/${post._id}/cover` : ''
+  };
+}
+
+app.get('/api/blog', async (req, res) => {
+  try {
+    const posts = await BlogPost.find().select('-coverImage.data').sort({ createdAt: -1 });
+    res.json({ ok: true, posts: posts.map((post) => blogPostToJson(req, post)) });
+  } catch (error) {
+    console.error('Could not fetch blog posts', error);
+    res.status(500).json({ ok: false, message: 'Could not fetch blog posts.' });
+  }
+});
+
+app.get('/api/blog/:id/cover', async (req, res) => {
+  try {
+    const post = await BlogPost.findById(req.params.id);
+    if (!post || !post.coverImage || !post.coverImage.data) {
+      return res.status(404).json({ ok: false, message: 'No cover image found.' });
+    }
+    res.setHeader('Content-Type', post.coverImage.mimeType || 'image/png');
+    res.send(Buffer.from(post.coverImage.data));
+  } catch (error) {
+    console.error('Could not fetch blog cover image', error);
+    res.status(500).json({ ok: false, message: 'Could not fetch cover image.' });
+  }
+});
+
+app.post('/api/blog', upload.single('coverImage'), async (req, res) => {
+  try {
+    const { Title, Author, Category, Excerpt, Body, datee } = req.body;
+    if (!Title || !Body) {
+      return res.status(400).json({ ok: false, message: 'Title and body are required.' });
+    }
+    const post = await BlogPost.create({
+      Title,
+      Author: Author || '_enigmalabs',
+      Category: Category || '',
+      Excerpt: Excerpt || '',
+      Body,
+      datee: datee || new Date().toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' }),
+      coverImage: req.file ? { data: req.file.buffer, mimeType: req.file.mimetype } : undefined
+    });
+    res.status(201).json({ ok: true, post: blogPostToJson(req, post) });
+  } catch (error) {
+    console.error('Could not create blog post', error);
+    res.status(500).json({ ok: false, message: 'Could not create blog post.' });
+  }
+});
+
+app.put('/api/blog/:id', upload.single('coverImage'), async (req, res) => {
+  try {
+    const post = await BlogPost.findById(req.params.id);
+    if (!post) {
+      return res.status(404).json({ ok: false, message: 'Blog post not found.' });
+    }
+
+    const fields = ['Title', 'Author', 'Category', 'Excerpt', 'Body', 'datee'];
+    fields.forEach((field) => {
+      if (req.body[field] !== undefined) post[field] = req.body[field];
+    });
+    if (req.file) {
+      post.coverImage = { data: req.file.buffer, mimeType: req.file.mimetype };
+    }
+
+    await post.save();
+    res.json({ ok: true, post: blogPostToJson(req, post) });
+  } catch (error) {
+    console.error('Could not update blog post', error);
+    res.status(500).json({ ok: false, message: 'Could not update blog post.' });
+  }
+});
+
+app.delete('/api/blog/:id', async (req, res) => {
+  try {
+    const deleted = await BlogPost.findByIdAndDelete(req.params.id);
+    if (!deleted) {
+      return res.status(404).json({ ok: false, message: 'Blog post not found.' });
+    }
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Could not delete blog post', error);
+    res.status(500).json({ ok: false, message: 'Could not delete blog post.' });
   }
 });
 

@@ -10,25 +10,81 @@
       padding-bottom: 0px;
   }
 
-  #coverImage{
-    object-fit: cover;
+  /* Post hero: cover image with breadcrumb/title/meta overlaid at the
+     bottom, following the same layout used on the Influanto blog. */
+  .blog-entry-hero {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 8;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+  }
 
+  .blog-entry-hero img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .blog-entry-hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.05) 0%, rgba(0, 0, 0, 0.55) 55%, rgba(0, 0, 0, 0.92) 100%);
+  }
+
+  .blog-entry-hero-content {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    padding: 1.75rem 2rem;
+  }
+
+  .blog-entry-breadcrumb {
+    font-size: 0.85rem;
+    margin-bottom: 0.75rem;
+    color: #ccc;
+  }
+
+  .blog-entry-breadcrumb a {
+    color: #68FF00;
+    text-decoration: none;
+  }
+
+  .blog-entry-title {
+    color: #fff;
+    font-size: 2rem;
+    line-height: 1.15;
+    margin: 0 0 0.5rem;
+  }
+
+  .blog-entry-meta {
+    color: #ccc;
+    font-size: 0.85rem;
+    margin: 0;
   }
 
   @media only screen and (max-width: 900px) {
-    #coverImage{
-        height:120px!important;
-        width:100%;
-    
-      }
+    .blog-entry-hero {
+      aspect-ratio: 16 / 10;
+    }
+    .blog-entry-title {
+      font-size: 1.6rem;
+    }
   }
 
   @media only screen and (max-width: 600px) {
-    #coverImage{
-        height:100px!important;
-        width:100%;
-
-      }
+    .blog-entry-hero {
+      aspect-ratio: 4 / 3;
+    }
+    .blog-entry-hero-content {
+      padding: 1.25rem;
+    }
+    .blog-entry-title {
+      font-size: 1.3rem;
+    }
   }
 
   .blogArticleBody h3 {

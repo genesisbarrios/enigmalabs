@@ -3,7 +3,6 @@ import { Alert, Badge, Button, Card, Col, Container, Form, ListGroup, Modal, Pag
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
-import LeadsTable from './LeadsTable';
 
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 const ADMIN_PASSWORD = process.env.REACT_APP_ONBOARD_PW;
@@ -287,6 +286,17 @@ type OutreachAnalytics = {
   campaigns: (SendStats & { id: string; category?: string; subject?: string; sentAt?: string })[];
 };
 
+type BlogPostRecord = {
+  _id: string;
+  Title: string;
+  Author: string;
+  Category?: string;
+  Excerpt?: string;
+  Body: string;
+  datee: string;
+  Image?: string;
+};
+
 type FileAttachment = { filename: string; content: string };
 
 function readFileAsAttachment(file: File): Promise<FileAttachment> {
@@ -438,6 +448,22 @@ const Admin = () => {
   const [outreachAnalytics, setOutreachAnalytics] = useState<OutreachAnalytics | null>(null);
   const [loadingOutreachAnalytics, setLoadingOutreachAnalytics] = useState(true);
 
+  // Blog — posts created here are served from the enigma database and
+  // merged client-side with the static/Firestore posts on /Blog (see
+  // Blog.tsx and BlogEntry.tsx). Shown underneath Outreach Analytics.
+  const BLANK_BLOG_POST_FORM = { Title: '', Category: '', Excerpt: '', Body: '', datee: '' };
+  const [blogPosts, setBlogPosts] = useState<BlogPostRecord[]>([]);
+  const [loadingBlogPosts, setLoadingBlogPosts] = useState(true);
+  const [showAddBlogPost, setShowAddBlogPost] = useState(false);
+  const [newBlogPost, setNewBlogPost] = useState(BLANK_BLOG_POST_FORM);
+  const [newBlogPostImage, setNewBlogPostImage] = useState<File | null>(null);
+  const [editingBlogId, setEditingBlogId] = useState<string | null>(null);
+  const [blogEditForm, setBlogEditForm] = useState(BLANK_BLOG_POST_FORM);
+  const [blogEditImage, setBlogEditImage] = useState<File | null>(null);
+  const [savingBlogPost, setSavingBlogPost] = useState(false);
+  const [blogMessage, setBlogMessage] = useState('');
+  const [blogError, setBlogError] = useState('');
+
   // Create Campaign modal
   const [showCreateCampaign, setShowCreateCampaign] = useState(false);
   const BLANK_CAMPAIGN_FORM = { category: 'beats' as NewsletterCategory, templateKey: 'custom-message', subject: '', bodyText: '', ctaLabel: '', ctaUrl: '', imageUrl: '', recipientCategories: ['beats'] as NewsletterCategory[] };
@@ -526,6 +552,118 @@ const Admin = () => {
       console.error(fetchError);
     } finally {
       setLoadingOutreachAnalytics(false);
+    }
+  };
+
+  // ── Blog ─────────────────────────────────────────────────────────────────
+
+  const fetchBlogPosts = async () => {
+    setLoadingBlogPosts(true);
+    try {
+      const response = await axios.get(`${API_BASE_URL}/blog`);
+      if (response.data?.ok) {
+        setBlogPosts(response.data.posts || []);
+      }
+    } catch (fetchError) {
+      console.error(fetchError);
+      setBlogError('Could not load blog posts.');
+    } finally {
+      setLoadingBlogPosts(false);
+    }
+  };
+
+  const blogPostFormData = (form: typeof BLANK_BLOG_POST_FORM, image: File | null) => {
+    const data = new FormData();
+    data.append('Title', form.Title);
+    data.append('Category', form.Category);
+    data.append('Excerpt', form.Excerpt);
+    data.append('Body', form.Body);
+    if (form.datee) data.append('datee', form.datee);
+    if (image) data.append('coverImage', image);
+    return data;
+  };
+
+  const handleAddBlogPost = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!newBlogPost.Title.trim() || !newBlogPost.Body.trim()) {
+      setBlogError('Title and body are required.');
+      return;
+    }
+    setSavingBlogPost(true);
+    setBlogError('');
+    try {
+      const response = await axios.post(`${API_BASE_URL}/blog`, blogPostFormData(newBlogPost, newBlogPostImage));
+      if (response.data?.ok) {
+        setBlogMessage('Post published.');
+        setNewBlogPost(BLANK_BLOG_POST_FORM);
+        setNewBlogPostImage(null);
+        setShowAddBlogPost(false);
+        fetchBlogPosts();
+      } else {
+        setBlogError(response.data?.message || 'Could not publish the post.');
+      }
+    } catch (saveError) {
+      console.error(saveError);
+      setBlogError('Could not publish the post.');
+    } finally {
+      setSavingBlogPost(false);
+    }
+  };
+
+  const handleStartEditBlogPost = (post: BlogPostRecord) => {
+    setShowAddBlogPost(false);
+    setEditingBlogId(post._id);
+    setBlogEditForm({
+      Title: post.Title || '',
+      Category: post.Category || '',
+      Excerpt: post.Excerpt || '',
+      Body: post.Body || '',
+      datee: post.datee || ''
+    });
+    setBlogEditImage(null);
+  };
+
+  const handleCancelEditBlogPost = () => {
+    setEditingBlogId(null);
+    setBlogEditForm(BLANK_BLOG_POST_FORM);
+    setBlogEditImage(null);
+  };
+
+  const handleSaveBlogPost = async (postId: string) => {
+    if (!blogEditForm.Title.trim() || !blogEditForm.Body.trim()) {
+      setBlogError('Title and body are required.');
+      return;
+    }
+    setSavingBlogPost(true);
+    setBlogError('');
+    try {
+      const response = await axios.put(`${API_BASE_URL}/blog/${postId}`, blogPostFormData(blogEditForm, blogEditImage));
+      if (response.data?.ok) {
+        setBlogMessage('Post updated.');
+        handleCancelEditBlogPost();
+        fetchBlogPosts();
+      } else {
+        setBlogError(response.data?.message || 'Could not update the post.');
+      }
+    } catch (saveError) {
+      console.error(saveError);
+      setBlogError('Could not update the post.');
+    } finally {
+      setSavingBlogPost(false);
+    }
+  };
+
+  const handleDeleteBlogPost = async (postId: string) => {
+    const confirmDelete = window.confirm('Delete this blog post?');
+    if (!confirmDelete) return;
+
+    try {
+      await axios.delete(`${API_BASE_URL}/blog/${postId}`);
+      setBlogMessage('Post deleted.');
+      fetchBlogPosts();
+    } catch (deleteError) {
+      console.error(deleteError);
+      setBlogError('Could not delete the post.');
     }
   };
 
@@ -969,6 +1107,7 @@ const Admin = () => {
       fetchWebsiteClients();
       fetchSubscribers();
       fetchOutreachAnalytics();
+      fetchBlogPosts();
     }
   }, [isAuthenticated]);
 
@@ -2763,11 +2902,150 @@ const Admin = () => {
         </Modal.Footer>
       </Modal>
 
-      <h2 style={{ color: '#68FF00', marginTop: '5rem', marginBottom: '1rem' }}>Leads</h2>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginTop: '5rem', marginBottom: '1rem' }}>
+        <h2 style={{ color: '#68FF00', margin: 0 }}>Blog</h2>
+        <Button
+          size="sm"
+          variant="outline-success"
+          onClick={() => {
+            handleCancelEditBlogPost();
+            setShowAddBlogPost((prev) => !prev);
+          }}
+        >
+          {showAddBlogPost ? 'Cancel' : '+ New Post'}
+        </Button>
+      </div>
       <p style={{ color: '#d4d4d4', marginBottom: '1rem' }}>
-        Inbound leads come from the free mockup signup form. Outbound leads come from the lead scraper or manual import.
+        Posts published here show up on /Blog alongside the built-in posts, credited to @_enigmalabs.
       </p>
-      <LeadsTable defaultPageSize={LEADS_ON_NEWSLETTER_PAGE_DEFAULT_SIZE} />
+
+      {blogMessage ? <Alert variant="success" dismissible onClose={() => setBlogMessage('')}>{blogMessage}</Alert> : null}
+      {blogError ? <Alert variant="danger" dismissible onClose={() => setBlogError('')}>{blogError}</Alert> : null}
+
+      {showAddBlogPost ? (
+        <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', marginBottom: '1.5rem' }}>
+          <Card.Body>
+            <Form onSubmit={handleAddBlogPost}>
+              <Row>
+                <Col md={8}>
+                  <Form.Group className="mb-2">
+                    <Form.Label style={{ fontSize: '0.8rem' }}>Title</Form.Label>
+                    <Form.Control size="sm" value={newBlogPost.Title} onChange={(e) => setNewBlogPost({ ...newBlogPost, Title: e.target.value })} required />
+                  </Form.Group>
+                </Col>
+                <Col md={4}>
+                  <Form.Group className="mb-2">
+                    <Form.Label style={{ fontSize: '0.8rem' }}>Category</Form.Label>
+                    <Form.Control size="sm" value={newBlogPost.Category} onChange={(e) => setNewBlogPost({ ...newBlogPost, Category: e.target.value })} placeholder="e.g. Web Dev" />
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Form.Group className="mb-2">
+                <Form.Label style={{ fontSize: '0.8rem' }}>Excerpt (shown on the listing card)</Form.Label>
+                <Form.Control size="sm" value={newBlogPost.Excerpt} onChange={(e) => setNewBlogPost({ ...newBlogPost, Excerpt: e.target.value })} placeholder="One-sentence hook" />
+              </Form.Group>
+              <Form.Group className="mb-2">
+                <Form.Label style={{ fontSize: '0.8rem' }}>Body (HTML)</Form.Label>
+                <Form.Control as="textarea" rows={8} size="sm" value={newBlogPost.Body} onChange={(e) => setNewBlogPost({ ...newBlogPost, Body: e.target.value })} required />
+              </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label style={{ fontSize: '0.8rem' }}>Cover Image</Form.Label>
+                <Form.Control size="sm" type="file" accept="image/*" onChange={(e) => setNewBlogPostImage((e.target as HTMLInputElement).files?.[0] || null)} />
+              </Form.Group>
+              <Button type="submit" size="sm" variant="success" disabled={savingBlogPost}>
+                {savingBlogPost ? 'Publishing...' : 'Publish Post'}
+              </Button>
+            </Form>
+          </Card.Body>
+        </Card>
+      ) : null}
+
+      {loadingBlogPosts ? <p>Loading blog posts...</p> : null}
+
+      {!loadingBlogPosts && blogPosts.length > 0 ? (
+        <Table striped bordered hover variant="dark" responsive size="sm">
+          <thead>
+            <tr>
+              <th>Cover</th>
+              <th>Title</th>
+              <th>Category</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {blogPosts.map((post) => (
+              <Fragment key={post._id}>
+                <tr>
+                  <td style={{ width: '72px' }}>
+                    {post.Image ? (
+                      <img src={post.Image} alt={post.Title} style={{ width: '56px', height: '38px', objectFit: 'cover', borderRadius: '4px' }} />
+                    ) : (
+                      '—'
+                    )}
+                  </td>
+                  <td>{post.Title}</td>
+                  <td>{post.Category || '—'}</td>
+                  <td><small>{post.datee}</small></td>
+                  <td style={{ whiteSpace: 'nowrap' }}>
+                    <Button size="sm" variant="outline-light" onClick={() => handleStartEditBlogPost(post)} style={{ marginRight: '0.4rem' }}>
+                      {editingBlogId === post._id ? 'Editing...' : 'Edit'}
+                    </Button>
+                    <Button size="sm" variant="outline-danger" onClick={() => handleDeleteBlogPost(post._id)}>Delete</Button>
+                  </td>
+                </tr>
+                {editingBlogId === post._id ? (
+                  <tr>
+                    <td colSpan={5}>
+                      <Form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          handleSaveBlogPost(post._id);
+                        }}
+                      >
+                        <Row>
+                          <Col md={8}>
+                            <Form.Group className="mb-2">
+                              <Form.Label style={{ fontSize: '0.8rem' }}>Title</Form.Label>
+                              <Form.Control size="sm" value={blogEditForm.Title} onChange={(e) => setBlogEditForm({ ...blogEditForm, Title: e.target.value })} required />
+                            </Form.Group>
+                          </Col>
+                          <Col md={4}>
+                            <Form.Group className="mb-2">
+                              <Form.Label style={{ fontSize: '0.8rem' }}>Category</Form.Label>
+                              <Form.Control size="sm" value={blogEditForm.Category} onChange={(e) => setBlogEditForm({ ...blogEditForm, Category: e.target.value })} />
+                            </Form.Group>
+                          </Col>
+                        </Row>
+                        <Form.Group className="mb-2">
+                          <Form.Label style={{ fontSize: '0.8rem' }}>Excerpt</Form.Label>
+                          <Form.Control size="sm" value={blogEditForm.Excerpt} onChange={(e) => setBlogEditForm({ ...blogEditForm, Excerpt: e.target.value })} />
+                        </Form.Group>
+                        <Form.Group className="mb-2">
+                          <Form.Label style={{ fontSize: '0.8rem' }}>Body (HTML)</Form.Label>
+                          <Form.Control as="textarea" rows={8} size="sm" value={blogEditForm.Body} onChange={(e) => setBlogEditForm({ ...blogEditForm, Body: e.target.value })} required />
+                        </Form.Group>
+                        <Form.Group className="mb-3">
+                          <Form.Label style={{ fontSize: '0.8rem' }}>Replace Cover Image (optional)</Form.Label>
+                          <Form.Control size="sm" type="file" accept="image/*" onChange={(e) => setBlogEditImage((e.target as HTMLInputElement).files?.[0] || null)} />
+                        </Form.Group>
+                        <Button type="submit" size="sm" variant="success" style={{ marginRight: '0.4rem' }} disabled={savingBlogPost}>
+                          {savingBlogPost ? 'Saving...' : 'Save'}
+                        </Button>
+                        <Button size="sm" variant="outline-light" onClick={handleCancelEditBlogPost}>Cancel</Button>
+                      </Form>
+                    </td>
+                  </tr>
+                ) : null}
+              </Fragment>
+            ))}
+          </tbody>
+        </Table>
+      ) : null}
+
+      {!loadingBlogPosts && blogPosts.length === 0 ? (
+        <Alert variant="secondary">No posts published from the admin yet — use “+ New Post” above.</Alert>
+      ) : null}
     </Container>
   );
 };
