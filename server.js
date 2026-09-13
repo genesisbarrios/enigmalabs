@@ -1416,6 +1416,7 @@ const webDevAgreementSchema = new mongoose.Schema({
   clientName: { type: String, required: true },
   clientAddress: { type: String, required: true },
   clientEmail: { type: String, required: true },
+  clientPhone: { type: String, required: true },
   jurisdiction: { type: String, required: true },
   effectiveDate: { type: Date, default: Date.now },
   signature: Buffer,
@@ -2500,7 +2501,7 @@ app.post('/api/newsletter/subscribers/:id/send', async (req, res) => {
 
 app.post('/api/agreements/submit', async (req, res) => {
   try {
-    const { planType, amount, clientName, clientAddress, clientEmail, jurisdiction, signatureDataUrl } = req.body;
+    const { planType, amount, clientName, clientAddress, clientEmail, clientPhone, jurisdiction, signatureDataUrl } = req.body;
 
     if (!['one_time', 'monthly', 'custom'].includes(planType)) {
       return res.status(400).json({ ok: false, message: 'Invalid plan type.' });
@@ -2509,7 +2510,7 @@ app.post('/api/agreements/submit', async (req, res) => {
     if (!numericAmount || numericAmount <= 0) {
       return res.status(400).json({ ok: false, message: 'A valid amount is required.' });
     }
-    if (!clientName || !clientAddress || !clientEmail || !jurisdiction) {
+    if (!clientName || !clientAddress || !clientEmail || !clientPhone || !jurisdiction) {
       return res.status(400).json({ ok: false, message: 'All fields are required.' });
     }
     if (!signatureDataUrl || !signatureDataUrl.startsWith('data:image/png;base64,')) {
@@ -2535,6 +2536,7 @@ app.post('/api/agreements/submit', async (req, res) => {
       clientName,
       clientAddress,
       clientEmail,
+      clientPhone,
       jurisdiction,
       effectiveDate,
       signature: signatureBuffer,
@@ -2550,7 +2552,7 @@ app.post('/api/agreements/submit', async (req, res) => {
     });
 
     await ensureNewsletterSubscriber(clientEmail);
-    await upsertWebsiteClient({ name: clientName, email: clientEmail, address: clientAddress });
+    await upsertWebsiteClient({ name: clientName, email: clientEmail, address: clientAddress, phone: clientPhone });
 
     res.status(201).json({ ok: true, agreementId: agreement._id });
   } catch (error) {

@@ -142,11 +142,12 @@ const Blog = () => {
           border: "1px solid #262626",
           marginTop: "2%",
           position: "relative",
+          
         }}
       >
         <img
           src="/blog-hero.jpg"
-          alt="Enigma Labs blog — web development and digital marketing insights"
+          alt="Enigma Labs blog — web development and digital marketing"
           style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
         />
       </div>

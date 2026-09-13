@@ -19,14 +19,20 @@ const PLAN_LABELS: Record<PlanType, string> = {
 const PLAN_DESCRIPTIONS: Record<PlanType, string> = {
   one_time_5: '$1,000 due once',
   one_time_10: '$2,000 due once',
-  monthly: '$200 billed monthly',
+  monthly: 'Billed monthly',
   custom: 'You enter the agreed amount'
 };
 
 const FIXED_PLAN_AMOUNTS: Partial<Record<PlanType, number>> = {
   one_time_5: 1000,
-  one_time_10: 2000,
-  monthly: 200
+  one_time_10: 2000
+};
+
+type MonthlyPages = '5' | '10';
+
+const MONTHLY_AMOUNTS: Record<MonthlyPages, number> = {
+  '5': 100,
+  '10': 200
 };
 
 const BACKEND_PLAN_TYPE: Record<PlanType, BackendPlanType> = {
@@ -35,6 +41,8 @@ const BACKEND_PLAN_TYPE: Record<PlanType, BackendPlanType> = {
   monthly: 'monthly',
   custom: 'custom'
 };
+
+const JURISDICTION = 'State of Florida, USA';
 
 const cardStyle: React.CSSProperties = {
   background: '#111',
@@ -54,9 +62,12 @@ const planCardStyle = (active: boolean): React.CSSProperties => ({
   boxShadow: active ? '0 0 25px rgba(104, 255, 0, 0.15)' : 'none'
 });
 
-const formatFee = (backendPlanType: BackendPlanType, amount: number) => {
+const formatFee = (backendPlanType: BackendPlanType, amount: number, monthlyPages?: MonthlyPages | '') => {
   const formatted = amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  if (backendPlanType === 'monthly') return `$${formatted} per month (recurring monthly subscription)`;
+  if (backendPlanType === 'monthly') {
+    const pagesLabel = monthlyPages ? ` — ${monthlyPages}-page website` : '';
+    return `$${formatted} per month (recurring monthly subscription${pagesLabel})`;
+  }
   if (backendPlanType === 'one_time') {
     if (amount === 1000) return `$${formatted} (one-time payment — 5-page website)`;
     if (amount === 2000) return `$${formatted} (one-time payment — 10-page website)`;
@@ -74,10 +85,11 @@ const OnboardingAgreement = () => {
       : null
   );
   const [customAmount, setCustomAmount] = useState(searchParams.get('amount') || '');
+  const [monthlyPages, setMonthlyPages] = useState<MonthlyPages | ''>('');
   const [clientName, setClientName] = useState(searchParams.get('clientName') || '');
   const [clientAddress, setClientAddress] = useState('');
   const [clientEmail, setClientEmail] = useState(searchParams.get('clientEmail') || '');
-  const [jurisdiction, setJurisdiction] = useState('');
+  const [clientPhone, setClientPhone] = useState(searchParams.get('clientPhone') || '');
 
   const visiblePlans: PlanType[] = ['one_time_5', 'one_time_10', 'monthly'];
 
@@ -90,8 +102,9 @@ const OnboardingAgreement = () => {
   const amount = useMemo(() => {
     if (!planType) return 0;
     if (planType === 'custom') return Number(customAmount) || 0;
+    if (planType === 'monthly') return monthlyPages ? MONTHLY_AMOUNTS[monthlyPages] : 0;
     return FIXED_PLAN_AMOUNTS[planType] ?? 0;
-  }, [planType, customAmount]);
+  }, [planType, customAmount, monthlyPages]);
 
   const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -107,11 +120,15 @@ const OnboardingAgreement = () => {
       setError('Please choose a plan.');
       return;
     }
+    if (planType === 'monthly' && !monthlyPages) {
+      setError('Please choose 5-page or 10-page for the monthly subscription.');
+      return;
+    }
     if (!amount || amount <= 0) {
       setError('Please enter a valid amount.');
       return;
     }
-    if (!clientName || !clientAddress || !clientEmail || !jurisdiction) {
+    if (!clientName || !clientAddress || !clientEmail || !clientPhone) {
       setError('Please fill in every field before signing.');
       return;
     }
@@ -129,7 +146,8 @@ const OnboardingAgreement = () => {
         clientName,
         clientAddress,
         clientEmail,
-        jurisdiction,
+        clientPhone,
+        jurisdiction: JURISDICTION,
         signatureDataUrl
       });
 
@@ -206,6 +224,32 @@ const OnboardingAgreement = () => {
             </Form.Group>
           ) : null}
 
+          {planType === 'monthly' ? (
+            <Form.Group className="mb-3" controlId="agreement-monthlyPages">
+              <Form.Label>Website Size</Form.Label>
+              <div>
+                <Form.Check
+                  type="radio"
+                  id="agreement-monthlyPages-5"
+                  name="monthlyPages"
+                  label="$100/month — 5-Page Website"
+                  checked={monthlyPages === '5'}
+                  onChange={() => setMonthlyPages('5')}
+                  required
+                />
+                <Form.Check
+                  type="radio"
+                  id="agreement-monthlyPages-10"
+                  name="monthlyPages"
+                  label="$200/month — 10-Page Website"
+                  checked={monthlyPages === '10'}
+                  onChange={() => setMonthlyPages('10')}
+                  required
+                />
+              </div>
+            </Form.Group>
+          ) : null}
+
           <Row>
             <Col md={6}>
               <Form.Group className="mb-3" controlId="agreement-clientName">
@@ -221,20 +265,20 @@ const OnboardingAgreement = () => {
             </Col>
           </Row>
 
-          <Form.Group className="mb-3" controlId="agreement-clientAddress">
-            <Form.Label>Client Address</Form.Label>
-            <Form.Control value={clientAddress} onChange={(event) => setClientAddress(event.target.value)} placeholder="Street, City, State" required />
-          </Form.Group>
-
-          <Form.Group className="mb-4" controlId="agreement-jurisdiction">
-            <Form.Label>Governing Jurisdiction</Form.Label>
-            <Form.Control
-              value={jurisdiction}
-              onChange={(event) => setJurisdiction(event.target.value)}
-              placeholder="e.g. State of Florida, USA"
-              required
-            />
-          </Form.Group>
+          <Row>
+            <Col md={6}>
+              <Form.Group className="mb-3" controlId="agreement-clientPhone">
+                <Form.Label>Client Phone</Form.Label>
+                <Form.Control type="tel" value={clientPhone} onChange={(event) => setClientPhone(event.target.value)} required />
+              </Form.Group>
+            </Col>
+            <Col md={6}>
+              <Form.Group className="mb-3" controlId="agreement-clientAddress">
+                <Form.Label>Client Address</Form.Label>
+                <Form.Control value={clientAddress} onChange={(event) => setClientAddress(event.target.value)} placeholder="Street, City, State" required />
+              </Form.Group>
+            </Col>
+          </Row>
 
           <Card style={{ ...cardStyle, marginBottom: '2rem' }}>
             <Card.Body style={{ padding: '2rem', maxHeight: '420px', overflowY: 'auto', fontSize: '0.9rem', color: '#d4d4d4' }}>
@@ -268,7 +312,7 @@ const OnboardingAgreement = () => {
 
               <h6 style={{ color: 'white' }}>3. Payment Terms</h6>
               <p>
-                Total Project Fee: {planType ? formatFee(BACKEND_PLAN_TYPE[planType], amount) : '—'}
+                Total Project Fee: {planType ? formatFee(BACKEND_PLAN_TYPE[planType], amount, monthlyPages) : '—'}
                 <br />
                 The Total Project Fee does not include third-party costs such as hosting, domain registration, premium plugins/themes,
                 stock photography, or paid API/service subscriptions. These are billed separately or paid directly by Client.
@@ -280,7 +324,7 @@ const OnboardingAgreement = () => {
                 estimate of additional cost and time impact before proceeding. Client approval (email is sufficient) is required before
                 out-of-scope work begins.
                 <br />
-                Included revision rounds: Additional revisions are billed at $35/hr.
+                Included revision rounds: Additional revisions are billed at $40/hr.
               </p>
 
               <h6 style={{ color: 'white' }}>5. Ownership &amp; Intellectual Property</h6>
@@ -335,7 +379,7 @@ const OnboardingAgreement = () => {
               <p>Developer is an independent contractor, not an employee, partner, or agent of Client. Developer is responsible for its own taxes, insurance, and benefits.</p>
 
               <h6 style={{ color: 'white' }}>11. Governing Law</h6>
-              <p>This Agreement is governed by the laws of the {jurisdiction || '[JURISDICTION]'}, without regard to conflict-of-law principles.</p>
+              <p>This Agreement is governed by the laws of the {JURISDICTION}, without regard to conflict-of-law principles.</p>
 
               <h6 style={{ color: 'white' }}>12. Entire Agreement</h6>
               <p>

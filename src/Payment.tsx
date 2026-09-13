@@ -14,7 +14,7 @@ const optionCardStyle: React.CSSProperties = {
   color: 'white',
   border: '1px solid #68FF00',
   borderRadius: '16px',
-  padding: '2.5rem 2rem',
+  padding: '1rem 1rem',
   height: '100%',
   cursor: 'pointer',
   boxShadow: '0 0 30px rgba(104, 255, 0, 0.15)',
@@ -41,14 +41,19 @@ const websitePlans: Plan[] = [
     url: 'https://square.link/u/nTuco1Ka'
   },
   {
-    title: '10-Page Website',
+    title: '10-Page Site',
     description: '$2,000 one-time payment',
     url: 'https://square.link/u/eJ9RcG2j'
   },
   {
     title: 'Monthly Subscription',
-    description: '$200/mo',
+    description: '$200/mo - 10 Pages',
     url: 'https://buy.stripe.com/5kQ6oA5vF8c6g6v8gF33W00'
+  },
+  {
+    title:'Monthly Subscription',
+    description: '$100/mo - 5 Pages',
+    url: 'https://buy.stripe.com/8x29AMgaj3VQg6v0Od33W04'
   }
 ];
 
@@ -105,7 +110,7 @@ const Payment = () => {
 
       <Row>
         {websitePlans.map((plan) => (
-          <Col xs={12} md={4} key={plan.title} style={{ marginBottom: '1.5rem' }}>
+          <Col xs={12} md={3} key={plan.title} style={{ marginBottom: '1.5rem' }}>
             <PlanCard plan={plan} />
           </Col>
         ))}
