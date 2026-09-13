@@ -36,14 +36,14 @@ type Plan = {
 
 const websitePlans: Plan[] = [
   {
-    title: '5-Page Website',
-    description: '$1,000 one-time payment',
-    url: 'https://square.link/u/nTuco1Ka'
-  },
-  {
     title: '10-Page Site',
     description: '$2,000 one-time payment',
     url: 'https://square.link/u/eJ9RcG2j'
+  }, 
+  {
+    title: '5-Page Website',
+    description: '$1,000 one-time payment',
+    url: 'https://square.link/u/nTuco1Ka'
   },
   {
     title: 'Monthly Subscription',
