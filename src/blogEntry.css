@@ -97,6 +97,15 @@
     border-radius: 15px;
   }
 
+  /* Numbered sub-headings inside a post body (e.g. "1. Point title" from the
+     point() helper in blogPosts.ts) were inheriting Bootstrap's default h3
+     size (1.75rem) — way too big for what's meant to be a minor in-body
+     subtitle rather than a section heading. */
+  .blogArticleBody h3 {
+    font-size: 1.15rem;
+    font-weight: 700;
+  }
+
   @media only screen and (max-width: 900px) {
     .blog-entry-hero {
       aspect-ratio: 16 / 10;

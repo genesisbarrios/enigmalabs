@@ -439,6 +439,19 @@ async function sendFreeAuditSignupEmail(subscriber) {
   );
 }
 
+const CONTACT_INTEREST_LABELS = { beats: 'Music', visuals: 'Branding', web: 'Web Development', ads: 'Ads' };
+
+async function sendContactFormEmail(payload) {
+  const interests = Object.keys(CONTACT_INTEREST_LABELS)
+    .filter((key) => payload[key])
+    .map((key) => CONTACT_INTEREST_LABELS[key]);
+
+  await sendAdminNotification(
+    `New contact form submission: ${payload.name || payload.email}`,
+    `New contact form submission (About page):\n\nName: ${payload.name || '—'}\nEmail: ${payload.email}\nPhone: ${payload.phone || '—'}\nInstagram/Social: ${payload.socialUrl || '—'}\nInterested in: ${interests.length ? interests.join(', ') : '—'}\nMessage: ${payload.message || '—'}`
+  );
+}
+
 // Confirms the audit is already underway and points straight to the booking
 // link — this is a warm inbound lead, not a cold pitch, so the copy skips
 // any "here's why you should work with us" framing.
@@ -2014,6 +2027,42 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
   } catch (error) {
     console.error('Newsletter subscription failed', error);
     res.status(500).json({ ok: false, message: 'Could not save newsletter subscription.' });
+  }
+});
+
+// Public "Contact Us" form (About page) — emails the admin directly with the
+// submitter's info. Newsletter signup is handled separately by the frontend
+// calling /api/newsletter/subscribe, so this endpoint only handles the email.
+app.post('/api/contact/submit', async (req, res) => {
+  try {
+    const payload = {
+      email: req.body.email || '',
+      name: req.body.name || '',
+      phone: req.body.phone || '',
+      socialUrl: req.body.socialUrl || '',
+      message: req.body.message || '',
+      beats: Boolean(req.body.beats),
+      visuals: Boolean(req.body.visuals),
+      web: Boolean(req.body.web),
+      ads: Boolean(req.body.ads),
+      honeypot: (req.body.honeypot !== undefined ? req.body.honeypot : req.body.website) || '',
+      formLoadedAt: req.body.formLoadedAt
+    };
+
+    if (!payload.email) {
+      return res.status(400).json({ ok: false, message: 'Email is required.' });
+    }
+
+    if (await isLikelySpamSubmission(payload, req)) {
+      return res.status(201).json({ ok: true, message: 'Message received.' });
+    }
+
+    await sendContactFormEmail(payload);
+
+    res.status(201).json({ ok: true, message: 'Message received.' });
+  } catch (error) {
+    console.error('Contact form submission failed', error);
+    res.status(500).json({ ok: false, message: 'Could not send your message.' });
   }
 });
 

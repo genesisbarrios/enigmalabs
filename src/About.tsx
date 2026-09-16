@@ -22,6 +22,7 @@ const About = () => {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [socialUrl, setSocialUrl] = useState("");
+  const [contactMessage, setContactMessage] = useState("");
   const [beats, setBeats] = useState(false);
   const [visuals, setVisuals] = useState(false);
   const [web, setWeb] = useState(false);
@@ -40,6 +41,8 @@ const About = () => {
     borderRadius: "20px",
     boxShadow: "0 0 30px rgba(104, 255, 0, 0.15)",
     width: "100%",
+    maxWidth: "480px",
+    margin: "0 auto",
     padding: "2.75rem 2rem"
   };
 
@@ -93,7 +96,7 @@ const About = () => {
     { key: "ads", label: "Ads", active: ads, toggle: () => setAds(!ads) }
   ];
 
-  function handleSubmit() {
+  async function handleSubmit() {
     if (!email) {
       setAlert('Please set an e-mail address~');
       return;
@@ -104,6 +107,7 @@ const About = () => {
       name,
       phone,
       socialUrl,
+      message: contactMessage,
       beats,
       visuals,
       web,
@@ -112,20 +116,25 @@ const About = () => {
       formLoadedAt
     };
 
-    axios.post(`${API_BASE_URL}/newsletter/subscribe`, dataToSend, {
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    })
-      .then(() => {
-        setMessage("Your e-mail has been saved!");
-        setAlert('');
-      })
-      .catch((error) => {
-        setAlert("There was an error.");
-        console.error('Error: ', error);
-        setMessage('');
-      });
+    const headers = { 'Content-Type': 'application/json' };
+
+    // Sent separately so a hiccup in one doesn't block the other — the admin
+    // notification email is the point of this form, while the newsletter
+    // signup is a side effect that should still go through independently.
+    const [contactResult, newsletterResult] = await Promise.allSettled([
+      axios.post(`${API_BASE_URL}/contact/submit`, dataToSend, { headers }),
+      axios.post(`${API_BASE_URL}/newsletter/subscribe`, dataToSend, { headers })
+    ]);
+
+    if (contactResult.status === 'rejected' && newsletterResult.status === 'rejected') {
+      console.error('Contact form submission failed', contactResult.reason, newsletterResult.reason);
+      setAlert("There was an error.");
+      setMessage('');
+      return;
+    }
+
+    setMessage("Thanks! Your message has been sent and you're on our newsletter list.");
+    setAlert('');
   }
 
       return (
@@ -172,12 +181,12 @@ const About = () => {
           </Row>
 
           <Row style={{ ...rowStyle, marginTop: "6%", marginBottom: "6%" }}>
-            <Col xs={12} md={6} className="mt-4 mt-md-0" style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+            <Col xs={12} className="mt-4 mt-md-0" style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
               <div style={newsletterCardStyle}>
                 <form style={{ textAlign: "center", width: "100%", maxWidth: "420px", margin: "0 auto" }}>
-                  <h3 style={{ color: "#68FF00", marginBottom: "0.25rem" }}>Sign Up For Our Newsletter</h3>
+                  <h3 style={{ color: "#68FF00", marginBottom: "0.25rem" }}>Contact Us</h3>
                   <p style={{ color: "#aaa", fontSize: "0.9rem", marginBottom: "1.5rem" }}>
-                    News, freebies, and discounts. No spam.
+                    Tell us about your project — you'll also be added to our newsletter for news, freebies, and discounts.
                   </p>
                   {/* Honeypot — hidden from real users, tempting for bots that auto-fill every field */}
                   <input
@@ -226,6 +235,15 @@ const About = () => {
                       setSocialUrl(e.target.value);
                     }}
                   ></input>
+                  <textarea
+                    name="message"
+                    placeholder="Tell us about your project (optional)"
+                    rows={4}
+                    style={{ ...newsletterInputStyle, resize: "vertical" as const }}
+                    onChange={(e) => {
+                      setContactMessage(e.target.value);
+                    }}
+                  ></textarea>
                   <label style={{ display: "block", color: "#d4d4d4", marginBottom: "0.5rem" }}>
                     What are you interested in?
                   </label>
@@ -263,11 +281,6 @@ const About = () => {
                   {alert && <Alert style={{ marginTop: "1.5rem", backgroundColor: "#2a0000", borderColor: "#ff4d4d", color: "#ff9d9d" }}>{alert.toString()}</Alert>}
                 </form>
               </div>
-            </Col>
-             <Col xs={12} md={6} className="text-center" style={{ display: "flex", flexDirection: "column", justifyContent: "center", alignItems: "center" }}>
-              <h4 className="mt-5">Email Us</h4>
-              <a href="mailto:info@enigma-labs.com" className="text-white">info@enigma-labs.com</a>
-              <div style={{marginBottom:"3%"}}></div>
             </Col>
           </Row>
         </Container>
