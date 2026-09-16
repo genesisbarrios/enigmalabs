@@ -24,7 +24,10 @@ const About = () => {
   const [phone, setPhone] = useState("");
   const [socialUrl, setSocialUrl] = useState("");
   const [contactMessage, setContactMessage] = useState("");
-  const [newsletterOptIn, setNewsletterOptIn] = useState(false);
+  const [beats, setBeats] = useState(false);
+  const [visuals, setVisuals] = useState(false);
+  const [web, setWeb] = useState(false);
+  const [ads, setAds] = useState(false);
   const [message, setMessage] = useState("");
   const [alert, setAlert] = useState("");
   // Honeypot — real users never see or fill this; bots that auto-fill every
@@ -82,11 +85,22 @@ const About = () => {
     transition: "all 0.15s ease"
   });
 
+  const interestOptions: { key: string; label: string; active: boolean; toggle: () => void }[] = [
+    { key: "web", label: "Web Development", active: web, toggle: () => setWeb(!web) },
+    { key: "visuals", label: "Branding", active: visuals, toggle: () => setVisuals(!visuals) },
+    { key: "ads", label: "Ads", active: ads, toggle: () => setAds(!ads) },
+    { key: "beats", label: "Music", active: beats, toggle: () => setBeats(!beats) },
+  ];
+
   async function handleSubmit() {
     if (!email) {
       setAlert('Please set an e-mail address~');
       return;
     }
+
+    // Picking any interest is what opts them into the newsletter — no
+    // separate opt-in checkbox.
+    const wantsNewsletter = beats || visuals || web || ads;
 
     const dataToSend = {
       email,
@@ -94,6 +108,10 @@ const About = () => {
       phone,
       socialUrl,
       message: contactMessage,
+      beats,
+      visuals,
+      web,
+      ads,
       website: honeypot,
       formLoadedAt
     };
@@ -101,10 +119,10 @@ const About = () => {
     const headers = { 'Content-Type': 'application/json' };
 
     // Sent separately so a hiccup in one doesn't block the other — the admin
-    // notification email is the point of this form. The newsletter signup is
-    // a separate opt-in and only fires if the user checked that box.
-    const requests = [axios.post(`${API_BASE_URL}/contact/submit`, { ...dataToSend, newsletterOptIn }, { headers })];
-    if (newsletterOptIn) {
+    // notification email is the point of this form. The newsletter signup
+    // only fires if the user picked at least one interest.
+    const requests = [axios.post(`${API_BASE_URL}/contact/submit`, dataToSend, { headers })];
+    if (wantsNewsletter) {
       requests.push(axios.post(`${API_BASE_URL}/newsletter/subscribe`, dataToSend, { headers }));
     }
     const results = await Promise.allSettled(requests);
@@ -117,7 +135,7 @@ const About = () => {
     }
 
     setMessage(
-      newsletterOptIn
+      wantsNewsletter
         ? "Thanks! Your message has been sent and you're on our newsletter list."
         : "Thanks! Your message has been sent."
     );
@@ -236,24 +254,27 @@ const About = () => {
                     </Col>
                   </Row>
                   <label style={{ display: "block", color: "#d4d4d4", marginBottom: "0.5rem" }}>
-                    Interested in our newsletter?
+                    Interested in our newsletter? Select what applies:
                   </label>
                   <div style={{ textAlign: "center" }}>
-                    <span
-                      role="checkbox"
-                      aria-checked={newsletterOptIn}
-                      tabIndex={0}
-                      style={newsletterChipStyle(newsletterOptIn)}
-                      onClick={() => setNewsletterOptIn(!newsletterOptIn)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          setNewsletterOptIn(!newsletterOptIn);
-                        }
-                      }}
-                    >
-                      {newsletterOptIn ? "✓ Yes, sign me up" : "Yes, sign me up"}
-                    </span>
+                    {interestOptions.map((option) => (
+                      <span
+                        key={option.key}
+                        role="checkbox"
+                        aria-checked={option.active}
+                        tabIndex={0}
+                        style={newsletterChipStyle(option.active)}
+                        onClick={option.toggle}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            option.toggle();
+                          }
+                        }}
+                      >
+                        {option.label}
+                      </span>
+                    ))}
                   </div>
                   <button
                     onClick={(e) => {

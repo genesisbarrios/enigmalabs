@@ -439,10 +439,16 @@ async function sendFreeAuditSignupEmail(subscriber) {
   );
 }
 
+const CONTACT_INTEREST_LABELS = { beats: 'Music', visuals: 'Branding', web: 'Web Development', ads: 'Ads' };
+
 async function sendContactFormEmail(payload) {
+  const interests = Object.keys(CONTACT_INTEREST_LABELS)
+    .filter((key) => payload[key])
+    .map((key) => CONTACT_INTEREST_LABELS[key]);
+
   await sendAdminNotification(
     `New contact form submission: ${payload.name || payload.email}`,
-    `New contact form submission (About page):\n\nName: ${payload.name || '—'}\nEmail: ${payload.email}\nPhone: ${payload.phone || '—'}\nInstagram/Social: ${payload.socialUrl || '—'}\nNewsletter opt-in: ${payload.newsletterOptIn ? 'Yes' : 'No'}\nMessage: ${payload.message || '—'}`
+    `New contact form submission (About page):\n\nName: ${payload.name || '—'}\nEmail: ${payload.email}\nPhone: ${payload.phone || '—'}\nInstagram/Social: ${payload.socialUrl || '—'}\nInterested in: ${interests.length ? interests.join(', ') : '—'}\nMessage: ${payload.message || '—'}`
   );
 }
 
@@ -1491,7 +1497,10 @@ const contactSubmissionSchema = new mongoose.Schema({
   phone: String,
   socialUrl: String,
   message: String,
-  newsletterOptIn: { type: Boolean, default: false },
+  beats: { type: Boolean, default: false },
+  visuals: { type: Boolean, default: false },
+  web: { type: Boolean, default: false },
+  ads: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -2047,7 +2056,10 @@ app.post('/api/contact/submit', async (req, res) => {
       phone: req.body.phone || '',
       socialUrl: req.body.socialUrl || '',
       message: req.body.message || '',
-      newsletterOptIn: Boolean(req.body.newsletterOptIn),
+      beats: Boolean(req.body.beats),
+      visuals: Boolean(req.body.visuals),
+      web: Boolean(req.body.web),
+      ads: Boolean(req.body.ads),
       honeypot: (req.body.honeypot !== undefined ? req.body.honeypot : req.body.website) || '',
       formLoadedAt: req.body.formLoadedAt
     };
