@@ -1,6 +1,7 @@
 import { useEffect, useState, useLayoutEffect } from "react";
 import { Row, Col, Container, Button, Alert } from "react-bootstrap";
 import axios from 'axios';
+import "./about.css";
 //import image1 from "./image1.png";
 
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
@@ -23,10 +24,7 @@ const About = () => {
   const [phone, setPhone] = useState("");
   const [socialUrl, setSocialUrl] = useState("");
   const [contactMessage, setContactMessage] = useState("");
-  const [beats, setBeats] = useState(false);
-  const [visuals, setVisuals] = useState(false);
-  const [web, setWeb] = useState(false);
-  const [ads, setAds] = useState(false);
+  const [newsletterOptIn, setNewsletterOptIn] = useState(false);
   const [message, setMessage] = useState("");
   const [alert, setAlert] = useState("");
   // Honeypot — real users never see or fill this; bots that auto-fill every
@@ -40,17 +38,12 @@ const About = () => {
     border: "1px solid #68FF00",
     borderRadius: "20px",
     boxShadow: "0 0 30px rgba(104, 255, 0, 0.15)",
-    width: "100%",
-    maxWidth: "480px",
-    margin: "0 auto",
     padding: "2.75rem 2rem"
   };
 
   const newsletterInputStyle = {
     display: "block",
-    margin: "0 auto 1.5rem",
     width: "100%",
-    maxWidth: "360px",
     padding: "0.85rem 1.15rem",
     borderRadius: "2rem",
     border: "1px solid #333",
@@ -89,13 +82,6 @@ const About = () => {
     transition: "all 0.15s ease"
   });
 
-  const interestOptions: { key: string; label: string; active: boolean; toggle: () => void }[] = [
-    { key: "web", label: "Web Development", active: web, toggle: () => setWeb(!web) },
-    { key: "visuals", label: "Branding", active: visuals, toggle: () => setVisuals(!visuals) },
-    { key: "ads", label: "Ads", active: ads, toggle: () => setAds(!ads) },
-    { key: "beats", label: "Music", active: beats, toggle: () => setBeats(!beats) },
-  ];
-
   async function handleSubmit() {
     if (!email) {
       setAlert('Please set an e-mail address~');
@@ -108,10 +94,6 @@ const About = () => {
       phone,
       socialUrl,
       message: contactMessage,
-      beats,
-      visuals,
-      web,
-      ads,
       website: honeypot,
       formLoadedAt
     };
@@ -119,21 +101,26 @@ const About = () => {
     const headers = { 'Content-Type': 'application/json' };
 
     // Sent separately so a hiccup in one doesn't block the other — the admin
-    // notification email is the point of this form, while the newsletter
-    // signup is a side effect that should still go through independently.
-    const [contactResult, newsletterResult] = await Promise.allSettled([
-      axios.post(`${API_BASE_URL}/contact/submit`, dataToSend, { headers }),
-      axios.post(`${API_BASE_URL}/newsletter/subscribe`, dataToSend, { headers })
-    ]);
+    // notification email is the point of this form. The newsletter signup is
+    // a separate opt-in and only fires if the user checked that box.
+    const requests = [axios.post(`${API_BASE_URL}/contact/submit`, { ...dataToSend, newsletterOptIn }, { headers })];
+    if (newsletterOptIn) {
+      requests.push(axios.post(`${API_BASE_URL}/newsletter/subscribe`, dataToSend, { headers }));
+    }
+    const results = await Promise.allSettled(requests);
 
-    if (contactResult.status === 'rejected' && newsletterResult.status === 'rejected') {
-      console.error('Contact form submission failed', contactResult.reason, newsletterResult.reason);
+    if (results.every((result) => result.status === 'rejected')) {
+      console.error('Contact form submission failed', results.map((result) => result.status === 'rejected' && result.reason));
       setAlert("There was an error.");
       setMessage('');
       return;
     }
 
-    setMessage("Thanks! Your message has been sent and you're on our newsletter list.");
+    setMessage(
+      newsletterOptIn
+        ? "Thanks! Your message has been sent and you're on our newsletter list."
+        : "Thanks! Your message has been sent."
+    );
     setAlert('');
   }
 
@@ -172,13 +159,10 @@ const About = () => {
           </Row>
 
           <Row style={{ ...rowStyle, marginTop: "6%", marginBottom: "6%" }}>
-            <Col xs={12} className="mt-4 mt-md-0" style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
-              <div style={newsletterCardStyle}>
-                <form style={{ textAlign: "center", width: "100%", maxWidth: "420px", margin: "0 auto" }}>
-                  <h3 style={{ color: "#68FF00", marginBottom: "0.25rem" }}>Contact Us</h3>
-                  <p style={{ color: "#aaa", fontSize: "0.9rem", marginBottom: "1.5rem" }}>
-                    Tell us about your project — you'll also be added to our newsletter for news, freebies, and discounts.
-                  </p>
+            <Col xs={12} className="mt-4 mt-md-0 d-flex justify-content-center justify-content-md-start align-items-center">
+              <div className="contact-card" style={newsletterCardStyle}>
+                <form style={{ textAlign: "center", width: "100%" }}>
+                  <h3 style={{ color: "#68FF00", marginBottom: "1.5rem" }}>Contact Us</h3>
                   {/* Honeypot — hidden from real users, tempting for bots that auto-fill every field */}
                   <input
                     type="text"
@@ -190,73 +174,86 @@ const About = () => {
                     aria-hidden="true"
                     style={{ position: "absolute", left: "-9999px", width: "1px", height: "1px", opacity: 0 }}
                   ></input>
-                  <input
-                    type="text"
-                    name="name"
-                    placeholder="Your name"
-                    style={newsletterInputStyle}
-                    onChange={(e) => {
-                      setName(e.target.value);
-                    }}
-                  ></input>
-                  <input
-                    type="email"
-                    name="e-mail"
-                    placeholder="your@email.com"
-                    style={newsletterInputStyle}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                    }}
-                  ></input>
-                  <input
-                    type="tel"
-                    name="phone"
-                    placeholder="Phone number"
-                    style={newsletterInputStyle}
-                    onChange={(e) => {
-                      setPhone(e.target.value);
-                    }}
-                  ></input>
-                  <input
-                    type="text"
-                    name="social-url"
-                    placeholder="Instagram handle (optional)"
-                    style={newsletterInputStyle}
-                    onChange={(e) => {
-                      setSocialUrl(e.target.value);
-                    }}
-                  ></input>
-                  <textarea
-                    name="message"
-                    placeholder="Tell us about your project (optional)"
-                    rows={4}
-                    style={{ ...newsletterInputStyle, resize: "vertical" as const }}
-                    onChange={(e) => {
-                      setContactMessage(e.target.value);
-                    }}
-                  ></textarea>
+                  <Row className="g-3 mb-3">
+                    <Col xs={12} md={6}>
+                      <input
+                        type="text"
+                        name="name"
+                        placeholder="Your name"
+                        style={newsletterInputStyle}
+                        onChange={(e) => {
+                          setName(e.target.value);
+                        }}
+                      ></input>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <input
+                        type="email"
+                        name="e-mail"
+                        placeholder="your@email.com"
+                        style={newsletterInputStyle}
+                        onChange={(e) => {
+                          setEmail(e.target.value);
+                        }}
+                      ></input>
+                    </Col>
+                  </Row>
+                  <Row className="g-3 mb-3">
+                    <Col xs={12} md={6}>
+                      <input
+                        type="tel"
+                        name="phone"
+                        placeholder="Phone number"
+                        style={newsletterInputStyle}
+                        onChange={(e) => {
+                          setPhone(e.target.value);
+                        }}
+                      ></input>
+                    </Col>
+                    <Col xs={12} md={6}>
+                      <input
+                        type="text"
+                        name="social-url"
+                        placeholder="Instagram handle (optional)"
+                        style={newsletterInputStyle}
+                        onChange={(e) => {
+                          setSocialUrl(e.target.value);
+                        }}
+                      ></input>
+                    </Col>
+                  </Row>
+                  <Row className="g-3 mb-3">
+                    <Col xs={12}>
+                      <textarea
+                        name="message"
+                        placeholder="Tell us about your project (optional)"
+                        rows={4}
+                        style={{ ...newsletterInputStyle, resize: "vertical" as const }}
+                        onChange={(e) => {
+                          setContactMessage(e.target.value);
+                        }}
+                      ></textarea>
+                    </Col>
+                  </Row>
                   <label style={{ display: "block", color: "#d4d4d4", marginBottom: "0.5rem" }}>
-                    What are you interested in?
+                    Interested in our newsletter?
                   </label>
                   <div style={{ textAlign: "center" }}>
-                    {interestOptions.map((option) => (
-                      <span
-                        key={option.key}
-                        role="checkbox"
-                        aria-checked={option.active}
-                        tabIndex={0}
-                        style={newsletterChipStyle(option.active)}
-                        onClick={option.toggle}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            option.toggle();
-                          }
-                        }}
-                      >
-                        {option.label}
-                      </span>
-                    ))}
+                    <span
+                      role="checkbox"
+                      aria-checked={newsletterOptIn}
+                      tabIndex={0}
+                      style={newsletterChipStyle(newsletterOptIn)}
+                      onClick={() => setNewsletterOptIn(!newsletterOptIn)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          setNewsletterOptIn(!newsletterOptIn);
+                        }
+                      }}
+                    >
+                      {newsletterOptIn ? "✓ Yes, sign me up" : "Yes, sign me up"}
+                    </span>
                   </div>
                   <button
                     onClick={(e) => {

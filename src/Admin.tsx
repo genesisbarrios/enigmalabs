@@ -168,10 +168,7 @@ type ContactSubmission = {
   phone?: string;
   socialUrl?: string;
   message?: string;
-  beats: boolean;
-  visuals: boolean;
-  web: boolean;
-  ads: boolean;
+  newsletterOptIn: boolean;
   createdAt: string;
 };
 
@@ -2830,19 +2827,13 @@ const Admin = () => {
             <tr>
               <th>Name</th>
               <th>Contact</th>
-              <th>Interested In</th>
+              <th>Newsletter</th>
               <th>Message</th>
               <th>Submitted</th>
             </tr>
           </thead>
           <tbody>
             {contactSubmissions.map((submission) => {
-              const interests = [
-                submission.beats ? 'Music' : null,
-                submission.visuals ? 'Branding' : null,
-                submission.web ? 'Web Development' : null,
-                submission.ads ? 'Ads' : null
-              ].filter((value): value is string => Boolean(value));
               return (
                 <tr key={submission._id}>
                   <td>{submission.name || '—'}</td>
@@ -2852,9 +2843,9 @@ const Admin = () => {
                     {submission.socialUrl ? <div><small style={{ color: '#aaa' }}>{submission.socialUrl}</small></div> : null}
                   </td>
                   <td>
-                    <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
-                      {interests.length > 0 ? interests.map((label) => <Badge key={label} bg="secondary">{label}</Badge>) : '—'}
-                    </div>
+                    <Badge bg={submission.newsletterOptIn ? 'success' : 'secondary'}>
+                      {submission.newsletterOptIn ? 'Yes' : 'No'}
+                    </Badge>
                   </td>
                   <td style={{ maxWidth: '320px' }}>
                     <small>{submission.message ? submission.message : '—'}</small>

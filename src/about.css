@@ -1,0 +1,14 @@
+/* Contact form card on the About page — centered + capped width on mobile,
+   wider and left-justified within its column on desktop. */
+.contact-card {
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+@media only screen and (min-width: 768px) {
+  .contact-card {
+    max-width: 640px;
+    margin: 0;
+  }
+}
