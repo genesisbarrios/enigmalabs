@@ -148,7 +148,7 @@ const About = () => {
 
               <hr style={{backgroundColor:"white", marginTop: "3%"}}/>
               <h2>Team</h2>
-              <h5>CEO, Genesis Barrios</h5>
+              <h5>CEO, Gen Barrios</h5>
               <p> Software Engineer, Music Producer & Audio Engineer, Content Creator </p>
               <a  className="socialLinks" href="https://linkedin.com/in/genesis-barrios" target="_blank">LinkedIn</a>
               <a  className="socialLinks" href="https://genesisbarrios.xyz" target="_blank">Programming Portfolio</a>
