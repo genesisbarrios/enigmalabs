@@ -1491,6 +1491,21 @@ const blogPostSchema = new mongoose.Schema({
 
 const BlogPost = mongoose.model('BlogPost', blogPostSchema, 'blogPosts');
 
+const contactSubmissionSchema = new mongoose.Schema({
+  name: String,
+  email: { type: String, required: true },
+  phone: String,
+  socialUrl: String,
+  message: String,
+  beats: { type: Boolean, default: false },
+  visuals: { type: Boolean, default: false },
+  web: { type: Boolean, default: false },
+  ads: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const ContactSubmission = mongoose.model('ContactSubmission', contactSubmissionSchema, 'contact_submissions');
+
 const leadSchema = new mongoose.Schema({
   businessName: String,
   contactName: String,
@@ -2031,8 +2046,8 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
 });
 
 // Public "Contact Us" form (About page) — emails the admin directly with the
-// submitter's info. Newsletter signup is handled separately by the frontend
-// calling /api/newsletter/subscribe, so this endpoint only handles the email.
+// submitter's info and saves it so it shows up in the admin panel. Newsletter
+// signup is handled separately by the frontend calling /api/newsletter/subscribe.
 app.post('/api/contact/submit', async (req, res) => {
   try {
     const payload = {
@@ -2057,12 +2072,24 @@ app.post('/api/contact/submit', async (req, res) => {
       return res.status(201).json({ ok: true, message: 'Message received.' });
     }
 
+    const { honeypot, formLoadedAt, ...submissionFields } = payload;
+    await ContactSubmission.create(submissionFields);
     await sendContactFormEmail(payload);
 
     res.status(201).json({ ok: true, message: 'Message received.' });
   } catch (error) {
     console.error('Contact form submission failed', error);
     res.status(500).json({ ok: false, message: 'Could not send your message.' });
+  }
+});
+
+app.get('/api/contact/submissions', async (_req, res) => {
+  try {
+    const submissions = await ContactSubmission.find().sort({ createdAt: -1 });
+    res.json({ ok: true, submissions });
+  } catch (error) {
+    console.error('Could not fetch contact submissions', error);
+    res.status(500).json({ ok: false, message: 'Could not fetch contact submissions.' });
   }
 });
 
@@ -2954,9 +2981,12 @@ app.post('/api/website-clients/send-custom-email', async (req, res) => {
 
 // ── CRM Leads ──
 
-app.get('/api/crm/leads', async (_req, res) => {
+app.get('/api/crm/leads', async (req, res) => {
   try {
-    const leads = await Lead.find().sort({ createdAt: -1 });
+    const filter = {};
+    if (req.query.inbound !== undefined) filter.inbound = req.query.inbound === 'true';
+    if (req.query.source) filter.source = req.query.source;
+    const leads = await Lead.find(filter).sort({ createdAt: -1 });
     res.json({ ok: true, leads });
   } catch (error) {
     console.error('Could not fetch leads', error);
