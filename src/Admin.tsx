@@ -2902,6 +2902,150 @@ const Admin = () => {
         </Modal.Footer>
       </Modal>
 
+      <div style={{ marginTop: '5rem', marginBottom: '1rem' }}>
+        <h2 style={{ color: '#68FF00', margin: 0 }}>Audits</h2>
+        <p style={{ color: '#d4d4d4', marginTop: '0.4rem', marginBottom: 0 }}>
+          Free-audit signups and their automated online-presence review (website, Instagram, Facebook, Google Business).
+          Rule-based, not a human read yet — use "Re-run" if a link failed to load.
+        </p>
+      </div>
+
+      {!loadingSubscribers && auditSignups.length === 0 ? <Alert variant="secondary">No audit requests yet.</Alert> : null}
+
+      {auditSignups.length > 0 ? (
+        <>
+          <Row className="mb-2 align-items-center">
+            <Col style={{ color: '#aaa', fontSize: '0.85rem' }}>
+              Showing {(auditPage - 1) * auditPageSize + 1}–{Math.min(auditPage * auditPageSize, auditSignups.length)} of {auditSignups.length}
+            </Col>
+            <Col xs="auto">
+              <Form.Select
+                size="sm"
+                value={auditPageSize}
+                onChange={(event) => setAuditPageSize(Number(event.target.value))}
+                style={{ width: 'auto' }}
+              >
+                {AUDIT_PAGE_SIZE_OPTIONS.map((size) => (
+                  <option key={size} value={size}>{size} per page</option>
+                ))}
+              </Form.Select>
+            </Col>
+          </Row>
+
+          <Table striped bordered hover variant="dark" responsive>
+            <thead>
+              <tr>
+                <th>Lead</th>
+                <th>Channels</th>
+                <th>Score</th>
+                <th>Status</th>
+                <th>Summary</th>
+                <th>Requested</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {paginatedAuditSignups.map((subscriber) => {
+                const isRunning = runningAuditId === subscriber._id;
+                const isExpanded = expandedAuditId === subscriber._id;
+                const channelLinks: { label: string; value?: string }[] = [
+                  { label: 'Website', value: subscriber.website || subscriber.projectUrl },
+                  { label: 'IG', value: subscriber.instagram },
+                  { label: 'FB', value: subscriber.facebook },
+                  { label: 'GBP', value: subscriber.googleBusinessUrl }
+                ];
+                return (
+                  <Fragment key={subscriber._id}>
+                    <tr>
+                      <td>
+                        <strong>{subscriber.name || subscriber.businessName || subscriber.email}</strong>
+                        <br />
+                        <small style={{ color: '#aaa' }}>{subscriber.email}</small>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                          {channelLinks.map((channel) => {
+                            const badge = (
+                              <Badge key={channel.label} bg={channel.value ? 'secondary' : 'dark'} style={{ opacity: channel.value ? 1 : 0.4 }}>
+                                {channel.label}
+                              </Badge>
+                            );
+                            if (!channel.value) return badge;
+                            const href = /^https?:\/\//i.test(channel.value) ? channel.value : `https://${channel.value.replace(/^@/, '')}`;
+                            return (
+                              <a key={channel.label} href={href} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                                {badge}
+                              </a>
+                            );
+                          })}
+                        </div>
+                      </td>
+                      <td>
+                        {subscriber.auditScore ? (
+                          <Badge bg={AUDIT_SCORE_VARIANT[subscriber.auditScore] || 'secondary'}>{subscriber.auditScore}</Badge>
+                        ) : '—'}
+                      </td>
+                      <td>
+                        {subscriber.auditStatus === 'pending' ? <Badge bg="info">Pending...</Badge> : null}
+                        {subscriber.auditStatus === 'complete' ? <Badge bg="success">Complete</Badge> : null}
+                        {subscriber.auditStatus === 'failed' ? <Badge bg="danger">Failed</Badge> : null}
+                        {!subscriber.auditStatus ? '—' : null}
+                      </td>
+                      <td style={{ maxWidth: '360px' }}>
+                        <small>{subscriber.auditSummary ? `${subscriber.auditSummary.slice(0, 120)}${subscriber.auditSummary.length > 120 ? '...' : ''}` : '—'}</small>
+                      </td>
+                      <td><small>{new Date(subscriber.auditRequestedAt || subscriber.createdAt).toLocaleString()}</small></td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                          <Button size="sm" variant="outline-light" onClick={() => setExpandedAuditId(isExpanded ? null : subscriber._id)}>
+                            {isExpanded ? 'Hide' : 'Details'}
+                          </Button>
+                          <Button size="sm" variant="outline-info" disabled={isRunning} onClick={() => handleRunAudit(subscriber._id)}>
+                            {isRunning ? 'Running...' : 'Re-run'}
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                    {isExpanded ? (
+                      <tr>
+                        <td colSpan={7} style={{ background: '#0a0a0a' }}>
+                          <div style={{ padding: '1rem' }}>
+                            <p style={{ marginBottom: '0.75rem' }}>{subscriber.auditSummary || 'No summary yet.'}</p>
+                            {subscriber.auditFindings && subscriber.auditFindings.length > 0 ? (
+                              <ListGroup variant="flush">
+                                {subscriber.auditFindings.map((finding, index) => (
+                                  <ListGroup.Item key={index} style={{ background: 'transparent', color: '#d4d4d4', border: '1px solid #2b2b2b', fontSize: '0.85rem' }}>
+                                    {finding}
+                                  </ListGroup.Item>
+                                ))}
+                              </ListGroup>
+                            ) : null}
+                          </div>
+                        </td>
+                      </tr>
+                    ) : null}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </Table>
+
+          {totalAuditPages > 1 ? (
+            <Pagination className="justify-content-center mt-3">
+              <Pagination.First onClick={() => setAuditPage(1)} disabled={auditPage === 1} />
+              <Pagination.Prev onClick={() => setAuditPage((page) => Math.max(1, page - 1))} disabled={auditPage === 1} />
+              {Array.from({ length: totalAuditPages }, (_, i) => i + 1).map((page) => (
+                <Pagination.Item key={page} active={page === auditPage} onClick={() => setAuditPage(page)}>
+                  {page}
+                </Pagination.Item>
+              ))}
+              <Pagination.Next onClick={() => setAuditPage((page) => Math.min(totalAuditPages, page + 1))} disabled={auditPage === totalAuditPages} />
+              <Pagination.Last onClick={() => setAuditPage(totalAuditPages)} disabled={auditPage === totalAuditPages} />
+            </Pagination>
+          ) : null}
+        </>
+      ) : null}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginTop: '5rem', marginBottom: '1rem' }}>
         <h2 style={{ color: '#68FF00', margin: 0 }}>Blog</h2>
         <Button

@@ -90,10 +90,10 @@ const About = () => {
   });
 
   const interestOptions: { key: string; label: string; active: boolean; toggle: () => void }[] = [
-    { key: "beats", label: "Music", active: beats, toggle: () => setBeats(!beats) },
-    { key: "visuals", label: "Branding", active: visuals, toggle: () => setVisuals(!visuals) },
     { key: "web", label: "Web Development", active: web, toggle: () => setWeb(!web) },
-    { key: "ads", label: "Ads", active: ads, toggle: () => setAds(!ads) }
+    { key: "visuals", label: "Branding", active: visuals, toggle: () => setVisuals(!visuals) },
+    { key: "ads", label: "Ads", active: ads, toggle: () => setAds(!ads) },
+    { key: "beats", label: "Music", active: beats, toggle: () => setBeats(!beats) },
   ];
 
   async function handleSubmit() {
@@ -166,16 +166,7 @@ const About = () => {
               <a  className="socialLinks" href="https://linkedin.com/in/genesis-barrios" target="_blank">LinkedIn</a>
               <a  className="socialLinks" href="https://genesisbarrios.xyz" target="_blank">Programming Portfolio</a>
               <a  className="socialLinks" href="https://github.com/genesisbarrios" target="_blank">Github</a>
-              <a  className="socialLinks" href="https://instagram.com/@gen.wav" target="_blank">Instagram</a>
-
-              <br></br>
-
-              {/* <h5>Chris Fernandez</h5>
-              <p> Music Producer, Photographer, Videographer and Editor </p>
-              <a  className="socialLinks" href="http://instagram.com/@khrissosick" target="_blank">Instagram</a>
-              <a  className="socialLinks" href="https://linktr.ee/khrissosick" target="_blank">Links</a>
-
-              */}
+              <a  className="socialLinks" href="https://instagram.com/gen.wav" target="_blank">Instagram</a>
 
             </Col>
           </Row>
