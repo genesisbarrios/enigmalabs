@@ -96,6 +96,7 @@ const EMAIL_TYPE_LABELS: Record<EmailType, string> = {
 type SentEmailData = {
   subject: string;
   html: string;
+  sentAt: string | null;
   opened: boolean;
   openedAt: string | null;
   clicked: boolean;
@@ -988,9 +989,24 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
                             ) : null}
                             {!lead.inbound && lead.website && lead.outdatedWebsite ? (
                               lead.outdatedMockupSent ? (
-                                <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'outdatedMockup')}>
-                                  See Sent Mockup Cold Email
-                                </Button>
+                                <>
+                                  <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'outdatedMockup')}>
+                                    See Sent Mockup Cold Email
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    variant="outline-warning"
+                                    disabled={busy || lead.declined}
+                                    onClick={() => {
+                                      const confirmResend = window.confirm(
+                                        `Resend the mockup cold email to ${lead.businessName || lead.email || 'this lead'}? They already received one before.`
+                                      );
+                                      if (confirmResend) handleSendOutdatedMockup(lead);
+                                    }}
+                                  >
+                                    Resend Mockup Cold Email
+                                  </Button>
+                                </>
                               ) : (
                                 <Button size="sm" variant="outline-warning" disabled={busy || lead.declined} onClick={() => handleSendOutdatedMockup(lead)}>
                                   Send Mockup Cold Email
@@ -1146,6 +1162,12 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
           {sentEmailData ? (
             <>
               <div style={{ display: 'flex', gap: '1.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                <div>
+                  <div style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase' }}>Sent</div>
+                  <div style={{ color: '#ccc' }}>
+                    {sentEmailData.sentAt ? new Date(sentEmailData.sentAt).toLocaleString() : 'Unknown'}
+                  </div>
+                </div>
                 <div>
                   <div style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase' }}>Opened</div>
                   <div style={{ color: sentEmailData.opened ? '#68FF00' : '#ccc' }}>

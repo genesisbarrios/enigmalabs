@@ -3623,6 +3623,7 @@ app.get('/api/crm/leads/:id/sent-email', async (req, res) => {
     const result = {
       subject: lead[`${prefix}Subject`] || '',
       html: previewHtml,
+      sentAt: lead[`${prefix}SentAt`] || null,
       opened: Boolean(lead[`${prefix}Opened`]),
       openedAt: lead[`${prefix}OpenedAt`] || null,
       clicked: Boolean(lead[`${prefix}Clicked`]),

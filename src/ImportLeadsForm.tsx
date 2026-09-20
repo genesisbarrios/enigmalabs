@@ -76,6 +76,16 @@ const IG_REGEX = /(instagram\.com\/[A-Za-z0-9_.]+|@[A-Za-z0-9_.]{2,30})/i;
 const PHONE_REGEX = /\+?\d[\d\-.\s()]{6,}\d/;
 // Matches a "City, ST" style token, e.g. "Miami, FL" or "New York, NY".
 const CITY_STATE_REGEX = /^[A-Za-z\s.'-]+,\s*[A-Za-z]{2}$/;
+// A bare domain with no http(s):// prefix, e.g. "hgrgroup.us" — common in
+// scraped lead sheets that dropped the protocol. Deliberately excludes
+// anything with an @ (already claimed by the email check by this point) or
+// spaces (so it never eats a multi-word business/industry name).
+const BARE_DOMAIN_REGEX = /^[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,}$/i;
+// A bare Instagram handle with no "@" or "instagram.com/" — the other common
+// scraped shape (e.g. "hgrgroup_gc"). Restricted to all-lowercase so it
+// doesn't swallow a Title-Case business/industry value sitting in the same
+// unlabeled column.
+const LOWERCASE_HANDLE_REGEX = /^[a-z][a-z0-9_.]{1,29}$/;
 // Common "no value" placeholders used in spreadsheet exports.
 const BLANK_PLACEHOLDER_REGEX = /^-+$|^n\/?a$/i;
 // A bare dash specifically (not "n/a") — in the Instagram column this means
@@ -124,6 +134,11 @@ function detectLeadFromTokens(tokens: string[]): ParsedLead {
       continue;
     }
 
+    if (!result.website && BARE_DOMAIN_REGEX.test(token)) {
+      result.website = token;
+      continue;
+    }
+
     if (!result.city && CITY_STATE_REGEX.test(token)) {
       result.city = token;
       continue;
@@ -134,11 +149,28 @@ function detectLeadFromTokens(tokens: string[]): ParsedLead {
       continue;
     }
 
+    if (!result.instagram && LOWERCASE_HANDLE_REGEX.test(token)) {
+      result.instagram = token;
+      continue;
+    }
+
     leftover.push(token);
   }
 
-  if (!result.businessName) {
-    result.businessName = leftover.join(' ').trim();
+  // Without a header row there's no reliable way to tell a business name
+  // apart from an industry or contact name sitting in the same column
+  // position. Previously every leftover token was joined into one string —
+  // "HGR Group Construction Helena Nefiodow Febres" — silently merging
+  // unrelated fields into Business Name. Safer default: only the first
+  // leftover token becomes the business name; anything else lands in
+  // Comments, where it's visible and easy to move to the right column in
+  // the preview table instead of corrupting Business Name.
+  if (!result.businessName && leftover.length) {
+    result.businessName = leftover[0];
+    const rest = leftover.slice(1);
+    if (rest.length) {
+      result.notes = [result.notes, rest.join(' / ')].filter(Boolean).join(' / ');
+    }
   }
 
   return result;
