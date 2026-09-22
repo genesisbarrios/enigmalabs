@@ -2669,8 +2669,13 @@ app.get('/api/agreements/:id/download', async (req, res) => {
       return res.status(404).json({ ok: false, message: 'Agreement not found.' });
     }
     const filename = buildAgreementFilename({ clientName: agreement.clientName, effectiveDate: agreement.effectiveDate || agreement.createdAt });
+    // ?inline=1 renders the PDF in the browser (used to embed it in the
+    // signed-agreement screen) instead of forcing a download — browsers
+    // won't render a PDF inside an <iframe>/<embed> when the response is
+    // sent as an attachment, so the two need different dispositions.
+    const disposition = req.query.inline ? 'inline' : 'attachment';
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.setHeader('Content-Disposition', `${disposition}; filename="${filename}"`);
     res.send(agreement.pdf);
   } catch (error) {
     console.error('Could not download agreement', error);

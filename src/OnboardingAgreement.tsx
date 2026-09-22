@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Button, Card, Col, Container, Form, Row } from 'react-bootstrap';
 import { Link, useSearchParams } from 'react-router-dom';
 import SignatureCanvas from 'react-signature-canvas';
@@ -43,6 +43,30 @@ const BACKEND_PLAN_TYPE: Record<PlanType, BackendPlanType> = {
 };
 
 const JURISDICTION = 'State of Florida, USA';
+
+const completeOnboardingButtonStyle: React.CSSProperties = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '0.5rem',
+  color: '#000',
+  backgroundColor: '#68FF00',
+  fontWeight: 700,
+  padding: '0.5rem 1.25rem',
+  borderRadius: '2rem',
+  textDecoration: 'none'
+};
+
+// Left-arrow button pinned to the top-left of the page content, pointing at
+// the actual onboarding form (not just back to the /onboard menu, which the
+// existing "Back to Onboarding" text links already cover) — this is the
+// "next step" action once someone's found this page directly.
+const CompleteOnboardingButton = () => (
+  <div style={{ marginBottom: '1.5rem' }}>
+    <Link to="/onboard/form" style={completeOnboardingButtonStyle}>
+      &larr; Complete Onboarding
+    </Link>
+  </div>
+);
 
 const cardStyle: React.CSSProperties = {
   background: '#111',
@@ -98,6 +122,20 @@ const OnboardingAgreement = () => {
   const [agreementId, setAgreementId] = useState('');
 
   const signatureRef = useRef<SignatureCanvas>(null);
+
+  // Auto-download the signed PDF the moment the agreement is saved, in
+  // addition to the on-screen viewer + explicit Download button below —
+  // belt-and-suspenders so the client leaves this page with a local copy
+  // even if they never click anything on the success screen.
+  useEffect(() => {
+    if (!agreementId) return;
+    const link = document.createElement('a');
+    link.href = `${API_BASE_URL}/agreements/${agreementId}/download`;
+    link.rel = 'noopener';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }, [agreementId]);
 
   const amount = useMemo(() => {
     if (!planType) return 0;
@@ -165,17 +203,38 @@ const OnboardingAgreement = () => {
   };
 
   if (agreementId) {
+    const downloadUrl = `${API_BASE_URL}/agreements/${agreementId}/download`;
     return (
       <Container style={{ paddingTop: '6rem', paddingBottom: '3rem', maxWidth: '700px' }}>
+        <CompleteOnboardingButton />
         <Card style={{ ...cardStyle, textAlign: 'center' }}>
           <Card.Body style={{ padding: '2.5rem' }}>
             <h1 style={{ color: '#68FF00', marginBottom: '1rem' }}>Agreement Signed</h1>
             <p style={{ color: '#d4d4d4', marginBottom: '2rem' }}>
-              Thanks, {clientName}. Your web development agreement has been signed and saved.
+              Thanks, {clientName}. Your web development agreement has been signed and saved — a
+              copy has also been emailed to {clientEmail} and downloaded to this device.
             </p>
+            <div
+              style={{
+                width: '100%',
+                height: '520px',
+                marginBottom: '1.5rem',
+                borderRadius: '12px',
+                overflow: 'hidden',
+                border: '1px solid #2b2b2b'
+              }}
+            >
+              <iframe
+                src={`${downloadUrl}?inline=1`}
+                title="Signed agreement"
+                width="100%"
+                height="100%"
+                style={{ border: 'none', backgroundColor: 'white' }}
+              />
+            </div>
             <Button
               style={{ backgroundColor: '#68FF00', borderColor: '#68FF00', color: '#000', fontWeight: 700, marginBottom: '1.5rem' }}
-              onClick={() => window.open(`${API_BASE_URL}/agreements/${agreementId}/download`, '_blank')}
+              onClick={() => window.open(downloadUrl, '_blank')}
             >
               Download Signed Agreement (PDF)
             </Button>
@@ -192,6 +251,7 @@ const OnboardingAgreement = () => {
 
   return (
     <Container style={{ paddingTop: '6rem', paddingBottom: '3rem', maxWidth: '900px' }}>
+      <CompleteOnboardingButton />
       <h1 style={{ color: '#68FF00', marginBottom: '0.5rem' }}>Web Development Agreement</h1>
       <p style={{ color: '#d4d4d4', marginBottom: '2rem' }}>
         Choose a plan, fill in your details, review the agreement, and sign at the bottom.

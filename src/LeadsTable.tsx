@@ -45,6 +45,7 @@ export type Lead = {
   coldEmailSent?: boolean;
   coldEmailSentAt?: string;
   coldEmailHtml?: string;
+  coldEmailSubject?: string;
   coldEmailOpened?: boolean;
   coldEmailClicked?: boolean;
   coldEmailResentAt?: string;
@@ -92,6 +93,23 @@ const EMAIL_TYPE_LABELS: Record<EmailType, string> = {
   onboardingReminder: 'Onboarding Reminder',
   outdatedMockup: 'Mockup Cold Email'
 };
+
+// Which cold-email variant a lead was actually sent is a fact about the
+// past (the subject line stored at send time, e.g. "Free Website Mockup"
+// vs "A few content ideas...") — it should never be re-derived from the
+// lead's CURRENT website field, which can (and does) change afterward, e.g.
+// once a lead becomes a real client with a site on file. Doing that made
+// "See Sent ..." buttons relabel old sends incorrectly once a lead's
+// website status changed after the fact.
+function coldEmailVariantLabel(lead: Lead): string {
+  if (lead.coldEmailSubject) {
+    return lead.coldEmailSubject.toLowerCase().includes('mockup') ? 'Mockup ' : 'Marketing / Ads ';
+  }
+  // Leads sent before coldEmailSubject was stored have no record of what
+  // was actually sent — fall back to the same website-had-content-ideas /
+  // no-website-had-mockup split the send endpoint itself uses.
+  return lead.website ? 'Marketing / Ads ' : 'Mockup ';
+}
 
 type SentEmailData = {
   subject: string;
@@ -285,8 +303,8 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
       };
     };
 
-    const mockupCold = leads.filter((l) => l.coldEmailSent && !l.website);
-    const marketingCold = leads.filter((l) => l.coldEmailSent && l.website);
+    const mockupCold = leads.filter((l) => l.coldEmailSent && coldEmailVariantLabel(l) === 'Mockup ');
+    const marketingCold = leads.filter((l) => l.coldEmailSent && coldEmailVariantLabel(l) === 'Marketing / Ads ');
     const outdatedMockup = leads.filter((l) => l.outdatedMockupSent);
     const onboardingEmails = leads.filter((l) => l.onboardingSent);
     const reminderEmails = leads.filter((l) => l.reminderEmailSent);
@@ -942,7 +960,7 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
                               lead.coldEmailSent ? (
                                 <>
                                   <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'cold')}>
-                                    See Sent {lead.website ? 'Marketing / Ads ' : ''}Cold Email
+                                    See Sent {coldEmailVariantLabel(lead)}Cold Email
                                   </Button>
                                   {lead.noActionTaken || (leadSource(lead) === 'newsletter' && lead.responded && !lead.coldEmailClicked) ? (
                                     <Button
