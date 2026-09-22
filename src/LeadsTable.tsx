@@ -105,9 +105,19 @@ function coldEmailVariantLabel(lead: Lead): string {
   if (lead.coldEmailSubject) {
     return lead.coldEmailSubject.toLowerCase().includes('mockup') ? 'Mockup ' : 'Marketing / Ads ';
   }
-  // Leads sent before coldEmailSubject was stored have no record of what
-  // was actually sent — fall back to the same website-had-content-ideas /
-  // no-website-had-mockup split the send endpoint itself uses.
+  // coldEmailSubject wasn't always stored (older leads predate that field —
+  // this was the actual case for at least one client we caught this on),
+  // but the full sent HTML (coldEmailHtml) has been around longer, so check
+  // that next before giving up and guessing from live state. The
+  // marketing/ads pitch is the only variant that ever mentions "ads" (as in
+  // "content and ads ideas") across all of its inbound/outbound/newsletter
+  // wordings — the mockup pitch never uses that word in any of its wordings.
+  if (lead.coldEmailHtml) {
+    return lead.coldEmailHtml.toLowerCase().includes('ads') ? 'Marketing / Ads ' : 'Mockup ';
+  }
+  // No stored record at all of what was actually sent (very old lead,
+  // predating both fields) — best-effort guess from current website
+  // status, which may be wrong if it changed since the email was sent.
   return lead.website ? 'Marketing / Ads ' : 'Mockup ';
 }
 
