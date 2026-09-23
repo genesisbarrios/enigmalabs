@@ -980,9 +980,20 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
                             {!lead.onboardingSent ? (
                               lead.coldEmailSent ? (
                                 <>
-                                  <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'cold')}>
-                                    See Sent {coldEmailVariantLabel(lead)}Cold Email
-                                  </Button>
+                                  {lead.coldEmailHtml ? (
+                                    <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'cold')}>
+                                      See Sent {coldEmailVariantLabel(lead)}Cold Email
+                                    </Button>
+                                  ) : (
+                                    // Marked sent manually (contacted outside the email flow) —
+                                    // there's no snapshot to view, so don't offer a button that
+                                    // can only ever 404.
+                                    <small style={{ color: '#888' }}>
+                                      {coldEmailVariantLabel(lead)}Cold Email marked sent — no copy on
+                                      file (sent outside the email flow; use Edit to label which
+                                      pitch it was)
+                                    </small>
+                                  )}
                                   {lead.noActionTaken || (leadSource(lead) === 'newsletter' && lead.responded && !lead.coldEmailClicked) ? (
                                     <Button
                                       size="sm"
