@@ -1547,6 +1547,13 @@ const leadSchema = new mongoose.Schema({
   // so "See Sent Email" can show the real thing later, not a re-render.
   coldEmailHtml: String,
   coldEmailSubject: String,
+  // For coldEmailSent set via the manual override below (contacted outside
+  // the email flow — text, in person, etc.) there's no coldEmailHtml/
+  // Subject snapshot to infer the pitch type from, and guessing from the
+  // lead's CURRENT website field breaks the moment they actually get a
+  // site built (their own website flips from empty to set, silently
+  // relabeling history). Lets the admin say directly which pitch applied.
+  coldEmailVariant: { type: String, enum: ['mockup', 'marketing'] },
   coldEmailResendId: String,
   coldEmailOpened: { type: Boolean, default: false },
   coldEmailOpenedAt: Date,
@@ -3062,6 +3069,11 @@ app.put('/api/crm/leads/:id', async (req, res) => {
       } else if (!coldEmailSent) {
         lead.coldEmailSentAt = undefined;
       }
+    }
+    // Which pitch a manually-marked contact actually got — see the schema
+    // comment on coldEmailVariant.
+    if (req.body.coldEmailVariant !== undefined) {
+      lead.coldEmailVariant = req.body.coldEmailVariant || undefined;
     }
     if (req.body.closedWebDevClient !== undefined) {
       const closedWebDevClient = Boolean(req.body.closedWebDevClient);

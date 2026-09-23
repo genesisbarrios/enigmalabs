@@ -46,6 +46,7 @@ export type Lead = {
   coldEmailSentAt?: string;
   coldEmailHtml?: string;
   coldEmailSubject?: string;
+  coldEmailVariant?: 'mockup' | 'marketing';
   coldEmailOpened?: boolean;
   coldEmailClicked?: boolean;
   coldEmailResentAt?: string;
@@ -95,30 +96,37 @@ const EMAIL_TYPE_LABELS: Record<EmailType, string> = {
 };
 
 // Which cold-email variant a lead was actually sent is a fact about the
-// past (the subject line stored at send time, e.g. "Free Website Mockup"
-// vs "A few content ideas...") — it should never be re-derived from the
-// lead's CURRENT website field, which can (and does) change afterward, e.g.
-// once a lead becomes a real client with a site on file. Doing that made
-// "See Sent ..." buttons relabel old sends incorrectly once a lead's
-// website status changed after the fact.
+// past — it should never be re-derived from the lead's CURRENT website
+// field, which can (and does) change afterward, e.g. once a lead becomes a
+// real client with a site on file. Doing that made "See Sent ..." buttons
+// relabel old sends incorrectly once a lead's website status changed after
+// the fact (confirmed on a lead who was marked coldEmailSent manually —
+// contacted outside the email flow, so there was never a coldEmailHtml/
+// Subject snapshot to fall back on either — see coldEmailVariant's schema
+// comment in server.js).
 function coldEmailVariantLabel(lead: Lead): string {
+  if (lead.coldEmailVariant) {
+    return lead.coldEmailVariant === 'mockup' ? 'Mockup ' : 'Marketing / Ads ';
+  }
   if (lead.coldEmailSubject) {
     return lead.coldEmailSubject.toLowerCase().includes('mockup') ? 'Mockup ' : 'Marketing / Ads ';
   }
-  // coldEmailSubject wasn't always stored (older leads predate that field —
-  // this was the actual case for at least one client we caught this on),
+  // coldEmailSubject wasn't always stored (older leads predate that field),
   // but the full sent HTML (coldEmailHtml) has been around longer, so check
-  // that next before giving up and guessing from live state. The
-  // marketing/ads pitch is the only variant that ever mentions "ads" (as in
-  // "content and ads ideas") across all of its inbound/outbound/newsletter
-  // wordings — the mockup pitch never uses that word in any of its wordings.
+  // that next before giving up. The marketing/ads pitch is the only variant
+  // that ever mentions "ads" (as in "content and ads ideas") across all of
+  // its inbound/outbound/newsletter wordings — the mockup pitch never uses
+  // that word in any of its wordings.
   if (lead.coldEmailHtml) {
     return lead.coldEmailHtml.toLowerCase().includes('ads') ? 'Marketing / Ads ' : 'Mockup ';
   }
-  // No stored record at all of what was actually sent (very old lead,
-  // predating both fields) — best-effort guess from current website
-  // status, which may be wrong if it changed since the email was sent.
-  return lead.website ? 'Marketing / Ads ' : 'Mockup ';
+  // No stored record at all of what was actually sent — most likely a
+  // manual "contacted outside the email flow" override with no snapshot to
+  // check (see above). Guessing from live website status is what caused
+  // this whole bug, so this stays neutral instead: plain "Cold Email," no
+  // adjective, until someone sets coldEmailVariant explicitly in the edit
+  // modal.
+  return '';
 }
 
 type SentEmailData = {
@@ -144,6 +152,7 @@ type EditForm = {
   industry: string;
   notes: string;
   coldEmailSent: boolean;
+  coldEmailVariant: '' | 'mockup' | 'marketing';
   closedWebDevClient: boolean;
 };
 
@@ -159,6 +168,7 @@ const emptyEditForm: EditForm = {
   industry: '',
   notes: '',
   coldEmailSent: false,
+  coldEmailVariant: '',
   closedWebDevClient: false
 };
 
@@ -174,6 +184,7 @@ const editFormFromLead = (lead: Lead): EditForm => ({
   industry: lead.industry || '',
   notes: lead.notes || '',
   coldEmailSent: lead.coldEmailSent || false,
+  coldEmailVariant: lead.coldEmailVariant || '',
   closedWebDevClient: lead.closedWebDevClient || false
 });
 
@@ -1296,6 +1307,24 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
                   />
                 </Form.Group>
               </Col>
+              {editForm.coldEmailSent ? (
+                <Col md={6}>
+                  <Form.Group className="mb-2">
+                    <Form.Label style={{ fontSize: '0.8rem' }}>
+                      Which pitch? (only matters if this was marked sent manually — a real
+                      system-sent email already knows its own subject line)
+                    </Form.Label>
+                    <Form.Select
+                      value={editForm.coldEmailVariant}
+                      onChange={(e) => setEditForm({ ...editForm, coldEmailVariant: e.target.value as EditForm['coldEmailVariant'] })}
+                    >
+                      <option value="">Unknown / let the system guess</option>
+                      <option value="mockup">Mockup (free website mockup pitch)</option>
+                      <option value="marketing">Marketing / Ads (content &amp; ads pitch)</option>
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+              ) : null}
               <Col md={6} className="d-flex align-items-end">
                 <Form.Group className="mb-2">
                   <Form.Check
