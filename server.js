@@ -1275,6 +1275,11 @@ const newsletterCampaignSchema = new mongoose.Schema({
   ctaUrl: String,
   imageUrl: String,
   recipientCount: { type: Number, default: 0 },
+  // When set, every recipient's send was handed to Resend with this as its
+  // own scheduledAt — Resend holds and delivers each one at that time, so
+  // "sent"/recipientCount above reflect successfully QUEUED, not delivered
+  // (same as an immediate send only ever meaning "Resend accepted it").
+  scheduledAt: Date,
   createdAt: { type: Date, default: Date.now }
 });
 const NewsletterCampaign = mongoose.model('NewsletterCampaign', newsletterCampaignSchema, 'newsletter_campaigns');
@@ -1315,7 +1320,7 @@ function newsletterTrackingPixelTag(sendId) {
 // `html`/`ctaUrls` unwrapped and this stamps in the real send id afterward by
 // re-rendering — simpler callers just embed `%%SEND_ID%%` placeholders,
 // replaced once the row exists.
-async function sendAndLogNewsletterEmail({ subscriber, campaignId, category, templateKey, subject, buildHtml, attachments }) {
+async function sendAndLogNewsletterEmail({ subscriber, campaignId, category, templateKey, subject, buildHtml, attachments, scheduledAt }) {
   if (!resend) {
     console.warn('RESEND_API_KEY not set — skipping newsletter send.');
     return { ok: false, message: 'Email delivery is not configured.' };
@@ -1341,7 +1346,11 @@ async function sendAndLogNewsletterEmail({ subscriber, campaignId, category, tem
       to: subscriber.email,
       subject,
       html,
-      ...(attachments && attachments.length ? { attachments } : {})
+      ...(attachments && attachments.length ? { attachments } : {}),
+      // ISO string (or Resend's own natural-language format, e.g. "in 1
+      // hour") — Resend holds the email and delivers it at this time
+      // instead of immediately. Omitted entirely for a normal send-now.
+      ...(scheduledAt ? { scheduledAt } : {})
     });
     if (error) {
       console.error('Could not send newsletter email', error);
@@ -2473,6 +2482,22 @@ app.post('/api/newsletter/campaigns', async (req, res) => {
       return res.status(400).json({ ok: false, message: 'Subject and message body are required.' });
     }
 
+    // Optional — an ISO datetime string from the admin's schedule picker.
+    // Resend holds each recipient's email and delivers it at this time
+    // instead of right away. Left out (or blank) sends immediately, same
+    // as before.
+    let scheduledAt;
+    if (req.body.scheduledAt) {
+      const parsed = new Date(req.body.scheduledAt);
+      if (Number.isNaN(parsed.getTime())) {
+        return res.status(400).json({ ok: false, message: 'Invalid scheduled time.' });
+      }
+      if (parsed.getTime() <= Date.now()) {
+        return res.status(400).json({ ok: false, message: 'Scheduled time must be in the future.' });
+      }
+      scheduledAt = parsed.toISOString();
+    }
+
     const recipientCategories = Array.isArray(req.body.recipientCategories) && req.body.recipientCategories.length
       ? req.body.recipientCategories
       : [category];
@@ -2497,7 +2522,8 @@ app.post('/api/newsletter/campaigns', async (req, res) => {
       ctaLabel: ctaLabel || '',
       ctaUrl: ctaUrl || '',
       imageUrl: imageUrl || '',
-      recipientCount: recipients.length
+      recipientCount: recipients.length,
+      scheduledAt
     });
 
     const instagramUrl = category === 'web' || category === 'ads' ? ENIGMA_INSTAGRAM_URL : GENWAV_INSTAGRAM_URL;
@@ -2513,7 +2539,8 @@ app.post('/api/newsletter/campaigns', async (req, res) => {
         templateKey: campaign.templateKey,
         subject,
         buildHtml: (sendId) => renderNewsletterEmail({ subscriber, subject, bodyText, ctaLabel, ctaUrl, imageUrl, sendId, instagramUrl, instagramLabel }),
-        attachments
+        attachments,
+        scheduledAt
       });
       if (result.ok) sent += 1;
     }

@@ -299,6 +299,7 @@ type NewsletterCampaign = {
   ctaUrl?: string;
   imageUrl?: string;
   recipientCount: number;
+  scheduledAt?: string;
   createdAt: string;
 };
 
@@ -495,7 +496,7 @@ const Admin = () => {
 
   // Create Campaign modal
   const [showCreateCampaign, setShowCreateCampaign] = useState(false);
-  const BLANK_CAMPAIGN_FORM = { category: 'beats' as NewsletterCategory, templateKey: 'custom-message', subject: '', bodyText: '', ctaLabel: '', ctaUrl: '', imageUrl: '', recipientCategories: ['beats'] as NewsletterCategory[] };
+  const BLANK_CAMPAIGN_FORM = { category: 'beats' as NewsletterCategory, templateKey: 'custom-message', subject: '', bodyText: '', ctaLabel: '', ctaUrl: '', imageUrl: '', recipientCategories: ['beats'] as NewsletterCategory[], scheduledAt: '' };
   const [campaignForm, setCampaignForm] = useState(BLANK_CAMPAIGN_FORM);
   const [campaignAttachments, setCampaignAttachments] = useState<FileAttachment[]>([]);
   const [campaignSending, setCampaignSending] = useState(false);
@@ -1012,7 +1013,11 @@ const Admin = () => {
     if (isLeadCampaign) return handleSendLeadCampaign();
 
     const recipientLabel = campaignForm.recipientCategories.map((c) => NEWSLETTER_CATEGORY_LABELS[c]).join(', ');
-    if (!window.confirm(`Send this to all ${campaignRecipientCount} subscriber(s) interested in ${recipientLabel}?`)) {
+    const scheduledAt = campaignForm.scheduledAt ? new Date(campaignForm.scheduledAt) : null;
+    const confirmLabel = scheduledAt
+      ? `Schedule this to send to all ${campaignRecipientCount} subscriber(s) interested in ${recipientLabel} at ${scheduledAt.toLocaleString()}?`
+      : `Send this to all ${campaignRecipientCount} subscriber(s) interested in ${recipientLabel}?`;
+    if (!window.confirm(confirmLabel)) {
       return;
     }
     setCampaignSending(true);
@@ -1026,10 +1031,15 @@ const Admin = () => {
         ctaLabel: campaignForm.ctaLabel,
         ctaUrl: campaignForm.ctaUrl,
         imageUrl: campaignForm.imageUrl,
-        attachments: campaignAttachments
+        attachments: campaignAttachments,
+        ...(scheduledAt ? { scheduledAt: scheduledAt.toISOString() } : {})
       });
       if (response.data?.ok) {
-        setNewsletterMessage(`Campaign sent to ${response.data.sent} of ${response.data.total} subscribers.`);
+        setNewsletterMessage(
+          scheduledAt
+            ? `Campaign scheduled for ${scheduledAt.toLocaleString()} — ${response.data.sent} of ${response.data.total} subscriber(s) queued.`
+            : `Campaign sent to ${response.data.sent} of ${response.data.total} subscribers.`
+        );
         setShowCreateCampaign(false);
         if (showNewsletterAnalytics) loadCategoryAnalytics(analyticsCategory);
         fetchOutreachAnalytics();
@@ -2750,6 +2760,19 @@ const Admin = () => {
                   </div>
                 ) : null}
               </Form.Group>
+              <Form.Group className="mb-3">
+                <Form.Label>Schedule for later (optional)</Form.Label>
+                <Form.Control
+                  type="datetime-local"
+                  value={campaignForm.scheduledAt}
+                  min={new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)}
+                  onChange={(e) => setCampaignForm({ ...campaignForm, scheduledAt: e.target.value })}
+                />
+                <div style={{ fontSize: '0.75rem', color: '#888', marginTop: '0.25rem' }}>
+                  Leave blank to send immediately. Otherwise Resend holds and delivers every
+                  recipient's email at this time (your local time) instead of right away.
+                </div>
+              </Form.Group>
               <Alert variant="secondary" style={{ fontSize: '0.85rem' }}>
                 {campaignForm.recipientCategories.length ? (
                   <>This will send to <strong>{campaignRecipientCount}</strong> subscriber{campaignRecipientCount === 1 ? '' : 's'} currently interested in {campaignForm.recipientCategories.map((c) => NEWSLETTER_CATEGORY_LABELS[c]).join(', ')}.</>
@@ -2768,7 +2791,11 @@ const Admin = () => {
             </Button>
           ) : (
             <Button variant="warning" size="sm" disabled={campaignSending || !campaignForm.subject || !campaignForm.bodyText || !campaignRecipientCount} onClick={handleSendCampaign}>
-              {campaignSending ? 'Sending...' : `Send Campaign to ${campaignRecipientCount}`}
+              {campaignSending
+                ? (campaignForm.scheduledAt ? 'Scheduling...' : 'Sending...')
+                : campaignForm.scheduledAt
+                ? `Schedule Campaign for ${campaignRecipientCount}`
+                : `Send Campaign to ${campaignRecipientCount}`}
             </Button>
           )}
         </Modal.Footer>
