@@ -109,9 +109,15 @@ const isMarked = (raw: unknown): boolean => {
 
 // Best-effort classification of a row of unlabeled tokens (pasted text, or a
 // spreadsheet row whose headers we didn't recognize) into lead fields.
-function detectLeadFromTokens(tokens: string[]): ParsedLead {
+// knownIndustries is the same list the Industry field's datalist offers
+// (defaults + every value ever saved) — without it, a bare token like
+// "Construction" is indistinguishable from a business/contact name and used
+// to just fall into the leftover bucket below, which is exactly how an
+// industry value was ending up saved in Comments instead of Industry.
+function detectLeadFromTokens(tokens: string[], knownIndustries: string[] = []): ParsedLead {
   const result: ParsedLead = { ...emptyManualForm };
   const leftover: string[] = [];
+  const industryLookup = new Set(knownIndustries.map((industry) => industry.trim().toLowerCase()));
 
   for (const raw of tokens) {
     const token = cleanValue(raw);
@@ -151,6 +157,11 @@ function detectLeadFromTokens(tokens: string[]): ParsedLead {
 
     if (!result.instagram && LOWERCASE_HANDLE_REGEX.test(token)) {
       result.instagram = token;
+      continue;
+    }
+
+    if (!result.industry && industryLookup.has(token.toLowerCase())) {
+      result.industry = token;
       continue;
     }
 
@@ -350,7 +361,7 @@ function reconcileRowOverflow(row: string[], headerCount: number, cityIdx: numbe
   return result;
 }
 
-function parsePastedLeads(text: string): ParsedLead[] {
+function parsePastedLeads(text: string, knownIndustries: string[] = []): ParsedLead[] {
   const lines = text.split('\n').map((line) => line.trim()).filter(Boolean);
   if (!lines.length) return [];
 
@@ -369,11 +380,11 @@ function parsePastedLeads(text: string): ParsedLead[] {
   }
 
   return lines
-    .map((line) => detectLeadFromTokens(splitLine(line)))
+    .map((line) => detectLeadFromTokens(splitLine(line), knownIndustries))
     .filter((lead) => lead.businessName || lead.email || lead.phone);
 }
 
-async function parseFileLeads(file: File): Promise<ParsedLead[]> {
+async function parseFileLeads(file: File, knownIndustries: string[] = []): Promise<ParsedLead[]> {
   const buffer = await file.arrayBuffer();
   const workbook = XLSX.read(buffer, { type: 'array' });
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -386,7 +397,7 @@ async function parseFileLeads(file: File): Promise<ParsedLead[]> {
 
   if (!hasRecognizedHeader) {
     return grid
-      .map((row) => detectLeadFromTokens(row.map((value) => String(value ?? ''))))
+      .map((row) => detectLeadFromTokens(row.map((value) => String(value ?? '')), knownIndustries))
       .filter((lead) => lead.businessName || lead.email || lead.phone);
   }
 
@@ -476,7 +487,7 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
 
   const handleParsePaste = () => {
     setError('');
-    const parsed = parsePastedLeads(pasteText);
+    const parsed = parsePastedLeads(pasteText, industryOptions);
     if (!parsed.length) {
       setError('Could not detect any leads in the pasted text.');
       return;
@@ -492,7 +503,7 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
 
     setError('');
     try {
-      const parsed = await parseFileLeads(file);
+      const parsed = await parseFileLeads(file, industryOptions);
       if (!parsed.length) {
         setError('Could not detect any leads in that file.');
         return;
@@ -800,8 +811,9 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
               Website/URL, Outdated Website, City/Location, Industry/Category, Comment/Notes, DM, Called, and Decline. "-" and
               blank cells are treated as empty; any mark in a Cold Email/Outdated Website/DM/Called/Decline column is read as
               "yes" (an explicit "No"/"FALSE"/"0" is read as "no"). A bare "-" in the Instagram column means "already searched,
-              not found." Pasting without a header row falls back to best-effort detection, which can't capture Industry or
-              Comments.
+              not found." Pasting without a header row falls back to best-effort detection: Industry is only recognized if
+              it exactly matches an existing industry already in the system (see the Industry dropdown), and anything else
+              unrecognized lands in Comments instead of being guessed.
             </p>
             <Form.Control
               as="textarea"
