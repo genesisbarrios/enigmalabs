@@ -122,6 +122,12 @@ const workProjects = [
     alt: "Maury Ramos Peña Portfolio Website"
   },
   {
+    name: "Customized Stone",
+    url: "https://www.customizedstone.net",
+    image: "/work/customizedstone.png",
+    alt: "Customized Stone — custom granite, marble, and quartz countertops in Miami"
+  },
+  {
     name: "Nuralume",
     url: "https://nuralume.xyz",
     image: "https://dl.dropboxusercontent.com/s/11xwqvyuioco1etjdeu27/nuralume.png?rlkey=xuiz2krmjop7kegb099q4jocg&st=xs0f6rkn&dl=0",
@@ -132,12 +138,6 @@ const workProjects = [
     url: "https://influanto.com",
     image: "https://dl.dropboxusercontent.com/s/a7lf48b7uht3dnyl59tc1/influantoHomepageLaptop.png?rlkey=pzp4yi2ns6ppjfmwb9m84t4tz&st=gjpea3z3&dl=0",
     alt: "Influanto the all in one music marketing platform"
-  },
-  {
-    name: "Mars Miami Studios",
-    url: "https://www.marsmusicstudios.com/",
-    image: "https://www.dropbox.com/scl/fi/hc1svqnn21ddd4wjjedpk/mars.png?rlkey=034jieiuwha3jtp43i3k7vt4t&st=7y8zgfqm&raw=1",
-    alt: "Mars Miami Studios"
   }
 ];
 

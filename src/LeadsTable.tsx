@@ -1033,11 +1033,13 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
                                 </>
                               ) : (
                                 <Button size="sm" variant="outline-warning" disabled={busy || lead.declined} onClick={() => handleSendColdEmail(lead)}>
-                                  Send {lead.website ? 'Marketing / Ads ' : ''}Cold Email
+                                  Send {lead.website || lead.closedWebDevClient ? 'Marketing / Ads ' : ''}Cold Email
                                 </Button>
                               )
                             ) : null}
-                            {!lead.inbound && lead.website && lead.outdatedWebsite ? (
+                            {/* Mockup pitch — never for a Closed Web Dev Client (their site is
+                                already being built); they only get marketing emails. */}
+                            {!lead.inbound && lead.website && lead.outdatedWebsite && !lead.closedWebDevClient ? (
                               lead.outdatedMockupSent ? (
                                 <>
                                   <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'outdatedMockup')}>
