@@ -195,7 +195,26 @@ type DirectionFilter = 'all' | 'inbound' | 'newsletter' | 'outbound';
 // correctly instead of silently reading as "outbound".
 const leadSource = (lead: Lead): 'outbound' | 'mockup_form' | 'newsletter' =>
   lead.source || (lead.inbound ? 'mockup_form' : 'outbound');
-type StatusFilter = 'all' | 'not_contacted' | 'cold_email' | 'onboarding';
+type StatusFilter =
+  | 'all'
+  | 'not_contacted'
+  | 'onboarding'
+  | 'mockup_sent'
+  | 'mockup_viewed'
+  | 'mockup_clicked'
+  | 'marketing_sent';
+
+// Mockup pitch = a cold email that was the mockup variant, or the separate
+// outdated-website mockup email. Cold emails with no record of which pitch
+// was sent (coldEmailVariantLabel returns '') match neither filter until
+// their variant is set in Edit.
+const sentMockupColdEmail = (lead: Lead) => lead.coldEmailSent && coldEmailVariantLabel(lead) === 'Mockup ';
+const isMockupSent = (lead: Lead) => Boolean(sentMockupColdEmail(lead) || lead.outdatedMockupSent);
+const isMockupViewed = (lead: Lead) =>
+  Boolean((sentMockupColdEmail(lead) && lead.coldEmailOpened) || lead.outdatedMockupOpened);
+const isMockupClicked = (lead: Lead) =>
+  Boolean((sentMockupColdEmail(lead) && lead.coldEmailClicked) || lead.outdatedMockupClicked);
+const isMarketingSent = (lead: Lead) => Boolean(lead.coldEmailSent && coldEmailVariantLabel(lead) === 'Marketing / Ads ');
 type EmailFilter = 'all' | 'has_email' | 'no_email';
 type SortOption = 'newest' | 'oldest' | 'name';
 
@@ -383,8 +402,11 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
       const matchesStatus =
         statusFilter === 'all' ||
         (statusFilter === 'not_contacted' && isNotContacted(lead)) ||
-        (statusFilter === 'cold_email' && lead.coldEmailSent) ||
-        (statusFilter === 'onboarding' && lead.onboardingSent);
+        (statusFilter === 'onboarding' && lead.onboardingSent) ||
+        (statusFilter === 'mockup_sent' && isMockupSent(lead)) ||
+        (statusFilter === 'mockup_viewed' && isMockupViewed(lead)) ||
+        (statusFilter === 'mockup_clicked' && isMockupClicked(lead)) ||
+        (statusFilter === 'marketing_sent' && isMarketingSent(lead));
 
       const matchesEmail =
         emailFilter === 'all' ||
@@ -749,8 +771,11 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
           <Form.Select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}>
             <option value="all">Any Contact Status</option>
             <option value="not_contacted">Not Contacted</option>
-            <option value="cold_email">Cold Email Sent</option>
             <option value="onboarding">Onboarding Sent</option>
+            <option value="mockup_sent">Mockup Cold Email Sent</option>
+            <option value="mockup_viewed">Viewed Mockup Cold Email</option>
+            <option value="mockup_clicked">Clicked Mockup Cold Email</option>
+            <option value="marketing_sent">Marketing Cold Email Sent</option>
           </Form.Select>
         </Col>
         <Col md={2}>

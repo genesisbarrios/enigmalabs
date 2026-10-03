@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { trackFormSubmit, trackFormView } from "./analytics";
 import { Row, Col, Container, Alert } from "react-bootstrap";
 import axios from "axios";
 
@@ -44,6 +45,7 @@ const FreeMockup = () => {
       "content",
       "Get a free website mockup from Enigma Labs — a high-converting, SEO-ready design built for your business."
     );
+    trackFormView("mockup");
   }, []);
 
   const [mockupName, setMockupName] = useState("");
@@ -91,6 +93,7 @@ const FreeMockup = () => {
     })
       .then(() => {
         setMockupMessage("You're on the list! We'll be in touch with your free mockup.");
+        trackFormSubmit("mockup");
         setMockupAlert('');
       })
       .catch((error) => {

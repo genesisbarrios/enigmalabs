@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { trackFormSubmit, trackFormView } from "./analytics";
 import { Row, Col, Container, Alert } from "react-bootstrap";
 import axios from "axios";
 
@@ -44,6 +45,7 @@ const FreeAudit = () => {
       "content",
       "Get a free audit of your website, app, or online presence from Enigma Labs before we hop on a call."
     );
+    trackFormView("audit");
   }, []);
 
   const [auditName, setAuditName] = useState("");
@@ -99,6 +101,7 @@ const FreeAudit = () => {
     })
       .then(() => {
         setAuditResultMessage("You're on the list! We're already getting started on your audit.");
+        trackFormSubmit("audit");
         setAuditAlert('');
       })
       .catch((error) => {

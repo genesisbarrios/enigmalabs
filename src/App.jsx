@@ -20,13 +20,27 @@ import Wallpapers from './wallpapers';
 import FreeMockup from './FreeMockup';
 import FreeAudit from './FreeAudit';
 import Newsletter from './Newsletter';
-import {Route, Routes} from 'react-router-dom';
+import {Route, Routes, useLocation} from 'react-router-dom';
+import { useEffect } from 'react';
+import { initMetaPixel, trackPageView } from './analytics';
 import {BrowserRouter as Router} from 'react-router-dom';
+// Meta Pixel PageView on every route change (single-page app, so the
+// browser never does a full page load between pages).
+initMetaPixel();
+const PageViewTracker = () => {
+  const location = useLocation();
+  useEffect(() => {
+    trackPageView(location.pathname);
+  }, [location.pathname]);
+  return null;
+};
+
 const App = () => {
 
   return (
     <div style={{width:"100%"}}>
     <Navigation/>
+    <PageViewTracker/>
       <Routes basename="/index.html">
         
         <Route exact path="/Blog" element={<Blog/>}/>
