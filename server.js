@@ -100,6 +100,26 @@ function trackedUrl(leadId, url, type) {
   return `${SITE_URL}/api/crm/leads/${leadId}/track/click?u=${encodeURIComponent(url)}${typeParam}`;
 }
 
+// Admin previews of sent emails ("See Sent Email", newsletter send preview):
+// strip the open-tracking pixel and unwrap every tracked link back to its
+// real destination, so the admin viewing an email — or clicking a link in it —
+// is never counted as the recipient opening or clicking. Only the preview
+// response changes; the stored snapshot stays exactly what was sent.
+function untrackedPreviewHtml(html) {
+  return String(html || '')
+    .replace(/<img[^>]*\/track\/open[^>]*>/gi, '')
+    .replace(/href=(["'])([^"']*\/track\/click\?[^"']*)\1/gi, (match, quote, href) => {
+      try {
+        const destination = new URL(href.replace(/&amp;/g, '&')).searchParams.get('u');
+        return destination && /^(https?:|mailto:|tel:)/i.test(destination)
+          ? `href=${quote}${destination.replace(/"/g, '&quot;')}${quote}`
+          : match;
+      } catch {
+        return match;
+      }
+    });
+}
+
 function trackingPixelTag(leadId, type) {
   if (!leadId) return '';
   const typeParam = type ? `?type=${encodeURIComponent(type)}` : '';
@@ -2362,7 +2382,7 @@ app.get('/api/newsletter/sends/:id', async (req, res) => {
   try {
     const send = await NewsletterSend.findById(req.params.id);
     if (!send) return res.status(404).json({ ok: false, message: 'Send not found.' });
-    const previewHtml = (send.html || '').replace(/<img[^>]*\/track\/open[^>]*>/gi, '');
+    const previewHtml = untrackedPreviewHtml(send.html);
     res.json({ ok: true, send: { ...send.toObject(), html: previewHtml } });
   } catch (error) {
     console.error('Could not load newsletter send', error);
@@ -3672,12 +3692,9 @@ app.get('/api/crm/leads/:id/sent-email', async (req, res) => {
       return res.status(404).json({ ok: false, message: 'No sent email on file for this lead yet.' });
     }
 
-    // The stored HTML is the exact snapshot that was emailed, tracking pixel
-    // included — rendering it as-is in the admin "See Sent Email" preview
-    // would fire a real /track/open request for the admin's own view and
-    // falsely mark the email as opened by the recipient. Strip it here, in
-    // the read-only preview response only; the stored copy is untouched.
-    const previewHtml = html.replace(/<img[^>]*\/track\/open[^>]*>/gi, '');
+    // The stored HTML is the exact snapshot that was emailed, tracking
+    // included — see untrackedPreviewHtml for why the preview strips it.
+    const previewHtml = untrackedPreviewHtml(html);
 
     const result = {
       subject: lead[`${prefix}Subject`] || '',
