@@ -42,12 +42,48 @@ export function initMetaPixel() {
   window.fbq?.("init", PIXEL_ID);
 }
 
-// Meta PageView on every route change. Admin pages are never tracked — the
-// pixel isn't even loaded until the first non-admin page.
+// Readable page names sent with every event. A fixed map rather than
+// document.title: each page sets its title in its own effect, which runs
+// after the route-change PageView, so the title would lag one page behind.
+const PAGE_NAMES: Record<string, string> = {
+  "/": "Home",
+  "/about": "About",
+  "/tech": "Tech",
+  "/music": "Music",
+  "/visuals": "Visuals",
+  "/wallpapers": "Wallpapers",
+  "/blog": "Blog",
+  "/mockup": "Free Website Mockup",
+  "/audit": "Free Audit",
+  "/newsletter": "Newsletter",
+  "/onboard": "Onboarding",
+  "/onboard/agreement": "Onboarding Agreement",
+  "/onboard/form": "Onboarding Form",
+  "/onboard/edit": "Onboarding Edit",
+  "/payment": "Payment",
+  "/privacypolicy": "Privacy Policy",
+  "/termsofservice": "Terms of Service",
+};
+
+export function pageName(path: string) {
+  const key = path.toLowerCase().replace(/\/+$/, "") || "/";
+  if (PAGE_NAMES[key]) return PAGE_NAMES[key];
+  if (key.startsWith("/blog/")) return `Blog: ${decodeURIComponent(path.split("/").pop() || "").replace(/[-_]+/g, " ")}`;
+  return key;
+}
+
+const pageData = () => ({
+  page_name: pageName(window.location.pathname),
+  page_path: window.location.pathname,
+});
+
+// Meta PageView on every route change, with page_name/page_path. Admin pages
+// are never tracked — the pixel isn't even loaded until the first non-admin
+// page.
 export function trackPageView(path: string) {
   if (path.toLowerCase().startsWith("/admin")) return;
   initMetaPixel();
-  window.fbq?.("track", "PageView");
+  window.fbq?.("track", "PageView", { page_name: pageName(path), page_path: path });
 }
 
 type LeadForm = "mockup" | "audit";
@@ -60,7 +96,7 @@ const FORM_NAMES: Record<LeadForm, string> = {
 // Meta: standard ViewContent. GA4: custom form_view event.
 export function trackFormView(form: LeadForm) {
   initMetaPixel();
-  window.fbq?.("track", "ViewContent", { content_name: FORM_NAMES[form], content_category: form });
+  window.fbq?.("track", "ViewContent", { content_name: FORM_NAMES[form], content_category: form, ...pageData() });
   window.gtag?.("event", "form_view", { form_name: form });
 }
 
@@ -68,6 +104,6 @@ export function trackFormView(form: LeadForm) {
 // Meta: standard Lead. GA4: recommended generate_lead event.
 export function trackFormSubmit(form: LeadForm) {
   initMetaPixel();
-  window.fbq?.("track", "Lead", { content_name: FORM_NAMES[form], content_category: form });
+  window.fbq?.("track", "Lead", { content_name: FORM_NAMES[form], content_category: form, ...pageData() });
   window.gtag?.("event", "generate_lead", { form_name: form });
 }
