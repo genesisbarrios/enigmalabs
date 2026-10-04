@@ -687,8 +687,8 @@ async function sendServiceInterestEmails(subscriber, category) {
 
 // Which pitch a lead gets: marketing/ads for anyone who already has a
 // website — and for Closed Web Dev Clients, whose website we're already
-// building, so a mockup pitch would make no sense. Everyone else gets the
-// web-dev mockup pitch.
+// building, so a website pitch would make no sense. Everyone else gets the
+// website pitch (we built them a new website from scratch).
 const pitchesMarketing = (lead) => Boolean(lead.website || lead.closedWebDevClient);
 
 // Leads with a website already get pitched marketing/ads (content creation,
@@ -732,18 +732,19 @@ function buildColdEmailHtml(lead) {
 
   const business = lead.businessName ? `<strong>${lead.businessName}</strong>'s` : 'your';
   const businessFor = lead.businessName ? `<strong>${lead.businessName}</strong>` : 'your business';
-  // Inbound leads already signed up wanting a mockup — skip the cold-outreach
+  // The website pitch: we've built them a brand new website from scratch (not
+  // a mockup). Inbound leads already signed up — skip the cold-outreach
   // framing and just confirm we're on it. Newsletter-sourced leads get a
-  // different ask — reply with details so the mockup can actually get made.
+  // different ask — reply with details so the site can actually get built.
   let paragraphs;
   if (lead.source === 'newsletter') {
     paragraphs = [
-      `Hi, thanks for signing up to our newsletter! We're currently offering free website mockups and would love to make one for ${businessFor}.`,
-      `Just reply with your business name, bio, logo, services, and any relevant images and we'll have it ready by the time you schedule your call:`
+      `Hi, thanks for signing up to our newsletter! We'd love to build ${businessFor} a brand new website from scratch.`,
+      `Just reply with your business name, bio, logo, services, and any relevant images and we'll have your new website ready by the time you schedule your call:`
     ];
   } else if (lead.inbound) {
     paragraphs = [
-      `Thanks for signing up! We're already working on your custom website mockup for ${businessFor} and will have it ready within a couple hours.`,
+      `Thanks for signing up! We're already building a brand new website from scratch for ${businessFor} and will have it ready to show you soon.`,
       `Feel free to schedule a quick call at your convenience so we can walk through it together once it's ready:`
     ];
   } else {
@@ -779,7 +780,7 @@ function buildReminderEmailHtml(lead) {
     ];
   } else if (lead.source === 'newsletter') {
     paragraphs = [
-      `Just a quick update — we've finished your free mockup! Whenever you're ready to review it, feel free to schedule a call at your convenience:`
+      `Just a quick update — we've finished building your new website! Whenever you're ready to see it, feel free to schedule a call at your convenience:`
     ];
   } else if (lead.website) {
     paragraphs = [
@@ -787,7 +788,7 @@ function buildReminderEmailHtml(lead) {
     ];
   } else if (lead.inbound) {
     paragraphs = [
-      `Hey, just wanted to let you know we've finished your homepage mockup! You can schedule a call whenever you're ready to take a look:`
+      `Hey, just wanted to let you know we've finished building your new website! You can schedule a call whenever you're ready to take a look:`
     ];
   } else {
     paragraphs = [
@@ -807,7 +808,8 @@ function buildReminderEmailHtml(lead) {
 }
 
 // Second cold-email option, only offered when outdatedWebsite is flagged —
-// pitches a refreshed mockup rather than the marketing/ads services pitch
+// tells them we built a brand new website from scratch to replace their
+// outdated one, rather than the marketing/ads services pitch
 // (buildMarketingAdsColdEmailHtml), which stays available alongside this one.
 function buildOutdatedWebsiteMockupEmailHtml(lead) {
   const business = lead.businessName ? `<strong>${lead.businessName}</strong>'s` : 'your';
@@ -817,7 +819,7 @@ function buildOutdatedWebsiteMockupEmailHtml(lead) {
     type: 'outdatedMockup',
     paragraphs: [
       `I came across ${business} business page and noticed your website could benefit from a modern refresh. A more updated design can help build trust with new customers, improve your visibility online, and convert more visitors into appointments.`,
-      `To give you an idea of what's possible, I went ahead and designed a custom homepage mockup specifically for your business. I'd love to show it to you — there's no obligation, and it only takes about 5-10 minutes.`,
+      `To show you what's possible, I went ahead and built you a brand new website from scratch. I'd love to show it to you — there's no obligation, and it only takes about 5-10 minutes.`,
       `Would you be available for a quick call sometime in the next day or two? Here's my calendar link for you to schedule it at your convenience:`
     ],
     ctaLabel: 'Schedule call',
@@ -904,7 +906,7 @@ async function autoSendColdEmailToLead(lead) {
   await sendLeadEmail(lead, {
     subject: pitchesMarketing(lead)
       ? `A few content ideas for ${lead.businessName || 'your business'} 💡`
-      : `Free Website Mockup 🖥️ for ${lead.businessName || 'your business'}`,
+      : `We built a new website for ${lead.businessName || 'your business'} 🖥️`,
     buildHtml: buildColdEmailHtml,
     statusField: 'coldEmailSent',
     statusAtField: 'coldEmailSentAt',
@@ -3431,7 +3433,7 @@ app.post('/api/crm/leads/:id/send-cold-email', async (req, res) => {
     const result = await sendLeadEmail(lead, {
       subject: pitchesMarketing(lead)
         ? `A few content ideas for ${lead.businessName || 'your business'} 💡`
-        : `Free Website Mockup 🖥️ for ${lead.businessName || 'your business'}`,
+        : `We built a new website for ${lead.businessName || 'your business'} 🖥️`,
       buildHtml: buildColdEmailHtml,
       statusField: 'coldEmailSent',
       statusAtField: 'coldEmailSentAt',
@@ -3456,7 +3458,7 @@ app.post('/api/crm/leads/:id/send-reminder-email', async (req, res) => {
       return res.status(400).json({ ok: false, message: 'This lead already opened or clicked — no further reminders needed.' });
     }
     const reminderSubject = !lead.closedWebDevClient && (lead.source === 'newsletter' || !lead.website)
-      ? 'Your free mockup is ready! 🎉'
+      ? 'Your new website is ready! 🎉'
       : 'Following up on your content & ads ideas';
     const result = await sendLeadEmail(lead, {
       subject: reminderSubject,
@@ -3523,7 +3525,7 @@ app.post('/api/crm/leads/bulk-send-cold-email', async (req, res) => {
       const result = await sendLeadEmail(lead, {
         subject: pitchesMarketing(lead)
           ? `A few content ideas for ${lead.businessName || 'your business'} 💡`
-          : `Free Website Mockup 🖥️ for ${lead.businessName || 'your business'}`,
+          : `We built a new website for ${lead.businessName || 'your business'} 🖥️`,
         buildHtml: buildColdEmailHtml,
         statusField: 'coldEmailSent',
         statusAtField: 'coldEmailSentAt',
@@ -3554,10 +3556,10 @@ app.post('/api/crm/leads/:id/send-outdated-mockup', async (req, res) => {
       return res.status(400).json({ ok: false, message: 'This email only applies to leads with a website flagged as outdated.' });
     }
     if (lead.closedWebDevClient) {
-      return res.status(400).json({ ok: false, message: 'This lead is already a Closed Web Dev Client — send a marketing email instead of a mockup pitch.' });
+      return res.status(400).json({ ok: false, message: 'This lead is already a Closed Web Dev Client — send a marketing email instead of a website pitch.' });
     }
     const result = await sendLeadEmail(lead, {
-      subject: `Free Website Redesign 🖥️ for ${lead.businessName || 'your business'}`,
+      subject: `We built a new website for ${lead.businessName || 'your business'} 🖥️`,
       buildHtml: buildOutdatedWebsiteMockupEmailHtml,
       statusField: 'outdatedMockupSent',
       statusAtField: 'outdatedMockupSentAt',

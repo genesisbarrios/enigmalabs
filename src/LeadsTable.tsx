@@ -92,7 +92,7 @@ const EMAIL_TYPE_LABELS: Record<EmailType, string> = {
   cold: 'Cold Email',
   onboarding: 'Onboarding Email',
   onboardingReminder: 'Onboarding Reminder',
-  outdatedMockup: 'Mockup Cold Email'
+  outdatedMockup: 'Outdated Website Cold Email'
 };
 
 // Which cold-email variant a lead was actually sent is a fact about the
@@ -106,10 +106,14 @@ const EMAIL_TYPE_LABELS: Record<EmailType, string> = {
 // comment in server.js).
 function coldEmailVariantLabel(lead: Lead): string {
   if (lead.coldEmailVariant) {
-    return lead.coldEmailVariant === 'mockup' ? 'Mockup ' : 'Marketing / Ads ';
+    // 'mockup' is the stored value for the website pitch (it used to offer a
+    // mockup; it now says we built them a new website from scratch).
+    return lead.coldEmailVariant === 'mockup' ? 'Website ' : 'Marketing / Ads ';
   }
   if (lead.coldEmailSubject) {
-    return lead.coldEmailSubject.toLowerCase().includes('mockup') ? 'Mockup ' : 'Marketing / Ads ';
+    // Older website-pitch subjects say "mockup", newer ones "new website".
+    const subject = lead.coldEmailSubject.toLowerCase();
+    return subject.includes('mockup') || subject.includes('new website') ? 'Website ' : 'Marketing / Ads ';
   }
   // coldEmailSubject wasn't always stored (older leads predate that field),
   // but the full sent HTML (coldEmailHtml) has been around longer, so check
@@ -118,7 +122,7 @@ function coldEmailVariantLabel(lead: Lead): string {
   // its inbound/outbound/newsletter wordings — the mockup pitch never uses
   // that word in any of its wordings.
   if (lead.coldEmailHtml) {
-    return lead.coldEmailHtml.toLowerCase().includes('ads') ? 'Marketing / Ads ' : 'Mockup ';
+    return lead.coldEmailHtml.toLowerCase().includes('ads') ? 'Marketing / Ads ' : 'Website ';
   }
   // No stored record at all of what was actually sent — most likely a
   // manual "contacted outside the email flow" override with no snapshot to
@@ -200,15 +204,17 @@ type StatusFilter =
   | 'not_contacted'
   | 'onboarding'
   | 'mockup_sent'
+  | 'mockup_not_sent'
   | 'mockup_viewed'
   | 'mockup_clicked'
-  | 'marketing_sent';
+  | 'marketing_sent'
+  | 'marketing_not_sent';
 
-// Mockup pitch = a cold email that was the mockup variant, or the separate
-// outdated-website mockup email. Cold emails with no record of which pitch
+// Website pitch = a cold email that was the website variant, or the separate
+// outdated-website email. Cold emails with no record of which pitch
 // was sent (coldEmailVariantLabel returns '') match neither filter until
 // their variant is set in Edit.
-const sentMockupColdEmail = (lead: Lead) => lead.coldEmailSent && coldEmailVariantLabel(lead) === 'Mockup ';
+const sentMockupColdEmail = (lead: Lead) => lead.coldEmailSent && coldEmailVariantLabel(lead) === 'Website ';
 const isMockupSent = (lead: Lead) => Boolean(sentMockupColdEmail(lead) || lead.outdatedMockupSent);
 const isMockupViewed = (lead: Lead) =>
   Boolean((sentMockupColdEmail(lead) && lead.coldEmailOpened) || lead.outdatedMockupOpened);
@@ -343,16 +349,16 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
       };
     };
 
-    const mockupCold = leads.filter((l) => l.coldEmailSent && coldEmailVariantLabel(l) === 'Mockup ');
+    const mockupCold = leads.filter((l) => l.coldEmailSent && coldEmailVariantLabel(l) === 'Website ');
     const marketingCold = leads.filter((l) => l.coldEmailSent && coldEmailVariantLabel(l) === 'Marketing / Ads ');
     const outdatedMockup = leads.filter((l) => l.outdatedMockupSent);
     const onboardingEmails = leads.filter((l) => l.onboardingSent);
     const reminderEmails = leads.filter((l) => l.reminderEmailSent);
 
     const rows = [
-      rateRow('Mockup Cold Email', mockupCold, 'coldEmailOpened', 'coldEmailClicked'),
+      rateRow('Website Cold Email', mockupCold, 'coldEmailOpened', 'coldEmailClicked'),
       rateRow('Marketing / Ads Cold Email', marketingCold, 'coldEmailOpened', 'coldEmailClicked'),
-      rateRow('Outdated Website Mockup Email', outdatedMockup, 'outdatedMockupOpened', 'outdatedMockupClicked'),
+      rateRow('Outdated Website Cold Email', outdatedMockup, 'outdatedMockupOpened', 'outdatedMockupClicked'),
       rateRow('Onboarding Email', onboardingEmails, 'onboardingOpened', 'onboardingClicked'),
       // Reminder emails reuse the original cold email's own tracking fields
       // (same "cold" link type) rather than having their own, so there's no
@@ -404,9 +410,11 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
         (statusFilter === 'not_contacted' && isNotContacted(lead)) ||
         (statusFilter === 'onboarding' && lead.onboardingSent) ||
         (statusFilter === 'mockup_sent' && isMockupSent(lead)) ||
+        (statusFilter === 'mockup_not_sent' && !isMockupSent(lead)) ||
         (statusFilter === 'mockup_viewed' && isMockupViewed(lead)) ||
         (statusFilter === 'mockup_clicked' && isMockupClicked(lead)) ||
-        (statusFilter === 'marketing_sent' && isMarketingSent(lead));
+        (statusFilter === 'marketing_sent' && isMarketingSent(lead)) ||
+        (statusFilter === 'marketing_not_sent' && !isMarketingSent(lead));
 
       const matchesEmail =
         emailFilter === 'all' ||
@@ -495,7 +503,7 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
     }
 
     const confirmSend = window.confirm(
-      `Send the mockup cold email to ${lead.businessName || lead.email || 'this lead'}?`
+      `Send the outdated website cold email to ${lead.businessName || lead.email || 'this lead'}?`
     );
     if (!confirmSend) return;
 
@@ -503,14 +511,14 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
       try {
         const response = await axios.post(`${API_BASE_URL}/crm/leads/${lead._id}/send-outdated-mockup`);
         if (response.data?.ok) {
-          setMessage(`Mockup cold email sent to ${lead.businessName || lead.email}.`);
+          setMessage(`Outdated website cold email sent to ${lead.businessName || lead.email}.`);
           fetchLeads();
         } else {
-          setError(response.data?.message || 'Could not send mockup cold email.');
+          setError(response.data?.message || 'Could not send outdated website cold email.');
         }
       } catch (actionError) {
         console.error(actionError);
-        setError('Could not send mockup cold email.');
+        setError('Could not send outdated website cold email.');
       }
     });
   };
@@ -772,10 +780,12 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
             <option value="all">Any Contact Status</option>
             <option value="not_contacted">Not Contacted</option>
             <option value="onboarding">Onboarding Sent</option>
-            <option value="mockup_sent">Mockup Cold Email Sent</option>
-            <option value="mockup_viewed">Viewed Mockup Cold Email</option>
-            <option value="mockup_clicked">Clicked Mockup Cold Email</option>
+            <option value="mockup_sent">Website Cold Email Sent</option>
+            <option value="mockup_not_sent">Website Cold Email Not Sent</option>
+            <option value="mockup_viewed">Viewed Website Cold Email</option>
+            <option value="mockup_clicked">Clicked Website Cold Email</option>
             <option value="marketing_sent">Marketing Cold Email Sent</option>
+            <option value="marketing_not_sent">Marketing Cold Email Not Sent</option>
           </Form.Select>
         </Col>
         <Col md={2}>
@@ -1062,13 +1072,13 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
                                 </Button>
                               )
                             ) : null}
-                            {/* Mockup pitch — never for a Closed Web Dev Client (their site is
-                                already being built); they only get marketing emails. */}
+                            {/* Outdated website pitch — never for a Closed Web Dev Client (their
+                                site is already being built); they only get marketing emails. */}
                             {!lead.inbound && lead.website && lead.outdatedWebsite && !lead.closedWebDevClient ? (
                               lead.outdatedMockupSent ? (
                                 <>
                                   <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'outdatedMockup')}>
-                                    See Sent Mockup Cold Email
+                                    See Sent Outdated Website Cold Email
                                   </Button>
                                   <Button
                                     size="sm"
@@ -1076,17 +1086,17 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
                                     disabled={busy || lead.declined}
                                     onClick={() => {
                                       const confirmResend = window.confirm(
-                                        `Resend the mockup cold email to ${lead.businessName || lead.email || 'this lead'}? They already received one before.`
+                                        `Resend the outdated website cold email to ${lead.businessName || lead.email || 'this lead'}? They already received one before.`
                                       );
                                       if (confirmResend) handleSendOutdatedMockup(lead);
                                     }}
                                   >
-                                    Resend Mockup Cold Email
+                                    Resend Outdated Website Cold Email
                                   </Button>
                                 </>
                               ) : (
                                 <Button size="sm" variant="outline-warning" disabled={busy || lead.declined} onClick={() => handleSendOutdatedMockup(lead)}>
-                                  Send Mockup Cold Email
+                                  Send Outdated Website Cold Email
                                 </Button>
                               )
                             ) : null}
@@ -1357,7 +1367,7 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
                       onChange={(e) => setEditForm({ ...editForm, coldEmailVariant: e.target.value as EditForm['coldEmailVariant'] })}
                     >
                       <option value="">Unknown / let the system guess</option>
-                      <option value="mockup">Mockup (free website mockup pitch)</option>
+                      <option value="mockup">Website (we built them a new website pitch)</option>
                       <option value="marketing">Marketing / Ads (content &amp; ads pitch)</option>
                     </Form.Select>
                   </Form.Group>
