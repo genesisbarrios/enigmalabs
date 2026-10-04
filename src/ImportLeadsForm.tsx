@@ -220,7 +220,6 @@ function extractLeadsFromGrid(grid: any[][]): ParsedLead[] {
   const cityIdxs = findIndices([/city/i, /location/i]);
   const industryIdxs = findIndices([/industry/i, /category/i]);
   const notesIdxs = findIndices([/comment/i, /note/i]);
-  const declineIdxs = findIndices([/decline/i]);
   const dmIdxs = findIndices([/^dm$/i, /direct message/i]);
   const calledIdxs = findIndices([/call/i]);
   const outdatedWebsiteIdxs = findIndices([/outdated/i]);
@@ -246,11 +245,6 @@ function extractLeadsFromGrid(grid: any[][]): ParsedLead[] {
       // A bare "-" in an Email column (when no real address was found) means
       // it was already searched and confirmed to not exist.
       const emailNotFound = !email && realEmailIdxs.some((idx) => DASH_ONLY_REGEX.test(String(row[idx] ?? '').trim()));
-      const coldEmailTrackerHasMark = coldEmailIdxs.length
-        ? coldEmailIdxs.some((idx) => isMarked(row[idx]))
-        : realEmailIdxs.filter((idx) => idx !== emailIdx).some((idx) => isMarked(row[idx]));
-
-      const declined = declineIdxs.some((idx) => isMarked(row[idx]));
       const dmSent = dmIdxs.some((idx) => isMarked(row[idx]));
       const called = calledIdxs.some((idx) => isMarked(row[idx]));
       const outdatedWebsite = outdatedWebsiteIdxs.some((idx) => isMarked(row[idx]));
@@ -274,10 +268,13 @@ function extractLeadsFromGrid(grid: any[][]): ParsedLead[] {
         city: firstNonEmpty(row, cityIdxs),
         industry: firstNonEmpty(row, industryIdxs),
         notes: firstNonEmpty(row, notesIdxs),
-        coldEmailSent: coldEmailTrackerHasMark,
+        // Cold-email and declined status are tracked in the CRM itself, never
+        // taken from a pasted sheet — pasted leads always start as not
+        // emailed and not declined.
+        coldEmailSent: false,
         dmSent,
         called,
-        declined
+        declined: false
       };
     })
     .filter((lead) => lead.businessName || lead.email || lead.phone);
@@ -844,9 +841,7 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
                   <th>Industry</th>
                   <th>Comments</th>
                   <th>DM Sent</th>
-                  <th>Cold Email Sent</th>
                   <th>Called</th>
-                  <th>Declined</th>
                 </tr>
               </thead>
               <tbody>
@@ -965,22 +960,8 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
                     <td className="text-center">
                       <Form.Check
                         type="checkbox"
-                        checked={lead.coldEmailSent}
-                        onChange={(e) => updatePreviewLead(index, { coldEmailSent: e.target.checked })}
-                      />
-                    </td>
-                    <td className="text-center">
-                      <Form.Check
-                        type="checkbox"
                         checked={lead.called}
                         onChange={(e) => updatePreviewLead(index, { called: e.target.checked })}
-                      />
-                    </td>
-                    <td className="text-center">
-                      <Form.Check
-                        type="checkbox"
-                        checked={lead.declined}
-                        onChange={(e) => updatePreviewLead(index, { declined: e.target.checked })}
                       />
                     </td>
                   </tr>
