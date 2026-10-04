@@ -1053,8 +1053,30 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
                                       Resend Cold Email
                                     </Button>
                                   ) : (
+                                    // Clicked but no booking yet — keep every follow-up available.
                                     <>
-                                      <small style={{ color: '#666' }}>Already clicked — no resend needed</small>
+                                      <small style={{ color: '#aaa' }}>Clicked — hasn&apos;t booked yet</small>
+                                      <Button
+                                        size="sm"
+                                        variant="outline-warning"
+                                        disabled={busy || lead.declined}
+                                        onClick={() => {
+                                          const confirmResend = window.confirm(
+                                            `Resend the cold email to ${lead.businessName || lead.email || 'this lead'}? They already clicked the last one but haven't booked.`
+                                          );
+                                          if (confirmResend) handleSendColdEmail(lead);
+                                        }}
+                                      >
+                                        Resend Cold Email
+                                      </Button>
+                                      <Button
+                                        size="sm"
+                                        variant="outline-warning"
+                                        disabled={busy || lead.declined}
+                                        onClick={() => handleSendReminderEmail(lead)}
+                                      >
+                                        {lead.reminderEmailSent ? 'Resend Reminder Email' : 'Send Reminder Email'}
+                                      </Button>
                                       <Button
                                         size="sm"
                                         variant="outline-danger"

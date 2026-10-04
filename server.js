@@ -3420,14 +3420,9 @@ app.post('/api/crm/leads/:id/send-cold-email', async (req, res) => {
     if (!lead) {
       return res.status(404).json({ ok: false, message: 'Lead not found.' });
     }
-    // Resends are unlimited as long as the lead hasn't clicked through yet —
-    // an open alone doesn't mean they've actually seen the pitch, but a
-    // click does, so only that blocks further resends (the "No Action"
-    // button then takes over for a differently-worded follow-up).
+    // Resends are always allowed — including after a click, since plenty of
+    // leads click the calendar link and still never book.
     if (lead.coldEmailSent) {
-      if (lead.coldEmailClicked) {
-        return res.status(400).json({ ok: false, message: 'This lead already clicked the cold email — no further resends needed.' });
-      }
       lead.coldEmailResentAt = new Date();
     }
     const result = await sendLeadEmail(lead, {
@@ -3454,9 +3449,8 @@ app.post('/api/crm/leads/:id/send-reminder-email', async (req, res) => {
     if (!lead) {
       return res.status(404).json({ ok: false, message: 'Lead not found.' });
     }
-    if (lead.reminderEmailSent && (lead.coldEmailOpened || lead.coldEmailClicked)) {
-      return res.status(400).json({ ok: false, message: 'This lead already opened or clicked — no further reminders needed.' });
-    }
+    // No open/click block: leads who opened or clicked but never booked are
+    // exactly who reminders are for.
     const reminderSubject = !lead.closedWebDevClient && (lead.source === 'newsletter' || !lead.website)
       ? 'Your new website is ready! 🎉'
       : 'Following up on your content & ads ideas';
