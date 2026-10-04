@@ -146,14 +146,14 @@ const instagramMistakeBody = `
 const socialMediaMistakesBody = `
   <p class="pBlogBody">Being on social media isn't the same as using it well. These are the mistakes we see most often from small business accounts that are active, but not actually growing.</p>
 
-  ${point(1, "Posting inconsistently", "A flurry of posts followed by three weeks of silence tells both the algorithm and your followers that you're not really here. Consistency beats frequency.")}
-  ${point(2, "No clear bio or call to action", "If someone lands on your profile and can't tell in five seconds what you do, where you are, and what to do next, they're gone.")}
+  ${point(1, "No clear bio or call to action", "If someone lands on your profile and can't tell in five seconds what you do, where you are, and what to do next, they're gone. Your bio should always spell out your services, and your address, website, phone number, and email should be listed and visible on your profile — not buried in a caption or missing entirely. Then tell people exactly what to do next: book, call, or click the link.")}
+  ${point(2, "Posting inconsistently", "A flurry of posts followed by three weeks of silence tells both the algorithm and your followers that you're not really here. Consistency beats frequency.")}
   ${point(3, "Ignoring comments and DMs", "Social media is the one place customers expect a real-time conversation. Slow or missing replies quietly cost you sales you never even hear about.")}
   ${point(4, "Buying followers or fake engagement", "It inflates a number nobody important is looking at, tanks your real engagement rate, and does nothing for actual sales.")}
   ${point(5, "Only posting to sell", "An account that's 100% promotion trains people to scroll past it. The accounts that grow mix in value, behind-the-scenes, and personality alongside the offers.")}
   ${point(6, "Never checking the analytics", "Every platform tells you what's working. Most small business accounts never open that tab, and keep guessing instead of adjusting.")}
   ${point(7, "Posting the exact same content everywhere", "What works as a 60-second video doesn't automatically work as a static post. Reposting identically across every platform usually underperforms on all of them.")}
-  ${point(8, "A link in bio that goes nowhere useful", "One link, pointing at a generic homepage — or nothing at all — wastes the single most valuable piece of real estate on the whole profile.")}
+  ${point(8, "A link in bio that goes nowhere useful", "One link pointing at a generic homepage — or nothing at all — wastes the single most valuable piece of real estate on your whole profile. You can use a link in bio, but on Instagram you can add multiple links right on your profile, so put your lead magnet (a free offer, quote, or guide) and your website link directly there. Every extra tap through a link page is a tap where people drop off — don't make them click twice to get to you.")}
 
   ${MOCKUP_CTA}
 `;
