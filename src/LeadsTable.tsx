@@ -141,7 +141,10 @@ function coldEmailVariantLabel(lead: Lead): string {
   // its inbound/outbound/newsletter wordings — the mockup pitch never uses
   // that word in any of its wordings.
   if (lead.coldEmailHtml) {
-    return lead.coldEmailHtml.toLowerCase().includes('ads') ? 'Marketing / Ads ' : 'Website ';
+    // Match the marketing pitch's actual wording ("content and ads ideas",
+    // "content ideas") — a bare "ads" also matches the "/crm/leads/" in every
+    // tracked link, which made every email read as marketing.
+    return /content (and ads )?ideas/i.test(lead.coldEmailHtml) ? 'Marketing / Ads ' : 'Website ';
   }
   // No stored record at all of what was actually sent — most likely a
   // manual "contacted outside the email flow" override with no snapshot to
@@ -232,11 +235,29 @@ type StatusFilter =
 // their variant is set in Edit.
 const sentMockupColdEmail = (lead: Lead) => lead.coldEmailSent && coldEmailVariantLabel(lead) === 'Website ';
 const isMockupSent = (lead: Lead) => Boolean(sentMockupColdEmail(lead) || lead.outdatedMockupSent);
+// Older leads recorded cold-email opens/clicks in the generic opened/clicked
+// fields before coldEmailOpened/coldEmailClicked existed — count both.
+const coldEmailOpened = (lead: Lead) => Boolean(lead.coldEmailOpened || lead.opened);
+const coldEmailClicked = (lead: Lead) => Boolean(lead.coldEmailClicked || lead.clicked);
 const isMockupViewed = (lead: Lead) =>
-  Boolean((sentMockupColdEmail(lead) && lead.coldEmailOpened) || lead.outdatedMockupOpened);
+  Boolean((sentMockupColdEmail(lead) && coldEmailOpened(lead)) || lead.outdatedMockupOpened);
 const isMockupClicked = (lead: Lead) =>
-  Boolean((sentMockupColdEmail(lead) && lead.coldEmailClicked) || lead.outdatedMockupClicked);
+  Boolean((sentMockupColdEmail(lead) && coldEmailClicked(lead)) || lead.outdatedMockupClicked);
 const isMarketingSent = (lead: Lead) => Boolean(lead.coldEmailSent && coldEmailVariantLabel(lead) === 'Marketing / Ads ');
+
+// "Not Sent" filters only list leads you could actually send that email to
+// right now: they have an address, aren't declined (fully), and aren't
+// already a client / onboarding. Otherwise those filters were mostly leads
+// with no email at all.
+const canBeEmailed = (lead: Lead) =>
+  Boolean(lead.email) && !lead.declined && !lead.convertedToClient && !lead.onboardingSent;
+// Website pitch is possible when the next cold email would be the website
+// pitch, or (for an outdated site) the outdated-website email.
+const canGetWebsitePitch = (lead: Lead) =>
+  !nextPitchIsMarketing(lead) ||
+  Boolean(lead.website && lead.outdatedWebsite && !lead.inbound && !lead.closedWebDevClient && !lead.declinedWebsite);
+const websiteNotSent = (lead: Lead) => canBeEmailed(lead) && canGetWebsitePitch(lead) && !isMockupSent(lead);
+const marketingNotSent = (lead: Lead) => canBeEmailed(lead) && nextPitchIsMarketing(lead) && !isMarketingSent(lead);
 type EmailFilter = 'all' | 'has_email' | 'no_email';
 type SortOption = 'newest' | 'oldest' | 'name';
 
@@ -244,7 +265,7 @@ const PAGE_SIZE_OPTIONS = [5, 10, 25, 50, 100, 200];
 const DEFAULT_PAGE_SIZE = 25;
 
 const isNotContacted = (lead: Lead) =>
-  !lead.coldEmailSent && !lead.outdatedMockupSent && !lead.dmSent && !lead.called && !lead.onboardingSent;
+  !lead.declined && !lead.coldEmailSent && !lead.outdatedMockupSent && !lead.dmSent && !lead.called && !lead.onboardingSent;
 
 const buildFindEmailUrl = (lead: Lead) => {
   const query = `${lead.businessName || ''} ${lead.city || ''} ("@gmail.com" OR "@outlook.com" OR "@hotmail.com" OR "@yahoo.com" OR "@icloud.com")`.trim();
@@ -426,11 +447,11 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
         (statusFilter === 'not_contacted' && isNotContacted(lead)) ||
         (statusFilter === 'onboarding' && lead.onboardingSent) ||
         (statusFilter === 'mockup_sent' && isMockupSent(lead)) ||
-        (statusFilter === 'mockup_not_sent' && !isMockupSent(lead)) ||
+        (statusFilter === 'mockup_not_sent' && websiteNotSent(lead)) ||
         (statusFilter === 'mockup_viewed' && isMockupViewed(lead)) ||
         (statusFilter === 'mockup_clicked' && isMockupClicked(lead)) ||
         (statusFilter === 'marketing_sent' && isMarketingSent(lead)) ||
-        (statusFilter === 'marketing_not_sent' && !isMarketingSent(lead));
+        (statusFilter === 'marketing_not_sent' && marketingNotSent(lead));
 
       const matchesEmail =
         emailFilter === 'all' ||
