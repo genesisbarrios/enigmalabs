@@ -706,10 +706,10 @@ async function sendServiceInterestEmails(subscriber, category) {
 // ── Lead outreach emails ──
 
 // Which pitch a lead gets: marketing/ads for anyone who already has a
-// website — and for Closed Web Dev Clients, whose website we're already
-// building, so a website pitch would make no sense. Everyone else gets the
+// website, for Closed Web Dev Clients (we're already building their site),
+// and for leads who declined the website service. Everyone else gets the
 // website pitch (we built them a new website from scratch).
-const pitchesMarketing = (lead) => Boolean(lead.website || lead.closedWebDevClient);
+const pitchesMarketing = (lead) => Boolean(lead.website || lead.closedWebDevClient || lead.declinedWebsite);
 
 // Leads with a website already get pitched marketing/ads (content creation,
 // social media management, and ads) instead of a website mockup — a
@@ -718,7 +718,13 @@ function buildMarketingAdsColdEmailHtml(lead) {
   const business = lead.businessName ? `<strong>${lead.businessName}</strong>'s` : 'your';
   // Inbound leads already signed up wanting this — skip the cold-outreach
   // framing and just confirm we're on it.
-  const paragraphs = lead.closedWebDevClient
+  const paragraphs = lead.declinedWebsite && !lead.closedWebDevClient
+    ? [
+        `Thanks again for considering us for ${business} website — totally understand it's not the right fit right now.`,
+        `Something else we do: we create and manage short-form content and ads that keep your brand active online and turn social media attention into actual leads and customers. I'd love to put together a few content and ads ideas specifically for ${business}.`,
+        `Want to hop on a quick call to go over them? Here's my calendar link:`
+      ]
+    : lead.closedWebDevClient
     ? [
         `Now that we're building ${business} new website, I wanted to share the next step: getting people to it.`,
         `We also create and manage short-form content and ads that keep your brand active online and turn social media attention into actual leads and customers. I'd love to put together a few content and ads ideas specifically for ${business} to launch alongside the new site.`,
@@ -794,7 +800,7 @@ function buildColdEmailHtml(lead) {
 function buildReminderEmailHtml(lead) {
   const businessFor = lead.businessName ? `<strong>${lead.businessName}</strong>` : 'your business';
   let paragraphs;
-  if (lead.closedWebDevClient) {
+  if (lead.closedWebDevClient || lead.declinedWebsite) {
     paragraphs = [
       `Hey, just wanted to follow up — did you get a chance to look at the content and ads ideas I put together for ${businessFor}? Happy to hop on a call whenever works for you:`
     ];
@@ -1669,6 +1675,11 @@ const leadSchema = new mongoose.Schema({
   dmSentAt: Date,
   called: { type: Boolean, default: false },
   calledAt: Date,
+  // Two-step decline: declinedWebsite = turned down the website service
+  // (website pitches stop, marketing emails still allowed); declined =
+  // turned down marketing too / fully inactive (nothing more is sent).
+  declinedWebsite: { type: Boolean, default: false },
+  declinedWebsiteAt: Date,
   declined: { type: Boolean, default: false },
   declinedAt: Date,
   // Set automatically when a matching onboarded/website client shows up
@@ -3140,6 +3151,11 @@ app.put('/api/crm/leads/:id', async (req, res) => {
     if (req.body.coldEmailVariant !== undefined) {
       lead.coldEmailVariant = req.body.coldEmailVariant || undefined;
     }
+    if (req.body.dmSent !== undefined) {
+      lead.dmSent = Boolean(req.body.dmSent);
+      if (lead.dmSent && !lead.dmSentAt) lead.dmSentAt = new Date();
+      else if (!lead.dmSent) lead.dmSentAt = undefined;
+    }
     if (req.body.closedWebDevClient !== undefined) {
       const closedWebDevClient = Boolean(req.body.closedWebDevClient);
       lead.closedWebDevClient = closedWebDevClient;
@@ -3315,8 +3331,22 @@ app.patch('/api/crm/leads/:id/decline', async (req, res) => {
     if (!lead) {
       return res.status(404).json({ ok: false, message: 'Lead not found.' });
     }
-    lead.declined = req.body.declined === undefined ? true : Boolean(req.body.declined);
-    lead.declinedAt = lead.declined ? new Date() : null;
+    // Two-step decline. Body { declinedWebsite } toggles step 1 (website
+    // service only); { declined } toggles step 2 (marketing too — fully
+    // inactive). An empty body keeps the old behavior: fully decline.
+    if (req.body.declinedWebsite !== undefined) {
+      lead.declinedWebsite = Boolean(req.body.declinedWebsite);
+      lead.declinedWebsiteAt = lead.declinedWebsite ? new Date() : null;
+    }
+    if (req.body.declined !== undefined || req.body.declinedWebsite === undefined) {
+      lead.declined = req.body.declined === undefined ? true : Boolean(req.body.declined);
+      lead.declinedAt = lead.declined ? new Date() : null;
+      // Fully declining implies the website was declined too.
+      if (lead.declined && !lead.declinedWebsite) {
+        lead.declinedWebsite = true;
+        lead.declinedWebsiteAt = new Date();
+      }
+    }
     await lead.save();
     res.json({ ok: true, lead });
   } catch (error) {
@@ -3471,7 +3501,7 @@ app.post('/api/crm/leads/:id/send-reminder-email', async (req, res) => {
     }
     // No open/click block: leads who opened or clicked but never booked are
     // exactly who reminders are for.
-    const reminderSubject = !lead.closedWebDevClient && (lead.source === 'newsletter' || !lead.website)
+    const reminderSubject = !lead.closedWebDevClient && !lead.declinedWebsite && (lead.source === 'newsletter' || !lead.website)
       ? 'Your new website is ready! 🎉'
       : 'Following up on your content & ads ideas';
     const result = await sendLeadEmail(lead, {
@@ -3571,6 +3601,9 @@ app.post('/api/crm/leads/:id/send-outdated-mockup', async (req, res) => {
     }
     if (lead.closedWebDevClient) {
       return res.status(400).json({ ok: false, message: 'This lead is already a Closed Web Dev Client — send a marketing email instead of a website pitch.' });
+    }
+    if (lead.declinedWebsite) {
+      return res.status(400).json({ ok: false, message: 'This lead declined the website service — send a marketing email instead.' });
     }
     const result = await sendLeadEmail(lead, {
       subject: `We built a new website for ${lead.businessName || 'your business'} 🖥️`,

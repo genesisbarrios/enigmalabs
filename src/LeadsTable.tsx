@@ -79,6 +79,9 @@ export type Lead = {
   dmSentAt?: string;
   called?: boolean;
   calledAt?: string;
+  // Step 1 of declining: turned down the website service only — marketing
+  // emails stay available. `declined` (step 2) = fully inactive.
+  declinedWebsite?: boolean;
   declined?: boolean;
   declinedAt?: string;
   convertedToClient?: boolean;
@@ -104,6 +107,22 @@ const EMAIL_TYPE_LABELS: Record<EmailType, string> = {
 // contacted outside the email flow, so there was never a coldEmailHtml/
 // Subject snapshot to fall back on either — see coldEmailVariant's schema
 // comment in server.js).
+// Which pitch the NEXT cold email will be — mirrors pitchesMarketing() in
+// server.js: marketing for leads with a website, Closed Web Dev Clients, and
+// leads who declined the website service; the website pitch otherwise.
+const nextPitchIsMarketing = (lead: Lead) => Boolean(lead.website || lead.closedWebDevClient || lead.declinedWebsite);
+
+// Label for the cold email send/resend buttons, naming the pitch that will
+// actually go out. "Send" (not "Resend") when it's a different pitch than the
+// one they already got.
+const coldEmailButtonLabel = (lead: Lead) => {
+  const next = nextPitchIsMarketing(lead) ? 'Marketing' : 'Website';
+  if (!lead.coldEmailSent) return `Send ${next} Cold Email`;
+  const last = coldEmailVariantLabel(lead).trim();
+  const sameAsLast = last === '' || last.startsWith(next);
+  return `${sameAsLast ? 'Resend' : 'Send'} ${next} Cold Email`;
+};
+
 function coldEmailVariantLabel(lead: Lead): string {
   if (lead.coldEmailVariant) {
     // 'mockup' is the stored value for the website pitch (it used to offer a
@@ -155,8 +174,7 @@ type EditForm = {
   city: string;
   industry: string;
   notes: string;
-  coldEmailSent: boolean;
-  coldEmailVariant: '' | 'mockup' | 'marketing';
+  dmSent: boolean;
   closedWebDevClient: boolean;
 };
 
@@ -171,8 +189,7 @@ const emptyEditForm: EditForm = {
   city: '',
   industry: '',
   notes: '',
-  coldEmailSent: false,
-  coldEmailVariant: '',
+  dmSent: false,
   closedWebDevClient: false
 };
 
@@ -187,8 +204,7 @@ const editFormFromLead = (lead: Lead): EditForm => ({
   city: lead.city || '',
   industry: lead.industry || '',
   notes: lead.notes || '',
-  coldEmailSent: lead.coldEmailSent || false,
-  coldEmailVariant: lead.coldEmailVariant || '',
+  dmSent: lead.dmSent || false,
   closedWebDevClient: lead.closedWebDevClient || false
 });
 
@@ -561,20 +577,15 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
       }
     });
 
-  const handleToggleDecline = (lead: Lead) => {
-    const nextDeclined = !lead.declined;
-    if (nextDeclined) {
-      const confirmDecline = window.confirm(
-        `Mark ${lead.businessName || lead.email || 'this lead'} as declined? You will no longer be able to contact them.`
-      );
-      if (!confirmDecline) return;
-    }
-
+  // Two-step decline: "Decline Website Service" (website pitches stop,
+  // marketing still allowed) → "Decline Marketing Services" (fully
+  // inactive). Each step can be undone on its own.
+  const updateDecline = (lead: Lead, body: { declinedWebsite?: boolean; declined?: boolean }, success: string) =>
     runAction(lead, async () => {
       try {
-        const response = await axios.patch(`${API_BASE_URL}/crm/leads/${lead._id}/decline`, { declined: nextDeclined });
+        const response = await axios.patch(`${API_BASE_URL}/crm/leads/${lead._id}/decline`, body);
         if (response.data?.ok) {
-          setMessage(nextDeclined ? 'Lead marked as declined.' : 'Lead un-declined.');
+          setMessage(success);
           fetchLeads();
         } else {
           setError(response.data?.message || 'Could not update decline status.');
@@ -584,6 +595,17 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
         setError('Could not update decline status.');
       }
     });
+
+  const handleDeclineWebsite = (lead: Lead) => {
+    const name = lead.businessName || lead.email || 'this lead';
+    if (!window.confirm(`Mark ${name} as declined for website services? Website emails stop — marketing emails stay available.`)) return;
+    updateDecline(lead, { declinedWebsite: true }, 'Marked as declined website service — marketing emails still available.');
+  };
+
+  const handleDeclineMarketing = (lead: Lead) => {
+    const name = lead.businessName || lead.email || 'this lead';
+    if (!window.confirm(`Mark ${name} as declined for marketing services too? They'll be inactive and you won't be able to email them.`)) return;
+    updateDecline(lead, { declined: true }, 'Lead marked as declined / inactive.');
   };
 
   const handleToggleDm = (lead: Lead) =>
@@ -991,7 +1013,11 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                       {lead.convertedToClient ? <Badge bg="success">WEB CLIENT</Badge> : null}
                       {lead.closedWebDevClient ? <Badge bg="primary">Closed Web Dev Client</Badge> : null}
-                      {lead.declined ? <Badge bg="danger">Declined / Inactive</Badge> : null}
+                      {lead.declined ? (
+                        <Badge bg="danger">Declined / Inactive</Badge>
+                      ) : lead.declinedWebsite ? (
+                        <Badge bg="warning" text="dark">Declined Website</Badge>
+                      ) : null}
                       {isNotContacted(lead) && !lead.declined && !lead.convertedToClient ? <Badge bg="secondary">Not Contacted</Badge> : null}
                       {lead.coldEmailSent ? <Badge bg="success">Cold Email Sent</Badge> : null}
                       {lead.onboardingSent ? <Badge bg="success">Onboarding Sent</Badge> : null}
@@ -1045,12 +1071,12 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
                                       disabled={busy || lead.declined}
                                       onClick={() => {
                                         const confirmResend = window.confirm(
-                                          `Resend the cold email to ${lead.businessName || lead.email || 'this lead'}? They already received one before.`
+                                          `${coldEmailButtonLabel(lead)} to ${lead.businessName || lead.email || 'this lead'}? They already received a cold email before.`
                                         );
                                         if (confirmResend) handleSendColdEmail(lead);
                                       }}
                                     >
-                                      Resend Cold Email
+                                      {coldEmailButtonLabel(lead)}
                                     </Button>
                                   ) : (
                                     // Clicked but no booking yet — keep every follow-up available.
@@ -1062,12 +1088,12 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
                                         disabled={busy || lead.declined}
                                         onClick={() => {
                                           const confirmResend = window.confirm(
-                                            `Resend the cold email to ${lead.businessName || lead.email || 'this lead'}? They already clicked the last one but haven't booked.`
+                                            `${coldEmailButtonLabel(lead)} to ${lead.businessName || lead.email || 'this lead'}? They already clicked the last one but haven't booked.`
                                           );
                                           if (confirmResend) handleSendColdEmail(lead);
                                         }}
                                       >
-                                        Resend Cold Email
+                                        {coldEmailButtonLabel(lead)}
                                       </Button>
                                       <Button
                                         size="sm"
@@ -1090,13 +1116,13 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
                                 </>
                               ) : (
                                 <Button size="sm" variant="outline-warning" disabled={busy || lead.declined} onClick={() => handleSendColdEmail(lead)}>
-                                  Send {lead.website || lead.closedWebDevClient ? 'Marketing / Ads ' : ''}Cold Email
+                                  {coldEmailButtonLabel(lead)}
                                 </Button>
                               )
                             ) : null}
                             {/* Outdated website pitch — never for a Closed Web Dev Client (their
                                 site is already being built); they only get marketing emails. */}
-                            {!lead.inbound && lead.website && lead.outdatedWebsite && !lead.closedWebDevClient ? (
+                            {!lead.inbound && lead.website && lead.outdatedWebsite && !lead.closedWebDevClient && !lead.declinedWebsite ? (
                               lead.outdatedMockupSent ? (
                                 <>
                                   <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'outdatedMockup')}>
@@ -1140,14 +1166,36 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
                             ) : null}
                           </>
                         ) : null}
-                        <Button
-                          size="sm"
-                          variant={lead.declined ? 'outline-secondary' : 'outline-danger'}
-                          disabled={busy}
-                          onClick={() => handleToggleDecline(lead)}
-                        >
-                          {lead.declined ? 'Undo Inactive' : 'Decline / Inactive'}
-                        </Button>
+                        {lead.declined ? (
+                          <Button
+                            size="sm"
+                            variant="outline-secondary"
+                            disabled={busy}
+                            onClick={() => updateDecline(lead, { declined: false }, 'Lead reactivated — marketing emails available again.')}
+                          >
+                            Undo Inactive
+                          </Button>
+                        ) : lead.declinedWebsite ? (
+                          <>
+                            <Button size="sm" variant="outline-danger" disabled={busy} onClick={() => handleDeclineMarketing(lead)}>
+                              Decline Marketing Services
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="link"
+                              className="p-0 text-start"
+                              style={{ fontSize: '0.75rem', color: '#888' }}
+                              disabled={busy}
+                              onClick={() => updateDecline(lead, { declinedWebsite: false }, 'Website decline undone.')}
+                            >
+                              Undo website decline
+                            </Button>
+                          </>
+                        ) : (
+                          <Button size="sm" variant="outline-danger" disabled={busy} onClick={() => handleDeclineWebsite(lead)}>
+                            Decline Website Service
+                          </Button>
+                        )}
                         <Button size="sm" variant="outline-light" onClick={() => openEditModal(lead)}>
                           Edit
                         </Button>
@@ -1371,30 +1419,12 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
                 <Form.Group className="mb-2">
                   <Form.Check
                     type="checkbox"
-                    label="Cold email sent"
-                    checked={editForm.coldEmailSent}
-                    onChange={(e) => setEditForm({ ...editForm, coldEmailSent: e.target.checked })}
+                    label="DM sent"
+                    checked={editForm.dmSent}
+                    onChange={(e) => setEditForm({ ...editForm, dmSent: e.target.checked })}
                   />
                 </Form.Group>
               </Col>
-              {editForm.coldEmailSent ? (
-                <Col md={6}>
-                  <Form.Group className="mb-2">
-                    <Form.Label style={{ fontSize: '0.8rem' }}>
-                      Which pitch? (only matters if this was marked sent manually — a real
-                      system-sent email already knows its own subject line)
-                    </Form.Label>
-                    <Form.Select
-                      value={editForm.coldEmailVariant}
-                      onChange={(e) => setEditForm({ ...editForm, coldEmailVariant: e.target.value as EditForm['coldEmailVariant'] })}
-                    >
-                      <option value="">Unknown / let the system guess</option>
-                      <option value="mockup">Website (we built them a new website pitch)</option>
-                      <option value="marketing">Marketing / Ads (content &amp; ads pitch)</option>
-                    </Form.Select>
-                  </Form.Group>
-                </Col>
-              ) : null}
               <Col md={6} className="d-flex align-items-end">
                 <Form.Group className="mb-2">
                   <Form.Check
