@@ -221,6 +221,7 @@ const leadSource = (lead: Lead): 'outbound' | 'mockup_form' | 'newsletter' =>
 type StatusFilter =
   | 'all'
   | 'not_contacted'
+  | 'closed_client'
   | 'onboarding'
   | 'mockup_sent'
   | 'mockup_not_sent'
@@ -445,6 +446,7 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
       const matchesStatus =
         statusFilter === 'all' ||
         (statusFilter === 'not_contacted' && isNotContacted(lead)) ||
+        (statusFilter === 'closed_client' && lead.closedWebDevClient) ||
         (statusFilter === 'onboarding' && lead.onboardingSent) ||
         (statusFilter === 'mockup_sent' && isMockupSent(lead)) ||
         (statusFilter === 'mockup_not_sent' && websiteNotSent(lead)) ||
@@ -822,6 +824,7 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
           <Form.Select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}>
             <option value="all">Any Contact Status</option>
             <option value="not_contacted">Not Contacted</option>
+            <option value="closed_client">Closed Web Dev Client</option>
             <option value="onboarding">Onboarding Sent</option>
             <option value="mockup_sent">Website Cold Email Sent</option>
             <option value="mockup_not_sent">Website Cold Email Not Sent</option>
