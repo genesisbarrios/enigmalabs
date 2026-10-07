@@ -140,6 +140,18 @@ const instagramMistakeBody = `
   ${point(5, "It looks like a side project", "Rightly or not, some customers still associate a “real” business with having its own website — especially for higher-ticket services where trust matters more.")}
   ${point(6, "You can't fully own your audience", "A follower list isn't an email list or a customer database — you can't export it, message all of them freely, or take it with you if you ever leave the platform.")}
 
+  <h2 style="margin-top:2.5rem;margin-bottom:0.5rem;">Why You Need a Website</h2>
+  <p class="pBlogBody">Instagram is a great place to get discovered — but it shouldn't be the only place your business lives. A website doesn't replace your Instagram; it's where your Instagram traffic should land. Here's what it does that a profile can't.</p>
+
+  ${point(1, "You own it", "No algorithm, no account bans, no policy changes. Your website, your domain, your content — it's the one piece of your online presence nobody can take away from you.")}
+  ${point(2, "Customers can find you on Google", "Most people search before they buy. A website lets you show up when someone searches what you do and where you are — “barber near me,” “catering in Miami” — not just when they already know your handle. It's also what AI assistants and Google Maps pull from when they recommend a business.")}
+  ${point(3, "It sells and books for you 24/7", "Booking, ordering, quote requests, and payments that work at 2am without you answering a single DM. Every question your website answers is one less back-and-forth in your inbox.")}
+  ${point(4, "It builds instant trust", "A professional website with your services, prices, reviews, and real photos of your work tells new customers you're established — especially for bigger purchases, where people want to check you out before they commit.")}
+  ${point(5, "You build a customer list you actually own", "Contact forms and newsletter signups turn visitors into an email list you control. When reach drops or an account gets locked, you can still reach every one of your customers directly.")}
+  ${point(6, "You can finally see what's working", "Website analytics and tracking pixels show you who's visiting, what they're looking at, and what turns them into customers — and let you retarget them with ads later. Instagram only shows you its own side of the story.")}
+
+  <p class="pBlogBody">The best setup in 2026 is both: Instagram to get noticed, and a website to turn that attention into booked appointments, orders, and loyal customers you own.</p>
+
   ${MOCKUP_CTA}
 `;
 
