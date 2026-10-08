@@ -260,9 +260,8 @@ function handleSubmit() {
               <div style={infoCardStyle}>
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Monthly Subscription</h6>
                 <ul style={{ marginBottom: 0 }}>
-                  <li>$200/mo for a 10 Page Website</li>
-                  <li>Includes Unlimited Edits, 24/7 Support, Hosting & Built-in CRM</li>
-                  <li>$100/mo for a 5 Page Website (Hosting, General Support & Built-in CRM)</li>
+                  <li>$200/mo for a 10 Page Website: Includes Unlimited Edits, 24/7 Support, Hosting & Built-in CRM</li>
+                  <li>$100/mo for a 5 Page Website: Includes Hosting, General Support & Built-in CRM</li>
                 </ul>
               </div>
             </Col>
