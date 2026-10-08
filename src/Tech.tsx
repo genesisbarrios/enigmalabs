@@ -211,7 +211,7 @@ function handleSubmit() {
               <h5 className="subsection-title" style={{marginTop: "5%"}}>Services</h5>
               <ul>
                 <li>Web Design & Web Development, Google Business Setup, SEO</li>
-                <li>Support & Maintenance: Hosting, Domain Setup, Updates, Admin Screen, etc. </li>
+                <li>Support & Maintenance: Hosting, Domain Setup, Updates & a Built-in CRM, etc. </li>
                 <li>Digital Marketing, Branding & Ads</li> 
               </ul>
             </Col>
@@ -261,8 +261,8 @@ function handleSubmit() {
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Monthly Subscription</h6>
                 <ul style={{ marginBottom: 0 }}>
                   <li>$200/mo for a 10 Page Website</li>
-                  <li>Includes Unlimited Edits, 24/7 Support, Hosting & Admin Page</li>
-                  <li>$100/mo for a 5 Page Website (Hosting,General Support & Admin Page)</li>
+                  <li>Includes Unlimited Edits, 24/7 Support, Hosting & Built-in CRM</li>
+                  <li>$100/mo for a 5 Page Website (Hosting, General Support & Built-in CRM)</li>
                 </ul>
               </div>
             </Col>
@@ -270,8 +270,8 @@ function handleSubmit() {
               <div style={infoCardStyle}>
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Hosting & Support</h6>
                 <ul style={{ marginBottom: 0 }}>
-                  <li>$15/mo: Hosting, General Support & Admin Page to contact subscribers</li>
-                  <li>$40/mo: Unlimited edits, 24/7 Support & Admin Page </li>
+                  <li>$15/mo: Hosting, General Support & Built-in CRM to manage your contacts, mailing list & newsletters</li>
+                  <li>$40/mo: Unlimited edits, 24/7 Support & Built-in CRM </li>
                 </ul>
               </div>
             </Col>
