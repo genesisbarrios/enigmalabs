@@ -251,8 +251,8 @@ function handleSubmit() {
               <div style={infoCardStyle}>
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Pay Up Front - Custom Website</h6>
                 <ul style={{ marginBottom: 0 }}>
-                  <li>$1000 for a 5 page website</li>
-                  <li>$2000 for a 10 page website</li>
+                  <li>$2000: 10 page website</li>
+                  <li>$1000: 5 page website</li>
                 </ul>
               </div>
             </Col>
@@ -278,9 +278,9 @@ function handleSubmit() {
               <div style={infoCardStyle}>
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Add Ons</h6>
                 <ul style={{ marginBottom: 0 }}>
-                  <li>$1000 - Custom Blog</li>
-                  <li>$1000 - Headless E-Commerce Store (Shopify/Printify or Stripe/Square Backend)</li>
-                  <li>$1500 - E-Commerce Store with Custom Backend</li>
+                  <li>$1000: Custom Blog</li>
+                  <li>$1000: Headless E-Commerce Store (Shopify/Printify or Stripe/Square Backend)</li>
+                  <li>$1500: E-Commerce Store with Custom Backend</li>
                 </ul>
               </div>
             </Col>
