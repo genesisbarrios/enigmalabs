@@ -1776,6 +1776,124 @@ async function findDuplicateLead({ email, phone }) {
   return Lead.findOne({ $or: conditions });
 }
 
+// ── Import merge (duplicates) ──────────────────────────────────────────────
+// When an import row matches an existing subscriber/lead, the existing record
+// keeps everything it already has; the row only adds what's new: blank text
+// fields get filled, off flags get turned on (with their timestamp), notes
+// are appended, and extra email addresses are added to a lead's list. Nothing
+// an admin already entered is ever overwritten or cleared by an import.
+function fillBlankFields(doc, row, fields) {
+  let changed = false;
+  fields.forEach((field) => {
+    const value = row[field] === undefined || row[field] === null ? '' : String(row[field]).trim();
+    if (value && !String(doc[field] || '').trim()) {
+      doc[field] = value;
+      changed = true;
+    }
+  });
+  return changed;
+}
+
+// flags: { flagField: 'timestampField' | null }
+function turnOnFlags(doc, row, flags) {
+  let changed = false;
+  Object.entries(flags).forEach(([field, atField]) => {
+    if (row[field] && !doc[field]) {
+      doc[field] = true;
+      if (atField && !doc[atField]) doc[atField] = new Date();
+      changed = true;
+    }
+  });
+  return changed;
+}
+
+function appendNotes(doc, notes) {
+  const incoming = String(notes || '').trim();
+  const current = String(doc.notes || '').trim();
+  if (!incoming || current.toLowerCase().includes(incoming.toLowerCase())) return false;
+  doc.notes = current ? `${current}\n${incoming}` : incoming;
+  return true;
+}
+
+function addEmails(doc, email) {
+  const current = splitEmails(doc.email);
+  const known = new Set(current.map((address) => address.toLowerCase()));
+  const added = splitEmails(email).filter((address) => !known.has(address.toLowerCase()));
+  if (!added.length) return false;
+  doc.email = [...current, ...added].join(', ');
+  return true;
+}
+
+const SUBSCRIBER_IMPORT_FIELDS = ['name', 'phone', 'businessName', 'socialUrl', 'googleBusinessUrl', 'city'];
+const SUBSCRIBER_IMPORT_FLAGS = { beats: null, mixing: null, loopsTemplates: null, visuals: null, web: null, ads: null };
+
+const findSubscriberByEmail = (email) =>
+  NewsletterSubscriber.findOne({ email: new RegExp(`^\\s*${escapeRegex(email)}\\s*$`, 'i') });
+
+// Creates the subscriber, or merges the row into an existing one with the
+// same email. Returns 'created' | 'updated' | 'unchanged'.
+async function importSubscriberRow(row) {
+  const email = String(row.email || '').trim();
+  const existing = await findSubscriberByEmail(email);
+  if (existing) {
+    const changed = [
+      fillBlankFields(existing, row, SUBSCRIBER_IMPORT_FIELDS),
+      turnOnFlags(existing, row, SUBSCRIBER_IMPORT_FLAGS),
+    ].some(Boolean);
+    if (!changed) return 'unchanged';
+    await existing.save();
+    return 'updated';
+  }
+  await NewsletterSubscriber.create({
+    email,
+    ...Object.fromEntries(SUBSCRIBER_IMPORT_FIELDS.map((field) => [field, String(row[field] || '').trim()])),
+    ...Object.fromEntries(Object.keys(SUBSCRIBER_IMPORT_FLAGS).map((flag) => [flag, Boolean(row[flag])])),
+  });
+  return 'created';
+}
+
+const LEAD_IMPORT_FIELDS = ['businessName', 'contactName', 'phone', 'instagram', 'website', 'city', 'industry', 'googleBusinessUrl'];
+const LEAD_IMPORT_FLAGS = {
+  outdatedWebsite: null,
+  coldEmailSent: 'coldEmailSentAt',
+  dmSent: 'dmSentAt',
+  called: 'calledAt',
+  declined: 'declinedAt',
+};
+
+// Merges an import row into an existing (duplicate) lead. Returns true if
+// anything new was saved.
+async function mergeLeadImportRow(lead, row) {
+  const hadInstagram = Boolean(String(lead.instagram || '').trim());
+  const hadEmail = Boolean(String(lead.email || '').trim());
+  const changes = [
+    fillBlankFields(lead, row, LEAD_IMPORT_FIELDS),
+    addEmails(lead, row.email),
+    turnOnFlags(lead, row, LEAD_IMPORT_FLAGS),
+    appendNotes(lead, row.notes),
+  ];
+  // A newly found Instagram/email clears the matching "not found" flag; a
+  // "not found" flag from the row only applies if there still isn't one.
+  if (!hadInstagram && String(lead.instagram || '').trim() && lead.instagramNotFound) {
+    lead.instagramNotFound = false;
+    lead.instagramNotFoundAt = undefined;
+  }
+  if (!hadEmail && String(lead.email || '').trim() && lead.emailNotFound) {
+    lead.emailNotFound = false;
+    lead.emailNotFoundAt = undefined;
+  }
+  if (!String(lead.instagram || '').trim()) changes.push(turnOnFlags(lead, row, { instagramNotFound: 'instagramNotFoundAt' }));
+  if (!String(lead.email || '').trim()) changes.push(turnOnFlags(lead, row, { emailNotFound: 'emailNotFoundAt' }));
+  // Same rule as the decline route: fully declined implies website declined.
+  if (lead.declined && !lead.declinedWebsite) {
+    lead.declinedWebsite = true;
+    lead.declinedWebsiteAt = lead.declinedAt || new Date();
+  }
+  if (!changes.some(Boolean)) return false;
+  await lead.save();
+  return true;
+}
+
 async function upsertInboundLead({ businessName, contactName, email, phone, instagram, googleBusinessUrl, city, submittedIp, source }) {
   try {
     const existing = await findDuplicateLead({ email, phone });
@@ -2218,28 +2336,23 @@ app.post('/api/newsletter/subscribers/import', async (req, res) => {
       return res.status(400).json({ ok: false, message: 'A non-empty subscribers array is required.' });
     }
 
-    const existingEmails = new Set(
-      (await NewsletterSubscriber.find({}, 'email')).map((s) => s.email)
-    );
+    // Sequential so a repeated email within the same file merges into the
+    // row created a moment earlier instead of creating a second subscriber.
+    const counts = { created: 0, updated: 0, unchanged: 0, missingEmail: 0 };
+    for (const row of rows) {
+      if (!String(row.email || '').trim()) {
+        counts.missingEmail += 1;
+        continue;
+      }
+      counts[await importSubscriberRow(row)] += 1;
+    }
 
-    const toInsert = rows
-      .map((row) => ({
-        email: (row.email || '').trim(),
-        name: (row.name || '').trim(),
-        phone: (row.phone || '').trim(),
-        socialUrl: (row.socialUrl || '').trim(),
-        beats: Boolean(row.beats),
-        mixing: Boolean(row.mixing),
-        loopsTemplates: Boolean(row.loopsTemplates),
-        visuals: Boolean(row.visuals),
-        web: Boolean(row.web),
-        ads: Boolean(row.ads)
-      }))
-      .filter((row) => row.email && !existingEmails.has(row.email));
-
-    const inserted = toInsert.length > 0 ? await NewsletterSubscriber.insertMany(toInsert) : [];
-
-    res.status(201).json({ ok: true, insertedCount: inserted.length, skippedCount: rows.length - inserted.length });
+    res.status(201).json({
+      ok: true,
+      insertedCount: counts.created,
+      updatedCount: counts.updated,
+      skippedCount: counts.unchanged + counts.missingEmail,
+    });
   } catch (error) {
     console.error('Newsletter subscriber import failed', error);
     res.status(500).json({ ok: false, message: 'Could not import newsletter subscribers.' });
@@ -2254,36 +2367,22 @@ app.post('/api/newsletter/subscribers/import-bulk', async (req, res) => {
     }
 
     let created = 0;
+    let updated = 0;
     let skipped = 0;
 
     for (const row of rows) {
-      const email = (row.email || '').trim();
-      if (!email) {
+      if (!String(row.email || '').trim()) {
         skipped += 1;
         continue;
       }
-
-      const existing = await NewsletterSubscriber.findOne({ email });
-      if (existing) {
-        skipped += 1;
-        continue;
-      }
-
-      await NewsletterSubscriber.create({
-        email,
-        name: row.name || '',
-        phone: row.phone || '',
-        businessName: row.businessName || '',
-        socialUrl: row.socialUrl || '',
-        beats: Boolean(row.beats),
-        visuals: Boolean(row.visuals),
-        web: Boolean(row.web),
-        ads: Boolean(row.ads)
-      });
-      created += 1;
+      // Duplicates merge any new data into the existing subscriber.
+      const result = await importSubscriberRow(row);
+      if (result === 'created') created += 1;
+      else if (result === 'updated') updated += 1;
+      else skipped += 1;
     }
 
-    res.status(201).json({ ok: true, created, skipped });
+    res.status(201).json({ ok: true, created, updated, skipped });
   } catch (error) {
     console.error('Could not bulk import newsletter subscribers', error);
     res.status(500).json({ ok: false, message: 'Could not import subscribers.' });
@@ -3225,8 +3324,10 @@ app.post('/api/crm/leads/import-bulk', async (req, res) => {
     }
 
     let created = 0;
+    let updated = 0;
     let skipped = 0;
     const createdLeads = [];
+    const updatedLeads = [];
 
     for (const row of rows) {
       const businessName = row.businessName || '';
@@ -3237,9 +3338,16 @@ app.post('/api/crm/leads/import-bulk', async (req, res) => {
         continue;
       }
 
+      // Duplicate (same email or phone): save whatever's new on this row
+      // into the existing lead instead of dropping it.
       const duplicate = await findDuplicateLead({ email, phone });
       if (duplicate) {
-        skipped += 1;
+        if (await mergeLeadImportRow(duplicate, row)) {
+          updated += 1;
+          updatedLeads.push(duplicate);
+        } else {
+          skipped += 1;
+        }
         continue;
       }
 
@@ -3272,7 +3380,7 @@ app.post('/api/crm/leads/import-bulk', async (req, res) => {
       created += 1;
     }
 
-    res.status(201).json({ ok: true, created, skipped, leads: createdLeads });
+    res.status(201).json({ ok: true, created, updated, skipped, leads: createdLeads, updatedLeads });
   } catch (error) {
     console.error('Could not bulk import leads', error);
     res.status(500).json({ ok: false, message: 'Could not import leads.' });

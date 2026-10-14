@@ -521,7 +521,12 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
     try {
       const response = await axios.post(`${API_BASE_URL}/crm/leads/import-bulk`, { leads: previewLeads });
       if (response.data?.ok) {
-        setMessage(`Saved ${response.data.created} new lead${response.data.created === 1 ? '' : 's'} (${response.data.skipped} duplicate${response.data.skipped === 1 ? '' : 's'} skipped).`);
+        const { created = 0, updated = 0, skipped = 0 } = response.data;
+        setMessage(
+          `Saved ${created} new lead${created === 1 ? '' : 's'}` +
+            (updated ? `, added new info to ${updated} existing lead${updated === 1 ? '' : 's'}` : '') +
+            ` (${skipped} duplicate${skipped === 1 ? '' : 's'} with nothing new skipped).`
+        );
         setPreviewLeads([]);
         setPasteText('');
         onImported();

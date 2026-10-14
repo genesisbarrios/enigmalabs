@@ -1172,7 +1172,9 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
                                 </Button>
                               )
                             ) : null}
-                            {!lead.website || lead.outdatedWebsite ? (
+                            {/* A Closed Web Dev Client always gets onboarding, even if
+                                they already have a (non-outdated) site on file. */}
+                            {lead.closedWebDevClient || !lead.website || lead.outdatedWebsite ? (
                               lead.onboardingSent ? (
                                 <>
                                   <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'onboarding')}>

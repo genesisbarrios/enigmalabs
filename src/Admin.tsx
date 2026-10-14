@@ -770,7 +770,13 @@ const Admin = () => {
     try {
       const response = await axios.post(`${API_BASE_URL}/newsletter/subscribers/import-bulk`, { subscribers: parsed });
       if (response.data?.ok) {
-        setNewsletterMessage(`Imported ${response.data.created} subscriber${response.data.created === 1 ? '' : 's'}${response.data.skipped ? ` — skipped ${response.data.skipped} (duplicate or missing email)` : ''}.`);
+        const { created = 0, updated = 0, skipped = 0 } = response.data;
+        setNewsletterMessage(
+          `Imported ${created} new subscriber${created === 1 ? '' : 's'}` +
+            (updated ? `, added new info to ${updated} existing` : '') +
+            (skipped ? ` — skipped ${skipped} (duplicate with nothing new, or missing email)` : '') +
+            '.'
+        );
         setPasteSubscribersText('');
         setShowPasteSubscribers(false);
         fetchSubscribers();
@@ -1152,7 +1158,12 @@ const Admin = () => {
       setSubscriberImportStatus(`Importing ${parsed.length} rows...`);
       const response = await axios.post(`${API_BASE_URL}/newsletter/subscribers/import`, { subscribers: parsed });
       if (response.data?.ok) {
-        setSubscriberImportStatus(`Imported ${response.data.insertedCount}, skipped ${response.data.skippedCount} duplicate(s).`);
+        const { insertedCount = 0, updatedCount = 0, skippedCount = 0 } = response.data;
+        setSubscriberImportStatus(
+          `Imported ${insertedCount} new` +
+            (updatedCount ? `, added new info to ${updatedCount} existing` : '') +
+            `, skipped ${skippedCount} (duplicate with nothing new, or missing email).`
+        );
         fetchSubscribers();
       } else {
         setSubscriberImportStatus(response.data?.message || 'Import failed.');
