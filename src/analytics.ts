@@ -78,13 +78,101 @@ const pageData = () => ({
   page_path: window.location.pathname,
 });
 
-// Meta PageView on every route change, with page_name/page_path. Admin pages
-// are never tracked — the pixel isn't even loaded until the first non-admin
-// page.
+// ── First-party Site Analytics (admin → Site Analytics) ──────────────────
+// Page views and link clicks go to our own backend too (/api/site-events),
+// so the admin has traffic numbers without depending on GA/Meta. Form
+// submissions are recorded server-side by the form handlers.
+const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ""}/api`;
+const VISITOR_KEY = "enigma_vid";
+
+// Anonymous random ID kept in this browser to count unique visitors —
+// never tied to a person.
+function getVisitorId() {
+  try {
+    let id = localStorage.getItem(VISITOR_KEY);
+    if (!id) {
+      id = (window.crypto as any)?.randomUUID?.() || `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+      localStorage.setItem(VISITOR_KEY, id as string);
+    }
+    return id as string;
+  } catch {
+    return "";
+  }
+}
+
+const deviceType = () => (window.innerWidth < 768 ? "mobile" : window.innerWidth < 1024 ? "tablet" : "desktop");
+
+function referrerHost() {
+  try {
+    const host = new URL(document.referrer).hostname.replace(/^www\./, "");
+    return host === window.location.hostname.replace(/^www\./, "") ? "" : host;
+  } catch {
+    return "";
+  }
+}
+
+function sendSiteEvent(payload: Record<string, string>) {
+  if (navigator.webdriver || window.location.pathname.toLowerCase().startsWith("/admin")) return;
+  const body = JSON.stringify({ visitorId: getVisitorId(), device: deviceType(), ...payload });
+  const url = `${API_BASE_URL}/site-events`;
+  // sendBeacon survives the page navigating away (tel:/external links).
+  const sent = navigator.sendBeacon?.(url, new Blob([body], { type: "application/json" }));
+  if (!sent) {
+    fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body, keepalive: true }).catch(() => {});
+  }
+}
+
+const SOCIAL_HOSTS: [RegExp, string][] = [
+  [/(^|\.)instagram\.com$/, "instagram"],
+  [/(^|\.)(facebook|fb)\.com$|(^|\.)fb\.me$/, "facebook"],
+  [/(^|\.)tiktok\.com$/, "tiktok"],
+  [/(^|\.)youtube\.com$|(^|\.)youtu\.be$/, "youtube"],
+  [/(^|\.)(x|twitter)\.com$/, "x"],
+  [/(^|\.)linkedin\.com$/, "linkedin"],
+  [/(^|\.)spotify\.com$/, "spotify"],
+  [/(^|\.)soundcloud\.com$/, "soundcloud"],
+  [/(^|\.)beatstars\.com$/, "beatstars"],
+];
+
+function classifyLink(anchor: HTMLAnchorElement): { type: string; label: string } | null {
+  const href = anchor.getAttribute("href") || "";
+  if (href.startsWith("tel:")) return { type: "phone_click", label: "phone" };
+  if (href.startsWith("mailto:")) return { type: "email_click", label: "email" };
+  try {
+    const host = new URL(href, window.location.href).hostname.replace(/^www\./, "");
+    const match = SOCIAL_HOSTS.find(([re]) => re.test(host));
+    return match ? { type: "social_click", label: match[1] } : null;
+  } catch {
+    return null;
+  }
+}
+
+// One document-level listener counts every tel:, mailto:, and social link,
+// wherever it's rendered. Safe to call more than once.
+let clickTrackingInstalled = false;
+export function installClickTracking() {
+  if (clickTrackingInstalled) return;
+  clickTrackingInstalled = true;
+  document.addEventListener(
+    "click",
+    (e) => {
+      const anchor = (e.target as Element | null)?.closest?.("a");
+      if (!anchor) return;
+      const event = classifyLink(anchor as HTMLAnchorElement);
+      if (event) sendSiteEvent({ ...event, path: window.location.pathname });
+    },
+    { capture: true }
+  );
+}
+
+// Meta PageView on every route change, with page_name/page_path, plus a
+// first-party page view. Admin pages are never tracked — the pixel isn't
+// even loaded until the first non-admin page.
 export function trackPageView(path: string) {
   if (path.toLowerCase().startsWith("/admin")) return;
   initMetaPixel();
   window.fbq?.("track", "PageView", { page_name: pageName(path), page_path: path });
+  sendSiteEvent({ type: "page_view", path, referrer: referrerHost() });
 }
 
 type LeadForm = "mockup" | "audit";
@@ -96,6 +184,7 @@ const FORM_NAMES: Record<LeadForm, string> = {
 // Someone viewed the form page — the "viewed" side of viewed vs. submitted.
 // Meta: standard ViewContent. GA4: custom form_view event.
 export function trackFormView(form: LeadForm) {
+  sendSiteEvent({ type: "form_view", label: form, path: window.location.pathname });
   initMetaPixel();
   window.fbq?.("track", "ViewContent", { content_name: FORM_NAMES[form], content_category: form, ...pageData() });
   window.gtag?.("event", "form_view", { form_name: form });

@@ -1590,7 +1590,8 @@ const leadSchema = new mongoose.Schema({
   // lead scraper or manual/file import. "source" is the more specific
   // breakdown, driving which direction filter and cold-email copy applies.
   inbound: { type: Boolean, default: false },
-  source: { type: String, enum: ['outbound', 'mockup_form', 'newsletter'], default: 'outbound' },
+  // free_audit_form: the /audit page (see /api/newsletter/subscribe).
+  source: { type: String, enum: ['outbound', 'mockup_form', 'newsletter', 'free_audit_form'], default: 'outbound' },
   coldEmailSent: { type: Boolean, default: false },
   coldEmailSentAt: Date,
   // Set the one time the cold email is resent — once present, resending is
@@ -1689,6 +1690,10 @@ const leadSchema = new mongoose.Schema({
   // client-specific contact (payment reminders, etc), not a replacement.
   convertedToClient: { type: Boolean, default: false },
   convertedToClientAt: Date,
+  // When this lead was first linked to a Website Client record (see
+  // syncClientLeadsIntoWebsiteClients) — set once, so deleting that client
+  // record doesn't make it reappear on the next sync.
+  websiteClientSyncedAt: Date,
   // Only set for inbound (public form) leads — used to rate-limit spam floods
   // from the free-mockup form by source IP.
   submittedIp: String,
@@ -2085,6 +2090,8 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
     if (await isLikelySpamSubmission(payload, req)) {
       return res.status(201).json({ ok: true, message: 'Subscription received.' });
     }
+    // Site Analytics: count the real (non-spam) submission by form.
+    recordFormSubmit(payload.freeaudit ? 'audit' : payload.freemockups ? 'mockup' : 'newsletter', req);
 
     // The free-mockup form is a lead-gen flow, not a newsletter signup —
     // keep mockup-only submissions out of the newsletter table entirely and
@@ -2254,6 +2261,7 @@ app.post('/api/contact/submit', async (req, res) => {
     if (await isLikelySpamSubmission(payload, req)) {
       return res.status(201).json({ ok: true, message: 'Message received.' });
     }
+    recordFormSubmit('contact', req);
 
     const { honeypot, formLoadedAt, ...submissionFields } = payload;
     await ContactSubmission.create(submissionFields);
@@ -2865,9 +2873,65 @@ app.get('/api/agreements/:id/download', async (req, res) => {
   }
 });
 
+// Leads that count as website clients: marked Closed Web Dev Client, sent the
+// onboarding email, or already converted (onboarding form submitted).
+const CLIENT_LEAD_QUERY = { $or: [{ closedWebDevClient: true }, { onboardingSent: true }, { convertedToClient: true }] };
+
+const leadClientStatus = (lead) =>
+  lead.convertedToClient ? 'onboarded' : lead.onboardingSent ? 'onboarding_sent' : 'closed';
+
+// Makes sure every closed/onboarded lead has a Website Client record, so the
+// Website Clients list shows them. Only creates missing records (matched by
+// email, case-insensitive) — never overwrites an existing client's details —
+// and only once per lead (websiteClientSyncedAt), so a client record you
+// delete stays deleted. Leads without an email are skipped until they have
+// one (a client record needs an email).
+async function syncClientLeadsIntoWebsiteClients() {
+  const [leads, clients] = await Promise.all([
+    Lead.find(CLIENT_LEAD_QUERY).select('businessName contactName email phone website instagram city industry websiteClientSyncedAt'),
+    WebsiteClient.find().select('email'),
+  ]);
+  const known = new Set(clients.map((c) => String(c.email || '').trim().toLowerCase()).filter(Boolean));
+  for (const lead of leads) {
+    if (lead.websiteClientSyncedAt) continue;
+    const emails = splitEmails(lead.email);
+    if (!emails.length) continue;
+    if (emails.some((e) => known.has(e.toLowerCase()))) {
+      await Lead.updateOne({ _id: lead._id }, { websiteClientSyncedAt: new Date() });
+      continue;
+    }
+    await WebsiteClient.create({
+      name: lead.businessName || lead.contactName || emails[0],
+      email: emails[0],
+      phone: lead.phone || '',
+      address: lead.city || '',
+      socialMediaLinks: lead.instagram || '',
+      businessType: lead.industry || '',
+      website: lead.website || '',
+    });
+    await Lead.updateOne({ _id: lead._id }, { websiteClientSyncedAt: new Date() });
+    known.add(emails[0].toLowerCase());
+  }
+  return leads;
+}
+
 app.get('/api/website-clients', async (_req, res) => {
   try {
-    const clients = await WebsiteClient.find().select('-logo.data').sort({ createdAt: -1 });
+    let clientLeads = [];
+    try {
+      clientLeads = await syncClientLeadsIntoWebsiteClients();
+    } catch (syncError) {
+      // Non-fatal — still return the existing client list.
+      console.error('Could not sync closed/onboarded leads into website clients', syncError);
+    }
+    const statusByEmail = new Map();
+    clientLeads.forEach((lead) => {
+      splitEmails(lead.email).forEach((e) => statusByEmail.set(e.toLowerCase(), leadClientStatus(lead)));
+    });
+    const clients = (await WebsiteClient.find().select('-logo.data').sort({ createdAt: -1 }).lean()).map((client) => ({
+      ...client,
+      leadStatus: statusByEmail.get(String(client.email || '').trim().toLowerCase()) || null,
+    }));
     res.json({ ok: true, clients });
   } catch (error) {
     console.error('Could not fetch website clients', error);
@@ -3172,7 +3236,15 @@ app.get('/api/crm/leads', async (req, res) => {
   try {
     const filter = {};
     if (req.query.inbound !== undefined) filter.inbound = req.query.inbound === 'true';
-    if (req.query.source) filter.source = req.query.source;
+    if (req.query.source === 'mockup_form') {
+      // Mockup requests from before lead sources were recorded (2026-08-28)
+      // are inbound but still carry the schema's 'outbound' default — every
+      // inbound path since then sets its own source, so inbound+outbound
+      // can only be one of those legacy mockup requests.
+      filter.$or = [{ source: 'mockup_form' }, { inbound: true, source: { $in: ['outbound', null] } }];
+    } else if (req.query.source) {
+      filter.source = req.query.source;
+    }
     const leads = await Lead.find(filter).sort({ createdAt: -1 });
     res.json({ ok: true, leads });
   } catch (error) {
@@ -4086,6 +4158,353 @@ app.delete('/api/onboarding/clients/:id', async (req, res) => {
     console.error('Could not delete client', error);
     res.status(500).json({ ok: false, message: 'Could not delete client.' });
   }
+});
+
+// ── Site analytics (first-party) ───────────────────────────────────────────
+// Same idea as the client sites' "Site Activity": enigma-labs.com records its
+// own page views and link clicks here (src/analytics.ts), and form
+// submissions are recorded server-side by the form handlers themselves, so
+// the admin can see traffic without depending on GA/Meta.
+const SITE_EVENT_TYPES = ['page_view', 'phone_click', 'email_click', 'social_click', 'form_view', 'form_submit'];
+const siteEventSchema = new mongoose.Schema({
+  type: { type: String, enum: SITE_EVENT_TYPES, required: true },
+  // e.g. social platform, or form name (mockup / audit / newsletter / contact)
+  label: String,
+  path: String,
+  // Anonymous random ID kept in the visitor's localStorage — only used to
+  // count unique visitors, never tied to a person.
+  visitorId: String,
+  // Referring site's hostname (page views from another site only).
+  referrer: String,
+  device: { type: String, enum: ['mobile', 'tablet', 'desktop'] },
+  createdAt: { type: Date, default: Date.now, index: true }
+});
+siteEventSchema.index({ type: 1, createdAt: -1 });
+const SiteEvent = mongoose.model('SiteEvent', siteEventSchema, 'site_events');
+
+const BOT_UA = /bot|crawl|spider|slurp|facebookexternalhit|headless|lighthouse|preview|monitor|curl|wget|python|axios/i;
+const ANALYTICS_TZ = 'America/New_York';
+
+const clip = (value, max) => String(value || '').slice(0, max);
+
+// Form submissions, recorded from the form handlers after spam checks pass.
+async function recordFormSubmit(label, req) {
+  try {
+    let path = '';
+    try {
+      path = new URL(req.get('referer') || '').pathname;
+    } catch (_) {
+      path = '';
+    }
+    await SiteEvent.create({ type: 'form_submit', label, path: clip(path, 200) });
+  } catch (error) {
+    console.error('Could not record form submission event', error);
+  }
+}
+
+app.post('/api/site-events', async (req, res) => {
+  try {
+    if (BOT_UA.test(req.get('user-agent') || '')) return res.status(204).end();
+    const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
+    const type = String(body.type || '');
+    // form_submit is server-recorded only, so the public endpoint can't fake it.
+    if (!SITE_EVENT_TYPES.includes(type) || type === 'form_submit') {
+      return res.status(400).json({ ok: false, message: 'Invalid event.' });
+    }
+    const path = clip(body.path, 200);
+    if (!path.startsWith('/') || path.toLowerCase().startsWith('/admin')) return res.status(204).end();
+    const visitorId = String(body.visitorId || '');
+    const referrer = String(body.referrer || '').toLowerCase().replace(/^www\./, '');
+    await SiteEvent.create({
+      type,
+      label: clip(body.label, 60),
+      path,
+      ...(/^[a-z0-9-]{8,40}$/i.test(visitorId) ? { visitorId } : {}),
+      ...(/^[a-z0-9.-]{3,100}$/.test(referrer) && !referrer.endsWith('enigma-labs.com') ? { referrer } : {}),
+      ...(['mobile', 'tablet', 'desktop'].includes(body.device) ? { device: body.device } : {})
+    });
+    res.status(201).json({ ok: true });
+  } catch (error) {
+    console.error('Could not record site event', error);
+    res.status(500).json({ ok: false, message: 'Could not record event.' });
+  }
+});
+
+// ?days=N (0 = all time, default 30) and optional ?path=/tech to scope
+// everything to one page.
+app.get('/api/site-analytics', async (req, res) => {
+  try {
+    const days = Math.min(Math.max(parseInt(req.query.days, 10) || 0, 0), 3650);
+    const pathFilter = clip(req.query.path, 200);
+    const match = {
+      ...(days ? { createdAt: { $gte: new Date(Date.now() - days * 86400000) } } : {}),
+      ...(pathFilter ? { path: pathFilter } : {})
+    };
+    const views = { ...match, type: 'page_view' };
+    const countBy = (filter, field, limit = 10) =>
+      SiteEvent.aggregate([
+        { $match: filter },
+        { $group: { _id: `$${field}`, n: { $sum: 1 }, visitors: { $addToSet: '$visitorId' } } },
+        { $sort: { n: -1 } },
+        { $limit: limit },
+        { $project: { _id: 0, label: { $ifNull: ['$_id', ''] }, count: '$n', visitors: { $size: '$visitors' } } }
+      ]);
+
+    const [typeGroups, visitorGroups, daily, pages, referrers, devices, social, forms, allPages] = await Promise.all([
+      SiteEvent.aggregate([{ $match: match }, { $group: { _id: '$type', n: { $sum: 1 } } }]),
+      SiteEvent.aggregate([{ $match: { ...views, visitorId: { $exists: true } } }, { $group: { _id: '$visitorId' } }, { $count: 'n' }]),
+      SiteEvent.aggregate([
+        { $match: views },
+        {
+          $group: {
+            _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt', timezone: ANALYTICS_TZ } },
+            pageViews: { $sum: 1 },
+            visitors: { $addToSet: '$visitorId' }
+          }
+        },
+        { $sort: { _id: 1 } },
+        { $project: { _id: 0, date: '$_id', pageViews: 1, visitors: { $size: '$visitors' } } }
+      ]),
+      countBy(views, 'path', 12),
+      countBy({ ...views, referrer: { $exists: true } }, 'referrer', 10),
+      countBy({ ...views, device: { $exists: true } }, 'device', 3),
+      countBy({ ...match, type: 'social_click' }, 'label', 10),
+      SiteEvent.aggregate([
+        { $match: { ...match, type: { $in: ['form_view', 'form_submit'] } } },
+        { $group: { _id: { label: '$label', type: '$type' }, n: { $sum: 1 } } }
+      ]),
+      // Page list for the filter dropdown — always the full range, unfiltered.
+      SiteEvent.distinct('path', { type: 'page_view' })
+    ]);
+
+    const byType = Object.fromEntries(typeGroups.map((g) => [g._id, g.n]));
+    const formMap = {};
+    forms.forEach((g) => {
+      const label = g._id.label || 'other';
+      formMap[label] = formMap[label] || { label, views: 0, submits: 0 };
+      formMap[label][g._id.type === 'form_view' ? 'views' : 'submits'] = g.n;
+    });
+
+    res.json({
+      ok: true,
+      days,
+      path: pathFilter,
+      totals: {
+        visitors: visitorGroups[0]?.n || 0,
+        pageViews: byType.page_view || 0,
+        formSubmits: byType.form_submit || 0,
+        phoneClicks: byType.phone_click || 0,
+        emailClicks: byType.email_click || 0,
+        socialClicks: byType.social_click || 0
+      },
+      daily,
+      pages,
+      referrers,
+      devices,
+      social,
+      forms: Object.values(formMap).sort((a, b) => b.submits - a.submits || b.views - a.views),
+      allPages: allPages.filter(Boolean).sort()
+    });
+  } catch (error) {
+    console.error('Could not load site analytics', error);
+    res.status(500).json({ ok: false, message: 'Could not load site analytics.' });
+  }
+});
+
+// ── Google Analytics 4 + Meta Pixel reports ──────────────────────────────
+// Pulled live from each platform's reporting API. Needs, in this project's
+// Vercel env:
+//   GA4:  GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_SERVICE_ACCOUNT_KEY, GA4_PROPERTY_ID
+//         (and that service account added as a Viewer on the GA4 property)
+//   Meta: META_ACCESS_TOKEN (a system-user token with ads_read), optional
+//         META_PIXEL_ID (defaults to the site's pixel)
+// Each source reports independently so one misconfigured account doesn't
+// hide the other.
+const META_PIXEL_ID = process.env.META_PIXEL_ID || '2094726328099929';
+
+let googleTokenCache = { token: '', expiresAt: 0 };
+async function getGoogleAccessToken() {
+  if (googleTokenCache.token && googleTokenCache.expiresAt > Date.now() + 60000) return googleTokenCache.token;
+  const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
+  const key = (process.env.GOOGLE_SERVICE_ACCOUNT_KEY || '').replace(/\\n/g, '\n');
+  if (!email || !key) return '';
+  const now = Math.floor(Date.now() / 1000);
+  const b64 = (obj) => Buffer.from(JSON.stringify(obj)).toString('base64url');
+  const unsigned = `${b64({ alg: 'RS256', typ: 'JWT' })}.${b64({
+    iss: email,
+    scope: 'https://www.googleapis.com/auth/analytics.readonly',
+    aud: 'https://oauth2.googleapis.com/token',
+    iat: now,
+    exp: now + 3600
+  })}`;
+  const signature = require('crypto').createSign('RSA-SHA256').update(unsigned).sign(key).toString('base64url');
+  const response = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer', assertion: `${unsigned}.${signature}` })
+  });
+  const data = await response.json();
+  if (!response.ok || !data.access_token) throw new Error(`Google sign-in failed: ${data.error_description || data.error || response.status}`);
+  googleTokenCache = { token: data.access_token, expiresAt: Date.now() + (data.expires_in || 3600) * 1000 };
+  return data.access_token;
+}
+
+async function runGaReport(token, body) {
+  const response = await fetch(`https://analyticsdata.googleapis.com/v1beta/properties/${process.env.GA4_PROPERTY_ID}:runReport`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify(body)
+  });
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error?.message || `GA report failed (${response.status})`);
+  return (data.rows || []).map((row) => ({
+    dims: (row.dimensionValues || []).map((d) => d.value),
+    metrics: (row.metricValues || []).map((m) => Number(m.value))
+  }));
+}
+
+async function getGaReport(days) {
+  const token = await getGoogleAccessToken();
+  const dateRanges = [{ startDate: `${days}daysAgo`, endDate: 'today' }];
+  const top = async (dimension, metric, limit) =>
+    (await runGaReport(token, {
+      dateRanges,
+      dimensions: [{ name: dimension }],
+      metrics: [{ name: metric }],
+      orderBys: [{ metric: { metricName: metric }, desc: true }],
+      limit
+    }))
+      .map((r) => ({ label: r.dims[0], count: r.metrics[0] }))
+      .filter((r) => r.label && r.label !== '(not set)');
+
+  const [totals, daily, pages, channels, sources, countries, cities, devices, events] = await Promise.all([
+    runGaReport(token, {
+      dateRanges,
+      metrics: [{ name: 'activeUsers' }, { name: 'newUsers' }, { name: 'sessions' }, { name: 'screenPageViews' }, { name: 'engagementRate' }, { name: 'keyEvents' }]
+    }),
+    runGaReport(token, {
+      dateRanges,
+      dimensions: [{ name: 'date' }],
+      metrics: [{ name: 'activeUsers' }, { name: 'sessions' }],
+      orderBys: [{ dimension: { dimensionName: 'date' } }]
+    }),
+    top('pagePath', 'screenPageViews', 12),
+    top('sessionDefaultChannelGroup', 'sessions', 8),
+    top('sessionSource', 'sessions', 10),
+    top('country', 'activeUsers', 8),
+    top('city', 'activeUsers', 8),
+    top('deviceCategory', 'activeUsers', 3),
+    top('eventName', 'eventCount', 15)
+  ]);
+  const t = totals[0]?.metrics || [0, 0, 0, 0, 0, 0];
+  return {
+    totals: { users: t[0], newUsers: t[1], sessions: t[2], pageViews: t[3], engagementRate: t[4], keyEvents: t[5] },
+    daily: daily.map((r) => ({
+      date: `${r.dims[0].slice(0, 4)}-${r.dims[0].slice(4, 6)}-${r.dims[0].slice(6, 8)}`,
+      users: r.metrics[0],
+      sessions: r.metrics[1]
+    })),
+    pages,
+    channels,
+    sources,
+    countries,
+    cities,
+    devices,
+    events
+  };
+}
+
+async function getMetaPixelReport(days) {
+  const end = Math.floor(Date.now() / 1000);
+  const start = end - days * 86400;
+  const stats = async (aggregation) => {
+    const url = new URL(`https://graph.facebook.com/v21.0/${META_PIXEL_ID}/stats`);
+    url.search = new URLSearchParams({
+      aggregation,
+      start_time: String(start),
+      end_time: String(end),
+      access_token: process.env.META_ACCESS_TOKEN
+    }).toString();
+    const response = await fetch(url);
+    const data = await response.json();
+    if (!response.ok || data.error) throw new Error(data.error?.message || `Meta request failed (${response.status})`);
+    return data.data || [];
+  };
+
+  const [byEvent, byUrl, byDevice] = await Promise.all([
+    stats('event'),
+    stats('url').catch(() => []),
+    stats('device_type').catch(() => [])
+  ]);
+
+  // Buckets come back hourly; roll them up into totals and per-day counts.
+  const dayKey = (iso) => new Date(iso).toLocaleDateString('en-CA', { timeZone: ANALYTICS_TZ });
+  const totals = {};
+  const dailyMap = {};
+  byEvent.forEach((bucket) => {
+    const day = dayKey(bucket.start_time);
+    (bucket.data || []).forEach(({ value, count }) => {
+      totals[value] = (totals[value] || 0) + Number(count || 0);
+      dailyMap[day] = dailyMap[day] || {};
+      dailyMap[day][value] = (dailyMap[day][value] || 0) + Number(count || 0);
+    });
+  });
+  const rollUp = (buckets, clean = (v) => v) => {
+    const out = {};
+    buckets.forEach((bucket) =>
+      (bucket.data || []).forEach(({ value, count }) => {
+        const key = clean(value);
+        if (key) out[key] = (out[key] || 0) + Number(count || 0);
+      })
+    );
+    return Object.entries(out)
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => b.count - a.count);
+  };
+  const urlPath = (value) => {
+    try {
+      return new URL(value).pathname;
+    } catch (_) {
+      return value;
+    }
+  };
+
+  return {
+    pixelId: META_PIXEL_ID,
+    events: Object.entries(totals)
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => b.count - a.count),
+    daily: Object.keys(dailyMap)
+      .sort()
+      .map((date) => ({ date, counts: dailyMap[date] })),
+    urls: rollUp(byUrl, urlPath).slice(0, 12),
+    devices: rollUp(byDevice).slice(0, 6)
+  };
+}
+
+app.get('/api/marketing-analytics', async (req, res) => {
+  const days = Math.min(Math.max(parseInt(req.query.days, 10) || 28, 1), 365);
+  const section = async (configured, missing, load) => {
+    if (!configured) return { connected: false, missing };
+    try {
+      return { connected: true, data: await load() };
+    } catch (error) {
+      return { connected: true, error: error.message };
+    }
+  };
+  const gaMissing = ['GOOGLE_SERVICE_ACCOUNT_EMAIL', 'GOOGLE_SERVICE_ACCOUNT_KEY', 'GA4_PROPERTY_ID'].filter((k) => !process.env[k]);
+  const metaMissing = ['META_ACCESS_TOKEN'].filter((k) => !process.env[k]);
+  const [ga, meta] = await Promise.all([
+    section(!gaMissing.length, gaMissing, () => getGaReport(days)),
+    section(!metaMissing.length, metaMissing, () => getMetaPixelReport(days))
+  ]);
+  res.json({
+    ok: true,
+    days,
+    serviceAccountEmail: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || '',
+    ga,
+    meta
+  });
 });
 
 let connectPromise = null;

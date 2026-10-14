@@ -41,7 +41,7 @@ export type Lead = {
   notes?: string;
   googleBusinessUrl?: string;
   inbound: boolean;
-  source?: 'outbound' | 'mockup_form' | 'newsletter';
+  source?: 'outbound' | 'mockup_form' | 'newsletter' | 'free_audit_form';
   coldEmailSent?: boolean;
   coldEmailSentAt?: string;
   coldEmailHtml?: string;
@@ -216,8 +216,11 @@ type DirectionFilter = 'all' | 'inbound' | 'newsletter' | 'outbound';
 // Existing leads created before "source" existed don't have it stored at
 // all — fall back to the old inbound boolean so they still classify
 // correctly instead of silently reading as "outbound".
-const leadSource = (lead: Lead): 'outbound' | 'mockup_form' | 'newsletter' =>
-  lead.source || (lead.inbound ? 'mockup_form' : 'outbound');
+// Inbound leads from before sources were recorded (2026-08-28) still carry
+// the 'outbound' default — those were mockup requests (same rule as the
+// server's ?source=mockup_form filter).
+const leadSource = (lead: Lead): NonNullable<Lead['source']> =>
+  lead.inbound && (!lead.source || lead.source === 'outbound') ? 'mockup_form' : lead.source || 'outbound';
 type StatusFilter =
   | 'all'
   | 'not_contacted'
@@ -439,7 +442,7 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
 
       const matchesDirection =
         directionFilter === 'all' ||
-        (directionFilter === 'inbound' && leadSource(lead) === 'mockup_form') ||
+        (directionFilter === 'inbound' && (leadSource(lead) === 'mockup_form' || leadSource(lead) === 'free_audit_form')) ||
         (directionFilter === 'newsletter' && leadSource(lead) === 'newsletter') ||
         (directionFilter === 'outbound' && leadSource(lead) === 'outbound');
 

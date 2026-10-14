@@ -1,5 +1,6 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Badge, Button, Card, Col, Container, Form, ListGroup, Modal, Pagination, Row, Table } from 'react-bootstrap';
+import { MarketingAnalyticsPanel, SiteAnalyticsPanel } from './SiteAnalytics';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
@@ -81,7 +82,15 @@ type WebsiteClient = {
   paymentReminderSentAt?: string | null;
   subscriptionReminderSentAt?: string | null;
   lastCustomEmailSentAt?: string | null;
+  // Set when this client matches a lead — see syncClientLeadsIntoWebsiteClients.
+  leadStatus?: 'closed' | 'onboarding_sent' | 'onboarded' | null;
   createdAt: string;
+};
+
+const LEAD_STATUS_BADGES: Record<NonNullable<WebsiteClient['leadStatus']>, { label: string; bg: string }> = {
+  closed: { label: 'Closed Lead', bg: 'primary' },
+  onboarding_sent: { label: 'Onboarding Sent', bg: 'warning' },
+  onboarded: { label: 'Onboarded', bg: 'success' },
 };
 
 const SUBSCRIBER_PAGE_SIZE_OPTIONS = [5, 10, 25, 50, 100, 200];
@@ -1716,6 +1725,8 @@ const Admin = () => {
         Review onboarding responses, download uploaded brand assets, and remove files once you are done with them.
       </p>
 
+      <SiteAnalyticsPanel />
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
         <h2 style={{ color: '#68FF00', margin: 0 }}>ONBOARDING FORMS</h2>
         <Button size="sm" variant="success" onClick={() => setShowAddWebsiteClient((prev) => !prev)}>
@@ -2045,7 +2056,14 @@ const Admin = () => {
               </div>
             )}
             <div style={{ flex: '2 1 200px', minWidth: 0 }}>
-              <strong style={{ display: 'block' }}>{client.name || '—'}</strong>
+              <strong style={{ display: 'block' }}>
+                {client.name || '—'}
+                {client.leadStatus ? (
+                  <Badge bg={LEAD_STATUS_BADGES[client.leadStatus].bg} className="ms-2" style={{ fontSize: '0.65rem', verticalAlign: 'middle' }}>
+                    {LEAD_STATUS_BADGES[client.leadStatus].label}
+                  </Badge>
+                ) : null}
+              </strong>
               <small style={{ color: '#aaa' }}>{client.email}</small>
             </div>
             <div style={{ flex: '1 1 130px', fontSize: '0.85rem', color: '#ccc' }}>{client.businessType || '—'}</div>
@@ -2151,6 +2169,271 @@ const Admin = () => {
           </div>
         </div>
       ))}
+
+      {/* Contact Us Submissions and Audits & Mockups side by side (stacked on smaller screens). */}
+      <Row className="g-4">
+        <Col lg={6} style={{ minWidth: 0, overflowX: 'auto' }}>
+          <div style={{ marginTop: '2.5rem', marginBottom: '1rem' }}>
+            <h2 style={{ color: '#68FF00', margin: 0 }}>Contact Us Submissions</h2>
+            <p style={{ color: '#d4d4d4', marginTop: '0.4rem', marginBottom: 0 }}>
+              Messages sent through the "Contact Us" form on the About page. Submitters are also added to the newsletter separately.
+            </p>
+          </div>
+
+          {!loadingContactSubmissions && contactSubmissions.length === 0 ? <Alert variant="secondary">No contact form submissions yet.</Alert> : null}
+
+          {contactSubmissions.length > 0 ? (
+            <Table striped bordered hover variant="dark" responsive>
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Contact</th>
+                  <th>Interested In</th>
+                  <th>Message</th>
+                  <th>Submitted</th>
+                </tr>
+              </thead>
+              <tbody>
+                {contactSubmissions.map((submission) => {
+                  const interests = [
+                    submission.beats ? 'Music' : null,
+                    submission.visuals ? 'Branding' : null,
+                    submission.web ? 'Web Development' : null,
+                    submission.ads ? 'Ads' : null
+                  ].filter((value): value is string => Boolean(value));
+                  return (
+                    <tr key={submission._id}>
+                      <td>{submission.name || '—'}</td>
+                      <td>
+                        <div>{submission.email}</div>
+                        {submission.phone ? <small style={{ color: '#aaa' }}>{submission.phone}</small> : null}
+                        {submission.socialUrl ? <div><small style={{ color: '#aaa' }}>{submission.socialUrl}</small></div> : null}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                          {interests.length > 0 ? interests.map((label) => <Badge key={label} bg="secondary">{label}</Badge>) : '—'}
+                        </div>
+                      </td>
+                      <td style={{ maxWidth: '320px' }}>
+                        <small>{submission.message ? submission.message : '—'}</small>
+                      </td>
+                      <td><small>{new Date(submission.createdAt).toLocaleString()}</small></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </Table>
+          ) : null}
+        </Col>
+        <Col lg={6} style={{ minWidth: 0, overflowX: 'auto' }}>
+          <div style={{ marginTop: '2.5rem', marginBottom: '1rem' }}>
+            <h2 style={{ color: '#68FF00', margin: 0 }}>Audits &amp; Mockups</h2>
+            <p style={{ color: '#d4d4d4', marginTop: '0.4rem', marginBottom: 0 }}>
+              Inbound requests for a free online-presence audit or a free website mockup.
+            </p>
+          </div>
+
+          <h5 style={{ color: '#d4d4d4', marginTop: '1.5rem', marginBottom: '0.5rem' }}>Free Audit Requests</h5>
+          <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '1rem' }}>
+            Automated online-presence review (website, Instagram, Facebook, Google Business). Rule-based, not a human read yet — use "Re-run" if a link failed to load.
+          </p>
+
+          {!loadingSubscribers && auditSignups.length === 0 ? <Alert variant="secondary">No audit requests yet.</Alert> : null}
+
+          {auditSignups.length > 0 ? (
+            <>
+              <Row className="mb-2 align-items-center">
+                <Col style={{ color: '#aaa', fontSize: '0.85rem' }}>
+                  Showing {(auditPage - 1) * auditPageSize + 1}–{Math.min(auditPage * auditPageSize, auditSignups.length)} of {auditSignups.length}
+                </Col>
+                <Col xs="auto">
+                  <Form.Select
+                    size="sm"
+                    value={auditPageSize}
+                    onChange={(event) => setAuditPageSize(Number(event.target.value))}
+                    style={{ width: 'auto' }}
+                  >
+                    {AUDIT_PAGE_SIZE_OPTIONS.map((size) => (
+                      <option key={size} value={size}>{size} per page</option>
+                    ))}
+                  </Form.Select>
+                </Col>
+              </Row>
+
+              <Table striped bordered hover variant="dark" responsive>
+                <thead>
+                  <tr>
+                    <th>Lead</th>
+                    <th>Channels</th>
+                    <th>Score</th>
+                    <th>Status</th>
+                    <th>Summary</th>
+                    <th>Requested</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {paginatedAuditSignups.map((subscriber) => {
+                    const isRunning = runningAuditId === subscriber._id;
+                    const isExpanded = expandedAuditId === subscriber._id;
+                    const channelLinks: { label: string; value?: string }[] = [
+                      { label: 'Website', value: subscriber.website || subscriber.projectUrl },
+                      { label: 'IG', value: subscriber.instagram },
+                      { label: 'FB', value: subscriber.facebook },
+                      { label: 'GBP', value: subscriber.googleBusinessUrl }
+                    ];
+                    return (
+                      <Fragment key={subscriber._id}>
+                        <tr>
+                          <td>
+                            <strong>{subscriber.name || subscriber.businessName || subscriber.email}</strong>
+                            <br />
+                            <small style={{ color: '#aaa' }}>{subscriber.email}</small>
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                              {channelLinks.map((channel) => {
+                                const badge = (
+                                  <Badge key={channel.label} bg={channel.value ? 'secondary' : 'dark'} style={{ opacity: channel.value ? 1 : 0.4 }}>
+                                    {channel.label}
+                                  </Badge>
+                                );
+                                if (!channel.value) return badge;
+                                const href = /^https?:\/\//i.test(channel.value) ? channel.value : `https://${channel.value.replace(/^@/, '')}`;
+                                return (
+                                  <a key={channel.label} href={href} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                                    {badge}
+                                  </a>
+                                );
+                              })}
+                            </div>
+                          </td>
+                          <td>
+                            {subscriber.auditScore ? (
+                              <Badge bg={AUDIT_SCORE_VARIANT[subscriber.auditScore] || 'secondary'}>{subscriber.auditScore}</Badge>
+                            ) : '—'}
+                          </td>
+                          <td>
+                            {subscriber.auditStatus === 'pending' ? <Badge bg="info">Pending...</Badge> : null}
+                            {subscriber.auditStatus === 'complete' ? <Badge bg="success">Complete</Badge> : null}
+                            {subscriber.auditStatus === 'failed' ? <Badge bg="danger">Failed</Badge> : null}
+                            {!subscriber.auditStatus ? '—' : null}
+                          </td>
+                          <td style={{ maxWidth: '360px' }}>
+                            <small>{subscriber.auditSummary ? `${subscriber.auditSummary.slice(0, 120)}${subscriber.auditSummary.length > 120 ? '...' : ''}` : '—'}</small>
+                          </td>
+                          <td><small>{new Date(subscriber.auditRequestedAt || subscriber.createdAt).toLocaleString()}</small></td>
+                          <td>
+                            <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
+                              <Button size="sm" variant="outline-light" onClick={() => setExpandedAuditId(isExpanded ? null : subscriber._id)}>
+                                {isExpanded ? 'Hide' : 'Details'}
+                              </Button>
+                              <Button size="sm" variant="outline-info" disabled={isRunning} onClick={() => handleRunAudit(subscriber._id)}>
+                                {isRunning ? 'Running...' : 'Re-run'}
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                        {isExpanded ? (
+                          <tr>
+                            <td colSpan={7} style={{ background: '#0a0a0a' }}>
+                              <div style={{ padding: '1rem' }}>
+                                <p style={{ marginBottom: '0.75rem' }}>{subscriber.auditSummary || 'No summary yet.'}</p>
+                                {subscriber.auditFindings && subscriber.auditFindings.length > 0 ? (
+                                  <ListGroup variant="flush">
+                                    {subscriber.auditFindings.map((finding, index) => (
+                                      <ListGroup.Item key={index} style={{ background: 'transparent', color: '#d4d4d4', border: '1px solid #2b2b2b', fontSize: '0.85rem' }}>
+                                        {finding}
+                                      </ListGroup.Item>
+                                    ))}
+                                  </ListGroup>
+                                ) : null}
+                              </div>
+                            </td>
+                          </tr>
+                        ) : null}
+                      </Fragment>
+                    );
+                  })}
+                </tbody>
+              </Table>
+
+              {totalAuditPages > 1 ? (
+                <Pagination className="justify-content-center mt-3">
+                  <Pagination.First onClick={() => setAuditPage(1)} disabled={auditPage === 1} />
+                  <Pagination.Prev onClick={() => setAuditPage((page) => Math.max(1, page - 1))} disabled={auditPage === 1} />
+                  {Array.from({ length: totalAuditPages }, (_, i) => i + 1).map((page) => (
+                    <Pagination.Item key={page} active={page === auditPage} onClick={() => setAuditPage(page)}>
+                      {page}
+                    </Pagination.Item>
+                  ))}
+                  <Pagination.Next onClick={() => setAuditPage((page) => Math.min(totalAuditPages, page + 1))} disabled={auditPage === totalAuditPages} />
+                  <Pagination.Last onClick={() => setAuditPage(totalAuditPages)} disabled={auditPage === totalAuditPages} />
+                </Pagination>
+              ) : null}
+            </>
+          ) : null}
+
+          <h5 style={{ color: '#d4d4d4', marginTop: '2.5rem', marginBottom: '0.5rem' }}>Free Mockup Requests</h5>
+          <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '1rem' }}>
+            Inbound leads from the free-mockup request form, routed straight into the leads CRM.
+          </p>
+
+          {!loadingMockupRequests && mockupRequests.length === 0 ? <Alert variant="secondary">No mockup requests yet.</Alert> : null}
+
+          {mockupRequests.length > 0 ? (
+            <Table striped bordered hover variant="dark" responsive>
+              <thead>
+                <tr>
+                  <th>Business / Contact</th>
+                  <th>Contact Info</th>
+                  <th>Channels</th>
+                  <th>Requested</th>
+                </tr>
+              </thead>
+              <tbody>
+                {mockupRequests.map((lead) => {
+                  const channelLinks: { label: string; value?: string }[] = [
+                    { label: 'IG', value: lead.instagram },
+                    { label: 'GBP', value: lead.googleBusinessUrl }
+                  ];
+                  return (
+                    <tr key={lead._id}>
+                      <td>
+                        <strong>{lead.businessName || lead.contactName || lead.email}</strong>
+                        {lead.businessName && lead.contactName ? <div><small style={{ color: '#aaa' }}>{lead.contactName}</small></div> : null}
+                      </td>
+                      <td>
+                        <div>{lead.email || '—'}</div>
+                        {lead.phone ? <small style={{ color: '#aaa' }}>{lead.phone}</small> : null}
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                          {channelLinks.map((channel) => {
+                            const badge = (
+                              <Badge key={channel.label} bg={channel.value ? 'secondary' : 'dark'} style={{ opacity: channel.value ? 1 : 0.4 }}>
+                                {channel.label}
+                              </Badge>
+                            );
+                            if (!channel.value) return badge;
+                            const href = /^https?:\/\//i.test(channel.value) ? channel.value : `https://${channel.value.replace(/^@/, '')}`;
+                            return (
+                              <a key={channel.label} href={href} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                                {badge}
+                              </a>
+                            );
+                          })}
+                        </div>
+                      </td>
+                      <td><small>{new Date(lead.createdAt).toLocaleString()}</small></td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </Table>
+          ) : null}
+        </Col>
+      </Row>
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginTop: '2.5rem', marginBottom: '1rem' }}>
         <h2 style={{ color: '#68FF00', margin: 0 }}>Newsletter Subscribers</h2>
@@ -2994,264 +3277,7 @@ const Admin = () => {
         </Modal.Footer>
       </Modal>
 
-      <div style={{ marginTop: '5rem', marginBottom: '1rem' }}>
-        <h2 style={{ color: '#68FF00', margin: 0 }}>Contact Us Submissions</h2>
-        <p style={{ color: '#d4d4d4', marginTop: '0.4rem', marginBottom: 0 }}>
-          Messages sent through the "Contact Us" form on the About page. Submitters are also added to the newsletter separately.
-        </p>
-      </div>
-
-      {!loadingContactSubmissions && contactSubmissions.length === 0 ? <Alert variant="secondary">No contact form submissions yet.</Alert> : null}
-
-      {contactSubmissions.length > 0 ? (
-        <Table striped bordered hover variant="dark" responsive>
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>Contact</th>
-              <th>Interested In</th>
-              <th>Message</th>
-              <th>Submitted</th>
-            </tr>
-          </thead>
-          <tbody>
-            {contactSubmissions.map((submission) => {
-              const interests = [
-                submission.beats ? 'Music' : null,
-                submission.visuals ? 'Branding' : null,
-                submission.web ? 'Web Development' : null,
-                submission.ads ? 'Ads' : null
-              ].filter((value): value is string => Boolean(value));
-              return (
-                <tr key={submission._id}>
-                  <td>{submission.name || '—'}</td>
-                  <td>
-                    <div>{submission.email}</div>
-                    {submission.phone ? <small style={{ color: '#aaa' }}>{submission.phone}</small> : null}
-                    {submission.socialUrl ? <div><small style={{ color: '#aaa' }}>{submission.socialUrl}</small></div> : null}
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
-                      {interests.length > 0 ? interests.map((label) => <Badge key={label} bg="secondary">{label}</Badge>) : '—'}
-                    </div>
-                  </td>
-                  <td style={{ maxWidth: '320px' }}>
-                    <small>{submission.message ? submission.message : '—'}</small>
-                  </td>
-                  <td><small>{new Date(submission.createdAt).toLocaleString()}</small></td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </Table>
-      ) : null}
-
-      <div style={{ marginTop: '5rem', marginBottom: '1rem' }}>
-        <h2 style={{ color: '#68FF00', margin: 0 }}>Audits &amp; Mockups</h2>
-        <p style={{ color: '#d4d4d4', marginTop: '0.4rem', marginBottom: 0 }}>
-          Inbound requests for a free online-presence audit or a free website mockup.
-        </p>
-      </div>
-
-      <h5 style={{ color: '#d4d4d4', marginTop: '1.5rem', marginBottom: '0.5rem' }}>Free Audit Requests</h5>
-      <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '1rem' }}>
-        Automated online-presence review (website, Instagram, Facebook, Google Business). Rule-based, not a human read yet — use "Re-run" if a link failed to load.
-      </p>
-
-      {!loadingSubscribers && auditSignups.length === 0 ? <Alert variant="secondary">No audit requests yet.</Alert> : null}
-
-      {auditSignups.length > 0 ? (
-        <>
-          <Row className="mb-2 align-items-center">
-            <Col style={{ color: '#aaa', fontSize: '0.85rem' }}>
-              Showing {(auditPage - 1) * auditPageSize + 1}–{Math.min(auditPage * auditPageSize, auditSignups.length)} of {auditSignups.length}
-            </Col>
-            <Col xs="auto">
-              <Form.Select
-                size="sm"
-                value={auditPageSize}
-                onChange={(event) => setAuditPageSize(Number(event.target.value))}
-                style={{ width: 'auto' }}
-              >
-                {AUDIT_PAGE_SIZE_OPTIONS.map((size) => (
-                  <option key={size} value={size}>{size} per page</option>
-                ))}
-              </Form.Select>
-            </Col>
-          </Row>
-
-          <Table striped bordered hover variant="dark" responsive>
-            <thead>
-              <tr>
-                <th>Lead</th>
-                <th>Channels</th>
-                <th>Score</th>
-                <th>Status</th>
-                <th>Summary</th>
-                <th>Requested</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {paginatedAuditSignups.map((subscriber) => {
-                const isRunning = runningAuditId === subscriber._id;
-                const isExpanded = expandedAuditId === subscriber._id;
-                const channelLinks: { label: string; value?: string }[] = [
-                  { label: 'Website', value: subscriber.website || subscriber.projectUrl },
-                  { label: 'IG', value: subscriber.instagram },
-                  { label: 'FB', value: subscriber.facebook },
-                  { label: 'GBP', value: subscriber.googleBusinessUrl }
-                ];
-                return (
-                  <Fragment key={subscriber._id}>
-                    <tr>
-                      <td>
-                        <strong>{subscriber.name || subscriber.businessName || subscriber.email}</strong>
-                        <br />
-                        <small style={{ color: '#aaa' }}>{subscriber.email}</small>
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
-                          {channelLinks.map((channel) => {
-                            const badge = (
-                              <Badge key={channel.label} bg={channel.value ? 'secondary' : 'dark'} style={{ opacity: channel.value ? 1 : 0.4 }}>
-                                {channel.label}
-                              </Badge>
-                            );
-                            if (!channel.value) return badge;
-                            const href = /^https?:\/\//i.test(channel.value) ? channel.value : `https://${channel.value.replace(/^@/, '')}`;
-                            return (
-                              <a key={channel.label} href={href} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
-                                {badge}
-                              </a>
-                            );
-                          })}
-                        </div>
-                      </td>
-                      <td>
-                        {subscriber.auditScore ? (
-                          <Badge bg={AUDIT_SCORE_VARIANT[subscriber.auditScore] || 'secondary'}>{subscriber.auditScore}</Badge>
-                        ) : '—'}
-                      </td>
-                      <td>
-                        {subscriber.auditStatus === 'pending' ? <Badge bg="info">Pending...</Badge> : null}
-                        {subscriber.auditStatus === 'complete' ? <Badge bg="success">Complete</Badge> : null}
-                        {subscriber.auditStatus === 'failed' ? <Badge bg="danger">Failed</Badge> : null}
-                        {!subscriber.auditStatus ? '—' : null}
-                      </td>
-                      <td style={{ maxWidth: '360px' }}>
-                        <small>{subscriber.auditSummary ? `${subscriber.auditSummary.slice(0, 120)}${subscriber.auditSummary.length > 120 ? '...' : ''}` : '—'}</small>
-                      </td>
-                      <td><small>{new Date(subscriber.auditRequestedAt || subscriber.createdAt).toLocaleString()}</small></td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
-                          <Button size="sm" variant="outline-light" onClick={() => setExpandedAuditId(isExpanded ? null : subscriber._id)}>
-                            {isExpanded ? 'Hide' : 'Details'}
-                          </Button>
-                          <Button size="sm" variant="outline-info" disabled={isRunning} onClick={() => handleRunAudit(subscriber._id)}>
-                            {isRunning ? 'Running...' : 'Re-run'}
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                    {isExpanded ? (
-                      <tr>
-                        <td colSpan={7} style={{ background: '#0a0a0a' }}>
-                          <div style={{ padding: '1rem' }}>
-                            <p style={{ marginBottom: '0.75rem' }}>{subscriber.auditSummary || 'No summary yet.'}</p>
-                            {subscriber.auditFindings && subscriber.auditFindings.length > 0 ? (
-                              <ListGroup variant="flush">
-                                {subscriber.auditFindings.map((finding, index) => (
-                                  <ListGroup.Item key={index} style={{ background: 'transparent', color: '#d4d4d4', border: '1px solid #2b2b2b', fontSize: '0.85rem' }}>
-                                    {finding}
-                                  </ListGroup.Item>
-                                ))}
-                              </ListGroup>
-                            ) : null}
-                          </div>
-                        </td>
-                      </tr>
-                    ) : null}
-                  </Fragment>
-                );
-              })}
-            </tbody>
-          </Table>
-
-          {totalAuditPages > 1 ? (
-            <Pagination className="justify-content-center mt-3">
-              <Pagination.First onClick={() => setAuditPage(1)} disabled={auditPage === 1} />
-              <Pagination.Prev onClick={() => setAuditPage((page) => Math.max(1, page - 1))} disabled={auditPage === 1} />
-              {Array.from({ length: totalAuditPages }, (_, i) => i + 1).map((page) => (
-                <Pagination.Item key={page} active={page === auditPage} onClick={() => setAuditPage(page)}>
-                  {page}
-                </Pagination.Item>
-              ))}
-              <Pagination.Next onClick={() => setAuditPage((page) => Math.min(totalAuditPages, page + 1))} disabled={auditPage === totalAuditPages} />
-              <Pagination.Last onClick={() => setAuditPage(totalAuditPages)} disabled={auditPage === totalAuditPages} />
-            </Pagination>
-          ) : null}
-        </>
-      ) : null}
-
-      <h5 style={{ color: '#d4d4d4', marginTop: '2.5rem', marginBottom: '0.5rem' }}>Free Mockup Requests</h5>
-      <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '1rem' }}>
-        Inbound leads from the free-mockup request form, routed straight into the leads CRM.
-      </p>
-
-      {!loadingMockupRequests && mockupRequests.length === 0 ? <Alert variant="secondary">No mockup requests yet.</Alert> : null}
-
-      {mockupRequests.length > 0 ? (
-        <Table striped bordered hover variant="dark" responsive>
-          <thead>
-            <tr>
-              <th>Business / Contact</th>
-              <th>Contact Info</th>
-              <th>Channels</th>
-              <th>Requested</th>
-            </tr>
-          </thead>
-          <tbody>
-            {mockupRequests.map((lead) => {
-              const channelLinks: { label: string; value?: string }[] = [
-                { label: 'IG', value: lead.instagram },
-                { label: 'GBP', value: lead.googleBusinessUrl }
-              ];
-              return (
-                <tr key={lead._id}>
-                  <td>
-                    <strong>{lead.businessName || lead.contactName || lead.email}</strong>
-                    {lead.businessName && lead.contactName ? <div><small style={{ color: '#aaa' }}>{lead.contactName}</small></div> : null}
-                  </td>
-                  <td>
-                    <div>{lead.email || '—'}</div>
-                    {lead.phone ? <small style={{ color: '#aaa' }}>{lead.phone}</small> : null}
-                  </td>
-                  <td>
-                    <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
-                      {channelLinks.map((channel) => {
-                        const badge = (
-                          <Badge key={channel.label} bg={channel.value ? 'secondary' : 'dark'} style={{ opacity: channel.value ? 1 : 0.4 }}>
-                            {channel.label}
-                          </Badge>
-                        );
-                        if (!channel.value) return badge;
-                        const href = /^https?:\/\//i.test(channel.value) ? channel.value : `https://${channel.value.replace(/^@/, '')}`;
-                        return (
-                          <a key={channel.label} href={href} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
-                            {badge}
-                          </a>
-                        );
-                      })}
-                    </div>
-                  </td>
-                  <td><small>{new Date(lead.createdAt).toLocaleString()}</small></td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </Table>
-      ) : null}
+      <MarketingAnalyticsPanel />
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginTop: '5rem', marginBottom: '1rem' }}>
         <h2 style={{ color: '#68FF00', margin: 0 }}>Blog</h2>

@@ -22,13 +22,16 @@ import FreeAudit from './FreeAudit';
 import Newsletter from './Newsletter';
 import {Route, Routes, useLocation} from 'react-router-dom';
 import { useEffect } from 'react';
-import { trackPageView } from './analytics';
+import { installClickTracking, trackPageView } from './analytics';
 import {BrowserRouter as Router} from 'react-router-dom';
 // Meta Pixel PageView on every route change (single-page app, so the
 // browser never does a full page load between pages). The pixel loads on
 // the first public page and never on /admin.
 const PageViewTracker = () => {
   const location = useLocation();
+  useEffect(() => {
+    installClickTracking();
+  }, []);
   useEffect(() => {
     trackPageView(location.pathname);
   }, [location.pathname]);
