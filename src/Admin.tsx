@@ -1305,7 +1305,12 @@ const Admin = () => {
         (subscriber.phone || '').toLowerCase().includes(q) ||
         (subscriber.businessName || '').toLowerCase().includes(q) ||
         (subscriber.socialUrl || '').toLowerCase().includes(q);
-      const matchesInterest = subscriberInterestFilter === 'all' || subscriber[subscriberInterestFilter as keyof Subscriber];
+      // 'none' = subscribers with none of the interest options checked.
+      const matchesInterest =
+        subscriberInterestFilter === 'all' ||
+        (subscriberInterestFilter === 'none'
+          ? !INTEREST_FIELDS.some((field) => subscriber[field.key])
+          : subscriber[subscriberInterestFilter as keyof Subscriber]);
       return matchesQuery && matchesInterest;
     });
   }, [subscribers, subscriberSearchQuery, subscriberInterestFilter]);
@@ -2367,6 +2372,7 @@ const Admin = () => {
               {INTEREST_FIELDS.map((field) => (
                 <option key={field.key} value={field.key}>{field.label}</option>
               ))}
+              <option value="none">None</option>
             </Form.Select>
           </Col>
         </Row>
