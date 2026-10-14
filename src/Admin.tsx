@@ -195,6 +195,44 @@ const INTEREST_FIELDS: { key: 'beats' | 'mixing' | 'loopsTemplates' | 'visuals' 
   { key: 'ads', label: 'Ads' }
 ];
 
+type SubscriberInterest = (typeof INTEREST_FIELDS)[number]['key'];
+type SubscriberInterestSet = Record<SubscriberInterest, boolean>;
+
+// Interests picked for a whole import (file or paste) — added on top of any
+// interest columns the rows already have; never removes one.
+const applyImportInterests = <T extends Record<string, any>>(rows: T[], interests: SubscriberInterestSet) =>
+  rows.map((row) => {
+    const merged: Record<string, any> = { ...row };
+    INTEREST_FIELDS.forEach(({ key }) => {
+      merged[key] = Boolean(row[key]) || interests[key];
+    });
+    return merged as T & SubscriberInterestSet;
+  });
+
+// Row of interest checkboxes shared by the file-import popup and the paste box.
+const ImportInterestPicker = ({
+  idPrefix,
+  value,
+  onChange,
+}: {
+  idPrefix: string;
+  value: SubscriberInterestSet;
+  onChange: (next: SubscriberInterestSet) => void;
+}) => (
+  <div style={{ display: 'flex', gap: '0.9rem', flexWrap: 'wrap', alignItems: 'center' }}>
+    {INTEREST_FIELDS.map((field) => (
+      <Form.Check
+        key={field.key}
+        id={`${idPrefix}-${field.key}`}
+        type="checkbox"
+        label={field.label}
+        checked={value[field.key]}
+        onChange={(e) => onChange({ ...value, [field.key]: e.target.checked })}
+      />
+    ))}
+  </div>
+);
+
 const emptySubscriberInterests = {
   beats: false,
   mixing: false,
@@ -445,6 +483,10 @@ const Admin = () => {
   const [pasteSubscribersText, setPasteSubscribersText] = useState('');
   const [importingSubscribers, setImportingSubscribers] = useState(false);
   const [subscriberImportStatus, setSubscriberImportStatus] = useState('');
+  const [pasteInterests, setPasteInterests] = useState<SubscriberInterestSet>({ ...emptySubscriberInterests });
+  // A parsed file waiting in the "pick interests" popup before importing.
+  const [pendingFileImport, setPendingFileImport] = useState<{ fileName: string; rows: Record<string, any>[] } | null>(null);
+  const [fileImportInterests, setFileImportInterests] = useState<SubscriberInterestSet>({ ...emptySubscriberInterests });
   const subscriberFileInputRef = useRef<HTMLInputElement>(null);
   const [subscriberPageSize, setSubscriberPageSize] = useState(SUBSCRIBER_PAGE_SIZE_OPTIONS[0]);
   const [subscriberPage, setSubscriberPage] = useState(1);
@@ -768,7 +810,9 @@ const Admin = () => {
     }
     setImportingSubscribers(true);
     try {
-      const response = await axios.post(`${API_BASE_URL}/newsletter/subscribers/import-bulk`, { subscribers: parsed });
+      const response = await axios.post(`${API_BASE_URL}/newsletter/subscribers/import-bulk`, {
+        subscribers: applyImportInterests(parsed, pasteInterests),
+      });
       if (response.data?.ok) {
         const { created = 0, updated = 0, skipped = 0 } = response.data;
         setNewsletterMessage(
@@ -778,6 +822,7 @@ const Admin = () => {
             '.'
         );
         setPasteSubscribersText('');
+        setPasteInterests({ ...emptySubscriberInterests });
         setShowPasteSubscribers(false);
         fetchSubscribers();
       } else {
@@ -1155,8 +1200,33 @@ const Admin = () => {
         return;
       }
 
-      setSubscriberImportStatus(`Importing ${parsed.length} rows...`);
-      const response = await axios.post(`${API_BASE_URL}/newsletter/subscribers/import`, { subscribers: parsed });
+      // Hand off to the popup so interests can be picked for the whole list.
+      setSubscriberImportStatus('');
+      setFileImportInterests({ ...emptySubscriberInterests });
+      setPendingFileImport({ fileName: file.name, rows: parsed });
+    } catch (importError) {
+      console.error(importError);
+      setSubscriberImportStatus('Could not read that file — check the format and try again.');
+    } finally {
+      event.target.value = '';
+    }
+  };
+
+  // How many rows in the pending file are already subscribers (by email,
+  // ignoring case) — they still get the selected interests added on import.
+  const pendingFileExistingCount = useMemo(() => {
+    if (!pendingFileImport) return 0;
+    const known = new Set(subscribers.map((sub) => String(sub.email || '').trim().toLowerCase()));
+    return pendingFileImport.rows.filter((row) => known.has(String(row.email || '').trim().toLowerCase())).length;
+  }, [pendingFileImport, subscribers]);
+
+  const confirmFileImport = async () => {
+    if (!pendingFileImport) return;
+    const rows = applyImportInterests(pendingFileImport.rows, fileImportInterests);
+    setImportingSubscribers(true);
+    setSubscriberImportStatus(`Importing ${rows.length} rows...`);
+    try {
+      const response = await axios.post(`${API_BASE_URL}/newsletter/subscribers/import`, { subscribers: rows });
       if (response.data?.ok) {
         const { insertedCount = 0, updatedCount = 0, skippedCount = 0 } = response.data;
         setSubscriberImportStatus(
@@ -1170,11 +1240,13 @@ const Admin = () => {
       }
     } catch (importError) {
       console.error(importError);
-      setSubscriberImportStatus('Import failed — check the file format and try again.');
+      setSubscriberImportStatus('Import failed — please try again.');
     } finally {
-      event.target.value = '';
+      setImportingSubscribers(false);
+      setPendingFileImport(null);
     }
   };
+
 
   useEffect(() => {
     if (isAuthenticated) {
@@ -2202,8 +2274,8 @@ const Admin = () => {
             <p style={{ color: '#aaa', fontSize: '0.85rem' }}>
               Paste rows copied from Excel/Sheets — one subscriber per line, tab or comma separated. A header row
               (Email, Name, Phone, Business, Instagram) is used to match columns if present; otherwise that order is
-              assumed. Any stray row that's just a "Genre" marker/divider is ignored automatically, and duplicate
-              emails are skipped.
+              assumed. Any stray row that's just a "Genre" marker/divider is ignored automatically. Duplicate emails
+              aren't added twice — any new info on them (name, phone, interests…) is saved to the existing subscriber.
             </p>
             <Form.Control
               as="textarea"
@@ -2212,9 +2284,15 @@ const Admin = () => {
               onChange={(e) => setPasteSubscribersText(e.target.value)}
               placeholder={'Email\tName\tPhone\tBusiness\tInstagram\njane@example.com\tJane Doe\t305-555-1234\tJane\'s Bakery\t@janesbakery'}
             />
-            <Button size="sm" variant="outline-light" className="mt-2" onClick={handlePasteSubscribers} disabled={!pasteSubscribersText.trim() || importingSubscribers}>
-              {importingSubscribers ? 'Importing...' : 'Detect & Import Subscribers'}
-            </Button>
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '1rem', marginTop: '0.75rem' }}>
+              <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.75rem' }}>
+                <span style={{ color: '#aaa', fontSize: '0.85rem' }}>Interests for this list:</span>
+                <ImportInterestPicker idPrefix="paste-interest" value={pasteInterests} onChange={setPasteInterests} />
+              </div>
+              <Button size="sm" variant="outline-light" onClick={handlePasteSubscribers} disabled={!pasteSubscribersText.trim() || importingSubscribers}>
+                {importingSubscribers ? 'Importing...' : 'Detect & Import Subscribers'}
+              </Button>
+            </div>
           </Card.Body>
         </Card>
       ) : null}
@@ -2606,6 +2684,59 @@ const Admin = () => {
           )}
         </>
       ) : null}
+
+      <Modal show={Boolean(pendingFileImport)} onHide={() => !importingSubscribers && setPendingFileImport(null)} size="lg" centered>
+        <Modal.Header style={{ background: '#111', color: 'white', borderBottom: '1px solid #2b2b2b' }}>
+          <Modal.Title>Import {pendingFileImport?.rows.length ?? 0} subscribers</Modal.Title>
+        </Modal.Header>
+        <Modal.Body style={{ background: '#111', color: 'white' }}>
+          <p style={{ color: '#aaa', fontSize: '0.85rem' }}>
+            Found <strong style={{ color: 'white' }}>{pendingFileImport?.rows.length ?? 0}</strong> rows with an email in{' '}
+            <strong style={{ color: 'white' }}>{pendingFileImport?.fileName}</strong>. Pick the interests to apply to the
+            whole list — they're added on top of any interest columns already in the file.
+          </p>
+          {pendingFileExistingCount > 0 ? (
+            <Alert variant="info" style={{ fontSize: '0.85rem', padding: '0.5rem 0.75rem' }}>
+              {pendingFileExistingCount} of these {pendingFileExistingCount === 1 ? 'is' : 'are'} already subscribed. They
+              won&apos;t be added twice, but they&apos;ll still get the interests you pick here plus any new info from
+              the file (nothing they already have is overwritten).
+            </Alert>
+          ) : null}
+          <Form.Label style={{ fontSize: '0.85rem' }}>Interests for this list</Form.Label>
+          <ImportInterestPicker idPrefix="file-interest" value={fileImportInterests} onChange={setFileImportInterests} />
+          <div style={{ maxHeight: 260, overflowY: 'auto', marginTop: '1rem', border: '1px solid #2b2b2b', borderRadius: 6 }}>
+            <Table size="sm" variant="dark" className="mb-0" style={{ fontSize: '0.8rem' }}>
+              <thead>
+                <tr>
+                  <th>Email</th>
+                  <th>Name</th>
+                  <th>Phone</th>
+                </tr>
+              </thead>
+              <tbody>
+                {(pendingFileImport?.rows || []).slice(0, 50).map((row, idx) => (
+                  <tr key={`${row.email}-${idx}`}>
+                    <td>{row.email}</td>
+                    <td>{row.name || '—'}</td>
+                    <td>{row.phone || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
+          {(pendingFileImport?.rows.length ?? 0) > 50 ? (
+            <small style={{ color: '#888' }}>Showing the first 50 of {pendingFileImport?.rows.length}.</small>
+          ) : null}
+        </Modal.Body>
+        <Modal.Footer style={{ background: '#111', borderTop: '1px solid #2b2b2b' }}>
+          <Button variant="outline-light" onClick={() => setPendingFileImport(null)} disabled={importingSubscribers}>
+            Cancel
+          </Button>
+          <Button variant="success" onClick={confirmFileImport} disabled={importingSubscribers}>
+            {importingSubscribers ? 'Importing...' : `Import ${pendingFileImport?.rows.length ?? 0} Subscribers`}
+          </Button>
+        </Modal.Footer>
+      </Modal>
 
       <Modal show={Boolean(analyticsSubscriber)} onHide={() => setAnalyticsSubscriber(null)} size="lg" centered>
         <Modal.Header style={{ background: '#111', color: 'white', borderBottom: '1px solid #2b2b2b' }}>
