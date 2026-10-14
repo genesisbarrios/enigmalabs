@@ -491,7 +491,7 @@ const Admin = () => {
   const [subscriberPageSize, setSubscriberPageSize] = useState(SUBSCRIBER_PAGE_SIZE_OPTIONS[0]);
   const [subscriberPage, setSubscriberPage] = useState(1);
   const [subscriberSearchQuery, setSubscriberSearchQuery] = useState('');
-  const [subscriberInterestFilter, setSubscriberInterestFilter] = useState('all');
+  const [subscriberInterestFilter, setSubscriberInterestFilter] = useState('any');
   const [newsletterMessage, setNewsletterMessage] = useState('');
   const [newsletterError, setNewsletterError] = useState('');
 
@@ -1305,10 +1305,13 @@ const Admin = () => {
         (subscriber.phone || '').toLowerCase().includes(q) ||
         (subscriber.businessName || '').toLowerCase().includes(q) ||
         (subscriber.socialUrl || '').toLowerCase().includes(q);
-      // 'none' = subscribers with none of the interest options checked.
+      // 'any' = no filter; 'every' = every interest option checked; 'none' =
+      // no interest option checked; otherwise that single interest.
       const matchesInterest =
-        subscriberInterestFilter === 'all' ||
-        (subscriberInterestFilter === 'none'
+        subscriberInterestFilter === 'any' ||
+        (subscriberInterestFilter === 'every'
+          ? INTEREST_FIELDS.every((field) => subscriber[field.key])
+          : subscriberInterestFilter === 'none'
           ? !INTEREST_FIELDS.some((field) => subscriber[field.key])
           : subscriber[subscriberInterestFilter as keyof Subscriber]);
       return matchesQuery && matchesInterest;
@@ -2368,10 +2371,11 @@ const Admin = () => {
               value={subscriberInterestFilter}
               onChange={(event) => setSubscriberInterestFilter(event.target.value)}
             >
-              <option value="all">All Interests</option>
+              <option value="any">Any Interests</option>
               {INTEREST_FIELDS.map((field) => (
                 <option key={field.key} value={field.key}>{field.label}</option>
               ))}
+              <option value="every">All Interests</option>
               <option value="none">None</option>
             </Form.Select>
           </Col>
