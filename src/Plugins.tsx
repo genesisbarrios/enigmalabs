@@ -384,6 +384,7 @@ function PluginSection({
             Free plugin · Flow Effect
           </p>
           <h2 className="subsection-title" style={{ color: GREEN, marginTop: 0 }}>{plugin.name}</h2>
+          <p style={{ color: "#d4d4d4", lineHeight: 1.7, maxWidth: 520 }}>{plugin.description}</p>
           <img
             src={plugin.image}
             alt={plugin.imageAlt}
@@ -397,10 +398,9 @@ function PluginSection({
               height: "auto",
               borderRadius: 12,
               border: "1px solid #2b2b2b",
-              margin: "0.5rem 0 1.25rem"
+              margin: "0.25rem 0 1.25rem"
             }}
           />
-          <p style={{ color: "#d4d4d4", lineHeight: 1.7, maxWidth: 520 }}>{plugin.description}</p>
           <ul style={{ listStyle: "none", padding: 0, margin: 0, maxWidth: 520 }}>
             {plugin.modules.map((m) => (
               <li key={m.name} style={{ display: "flex", gap: "0.75rem", padding: "0.45rem 0", borderBottom: "1px solid #222", color: "#d4d4d4" }}>
