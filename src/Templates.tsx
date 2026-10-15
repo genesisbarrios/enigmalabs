@@ -296,6 +296,7 @@ const Templates = () => {
               display: "block",
               margin: "0 auto",
               width: "100%",
+              maxWidth: 560,
               height: "auto",
               borderRadius: 16,
               border: "1px solid #2b2b2b",

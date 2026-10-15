@@ -11,9 +11,9 @@ const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 
 const TEXTURE_CONSOLE = {
   name: "Texture Console",
-  file: "/plugins/Texture_Console_EnigmaLabs_v29.fmx",
-  fileName: "Texture_Console_EnigmaLabs_v29.fmx",
-  image: "/plugins/TextureConsoleV29.png",
+  file: "/plugins/Texture_Console_EnigmaLabs_v31.fmx",
+  fileName: "Texture_Console_EnigmaLabs_v31.fmx",
+  image: "/plugins/TextureConsoleV31.png",
   // Straight from the plugin's own parameter list.
   modules: [
     { name: "Character", detail: "Drive, Sweeten, Crush, Cassette" },
@@ -233,13 +233,13 @@ const Plugins = () => {
           <img
             src={TEXTURE_CONSOLE.image}
             alt="Texture Console plugin interface — Character, Movement, Diffusion, and Degrade modules with filter and reverb"
-            width={795}
-            height={596}
+            width={1590}
+            height={1190}
             style={{
               display: "block",
               margin: "0 auto",
               width: "100%",
-              maxWidth: 795, // the screenshot's real width — don't upscale it
+              maxWidth: 795, // display size; the 1590px image keeps it sharp on retina
               height: "auto",
               borderRadius: 16,
               border: "1px solid #2b2b2b",
