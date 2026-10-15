@@ -30,21 +30,6 @@ const CATEGORIES: Category[] = [
     }))
   },
   {
-    id: "templates",
-    title: "Templates",
-    blurb: "Ready-to-record vocal chains for your DAW.",
-    href: "/templates",
-    items: [
-      {
-        name: "R&B Vocal Template",
-        tagline: "A Logic Pro X vocal chain with FX buses — stock plugins and UAD & Waves versions.",
-        image: RNB_VOCAL.image,
-        imageAlt: "FREE R&B Vocal Template for Logic Pro X",
-        href: "/templates"
-      }
-    ]
-  },
-  {
     id: "sample-packs",
     title: "Sample Packs",
     blurb: "Loops, one-shots, and songstarters by gen.wav.",
@@ -60,6 +45,21 @@ const CATEGORIES: Category[] = [
       square: true,
       external: true
     }))
+  },
+  {
+    id: "templates",
+    title: "Templates",
+    blurb: "Ready-to-record vocal chains for your DAW.",
+    href: "/templates",
+    items: [
+      {
+        name: "R&B Vocal Template",
+        tagline: "A Logic Pro X vocal chain with FX buses — stock plugins and UAD & Waves versions.",
+        image: RNB_VOCAL.image,
+        imageAlt: "FREE R&B Vocal Template for Logic Pro X",
+        href: "/templates"
+      }
+    ]
   }
 ];
 
