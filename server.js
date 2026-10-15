@@ -2105,7 +2105,10 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
       return res.status(201).json({ ok: true, message: 'Subscription received.' });
     }
     // Site Analytics: count the real (non-spam) submission by form.
-    recordFormSubmit(payload.freeaudit ? 'audit' : payload.freemockups ? 'mockup' : 'newsletter', req);
+    recordFormSubmit(
+      payload.freeaudit ? 'audit' : payload.freemockups ? 'mockup' : req.body.formSource === 'plugin' ? 'plugin' : 'newsletter',
+      req
+    );
 
     // The free-mockup form is a lead-gen flow, not a newsletter signup —
     // keep mockup-only submissions out of the newsletter table entirely and

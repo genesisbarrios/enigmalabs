@@ -333,7 +333,8 @@ const FORM_NAMES: Record<string, string> = {
   mockup: 'Free Website Mockup',
   audit: 'Free Audit',
   newsletter: 'Newsletter Signup',
-  contact: 'Contact Form'
+  contact: 'Contact Form',
+  plugin: 'Plugin Download'
 };
 
 export function SiteAnalyticsPanel() {
@@ -437,7 +438,7 @@ export function SiteAnalyticsPanel() {
                   </tbody>
                 </table>
               )}
-              <p style={{ color: C.muted, fontSize: '0.72rem', margin: '8px 0 0' }}>Views are tracked for the Free Mockup and Free Audit pages.</p>
+              <p style={{ color: C.muted, fontSize: '0.72rem', margin: '8px 0 0' }}>Views are tracked for the Free Mockup, Free Audit, and Plugins pages.</p>
             </div>
           </div>
         </div>
