@@ -276,35 +276,12 @@ const Templates = () => {
 
   return (
     <Container className="aboutContainer">
-      <Row style={{ margin: "1%", marginTop: "6%" }}>
+      <Row style={{ margin: "1%", marginTop: "1rem" }}>
         <Col xs={12} style={{ textAlign: "center" }}>
           <h1 className="subpage-title aboutTitle">Templates</h1>
-          <p style={{ color: "#d4d4d4", maxWidth: 620, margin: "0 auto" }}>
-            Free vocal templates from Enigma Labs. Sign up to our newsletter to download.
-          </p>
         </Col>
       </Row>
 
-      <Row style={{ margin: "1%", marginTop: "3%" }}>
-        <Col xs={12} lg={{ span: 10, offset: 1 }}>
-          <img
-            src={RNB_VOCAL.image}
-            alt="FREE R&B Vocal Template for Logic Pro X — lead vocal, vocal bus, parallel saturation, chorus doubler, delays, plate and room verb tracks"
-            width={1600}
-            height={900}
-            style={{
-              display: "block",
-              margin: "0 auto",
-              width: "100%",
-              maxWidth: 560,
-              height: "auto",
-              borderRadius: 16,
-              border: "1px solid #2b2b2b",
-              boxShadow: "0 0 40px rgba(104, 255, 0, 0.12)"
-            }}
-          />
-        </Col>
-      </Row>
 
       <Row style={{ margin: "1%", marginTop: "3%", alignItems: "center" }}>
         <Col xs={12} md={6} style={{ marginBottom: "2rem" }}>
@@ -323,6 +300,22 @@ const Templates = () => {
               </li>
             ))}
           </ul>
+          <img
+            src={RNB_VOCAL.image}
+            alt="FREE R&B Vocal Template for Logic Pro X — lead vocal, vocal bus, parallel saturation, chorus doubler, delays, plate and room verb tracks"
+            width={1600}
+            height={900}
+            style={{
+              display: "block",
+              margin: "1.5rem 0 0",
+              width: "100%",
+              maxWidth: 520,
+              height: "auto",
+              borderRadius: 16,
+              border: "1px solid #2b2b2b",
+              boxShadow: "0 0 40px rgba(104, 255, 0, 0.12)"
+            }}
+          />
           <h3 style={{ color: "#fff", fontSize: "1.05rem", marginTop: "1.5rem", marginBottom: "0.5rem" }}>Two versions included</h3>
           {RNB_VOCAL.versions.map((v) => (
             <p key={v.name} style={{ color: "#d4d4d4", lineHeight: 1.6, maxWidth: 520, marginBottom: "0.6rem" }}>

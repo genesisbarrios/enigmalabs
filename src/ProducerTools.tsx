@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Row, Col, Container } from "react-bootstrap";
 import { PLUGINS } from "./Plugins";
 import { RNB_VOCAL } from "./Templates";
+import { SAMPLE_PACKS } from "./SamplePacks";
 
 // Producer Tools ("Vault" in the nav) — the hub for every product category.
 // Each item links to its own page (/plugins, /templates, later /sample-packs),
@@ -9,7 +10,7 @@ import { RNB_VOCAL } from "./Templates";
 // so names and images stay in sync. `price` empty = FREE badge; set it (e.g.
 // "$29") when paid products arrive.
 
-type Item = { name: string; tagline: string; image: string; imageAlt: string; href: string; price?: string };
+type Item = { name: string; tagline: string; image: string; imageAlt: string; href: string; price?: string; square?: boolean };
 type Category = { id: string; title: string; blurb: string; href?: string; items: Item[]; comingSoon?: string };
 
 const CATEGORIES: Category[] = [
@@ -44,9 +45,17 @@ const CATEGORIES: Category[] = [
   {
     id: "sample-packs",
     title: "Sample Packs",
-    blurb: "Loops, one-shots, and kits.",
-    items: [],
-    comingSoon: "Sample packs are on the way. Join the newsletter to hear first when they drop."
+    blurb: "Loops, one-shots, and songstarters by gen.wav.",
+    href: "/sample-packs",
+    items: SAMPLE_PACKS.map((p) => ({
+      name: p.name,
+      tagline: p.description.length > 140 ? `${p.description.slice(0, 137).replace(/\s+\S*$/, "")}…` : p.description,
+      image: p.image,
+      imageAlt: `${p.name} sample pack cover`,
+      href: `/sample-packs#${p.id}`,
+      price: p.price || undefined,
+      square: true
+    }))
   }
 ];
 
@@ -142,7 +151,7 @@ const ProducerTools = () => {
                       src={item.image}
                       alt={item.imageAlt}
                       loading="lazy"
-                      style={{ display: "block", width: "100%", aspectRatio: "4 / 3", objectFit: "cover", borderRadius: 10 }}
+                      style={{ display: "block", width: "100%", aspectRatio: item.square ? "1 / 1" : "4 / 3", objectFit: "cover", borderRadius: 10 }}
                     />
                     <span
                       style={{

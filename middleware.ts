@@ -9,7 +9,7 @@ import { next } from "@vercel/edge";
 // everyone else (real browsers) falls through to the normal static SPA
 // untouched, so there is no behavior or performance change for humans.
 export const config = {
-  matcher: ["/audit", "/mockup", "/Blog", "/Blog/:slug", "/plugins", "/Plugins", "/templates", "/Templates", "/tools"],
+  matcher: ["/audit", "/mockup", "/Blog", "/Blog/:slug", "/plugins", "/Plugins", "/templates", "/Templates", "/tools", "/sample-packs"],
 };
 
 const BOT_UA =
@@ -133,6 +133,20 @@ function resolveStaticMeta(origin: string, pathname: string): Meta | null {
   }
   // Keep these image paths in sync with src/Plugins.tsx / src/Templates.tsx
   // when a new screenshot version is uploaded.
+  if (pathname.toLowerCase() === "/sample-packs") {
+    return {
+      title: "Sample Packs: Free Trap, R&B & Reggaeton Sound Kits | Enigma Labs Producer Tools",
+      description:
+        "Sample packs by gen.wav: The Wav Pack V.1 and Solar Flares (free), and The Wav Pack Vol. II — guitar, piano, and synth loops, drum loops, one-shots, and FX for trap, R&B, and reggaeton.",
+      url: `${origin}/sample-packs`,
+      image: `${origin}/sample-packs/solar-flares.jpg`,
+      imageWidth: 800,
+      imageHeight: 800,
+      imageType: "image/jpeg",
+      imageAlt: "Solar Flares free sample pack by gen.wav",
+      twitterCard: "summary_large_image",
+    };
+  }
   if (pathname.toLowerCase() === "/tools") {
     return {
       title: "Producer Tools: Free Plugins, Vocal Templates & Sample Packs | Enigma Labs Vault",

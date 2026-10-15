@@ -57,6 +57,7 @@ const PAGE_NAMES: Record<string, string> = {
   "/tools": "Producer Tools (Vault)",
   "/plugins": "Plugins",
   "/templates": "Templates",
+  "/sample-packs": "Sample Packs",
   "/mockup": "Free Website Mockup",
   "/audit": "Free Audit",
   "/newsletter": "Newsletter",

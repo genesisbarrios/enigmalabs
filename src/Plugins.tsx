@@ -241,7 +241,7 @@ const Plugins = () => {
 
   return (
     <Container className="aboutContainer">
-      <Row style={{ margin: "1%", marginTop: "6%" }}>
+      <Row style={{ margin: "1%", marginTop: "1rem" }}>
         <Col xs={12} style={{ textAlign: "center" }}>
           <h1 className="subpage-title aboutTitle">Free Plugins</h1>
         </Col>

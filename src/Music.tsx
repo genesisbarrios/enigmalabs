@@ -3,6 +3,7 @@ import { Row, Col, Container, Button } from "react-bootstrap";
 //import image1 from "./image1.png";
 import { Alert } from "react-bootstrap";
 import axios from 'axios';
+import BeatStarsIcon from "./BeatStarsIcon";
 
 const BEATSTARS_TRACKS_URL = "https://www.beatstars.com/genwav/tracks";
 
@@ -12,12 +13,6 @@ const BEAT_DEALS = [
   { name: "Reggaeton Pack", detail: "5 Reggaeton Beats for $50", url: "https://www.beatstars.com/collection/208970" }
 ];
 
-// BeatStars logo mark (Simple Icons, CC0) in the site's red.
-const BeatStarsIcon = ({ size = 28, color = "#DF0000" }: { size?: number; color?: string }) => (
-  <svg viewBox="0 0 24 24" width={size} height={size} fill={color} role="img" aria-hidden="true" style={{ flexShrink: 0, display: "block" }}>
-    <path d="m17.217 11.996-3.308 1.079v3.478l-2.052-2.818-3.309 1.079 2.043-2.818-2.043-2.819 3.31 1.08 2.05-2.819v3.487zm0 0v7.277H6.854V4.584h10.363v7.412l4.585-1.49v-7.67L19.135 0H2.198v24h16.92l2.684-2.685v-7.83z" />
-  </svg>
-);
 
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 
