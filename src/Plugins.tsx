@@ -11,9 +11,9 @@ const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 
 const TEXTURE_CONSOLE = {
   name: "Texture Console",
-  file: "/plugins/Texture_Console_EnigmaLabs_v31.fmx",
-  fileName: "Texture_Console_EnigmaLabs_v31.fmx",
-  image: "/plugins/TextureConsoleV31.png",
+  file: "/plugins/Enigma_Texture_Console_v32.fmx",
+  fileName: "Enigma_Texture_Console_v32.fmx",
+  image: "/plugins/TextureConsoleV32.png",
   // Straight from the plugin's own parameter list.
   modules: [
     { name: "Character", detail: "Drive, Sweeten, Crush, Cassette" },
@@ -43,6 +43,8 @@ const isMacDesktop = () => {
 };
 
 const SIGNED_UP_KEY = "enigma_plugins_signed_up";
+const PLUGIN_KEYWORDS =
+  "free plugin, free plugins, free VST plugin, free AU plugin, free audio plugin, free effect plugin, free multi-effect plugin, free chorus plugin, free phaser plugin, free tape delay plugin, free reverb plugin, free saturation plugin, free lo-fi plugin, free Chroma Console alternative, Chroma Console style plugin, Texture Console, Google Flow Music plugin, Flow Effect plugin, Enigma Labs plugins";
 
 const readSignedUp = () => {
   try {
@@ -66,12 +68,43 @@ const Plugins = () => {
     // Chroma Console is Hologram Electronics' product name — referenced only
     // as a comparison ("inspired by" / "alternative"), never as this plugin's
     // name, plus a non-affiliation note on the page.
-    document.title = "Enigma Labs Plugins | Texture Console — Free Chroma Console-Style Plugin";
-    document.querySelector('meta[name="description"]')?.setAttribute(
-      "content",
-      "Texture Console is a free Chroma Console-inspired multi-effect plugin by Enigma Labs: character, movement, diffusion, and degrade in one, plus filter and reverb. Download free for the Google Flow Music Flow Effect plugin."
-    );
+    document.title = "Free Plugin: Texture Console (Chroma Console Alternative) | Enigma Labs Plugins";
+    document.querySelector('meta[name="description"]')?.setAttribute("content", "Download Texture Console, a free plugin from Enigma Labs. This free Chroma Console-style multi-effect plugin packs character, movement, diffusion, and degrade, plus filter and reverb. Free VST3/AU effect via Google Flow Music's Flow Effect (Mac).");
+
+    // Search keywords + structured data (a free, $0 app) — added on this page
+    // only and removed again when leaving it.
+    let keywords = document.querySelector('meta[name="keywords"]');
+    const createdKeywords = !keywords;
+    if (!keywords) {
+      keywords = document.createElement("meta");
+      keywords.setAttribute("name", "keywords");
+      document.head.appendChild(keywords);
+    }
+    const previousKeywords = keywords.getAttribute("content");
+    keywords.setAttribute("content", PLUGIN_KEYWORDS);
+    const jsonLd = document.createElement("script");
+    jsonLd.type = "application/ld+json";
+    jsonLd.text = JSON.stringify({
+      "@context": "https://schema.org",
+      "@type": "SoftwareApplication",
+      name: "Texture Console",
+      applicationCategory: "MultimediaApplication",
+      applicationSubCategory: "Audio effect plugin",
+      operatingSystem: "macOS",
+      description: "Download Texture Console, a free plugin from Enigma Labs. This free Chroma Console-style multi-effect plugin packs character, movement, diffusion, and degrade, plus filter and reverb. Free VST3/AU effect via Google Flow Music's Flow Effect (Mac).",
+      image: `${window.location.origin}${TEXTURE_CONSOLE.image}`,
+      url: `${window.location.origin}/plugins`,
+      offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+      publisher: { "@type": "Organization", name: "Enigma Labs", url: window.location.origin }
+    });
+    document.head.appendChild(jsonLd);
+
     trackFormView("plugin");
+    return () => {
+      jsonLd.remove();
+      if (createdKeywords) keywords?.remove();
+      else if (previousKeywords !== null) keywords?.setAttribute("content", previousKeywords);
+    };
   }, []);
 
   const [signedUp, setSignedUp] = useState(readSignedUp);
@@ -221,7 +254,7 @@ const Plugins = () => {
     <Container className="aboutContainer">
       <Row style={{ margin: "1%", marginTop: "6%" }}>
         <Col xs={12} style={{ textAlign: "center" }}>
-          <h1 className="subpage-title aboutTitle">Plugins</h1>
+          <h1 className="subpage-title aboutTitle">Free Plugins</h1>
           <p style={{ color: "#d4d4d4", maxWidth: 620, margin: "0 auto" }}>
             Free tools from Enigma Labs — including a free Chroma Console-style plugin. Sign up to our newsletter to download.
           </p>
@@ -233,13 +266,13 @@ const Plugins = () => {
           <img
             src={TEXTURE_CONSOLE.image}
             alt="Texture Console plugin interface — Character, Movement, Diffusion, and Degrade modules with filter and reverb"
-            width={1590}
-            height={1190}
+            width={1592}
+            height={1194}
             style={{
               display: "block",
               margin: "0 auto",
               width: "100%",
-              maxWidth: 795, // display size; the 1590px image keeps it sharp on retina
+              maxWidth: 795, // display size; the 1592px image keeps it sharp on retina
               height: "auto",
               borderRadius: 16,
               border: "1px solid #2b2b2b",
@@ -252,7 +285,7 @@ const Plugins = () => {
       <Row style={{ margin: "1%", marginTop: "3%", alignItems: "center" }}>
         <Col xs={12} md={6} style={{ marginBottom: "2rem" }}>
           <p style={{ color: "#68FF00", letterSpacing: "0.2em", textTransform: "uppercase", fontSize: "0.8rem", marginBottom: "0.25rem" }}>
-            Free · Flow Effect plugin
+            Free plugin · Flow Effect
           </p>
           <h2 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>{TEXTURE_CONSOLE.name}</h2>
           <p style={{ color: "#d4d4d4", lineHeight: 1.7, maxWidth: 520 }}>
