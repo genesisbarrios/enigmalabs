@@ -291,7 +291,7 @@ const Plugins = () => {
                   handleSubmit();
                 }}
               >
-                <h3 style={{ color: "#68FF00", marginBottom: "0.25rem" }}>Get it free</h3>
+                <h3 style={{ color: "#68FF00", marginBottom: "0.25rem" }}>Download it for free</h3>
                 <p style={{ color: "#aaa", fontSize: "0.9rem", marginBottom: "1.25rem" }}>
                   Join the newsletter and the download starts right away.
                 </p>
