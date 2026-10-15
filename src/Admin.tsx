@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, Badge, Button, Card, Col, Container, Form, ListGroup, Modal, Pagination, Row, Spinner, Table } from 'react-bootstrap';
 import { MarketingAnalyticsPanel, SiteAnalyticsPanel } from './SiteAnalytics';
+import { CampaignDetailsModal, RecipientPickerModal } from './CampaignRecipients';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
@@ -360,7 +361,7 @@ type OutreachAnalytics = {
   personal: SendStats;
   signup: SendStats;
   campaignsSummary: SendStats & { totalCampaigns: number };
-  campaigns: (SendStats & { id: string; category?: string; subject?: string; sentAt?: string })[];
+  campaigns: (SendStats & { id: string; category?: string; subject?: string; sentAt?: string; recipientCount?: number })[];
 };
 
 type BlogPostRecord = {
@@ -987,6 +988,7 @@ const Admin = () => {
     const preset = TEMPLATE_PRESETS.beats['custom-message'];
     setCampaignForm({ ...BLANK_CAMPAIGN_FORM, subject: preset.subject, bodyText: preset.bodyText });
     setCampaignAttachments([]);
+    setCampaignRecipientIds(null);
     setShowCreateCampaign(true);
   };
 
@@ -994,6 +996,7 @@ const Admin = () => {
     const templateKey = 'custom-message';
     const preset = TEMPLATE_PRESETS[category][templateKey];
     setCampaignForm({ ...campaignForm, category, templateKey, subject: preset.subject, bodyText: preset.bodyText, ctaLabel: preset.ctaLabel || '', ctaUrl: preset.ctaUrl || '', imageUrl: preset.imageUrl || '', recipientCategories: [category] });
+    setCampaignRecipientIds(null);
   };
 
   const handleCampaignTemplateChange = (templateKey: string) => {
@@ -1002,6 +1005,9 @@ const Admin = () => {
   };
 
   const toggleCampaignRecipientCategory = (category: NewsletterCategory) => {
+    // Changing interests goes back to "everyone matching" — a hand-picked
+    // list would silently stop matching what the checkboxes say.
+    setCampaignRecipientIds(null);
     setCampaignForm((prev) => {
       const has = prev.recipientCategories.includes(category);
       const recipientCategories = has
@@ -1017,10 +1023,20 @@ const Admin = () => {
     setCampaignAttachments(read);
   };
 
-  const campaignRecipientCount = useMemo(
-    () => subscribers.filter((s) => campaignForm.recipientCategories.some((c) => s[c])).length,
+  // Who a campaign goes to: everyone matching the picked interests, unless the
+  // recipient window was used to choose people by hand (campaignRecipientIds).
+  const [campaignRecipientIds, setCampaignRecipientIds] = useState<string[] | null>(null);
+  const [showRecipientPicker, setShowRecipientPicker] = useState(false);
+  const [detailsCampaignId, setDetailsCampaignId] = useState<string | null>(null);
+  const matchingRecipientIds = useMemo(
+    () =>
+      subscribers
+        .filter((s) => (s.email || '').trim() && campaignForm.recipientCategories.some((c) => s[c]))
+        .map((s) => s._id),
     [subscribers, campaignForm.recipientCategories]
   );
+  const effectiveRecipientIds = campaignRecipientIds ?? matchingRecipientIds;
+  const campaignRecipientCount = effectiveRecipientIds.length;
 
   const isLeadCampaign = LEAD_CAMPAIGN_CATEGORIES.includes(campaignForm.category);
 
@@ -1054,22 +1070,85 @@ const Admin = () => {
       return;
     }
     setCampaignSending(true);
+    // Sent in server-side batches — pass back nextAfterId until none remain.
+    let sent = 0;
+    let failed = 0;
+    let total = 0;
     try {
-      const response = await axios.post(`${API_BASE_URL}/crm/leads/bulk-send-cold-email`, {
-        category: campaignForm.category,
-        openedFilter: leadAudienceOpenedFilter,
-        clickedFilter: leadAudienceClickedFilter
-      });
-      if (response.data?.ok) {
-        setNewsletterMessage(`Cold email sent to ${response.data.sent} of ${response.data.total} leads.`);
-        setShowCreateCampaign(false);
-      } else {
-        setNewsletterError(response.data?.message || 'Could not send to leads.');
+      let afterId: string | null = null;
+      for (;;) {
+        const response: any = await axios.post(`${API_BASE_URL}/crm/leads/bulk-send-cold-email`, {
+          category: campaignForm.category,
+          openedFilter: leadAudienceOpenedFilter,
+          clickedFilter: leadAudienceClickedFilter,
+          afterId
+        });
+        if (!response.data?.ok) {
+          setNewsletterError(response.data?.message || 'Could not send to leads.');
+          break;
+        }
+        const batch = response.data;
+        if (afterId === null) total = batch.total;
+        sent += batch.sent;
+        failed += batch.failed || 0;
+        setCampaignProgress({ sentSoFar: sent + failed, total });
+        if (!batch.remaining || !batch.processed) {
+          setNewsletterMessage(`Cold email sent to ${sent} of ${total} leads${failed ? ` (${failed} failed — check those leads' email addresses)` : ''}.`);
+          setShowCreateCampaign(false);
+          break;
+        }
+        afterId = batch.nextAfterId;
       }
     } catch (sendError: any) {
-      setNewsletterError(sendError?.response?.data?.message || 'Could not send to leads.');
+      setNewsletterError(
+        `${sendError?.response?.data?.message || 'Could not send to leads.'}${sent ? ` ${sent} lead(s) were sent before it stopped.` : ''}`
+      );
     } finally {
       setCampaignSending(false);
+      setCampaignProgress(null);
+    }
+  };
+
+  // Campaigns send in server-side batches (each request fits inside the
+  // hosting time limit) — keep asking for the next batch until everyone's
+  // been sent to, or a batch makes no progress (e.g. delivery errors).
+  type CampaignBatch = { sent: number; failed: number; sentSoFar: number; total: number; remaining: number; campaign?: { _id: string } };
+  const [campaignProgress, setCampaignProgress] = useState<{ sentSoFar: number; total: number } | null>(null);
+  const [finishingCampaignId, setFinishingCampaignId] = useState<string | null>(null);
+
+  const runRemainingCampaignBatches = async (campaignId: string, first: CampaignBatch, attachments?: unknown[]) => {
+    let batch = first;
+    let failed = first.failed || 0;
+    setCampaignProgress({ sentSoFar: batch.sentSoFar, total: batch.total });
+    while (batch.remaining > 0) {
+      const response = await axios.post(`${API_BASE_URL}/newsletter/campaigns/${campaignId}/continue`, { attachments });
+      if (!response.data?.ok) throw new Error(response.data?.message || 'Could not continue sending.');
+      batch = response.data;
+      failed += batch.failed || 0;
+      setCampaignProgress({ sentSoFar: batch.sentSoFar, total: batch.total });
+      if (!batch.sent) break; // nothing went through this round — stop instead of looping
+    }
+    return { ...batch, failed };
+  };
+
+  const handleFinishCampaign = async (campaignId: string) => {
+    if (!window.confirm('Send this campaign to the subscribers who haven\'t received it yet? Anyone who already got it is skipped.')) return;
+    setFinishingCampaignId(campaignId);
+    setNewsletterError('');
+    try {
+      const response = await axios.post(`${API_BASE_URL}/newsletter/campaigns/${campaignId}/continue`, {});
+      if (!response.data?.ok) throw new Error(response.data?.message || 'Could not continue sending.');
+      const result = await runRemainingCampaignBatches(campaignId, response.data);
+      setNewsletterMessage(
+        `Campaign now sent to ${result.sentSoFar} of ${result.total} subscribers` +
+          (result.remaining > 0 ? ` — ${result.remaining} couldn't be sent (check the email addresses), try again later.` : '.')
+      );
+      fetchOutreachAnalytics();
+    } catch (finishError: any) {
+      setNewsletterError(finishError?.response?.data?.message || finishError?.message || 'Could not finish sending the campaign.');
+    } finally {
+      setFinishingCampaignId(null);
+      setCampaignProgress(null);
     }
   };
 
@@ -1079,8 +1158,8 @@ const Admin = () => {
     const recipientLabel = campaignForm.recipientCategories.map((c) => NEWSLETTER_CATEGORY_LABELS[c]).join(', ');
     const scheduledAt = campaignForm.scheduledAt ? new Date(campaignForm.scheduledAt) : null;
     const confirmLabel = scheduledAt
-      ? `Schedule this to send to all ${campaignRecipientCount} subscriber(s) interested in ${recipientLabel} at ${scheduledAt.toLocaleString()}?`
-      : `Send this to all ${campaignRecipientCount} subscriber(s) interested in ${recipientLabel}?`;
+      ? `Schedule this to send to ${campaignRecipientCount} ${campaignRecipientIds ? 'selected ' : ''}subscriber(s)${campaignRecipientIds ? '' : ` interested in ${recipientLabel}`} at ${scheduledAt.toLocaleString()}?`
+      : `Send this to ${campaignRecipientCount} ${campaignRecipientIds ? 'selected ' : ''}subscriber(s)${campaignRecipientIds ? '' : ` interested in ${recipientLabel}`}?`;
     if (!window.confirm(confirmLabel)) {
       return;
     }
@@ -1089,6 +1168,7 @@ const Admin = () => {
       const response = await axios.post(`${API_BASE_URL}/newsletter/campaigns`, {
         category: campaignForm.category,
         recipientCategories: campaignForm.recipientCategories,
+        recipientIds: effectiveRecipientIds,
         templateKey: campaignForm.templateKey,
         subject: campaignForm.subject,
         bodyText: campaignForm.bodyText,
@@ -1099,10 +1179,15 @@ const Admin = () => {
         ...(scheduledAt ? { scheduledAt: scheduledAt.toISOString() } : {})
       });
       if (response.data?.ok) {
+        const result = await runRemainingCampaignBatches(response.data.campaign._id, response.data, campaignAttachments);
+        const shortfall =
+          result.remaining > 0
+            ? ` ${result.remaining} couldn't be sent yet — use "Finish sending" in Outreach Analytics to retry.`
+            : '';
         setNewsletterMessage(
-          scheduledAt
-            ? `Campaign scheduled for ${scheduledAt.toLocaleString()} — ${response.data.sent} of ${response.data.total} subscriber(s) queued.`
-            : `Campaign sent to ${response.data.sent} of ${response.data.total} subscribers.`
+          (scheduledAt
+            ? `Campaign scheduled for ${scheduledAt.toLocaleString()} — ${result.sentSoFar} of ${result.total} subscriber(s) queued.`
+            : `Campaign sent to ${result.sentSoFar} of ${result.total} subscribers.`) + shortfall
         );
         setShowCreateCampaign(false);
         if (showNewsletterAnalytics) loadCategoryAnalytics(analyticsCategory);
@@ -1111,9 +1196,14 @@ const Admin = () => {
         setNewsletterError(response.data?.message || 'Could not send campaign.');
       }
     } catch (sendError: any) {
-      setNewsletterError(sendError?.response?.data?.message || 'Could not send campaign.');
+      setNewsletterError(
+        (sendError?.response?.data?.message || sendError?.message || 'Could not send campaign.') +
+          ' Anything already sent stays sent — use "Finish sending" in Outreach Analytics to send the rest.'
+      );
+      fetchOutreachAnalytics();
     } finally {
       setCampaignSending(false);
+      setCampaignProgress(null);
     }
   };
 
@@ -1967,22 +2057,9 @@ const Admin = () => {
           >
             {sendingMarketingEmail ? 'Sending...' : `Send Marketing Email${selectedWebsiteClientIds.size > 0 ? ` (${selectedWebsiteClientIds.size} selected)` : ''}`}
           </Button>
-          <Button
-            size="sm"
-            variant="outline-warning"
-            disabled={selectedWebsiteClientIds.size === 0 || sendingPaymentReminder}
-            onClick={() => handleSendPaymentReminder(Array.from(selectedWebsiteClientIds))}
-          >
-            {sendingPaymentReminder ? 'Sending...' : `Send Payment Reminder${selectedWebsiteClientIds.size > 0 ? ` (${selectedWebsiteClientIds.size} selected)` : ''}`}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline-warning"
-            disabled={selectedWebsiteClientIds.size === 0 || sendingSubscriptionReminder}
-            onClick={() => handleSendSubscriptionReminder(Array.from(selectedWebsiteClientIds))}
-          >
-            {sendingSubscriptionReminder ? 'Sending...' : `Send Subscription Reminder${selectedWebsiteClientIds.size > 0 ? ` (${selectedWebsiteClientIds.size} selected)` : ''}`}
-          </Button>
+          {/* Payment / subscription reminder buttons are hidden for now — the
+              handlers and /api/website-clients/send-*-reminder routes are kept
+              for when reminders come back (e.g. driven by Stripe status). */}
           <Button
             size="sm"
             variant="outline-light"
@@ -2095,7 +2172,9 @@ const Admin = () => {
             <div style={{ flex: '2 1 200px', minWidth: 0 }}>
               <strong style={{ display: 'block' }}>
                 {client.name || '—'}
-                {client.leadStatus ? (
+                {client.paid ? (
+                  <Badge bg="success" className="ms-2" style={{ fontSize: '0.65rem', verticalAlign: 'middle' }}>Client</Badge>
+                ) : client.leadStatus ? (
                   <Badge bg={LEAD_STATUS_BADGES[client.leadStatus].bg} className="ms-2" style={{ fontSize: '0.65rem', verticalAlign: 'middle' }}>
                     {LEAD_STATUS_BADGES[client.leadStatus].label}
                   </Badge>
@@ -2119,7 +2198,7 @@ const Admin = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flexShrink: 0 }}>
               {client.websiteReviewSentAt ? <Badge bg="success">Review Sent</Badge> : null}
               {client.marketingEmailSentAt ? <Badge bg="primary">Marketing Sent</Badge> : null}
-              {client.paid ? <Badge bg="success">Paid</Badge> : null}
+              {client.paid ? <Badge bg="success">Onboarded</Badge> : null}
               {client.onboardingEmailSentAt ? <Badge bg="info" text="dark">Onboarding Sent</Badge> : null}
               {client.paymentReminderSentAt ? <Badge bg="warning" text="dark">Payment Reminder Sent</Badge> : null}
               {client.subscriptionReminderSentAt ? <Badge bg="warning" text="dark">Subscription Reminder Sent</Badge> : null}
@@ -2147,12 +2226,6 @@ const Admin = () => {
               ) : null}
               <Button size="sm" variant="outline-primary" disabled={sendingMarketingEmail} onClick={() => handleSendMarketingEmail([client._id])}>
                 Send Marketing Email
-              </Button>
-              <Button size="sm" variant="outline-warning" disabled={sendingPaymentReminder} onClick={() => handleSendPaymentReminder([client._id])}>
-                Payment Reminder
-              </Button>
-              <Button size="sm" variant="outline-warning" disabled={sendingSubscriptionReminder} onClick={() => handleSendSubscriptionReminder([client._id])}>
-                Subscription Reminder
               </Button>
               <Button size="sm" variant="outline-light" onClick={() => openCustomClientEmail([client._id])}>
                 Custom Email
@@ -3006,6 +3079,7 @@ const Admin = () => {
                   <th>Open Rate</th>
                   <th>Click Rate</th>
                   <th>Date</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
@@ -3013,12 +3087,41 @@ const Admin = () => {
                   <tr key={campaign.id}>
                     <td>{campaign.subject || '—'}</td>
                     <td>{campaign.category ? NEWSLETTER_CATEGORY_LABELS[campaign.category as NewsletterCategory] || campaign.category : '—'}</td>
-                    <td>{campaign.sent}</td>
+                    <td>
+                      {campaign.recipientCount && campaign.sent < campaign.recipientCount ? (
+                        <>
+                          {campaign.sent} of {campaign.recipientCount}
+                          <Button
+                            size="sm"
+                            variant="outline-warning"
+                            className="ms-2 py-0"
+                            disabled={finishingCampaignId !== null}
+                            onClick={() => handleFinishCampaign(campaign.id)}
+                          >
+                            {finishingCampaignId === campaign.id ? (
+                              <>
+                                <Spinner animation="border" size="sm" className="me-1" />
+                                {campaignProgress ? `${campaignProgress.sentSoFar} of ${campaignProgress.total}` : 'Sending'}
+                              </>
+                            ) : (
+                              'Finish sending'
+                            )}
+                          </Button>
+                        </>
+                      ) : (
+                        campaign.sent
+                      )}
+                    </td>
                     <td>{campaign.opened}</td>
                     <td>{campaign.clicked}</td>
                     <td>{(campaign.openRate * 100).toFixed(0)}%</td>
                     <td>{(campaign.clickRate * 100).toFixed(0)}%</td>
                     <td><small>{campaign.sentAt ? new Date(campaign.sentAt).toLocaleDateString() : '—'}</small></td>
+                    <td>
+                      <Button size="sm" variant="outline-light" className="py-0" onClick={() => setDetailsCampaignId(campaign.id)}>
+                        Details
+                      </Button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -3130,7 +3233,20 @@ const Admin = () => {
         </Modal.Footer>
       </Modal>
 
-      <Modal show={showCreateCampaign} onHide={() => setShowCreateCampaign(false)} size="lg" centered>
+      <RecipientPickerModal
+        show={showRecipientPicker}
+        subscribers={subscribers}
+        campaignInterests={campaignForm.recipientCategories}
+        initialSelected={effectiveRecipientIds}
+        onCancel={() => setShowRecipientPicker(false)}
+        onDone={(ids) => {
+          setCampaignRecipientIds(ids);
+          setShowRecipientPicker(false);
+        }}
+      />
+      <CampaignDetailsModal campaignId={detailsCampaignId} onClose={() => setDetailsCampaignId(null)} />
+
+      <Modal show={showCreateCampaign && !showRecipientPicker} onHide={() => setShowCreateCampaign(false)} size="lg" centered>
         <Modal.Header style={{ background: '#111', color: 'white', borderBottom: '1px solid #2b2b2b' }}>
           <Modal.Title>Create Campaign</Modal.Title>
           <button type="button" className="btn-close btn-close-danger" aria-label="Close" onClick={() => setShowCreateCampaign(false)} />
@@ -3260,11 +3376,23 @@ const Admin = () => {
                 </div>
               </Form.Group>
               <Alert variant="secondary" style={{ fontSize: '0.85rem' }}>
-                {campaignForm.recipientCategories.length ? (
+                {campaignRecipientIds ? (
+                  <>This will send to <strong>{campaignRecipientCount}</strong> hand-picked subscriber{campaignRecipientCount === 1 ? '' : 's'}.</>
+                ) : campaignForm.recipientCategories.length ? (
                   <>This will send to <strong>{campaignRecipientCount}</strong> subscriber{campaignRecipientCount === 1 ? '' : 's'} currently interested in {campaignForm.recipientCategories.map((c) => NEWSLETTER_CATEGORY_LABELS[c]).join(', ')}.</>
                 ) : (
-                  'Select at least one interest to send to.'
+                  'Select at least one interest, or pick recipients by hand.'
                 )}
+                <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', flexWrap: 'wrap' }}>
+                  <Button size="sm" variant="outline-dark" onClick={() => setShowRecipientPicker(true)}>
+                    View / edit recipients
+                  </Button>
+                  {campaignRecipientIds ? (
+                    <Button size="sm" variant="link" className="p-0" onClick={() => setCampaignRecipientIds(null)}>
+                      Reset to everyone matching the interests
+                    </Button>
+                  ) : null}
+                </div>
               </Alert>
             </>
           )}
@@ -3273,7 +3401,8 @@ const Admin = () => {
           {campaignSending ? (
             <div role="status" aria-live="polite" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginRight: 'auto', color: '#d4d4d4', fontSize: '0.85rem' }}>
               <Spinner animation="border" size="sm" variant="warning" />
-              {campaignForm.scheduledAt && !isLeadCampaign ? 'Scheduling campaign…' : 'Sending emails — keep this window open…'}
+              {campaignForm.scheduledAt && !isLeadCampaign ? 'Scheduling' : 'Sending'}
+              {campaignProgress ? ` ${campaignProgress.sentSoFar} of ${campaignProgress.total}` : ''}… keep this window open
             </div>
           ) : null}
           <Button variant="outline-light" size="sm" onClick={() => setShowCreateCampaign(false)} disabled={campaignSending}>Cancel</Button>

@@ -1312,6 +1312,9 @@ const newsletterCampaignSchema = new mongoose.Schema({
   // across several interests at once.
   category: { type: String, enum: NEWSLETTER_CATEGORIES, required: true },
   recipientCategories: { type: [{ type: String, enum: NEWSLETTER_CATEGORIES }], default: undefined },
+  // Exact subscribers picked in the admin's recipient window. When set, this
+  // (not recipientCategories) decides who the campaign goes to.
+  recipientIds: { type: [mongoose.Schema.Types.ObjectId], default: undefined },
   templateKey: String,
   subject: String,
   html: String,
@@ -1385,7 +1388,7 @@ async function sendAndLogNewsletterEmail({ subscriber, campaignId, category, tem
   const html = buildHtml(send._id.toString());
 
   try {
-    const { data, error } = await resend.emails.send({
+    const payload = {
       from: AGREEMENT_FROM_EMAIL,
       to: subscriber.email,
       subject,
@@ -1395,7 +1398,13 @@ async function sendAndLogNewsletterEmail({ subscriber, campaignId, category, tem
       // hour") — Resend holds the email and delivers it at this time
       // instead of immediately. Omitted entirely for a normal send-now.
       ...(scheduledAt ? { scheduledAt } : {})
-    });
+    };
+    let { data, error } = await resend.emails.send(payload);
+    // Resend's per-second rate limit — wait a moment and retry once.
+    if (error && (error.statusCode === 429 || error.name === 'rate_limit_exceeded')) {
+      await new Promise((resolve) => setTimeout(resolve, 1100));
+      ({ data, error } = await resend.emails.send(payload));
+    }
     if (error) {
       console.error('Could not send newsletter email', error);
       await NewsletterSend.findByIdAndDelete(send._id);
@@ -2583,6 +2592,9 @@ app.get('/api/newsletter/outreach-analytics', async (_req, res) => {
           category: campaign?.category || campaignSendRows[0]?.category,
           subject: campaign?.subject || campaignSendRows[0]?.subject,
           sentAt: campaign?.createdAt || campaignSendRows[0]?.sentAt,
+          // Subscribers it was meant to reach — more than `sent` means the
+          // send stopped partway (the admin offers "Finish sending").
+          recipientCount: campaign?.recipientCount || 0,
           ...summarizeSends(campaignSendRows)
         };
       })
@@ -2630,6 +2642,125 @@ function autoAttachmentsForCategory(category) {
   return attachments;
 }
 
+// Campaigns send in time-boxed batches: each request sends to as many
+// remaining recipients as fit in CAMPAIGN_BATCH_MS (comfortably inside the
+// serverless function's time limit), and the admin keeps calling
+// /campaigns/:id/continue until `remaining` is 0. Recipients who already have
+// a send logged for this campaign are skipped, so a batch that gets cut off —
+// or a campaign that failed partway — resumes without double-sending.
+const CAMPAIGN_BATCH_MS = 7000;
+
+function campaignRecipients(campaign) {
+  if (campaign.recipientIds && campaign.recipientIds.length) {
+    return NewsletterSubscriber.find({ _id: { $in: campaign.recipientIds }, email: { $ne: '' } });
+  }
+  const categories = campaign.recipientCategories && campaign.recipientCategories.length ? campaign.recipientCategories : [campaign.category];
+  return NewsletterSubscriber.find({ $or: categories.map((c) => ({ [c]: true })), email: { $ne: '' } });
+}
+
+async function sendCampaignBatch(campaign, uploadedAttachments) {
+  const deadline = Date.now() + CAMPAIGN_BATCH_MS;
+  const { category, subject, ctaLabel, ctaUrl, imageUrl } = campaign;
+  const bodyText = campaign.html; // the reusable plain-text body (see NewsletterCampaign.html)
+  const scheduledAt = campaign.scheduledAt && new Date(campaign.scheduledAt) > new Date() ? new Date(campaign.scheduledAt).toISOString() : undefined;
+
+  const [recipients, alreadySentIds] = await Promise.all([
+    campaignRecipients(campaign),
+    NewsletterSend.distinct('subscriberId', { campaignId: campaign._id })
+  ]);
+  const done = new Set(alreadySentIds.map(String));
+  const pending = recipients.filter((r) => !done.has(String(r._id)));
+
+  const instagramUrl = category === 'web' || category === 'ads' ? ENIGMA_INSTAGRAM_URL : GENWAV_INSTAGRAM_URL;
+  const instagramLabel = category === 'web' || category === 'ads' ? '@_enigmalabs' : '@gen.wav';
+  const attachments = [...autoAttachmentsForCategory(category), ...(Array.isArray(uploadedAttachments) ? uploadedAttachments : [])];
+
+  let sent = 0;
+  let failed = 0;
+  let attempted = 0;
+  for (const subscriber of pending) {
+    if (Date.now() >= deadline) break;
+    attempted += 1;
+    const result = await sendAndLogNewsletterEmail({
+      subscriber,
+      campaignId: campaign._id,
+      category,
+      templateKey: campaign.templateKey,
+      subject,
+      buildHtml: (sendId) => renderNewsletterEmail({ subscriber, subject, bodyText, ctaLabel, ctaUrl, imageUrl, sendId, instagramUrl, instagramLabel }),
+      attachments,
+      scheduledAt
+    });
+    if (result.ok) sent += 1;
+    else failed += 1;
+  }
+
+  const total = recipients.length;
+  const sentSoFar = done.size + sent;
+  if (campaign.recipientCount !== total) {
+    campaign.recipientCount = total;
+    await campaign.save();
+  }
+  return { sent, failed, sentSoFar, total, remaining: pending.length - attempted };
+}
+
+// Per-recipient detail for Outreach Analytics: who it was sent to, who
+// opened and clicked (and when), and anyone it hasn't reached yet.
+app.get('/api/newsletter/campaigns/:id/recipients', async (req, res) => {
+  try {
+    const campaign = await NewsletterCampaign.findById(req.params.id);
+    if (!campaign) return res.status(404).json({ ok: false, message: 'Campaign not found.' });
+    const [sends, recipients] = await Promise.all([
+      NewsletterSend.find({ campaignId: campaign._id }).select('subscriberId sentAt opened openedAt clicked clickedAt').lean(),
+      campaignRecipients(campaign).select('email name businessName').lean()
+    ]);
+    const sentIds = sends.map((s) => s.subscriberId);
+    const people = await NewsletterSubscriber.find({ _id: { $in: sentIds } }).select('email name businessName').lean();
+    const byId = new Map(people.map((p) => [String(p._id), p]));
+    const sentSet = new Set(sentIds.map(String));
+    res.json({
+      ok: true,
+      campaign: { id: campaign._id, subject: campaign.subject, category: campaign.category, createdAt: campaign.createdAt, scheduledAt: campaign.scheduledAt },
+      sent: sends
+        .map((s) => {
+          const p = byId.get(String(s.subscriberId)) || {};
+          return {
+            subscriberId: s.subscriberId,
+            email: p.email || '(deleted subscriber)',
+            name: p.name || '',
+            businessName: p.businessName || '',
+            sentAt: s.sentAt,
+            opened: Boolean(s.opened),
+            openedAt: s.openedAt || null,
+            clicked: Boolean(s.clicked),
+            clickedAt: s.clickedAt || null
+          };
+        })
+        .sort((a, b) => Number(b.clicked) - Number(a.clicked) || Number(b.opened) - Number(a.opened) || String(a.email).localeCompare(String(b.email))),
+      notSent: recipients
+        .filter((r) => !sentSet.has(String(r._id)))
+        .map((r) => ({ subscriberId: r._id, email: r.email, name: r.name || '', businessName: r.businessName || '' }))
+    });
+  } catch (error) {
+    console.error('Could not load campaign recipients', error);
+    res.status(500).json({ ok: false, message: 'Could not load campaign details.' });
+  }
+});
+
+// Sends the next batch of an existing campaign. Uploaded attachments aren't
+// stored on the campaign, so the admin sends them again with each call.
+app.post('/api/newsletter/campaigns/:id/continue', async (req, res) => {
+  try {
+    const campaign = await NewsletterCampaign.findById(req.params.id);
+    if (!campaign) return res.status(404).json({ ok: false, message: 'Campaign not found.' });
+    const batch = await sendCampaignBatch(campaign, req.body.attachments);
+    res.json({ ok: true, campaign, ...batch });
+  } catch (error) {
+    console.error('Could not continue newsletter campaign', error);
+    res.status(500).json({ ok: false, message: 'Could not continue sending the campaign.' });
+  }
+});
+
 // Sends a template (or a previously-sent campaign, verbatim) to every
 // subscriber currently marked interested in `category`, and logs the whole
 // blast as a reusable NewsletterCampaign so it can be resent later.
@@ -2666,12 +2797,20 @@ app.post('/api/newsletter/campaigns', async (req, res) => {
       return res.status(400).json({ ok: false, message: 'Unknown recipient interest.' });
     }
 
-    const recipients = await NewsletterSubscriber.find({
-      $or: recipientCategories.map((c) => ({ [c]: true })),
-      email: { $ne: '' }
-    });
+    // Exact picks from the admin's recipient window, when provided.
+    const recipientIds = Array.isArray(req.body.recipientIds)
+      ? [...new Set(req.body.recipientIds.map(String))].filter((id) => mongoose.Types.ObjectId.isValid(id))
+      : null;
+    const recipients = await (recipientIds
+      ? NewsletterSubscriber.find({ _id: { $in: recipientIds }, email: { $ne: '' } })
+      : NewsletterSubscriber.find({ $or: recipientCategories.map((c) => ({ [c]: true })), email: { $ne: '' } }));
     if (!recipients.length) {
-      return res.status(400).json({ ok: false, message: `No subscribers are currently interested in ${recipientCategories.join(', ')}.` });
+      return res.status(400).json({
+        ok: false,
+        message: recipientIds
+          ? 'None of the selected subscribers have an email address.'
+          : `No subscribers are currently interested in ${recipientCategories.join(', ')}.`
+      });
     }
 
     const campaign = await NewsletterCampaign.create({
@@ -2684,29 +2823,12 @@ app.post('/api/newsletter/campaigns', async (req, res) => {
       ctaUrl: ctaUrl || '',
       imageUrl: imageUrl || '',
       recipientCount: recipients.length,
+      ...(recipientIds ? { recipientIds: recipients.map((r) => r._id) } : {}),
       scheduledAt
     });
 
-    const instagramUrl = category === 'web' || category === 'ads' ? ENIGMA_INSTAGRAM_URL : GENWAV_INSTAGRAM_URL;
-    const instagramLabel = category === 'web' || category === 'ads' ? '@_enigmalabs' : '@gen.wav';
-    const attachments = [...autoAttachmentsForCategory(category), ...(Array.isArray(uploadedAttachments) ? uploadedAttachments : [])];
-
-    let sent = 0;
-    for (const subscriber of recipients) {
-      const result = await sendAndLogNewsletterEmail({
-        subscriber,
-        campaignId: campaign._id,
-        category,
-        templateKey: campaign.templateKey,
-        subject,
-        buildHtml: (sendId) => renderNewsletterEmail({ subscriber, subject, bodyText, ctaLabel, ctaUrl, imageUrl, sendId, instagramUrl, instagramLabel }),
-        attachments,
-        scheduledAt
-      });
-      if (result.ok) sent += 1;
-    }
-
-    res.status(201).json({ ok: true, campaign, sent, total: recipients.length });
+    const batch = await sendCampaignBatch(campaign, uploadedAttachments);
+    res.status(201).json({ ok: true, campaign, ...batch });
   } catch (error) {
     console.error('Could not send newsletter campaign', error);
     res.status(500).json({ ok: false, message: 'Could not send campaign.' });
@@ -3810,13 +3932,25 @@ app.post('/api/crm/leads/bulk-send-cold-email', async (req, res) => {
     if (category !== 'web' && category !== 'ads') {
       return res.status(400).json({ ok: false, message: 'category must be "web" or "ads".' });
     }
-    const leads = await Lead.find(buildLeadAudienceQuery({ category, openedFilter, clickedFilter }));
-    if (!leads.length) {
+    // Time-boxed batches, same as newsletter campaigns: leads are walked in
+    // _id order and each request sends until CAMPAIGN_BATCH_MS, returning
+    // `nextAfterId` for the admin to pass back on the next call.
+    const audience = buildLeadAudienceQuery({ category, openedFilter, clickedFilter });
+    const afterId = req.body.afterId && mongoose.Types.ObjectId.isValid(req.body.afterId) ? req.body.afterId : null;
+    const leads = await Lead.find(afterId ? { $and: [audience, { _id: { $gt: afterId } }] } : audience).sort({ _id: 1 });
+    if (!leads.length && !afterId) {
       return res.status(400).json({ ok: false, message: 'No leads match those filters.' });
     }
 
+    const deadline = Date.now() + CAMPAIGN_BATCH_MS;
     let sent = 0;
+    let failed = 0;
+    let processed = 0;
+    let nextAfterId = afterId;
     for (const lead of leads) {
+      if (Date.now() >= deadline) break;
+      processed += 1;
+      nextAfterId = String(lead._id);
       const result = await sendLeadEmail(lead, {
         subject: pitchesMarketing(lead)
           ? `A few content ideas for ${lead.businessName || 'your business'} 💡`
@@ -3829,9 +3963,10 @@ app.post('/api/crm/leads/bulk-send-cold-email', async (req, res) => {
         resendIdField: 'coldEmailResendId'
       });
       if (result.ok) sent += 1;
+      else failed += 1;
     }
 
-    res.status(201).json({ ok: true, sent, total: leads.length });
+    res.status(201).json({ ok: true, sent, failed, processed, remaining: leads.length - processed, nextAfterId, total: leads.length });
   } catch (error) {
     console.error('Could not bulk-send cold email', error);
     res.status(500).json({ ok: false, message: 'Could not send to leads.' });
