@@ -11,7 +11,7 @@ import { trackFormSubmit, trackFormView } from "./analytics";
 
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 
-type Plugin = {
+export type Plugin = {
   id: string;
   name: string;
   tagline: string; // short description on the top card
@@ -28,7 +28,7 @@ type Plugin = {
   finalStep: string;
 };
 
-const PLUGINS: Plugin[] = [
+export const PLUGINS: Plugin[] = [
   {
     id: "texture-console",
     name: "Enigma Texture Console",

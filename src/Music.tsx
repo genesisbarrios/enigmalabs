@@ -209,10 +209,10 @@ const Music = () => {
           </Row>
           <Row style={rowStyle}>
             <Col sm={12}>
-            <iframe 
-              src="https://player.beatstars.com/?storeId=140652" 
-              width="100%" 
-              height="650">
+            <iframe
+              className="beatstars-embed"
+              title="gen.wav beats on BeatStars"
+              src="https://player.beatstars.com/?storeId=140652">
           </iframe>
             </Col>
           </Row>

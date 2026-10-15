@@ -10,7 +10,7 @@ import { trackFormSubmit, trackFormView } from "./analytics";
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 
 const DIR = "/templates/r&b_vocal";
-const RNB_VOCAL = {
+export const RNB_VOCAL = {
   name: "FREE R&B Vocal Template for Logic Pro X",
   fileName: "gen.wav R&B Vocal Templates.zip",
   file: encodeURI(`${DIR}/gen.wav R&B Vocal Templates.zip`),

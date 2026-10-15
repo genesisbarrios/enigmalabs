@@ -9,7 +9,7 @@ import { next } from "@vercel/edge";
 // everyone else (real browsers) falls through to the normal static SPA
 // untouched, so there is no behavior or performance change for humans.
 export const config = {
-  matcher: ["/audit", "/mockup", "/Blog", "/Blog/:slug", "/plugins", "/Plugins", "/templates", "/Templates"],
+  matcher: ["/audit", "/mockup", "/Blog", "/Blog/:slug", "/plugins", "/Plugins", "/templates", "/Templates", "/tools"],
 };
 
 const BOT_UA =
@@ -133,6 +133,20 @@ function resolveStaticMeta(origin: string, pathname: string): Meta | null {
   }
   // Keep these image paths in sync with src/Plugins.tsx / src/Templates.tsx
   // when a new screenshot version is uploaded.
+  if (pathname.toLowerCase() === "/tools") {
+    return {
+      title: "Producer Tools: Free Plugins, Vocal Templates & Sample Packs | Enigma Labs Vault",
+      description:
+        "The Enigma Labs Vault: free plugins (Enigma Texture Console, Enigma Vocal Sauce), a free R&B vocal template for Logic Pro X, and sample packs coming soon.",
+      url: `${origin}/tools`,
+      image: `${origin}/plugins/TextureConsoleV32.png`,
+      imageWidth: 1592,
+      imageHeight: 1194,
+      imageType: "image/png",
+      imageAlt: "Enigma Labs Producer Tools",
+      twitterCard: "summary_large_image",
+    };
+  }
   if (pathname.toLowerCase() === "/plugins") {
     return {
       title: "Free Plugins: Enigma Texture Console & Enigma Vocal Sauce | Enigma Labs Plugins",

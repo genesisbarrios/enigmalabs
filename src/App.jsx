@@ -22,6 +22,7 @@ import FreeAudit from './FreeAudit';
 import Newsletter from './Newsletter';
 import Plugins from './Plugins';
 import Templates from './Templates';
+import ProducerTools from './ProducerTools';
 import {Route, Routes, useLocation} from 'react-router-dom';
 import { useEffect } from 'react';
 import { installClickTracking, trackPageView } from './analytics';
@@ -62,6 +63,7 @@ const App = () => {
          <Route path="/Wallpapers" element={<Wallpapers/>}/>
          <Route path="/plugins" element={<Plugins/>}/>
          <Route path="/templates" element={<Templates/>}/>
+         <Route path="/tools" element={<ProducerTools/>}/>
          <Route path="/mockup" element={<FreeMockup/>}/>
          <Route path="/audit" element={<FreeAudit/>}/>
          <Route path="/newsletter" element={<Newsletter/>}/>
