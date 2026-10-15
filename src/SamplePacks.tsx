@@ -89,7 +89,7 @@ const SamplePacks = () => {
 
   return (
     <Container className="aboutContainer">
-      <Row style={{ margin: "1%", marginTop: "6%" }}>
+      <Row style={{ margin: "1%", marginTop: "1rem" }}>
         <Col xs={12} style={{ textAlign: "center" }}>
           <p style={{ color: GREEN, letterSpacing: "0.3em", textTransform: "uppercase", fontSize: "0.8rem", marginBottom: "0.25rem" }}>
             <a href="/tools" style={{ color: GREEN, textDecoration: "none" }}>Producer Tools</a>
