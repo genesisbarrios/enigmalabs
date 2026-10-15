@@ -2176,53 +2176,6 @@ const Admin = () => {
         />
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginTop: '2.5rem', marginBottom: '1rem' }}>
-        <h2 style={{ color: '#68FF00', margin: 0 }}>Signed Web Development Agreements</h2>
-        <Form.Select value={planFilter} onChange={(event) => setPlanFilter(event.target.value as 'all' | Agreement['planType'])} style={{ maxWidth: '220px' }}>
-          <option value="all">All Plan Types</option>
-          <option value="one_time">One-Time Payment</option>
-          <option value="monthly">Monthly Subscription</option>
-          <option value="custom">Custom / Negotiated</option>
-        </Form.Select>
-      </div>
-
-      {loadingAgreements ? <p>Loading agreements...</p> : null}
-
-      {!loadingAgreements && filteredAgreements.length === 0 ? <Alert variant="secondary">No agreements match.</Alert> : null}
-
-      {filteredAgreements.map((agreement) => (
-        <div
-          key={agreement._id}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-            padding: '0.5rem 0.75rem',
-            background: '#111',
-            border: '1px solid #2b2b2b',
-            borderRadius: '8px',
-            marginBottom: '0.5rem',
-            flexWrap: 'wrap'
-          }}
-        >
-          <div style={{ flex: '2 1 200px', minWidth: 0 }}>
-            <strong style={{ display: 'block' }}>{agreement.clientName}</strong>
-            <small style={{ color: '#aaa' }}>{agreement.clientEmail}</small>
-          </div>
-          <div style={{ flex: '1 1 150px', fontSize: '0.85rem', color: '#ccc' }}>{PLAN_LABELS[agreement.planType]}</div>
-          <div style={{ flex: '1 1 100px', fontSize: '0.85rem', color: '#ccc' }}>
-            ${agreement.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </div>
-          <div style={{ flex: '1 1 130px', fontSize: '0.8rem', color: '#888' }}>
-            {new Date(agreement.effectiveDate).toLocaleDateString()}
-          </div>
-          <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
-            <Button size="sm" variant="outline-success" onClick={() => handleDownloadAgreement(agreement._id)}>PDF</Button>
-            <Button size="sm" variant="outline-danger" onClick={() => handleDeleteAgreement(agreement._id)}>Delete</Button>
-          </div>
-        </div>
-      ))}
-
       {/* Free Mockup Requests (left) and Free Audit Requests (right), side by side —
           stacked on smaller screens; Contact Us Submissions full width below. */}
       <Row className="g-4">
@@ -2433,6 +2386,53 @@ const Admin = () => {
           ) : null}
         </Col>
       </Row>
+
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginTop: '2.5rem', marginBottom: '1rem' }}>
+        <h2 style={{ color: '#68FF00', margin: 0 }}>Signed Web Development Agreements</h2>
+        <Form.Select value={planFilter} onChange={(event) => setPlanFilter(event.target.value as 'all' | Agreement['planType'])} style={{ maxWidth: '220px' }}>
+          <option value="all">All Plan Types</option>
+          <option value="one_time">One-Time Payment</option>
+          <option value="monthly">Monthly Subscription</option>
+          <option value="custom">Custom / Negotiated</option>
+        </Form.Select>
+      </div>
+
+      {loadingAgreements ? <p>Loading agreements...</p> : null}
+
+      {!loadingAgreements && filteredAgreements.length === 0 ? <Alert variant="secondary">No agreements match.</Alert> : null}
+
+      {filteredAgreements.map((agreement) => (
+        <div
+          key={agreement._id}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            padding: '0.5rem 0.75rem',
+            background: '#111',
+            border: '1px solid #2b2b2b',
+            borderRadius: '8px',
+            marginBottom: '0.5rem',
+            flexWrap: 'wrap'
+          }}
+        >
+          <div style={{ flex: '2 1 200px', minWidth: 0 }}>
+            <strong style={{ display: 'block' }}>{agreement.clientName}</strong>
+            <small style={{ color: '#aaa' }}>{agreement.clientEmail}</small>
+          </div>
+          <div style={{ flex: '1 1 150px', fontSize: '0.85rem', color: '#ccc' }}>{PLAN_LABELS[agreement.planType]}</div>
+          <div style={{ flex: '1 1 100px', fontSize: '0.85rem', color: '#ccc' }}>
+            ${agreement.amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </div>
+          <div style={{ flex: '1 1 130px', fontSize: '0.8rem', color: '#888' }}>
+            {new Date(agreement.effectiveDate).toLocaleDateString()}
+          </div>
+          <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+            <Button size="sm" variant="outline-success" onClick={() => handleDownloadAgreement(agreement._id)}>PDF</Button>
+            <Button size="sm" variant="outline-danger" onClick={() => handleDeleteAgreement(agreement._id)}>Delete</Button>
+          </div>
+        </div>
+      ))}
 
       <div style={{ marginTop: '2.5rem', marginBottom: '1rem' }}>
         <h2 style={{ color: '#68FF00', margin: 0 }}>Contact Us Submissions</h2>
