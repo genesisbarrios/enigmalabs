@@ -244,10 +244,6 @@ const Plugins = () => {
       <Row style={{ margin: "1%", marginTop: "6%" }}>
         <Col xs={12} style={{ textAlign: "center" }}>
           <h1 className="subpage-title aboutTitle">Free Plugins</h1>
-          <p style={{ color: "#d4d4d4", maxWidth: 640, margin: "0 auto" }}>
-            Free plugins from Enigma Labs — a Chroma Console-style texture engine and a full vocal chain. Sign up to our newsletter once to
-            download them all.
-          </p>
         </Col>
       </Row>
 
@@ -388,6 +384,22 @@ function PluginSection({
             Free plugin · Flow Effect
           </p>
           <h2 className="subsection-title" style={{ color: GREEN, marginTop: 0 }}>{plugin.name}</h2>
+          <img
+            src={plugin.image}
+            alt={plugin.imageAlt}
+            width={plugin.imageWidth}
+            height={plugin.imageHeight}
+            loading="lazy"
+            style={{
+              display: "block",
+              width: "100%",
+              maxWidth: 380,
+              height: "auto",
+              borderRadius: 12,
+              border: "1px solid #2b2b2b",
+              margin: "0.5rem 0 1.25rem"
+            }}
+          />
           <p style={{ color: "#d4d4d4", lineHeight: 1.7, maxWidth: 520 }}>{plugin.description}</p>
           <ul style={{ listStyle: "none", padding: 0, margin: 0, maxWidth: 520 }}>
             {plugin.modules.map((m) => (
