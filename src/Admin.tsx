@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, Badge, Button, Card, Col, Container, Form, ListGroup, Modal, Pagination, Row, Table } from 'react-bootstrap';
+import { Alert, Badge, Button, Card, Col, Container, Form, ListGroup, Modal, Pagination, Row, Spinner, Table } from 'react-bootstrap';
 import { MarketingAnalyticsPanel, SiteAnalyticsPanel } from './SiteAnalytics';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -82,6 +82,9 @@ type WebsiteClient = {
   paymentReminderSentAt?: string | null;
   subscriptionReminderSentAt?: string | null;
   lastCustomEmailSentAt?: string | null;
+  paid?: boolean;
+  paidAt?: string | null;
+  onboardingEmailSentAt?: string | null;
   // Set when this client matches a lead — see syncClientLeadsIntoWebsiteClients.
   leadStatus?: 'closed' | 'onboarding_sent' | 'onboarded' | null;
   createdAt: string;
@@ -122,7 +125,8 @@ const emptyWebsiteClientForm = {
   socialMediaLinks: '',
   businessType: '',
   website: '',
-  hasExistingWebsite: true
+  hasExistingWebsite: true,
+  paid: false
 };
 
 type AuditChannelResult = {
@@ -1438,8 +1442,32 @@ const Admin = () => {
       socialMediaLinks: client.socialMediaLinks || '',
       businessType: client.businessType || '',
       website: client.website || '',
-      hasExistingWebsite: client.hasExistingWebsite ?? true
+      hasExistingWebsite: client.hasExistingWebsite ?? true,
+      paid: Boolean(client.paid)
     });
+  };
+
+  const [sendingOnboardingClientId, setSendingOnboardingClientId] = useState<string | null>(null);
+  const handleSendClientOnboarding = async (client: WebsiteClient) => {
+    const again = client.onboardingEmailSentAt ? ' They already received it once.' : '';
+    if (!window.confirm(`Send the onboarding email to ${client.name || client.email}?${again}`)) return;
+    setSendingOnboardingClientId(client._id);
+    setMessage('');
+    setError('');
+    try {
+      const response = await axios.post(`${API_BASE_URL}/website-clients/${client._id}/send-onboarding`);
+      if (response.data?.ok) {
+        setMessage(`Onboarding email sent to ${client.name || client.email}.`);
+        fetchWebsiteClients();
+      } else {
+        setError(response.data?.message || 'Could not send onboarding email.');
+      }
+    } catch (sendError: any) {
+      console.error(sendError);
+      setError(sendError?.response?.data?.message || 'Could not send onboarding email.');
+    } finally {
+      setSendingOnboardingClientId(null);
+    }
   };
 
   const handleCancelEditWebsiteClient = () => {
@@ -2014,6 +2042,15 @@ const Admin = () => {
                     onChange={(e) => setWebsiteClientEditForm({ ...websiteClientEditForm, hasExistingWebsite: e.target.checked })}
                   />
                 </Form.Group>
+                <Form.Group className="mb-3">
+                  <Form.Check
+                    type="checkbox"
+                    id={`client-paid-${client._id}`}
+                    label="Client paid (hides Send Onboarding Email)"
+                    checked={websiteClientEditForm.paid}
+                    onChange={(e) => setWebsiteClientEditForm({ ...websiteClientEditForm, paid: e.target.checked })}
+                  />
+                </Form.Group>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
                   <Button size="sm" variant="success" onClick={() => handleSaveWebsiteClient(client._id)}>Save</Button>
                   <Button size="sm" variant="outline-light" onClick={handleCancelEditWebsiteClient}>Cancel</Button>
@@ -2082,11 +2119,27 @@ const Admin = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flexShrink: 0 }}>
               {client.websiteReviewSentAt ? <Badge bg="success">Review Sent</Badge> : null}
               {client.marketingEmailSentAt ? <Badge bg="primary">Marketing Sent</Badge> : null}
+              {client.paid ? <Badge bg="success">Paid</Badge> : null}
+              {client.onboardingEmailSentAt ? <Badge bg="info" text="dark">Onboarding Sent</Badge> : null}
               {client.paymentReminderSentAt ? <Badge bg="warning" text="dark">Payment Reminder Sent</Badge> : null}
               {client.subscriptionReminderSentAt ? <Badge bg="warning" text="dark">Subscription Reminder Sent</Badge> : null}
               {client.lastCustomEmailSentAt ? <Badge bg="secondary">Custom Email Sent</Badge> : null}
             </div>
             <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0, flexWrap: 'wrap' }}>
+              {!client.paid ? (
+                <Button
+                  size="sm"
+                  variant="success"
+                  disabled={sendingOnboardingClientId === client._id}
+                  onClick={() => handleSendClientOnboarding(client)}
+                >
+                  {sendingOnboardingClientId === client._id
+                    ? 'Sending...'
+                    : client.onboardingEmailSentAt
+                    ? 'Resend Onboarding Email'
+                    : 'Send Onboarding Email'}
+                </Button>
+              ) : null}
               {!client.hasExistingWebsite ? (
                 <Button size="sm" variant="outline-success" disabled={sendingReview} onClick={() => handleSendWebsiteReview([client._id])}>
                   Send Website Review
@@ -2170,54 +2223,64 @@ const Admin = () => {
         </div>
       ))}
 
-      {/* Contact Us Submissions and Audits & Mockups side by side (stacked on smaller screens). */}
+      {/* Free Mockup Requests (left) and Free Audit Requests (right), side by side —
+          stacked on smaller screens; Contact Us Submissions full width below. */}
       <Row className="g-4">
         <Col lg={6} style={{ minWidth: 0, overflowX: 'auto' }}>
-          <div style={{ marginTop: '2.5rem', marginBottom: '1rem' }}>
-            <h2 style={{ color: '#68FF00', margin: 0 }}>Contact Us Submissions</h2>
-            <p style={{ color: '#d4d4d4', marginTop: '0.4rem', marginBottom: 0 }}>
-              Messages sent through the "Contact Us" form on the About page. Submitters are also added to the newsletter separately.
-            </p>
+          <div style={{ marginTop: '2.5rem', marginBottom: '0.5rem' }}>
+            <h2 style={{ color: '#68FF00', margin: 0 }}>Free Mockup Requests</h2>
           </div>
+          <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '1rem' }}>
+            Inbound leads from the free-mockup request form, routed straight into the leads CRM.
+          </p>
 
-          {!loadingContactSubmissions && contactSubmissions.length === 0 ? <Alert variant="secondary">No contact form submissions yet.</Alert> : null}
+          {!loadingMockupRequests && mockupRequests.length === 0 ? <Alert variant="secondary">No mockup requests yet.</Alert> : null}
 
-          {contactSubmissions.length > 0 ? (
+          {mockupRequests.length > 0 ? (
             <Table striped bordered hover variant="dark" responsive>
               <thead>
                 <tr>
-                  <th>Name</th>
-                  <th>Contact</th>
-                  <th>Interested In</th>
-                  <th>Message</th>
-                  <th>Submitted</th>
+                  <th>Business / Contact</th>
+                  <th>Contact Info</th>
+                  <th>Channels</th>
+                  <th>Requested</th>
                 </tr>
               </thead>
               <tbody>
-                {contactSubmissions.map((submission) => {
-                  const interests = [
-                    submission.beats ? 'Music' : null,
-                    submission.visuals ? 'Branding' : null,
-                    submission.web ? 'Web Development' : null,
-                    submission.ads ? 'Ads' : null
-                  ].filter((value): value is string => Boolean(value));
+                {mockupRequests.map((lead) => {
+                  const channelLinks: { label: string; value?: string }[] = [
+                    { label: 'IG', value: lead.instagram },
+                    { label: 'GBP', value: lead.googleBusinessUrl }
+                  ];
                   return (
-                    <tr key={submission._id}>
-                      <td>{submission.name || '—'}</td>
+                    <tr key={lead._id}>
                       <td>
-                        <div>{submission.email}</div>
-                        {submission.phone ? <small style={{ color: '#aaa' }}>{submission.phone}</small> : null}
-                        {submission.socialUrl ? <div><small style={{ color: '#aaa' }}>{submission.socialUrl}</small></div> : null}
+                        <strong>{lead.businessName || lead.contactName || lead.email}</strong>
+                        {lead.businessName && lead.contactName ? <div><small style={{ color: '#aaa' }}>{lead.contactName}</small></div> : null}
+                      </td>
+                      <td>
+                        <div>{lead.email || '—'}</div>
+                        {lead.phone ? <small style={{ color: '#aaa' }}>{lead.phone}</small> : null}
                       </td>
                       <td>
                         <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
-                          {interests.length > 0 ? interests.map((label) => <Badge key={label} bg="secondary">{label}</Badge>) : '—'}
+                          {channelLinks.map((channel) => {
+                            const badge = (
+                              <Badge key={channel.label} bg={channel.value ? 'secondary' : 'dark'} style={{ opacity: channel.value ? 1 : 0.4 }}>
+                                {channel.label}
+                              </Badge>
+                            );
+                            if (!channel.value) return badge;
+                            const href = /^https?:\/\//i.test(channel.value) ? channel.value : `https://${channel.value.replace(/^@/, '')}`;
+                            return (
+                              <a key={channel.label} href={href} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
+                                {badge}
+                              </a>
+                            );
+                          })}
                         </div>
                       </td>
-                      <td style={{ maxWidth: '320px' }}>
-                        <small>{submission.message ? submission.message : '—'}</small>
-                      </td>
-                      <td><small>{new Date(submission.createdAt).toLocaleString()}</small></td>
+                      <td><small>{new Date(lead.createdAt).toLocaleString()}</small></td>
                     </tr>
                   );
                 })}
@@ -2226,14 +2289,9 @@ const Admin = () => {
           ) : null}
         </Col>
         <Col lg={6} style={{ minWidth: 0, overflowX: 'auto' }}>
-          <div style={{ marginTop: '2.5rem', marginBottom: '1rem' }}>
-            <h2 style={{ color: '#68FF00', margin: 0 }}>Audits &amp; Mockups</h2>
-            <p style={{ color: '#d4d4d4', marginTop: '0.4rem', marginBottom: 0 }}>
-              Inbound requests for a free online-presence audit or a free website mockup.
-            </p>
+          <div style={{ marginTop: '2.5rem', marginBottom: '0.5rem' }}>
+            <h2 style={{ color: '#68FF00', margin: 0 }}>Free Audit Requests</h2>
           </div>
-
-          <h5 style={{ color: '#d4d4d4', marginTop: '1.5rem', marginBottom: '0.5rem' }}>Free Audit Requests</h5>
           <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '1rem' }}>
             Automated online-presence review (website, Instagram, Facebook, Google Business). Rule-based, not a human read yet — use "Re-run" if a link failed to load.
           </p>
@@ -2373,67 +2431,60 @@ const Admin = () => {
               ) : null}
             </>
           ) : null}
-
-          <h5 style={{ color: '#d4d4d4', marginTop: '2.5rem', marginBottom: '0.5rem' }}>Free Mockup Requests</h5>
-          <p style={{ color: '#aaa', fontSize: '0.85rem', marginBottom: '1rem' }}>
-            Inbound leads from the free-mockup request form, routed straight into the leads CRM.
-          </p>
-
-          {!loadingMockupRequests && mockupRequests.length === 0 ? <Alert variant="secondary">No mockup requests yet.</Alert> : null}
-
-          {mockupRequests.length > 0 ? (
-            <Table striped bordered hover variant="dark" responsive>
-              <thead>
-                <tr>
-                  <th>Business / Contact</th>
-                  <th>Contact Info</th>
-                  <th>Channels</th>
-                  <th>Requested</th>
-                </tr>
-              </thead>
-              <tbody>
-                {mockupRequests.map((lead) => {
-                  const channelLinks: { label: string; value?: string }[] = [
-                    { label: 'IG', value: lead.instagram },
-                    { label: 'GBP', value: lead.googleBusinessUrl }
-                  ];
-                  return (
-                    <tr key={lead._id}>
-                      <td>
-                        <strong>{lead.businessName || lead.contactName || lead.email}</strong>
-                        {lead.businessName && lead.contactName ? <div><small style={{ color: '#aaa' }}>{lead.contactName}</small></div> : null}
-                      </td>
-                      <td>
-                        <div>{lead.email || '—'}</div>
-                        {lead.phone ? <small style={{ color: '#aaa' }}>{lead.phone}</small> : null}
-                      </td>
-                      <td>
-                        <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
-                          {channelLinks.map((channel) => {
-                            const badge = (
-                              <Badge key={channel.label} bg={channel.value ? 'secondary' : 'dark'} style={{ opacity: channel.value ? 1 : 0.4 }}>
-                                {channel.label}
-                              </Badge>
-                            );
-                            if (!channel.value) return badge;
-                            const href = /^https?:\/\//i.test(channel.value) ? channel.value : `https://${channel.value.replace(/^@/, '')}`;
-                            return (
-                              <a key={channel.label} href={href} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
-                                {badge}
-                              </a>
-                            );
-                          })}
-                        </div>
-                      </td>
-                      <td><small>{new Date(lead.createdAt).toLocaleString()}</small></td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </Table>
-          ) : null}
         </Col>
       </Row>
+
+      <div style={{ marginTop: '2.5rem', marginBottom: '1rem' }}>
+        <h2 style={{ color: '#68FF00', margin: 0 }}>Contact Us Submissions</h2>
+        <p style={{ color: '#d4d4d4', marginTop: '0.4rem', marginBottom: 0 }}>
+          Messages sent through the "Contact Us" form on the About page. Submitters are also added to the newsletter separately.
+        </p>
+      </div>
+
+      {!loadingContactSubmissions && contactSubmissions.length === 0 ? <Alert variant="secondary">No contact form submissions yet.</Alert> : null}
+
+      {contactSubmissions.length > 0 ? (
+        <Table striped bordered hover variant="dark" responsive>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Contact</th>
+              <th>Interested In</th>
+              <th>Message</th>
+              <th>Submitted</th>
+            </tr>
+          </thead>
+          <tbody>
+            {contactSubmissions.map((submission) => {
+              const interests = [
+                submission.beats ? 'Music' : null,
+                submission.visuals ? 'Branding' : null,
+                submission.web ? 'Web Development' : null,
+                submission.ads ? 'Ads' : null
+              ].filter((value): value is string => Boolean(value));
+              return (
+                <tr key={submission._id}>
+                  <td>{submission.name || '—'}</td>
+                  <td>
+                    <div>{submission.email}</div>
+                    {submission.phone ? <small style={{ color: '#aaa' }}>{submission.phone}</small> : null}
+                    {submission.socialUrl ? <div><small style={{ color: '#aaa' }}>{submission.socialUrl}</small></div> : null}
+                  </td>
+                  <td>
+                    <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
+                      {interests.length > 0 ? interests.map((label) => <Badge key={label} bg="secondary">{label}</Badge>) : '—'}
+                    </div>
+                  </td>
+                  <td style={{ maxWidth: '320px' }}>
+                    <small>{submission.message ? submission.message : '—'}</small>
+                  </td>
+                  <td><small>{new Date(submission.createdAt).toLocaleString()}</small></td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </Table>
+      ) : null}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginTop: '2.5rem', marginBottom: '1rem' }}>
         <h2 style={{ color: '#68FF00', margin: 0 }}>Newsletter Subscribers</h2>
@@ -3219,6 +3270,12 @@ const Admin = () => {
           )}
         </Modal.Body>
         <Modal.Footer style={{ background: '#111', borderTop: '1px solid #2b2b2b' }}>
+          {campaignSending ? (
+            <div role="status" aria-live="polite" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginRight: 'auto', color: '#d4d4d4', fontSize: '0.85rem' }}>
+              <Spinner animation="border" size="sm" variant="warning" />
+              {campaignForm.scheduledAt && !isLeadCampaign ? 'Scheduling campaign…' : 'Sending emails — keep this window open…'}
+            </div>
+          ) : null}
           <Button variant="outline-light" size="sm" onClick={() => setShowCreateCampaign(false)} disabled={campaignSending}>Cancel</Button>
           {isLeadCampaign ? (
             <Button variant="warning" size="sm" disabled={campaignSending || leadAudienceLoading || !leadAudienceCount} onClick={handleSendCampaign}>

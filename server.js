@@ -1516,6 +1516,11 @@ const websiteClientSchema = new mongoose.Schema({
   paymentReminderSentAt: Date,
   subscriptionReminderSentAt: Date,
   lastCustomEmailSentAt: Date,
+  // Ticked in the admin once the client has paid — hides "Send Onboarding
+  // Email" for them.
+  paid: { type: Boolean, default: false },
+  paidAt: Date,
+  onboardingEmailSentAt: Date,
   createdAt: { type: Date, default: Date.now }
 });
 
@@ -2993,6 +2998,12 @@ app.put('/api/website-clients/:id', async (req, res) => {
     if (req.body.hasExistingWebsite !== undefined) {
       client.hasExistingWebsite = Boolean(req.body.hasExistingWebsite);
     }
+    if (req.body.paid !== undefined) {
+      const paid = Boolean(req.body.paid);
+      if (paid && !client.paid) client.paidAt = new Date();
+      if (!paid) client.paidAt = undefined;
+      client.paid = paid;
+    }
 
     await client.save();
     res.json({ ok: true, client });
@@ -3112,6 +3123,66 @@ app.delete('/api/blog/:id', async (req, res) => {
   } catch (error) {
     console.error('Could not delete blog post', error);
     res.status(500).json({ ok: false, message: 'Could not delete blog post.' });
+  }
+});
+
+// Onboarding email from Website Clients — the same email as the Leads table's
+// "Send Onboarding". When the client matches a lead, it goes through that
+// lead (so the lead shows Onboarding Sent, with open/click tracking);
+// otherwise it's sent straight to the client's email.
+app.post('/api/website-clients/:id/send-onboarding', async (req, res) => {
+  try {
+    const client = await WebsiteClient.findById(req.params.id);
+    if (!client) {
+      return res.status(404).json({ ok: false, message: 'Website client not found.' });
+    }
+    if (client.paid) {
+      return res.status(400).json({ ok: false, message: 'This client is marked as paid — no onboarding email needed.' });
+    }
+    if (!client.email) {
+      return res.status(400).json({ ok: false, message: 'This client has no email address on file.' });
+    }
+    if (!resend) {
+      return res.status(400).json({ ok: false, message: 'RESEND_API_KEY not set — email delivery is not configured.' });
+    }
+
+    const subject = `Let's get started on your new website`;
+    const lead = await findDuplicateLead({ email: client.email, phone: client.phone });
+    if (lead && !lead.declined && splitEmails(lead.email).some((e) => e.toLowerCase() === client.email.trim().toLowerCase())) {
+      const result = await sendLeadEmail(lead, {
+        subject,
+        buildHtml: buildOnboardingEmailHtml,
+        statusField: 'onboardingSent',
+        statusAtField: 'onboardingSentAt',
+        htmlField: 'onboardingHtml',
+        subjectField: 'onboardingSubject',
+        resendIdField: 'onboardingResendId'
+      });
+      if (!result.ok) return res.status(400).json(result);
+    } else {
+      const html = renderBrandedEmail({
+        // Client "name" is usually the business name — use the generic greeting.
+        greetingName: '',
+        type: 'onboarding',
+        paragraphs: [
+          `We're excited to get started on your new website! The next step is filling out our quick onboarding form so we have everything we need — your branding, business details, and preferences.`
+        ],
+        ctaLabel: 'Start onboarding',
+        ctaUrl: `${SITE_URL}/onboard`
+      });
+      const { error } = await resend.emails.send({ from: AGREEMENT_FROM_EMAIL, to: client.email, subject, html });
+      if (error) {
+        console.error('Could not send client onboarding email', error);
+        return res.status(400).json({ ok: false, message: 'Failed to send the email.' });
+      }
+    }
+
+    client.onboardingEmailSentAt = new Date();
+    await client.save();
+    res.json({ ok: true, client });
+  } catch (error) {
+    console.error('Could not send client onboarding email', error);
+    res.status(500).json({ ok: false, message: 'Could not send onboarding email.' });
   }
 });
 
