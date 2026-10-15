@@ -284,6 +284,40 @@ type TemplatePreset = { label: string; subject: string; bodyText: string; ctaLab
 
 // Only "beats" has named presets today — every other category gets a single
 // free-form "Custom Message" composer.
+// Free product emails — each links to its own page with ?subscriber=1, which
+// skips the signup box there (they're already on the list) and shows the
+// download button. Image paths are pre-encoded (%20 / %26) because the email
+// renderer drops imageUrl straight into the <img src>.
+const PRODUCT_EMAIL_PRESETS: Record<string, TemplatePreset> = {
+  'free-vocal-template': {
+    label: 'Free R&B Vocal Template (Logic)',
+    subject: 'Free R&B vocal template for Logic Pro X 🎙️',
+    bodyText:
+      "Hey (name), here's a free R&B vocal template for Logic Pro X — a full lead vocal chain plus FX buses for parallel saturation, chorus doubler, 1/2 and 1/4 note delays, and plate and room verb.\n\nIt comes in two versions: one built on Logic's stock plugins and one for UAD & Waves users. Grab it free below and load it right onto an audio track.",
+    ctaLabel: 'Get the Vocal Template',
+    ctaUrl: `${window.location.origin}/templates?subscriber=1`,
+    imageUrl: `${window.location.origin}/templates/r%26b_vocal/rnb-vocal-template.jpg`
+  },
+  'free-plugin-vocal-sauce': {
+    label: 'Free Plugin: Enigma Vocal Sauce',
+    subject: 'Free vocal chain plugin: Enigma Vocal Sauce 🎤',
+    bodyText:
+      "Hey (name), I just released Enigma Vocal Sauce — a free vocal chain in one plugin.\n\nPreamp, a 5-band EQ, 1176-style and LA-2A-style compression, a Pultec-style EQ for weight and air, and a de-esser, all in one window. Put it on your vocal and you're most of the way there. Download it free below.",
+    ctaLabel: 'Download Vocal Sauce',
+    ctaUrl: `${window.location.origin}/plugins?subscriber=1#vocal-sauce`,
+    imageUrl: `${window.location.origin}/plugins/Vocal%20Sauce/Enigma%20Vocal%20Sauce.png`
+  },
+  'free-plugin-texture-console': {
+    label: 'Free Plugin: Enigma Texture Console',
+    subject: 'Free Chroma Console-style plugin: Enigma Texture Console 🎛️',
+    bodyText:
+      "Hey (name), I just released Enigma Texture Console — a free, Chroma Console-style texture plugin.\n\nCharacter (drive, sweeten, crush, cassette), movement (chorus, phaser, tremolo, vibrato), diffusion (echo, space, tape lag, cascade), and degrade, plus filter and reverb — all in one effect. Download it free below.",
+    ctaLabel: 'Download Texture Console',
+    ctaUrl: `${window.location.origin}/plugins?subscriber=1#texture-console`,
+    imageUrl: `${window.location.origin}/plugins/TextureConsoleV32.png`
+  }
+};
+
 const TEMPLATE_PRESETS: Record<NewsletterCategory, Record<string, TemplatePreset>> = {
   beats: {
     'new-beats-dropped': {
@@ -310,7 +344,11 @@ const TEMPLATE_PRESETS: Record<NewsletterCategory, Record<string, TemplatePreset
     },
     'custom-message': { label: 'Custom Message', subject: '', bodyText: '' }
   },
-  mixing: { 'custom-message': { label: 'Custom Message', subject: '', bodyText: '' } },
+  mixing: {
+    'free-plugin-vocal-sauce': PRODUCT_EMAIL_PRESETS['free-plugin-vocal-sauce'],
+    'free-vocal-template': PRODUCT_EMAIL_PRESETS['free-vocal-template'],
+    'custom-message': { label: 'Custom Message', subject: '', bodyText: '' }
+  },
   loopsTemplates: {
     'free-sample-pack': {
       label: 'Free Sample Pack',
@@ -320,6 +358,9 @@ const TEMPLATE_PRESETS: Record<NewsletterCategory, Record<string, TemplatePreset
       ctaUrl: 'https://www.beatstars.com/genwav',
       imageUrl: `${window.location.origin}/wav-pack-vol1.jpg`
     },
+    'free-vocal-template': PRODUCT_EMAIL_PRESETS['free-vocal-template'],
+    'free-plugin-vocal-sauce': PRODUCT_EMAIL_PRESETS['free-plugin-vocal-sauce'],
+    'free-plugin-texture-console': PRODUCT_EMAIL_PRESETS['free-plugin-texture-console'],
     'custom-message': { label: 'Custom Message', subject: '', bodyText: '' }
   },
   web: { 'custom-message': { label: 'Custom Message', subject: '', bodyText: '' } },

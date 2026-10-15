@@ -40,11 +40,17 @@ const SIGNED_UP_KEY = "enigma_templates_signed_up";
 const KEYWORDS =
   "free R&B vocal template, Logic Pro X vocal template, Logic Pro vocal preset, Logic Pro vocal chain, free vocal preset, R&B vocal chain, vocal template, BandLab vocal preset, Audacity vocal preset, GarageBand vocal preset, FL Studio vocal preset, vocal mixing template";
 
+// Email links to existing subscribers add ?subscriber=1 — they're already on
+// the list, so skip the signup box (and remember it in this browser).
 const readSignedUp = () => {
   try {
+    if (new URLSearchParams(window.location.search).get("subscriber") === "1") {
+      localStorage.setItem(SIGNED_UP_KEY, "1");
+      return true;
+    }
     return localStorage.getItem(SIGNED_UP_KEY) === "1";
   } catch {
-    return false;
+    return new URLSearchParams(window.location.search).get("subscriber") === "1";
   }
 };
 

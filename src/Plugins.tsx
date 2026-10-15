@@ -100,11 +100,17 @@ const PAGE_DESCRIPTION =
 const PLUGIN_KEYWORDS =
   "free plugin, free plugins, free VST plugin, free AU plugin, free audio plugin, free effect plugin, free multi-effect plugin, free chorus plugin, free phaser plugin, free tape delay plugin, free reverb plugin, free saturation plugin, free lo-fi plugin, free Chroma Console alternative, Chroma Console style plugin, free vocal plugin, free vocal chain plugin, free vocal preset plugin, free 1176 plugin, free LA-2A plugin, free CLA-2A alternative, free Pultec EQ plugin, free de-esser plugin, Enigma Texture Console, Enigma Vocal Sauce, Google Flow Music plugin, Flow Effect plugin, Enigma Labs plugins";
 
+// Email links to existing subscribers add ?subscriber=1 — they're already on
+// the list, so skip the signup box (and remember it in this browser).
 const readSignedUp = () => {
   try {
+    if (new URLSearchParams(window.location.search).get("subscriber") === "1") {
+      localStorage.setItem(SIGNED_UP_KEY, "1");
+      return true;
+    }
     return localStorage.getItem(SIGNED_UP_KEY) === "1";
   } catch {
-    return false;
+    return new URLSearchParams(window.location.search).get("subscriber") === "1";
   }
 };
 

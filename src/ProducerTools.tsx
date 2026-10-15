@@ -2,16 +2,18 @@ import { useEffect } from "react";
 import { Row, Col, Container } from "react-bootstrap";
 import { PLUGINS } from "./Plugins";
 import { RNB_VOCAL } from "./Templates";
-import { SAMPLE_PACKS } from "./SamplePacks";
+import { SAMPLE_PACKS } from "./samplePacks";
 
 // Producer Tools ("Vault" in the nav) — the hub for every product category.
-// Each item links to its own page (/plugins, /templates, later /sample-packs),
-// which handles the signup / download. Items read from those pages' own data
+// Each item links to its own page (/plugins, /templates) or, for sample
+// packs, straight to the pack on BeatStars. Product pages handle signup and
+// download. Items read from shared data (Plugins, Templates, samplePacks.ts)
 // so names and images stay in sync. `price` empty = FREE badge; set it (e.g.
 // "$29") when paid products arrive.
 
-type Item = { name: string; tagline: string; image: string; imageAlt: string; href: string; price?: string; square?: boolean };
-type Category = { id: string; title: string; blurb: string; href?: string; items: Item[]; comingSoon?: string };
+// external = opens in a new tab (e.g. BeatStars).
+type Item = { name: string; tagline: string; image: string; imageAlt: string; href: string; price?: string; square?: boolean; external?: boolean };
+type Category = { id: string; title: string; blurb: string; href?: string; hrefLabel?: string; items: Item[]; comingSoon?: string };
 
 const CATEGORIES: Category[] = [
   {
@@ -46,15 +48,17 @@ const CATEGORIES: Category[] = [
     id: "sample-packs",
     title: "Sample Packs",
     blurb: "Loops, one-shots, and songstarters by gen.wav.",
-    href: "/sample-packs",
+    href: "https://www.beatstars.com/genwav/sound-kits",
+    hrefLabel: "View all on BeatStars →",
     items: SAMPLE_PACKS.map((p) => ({
       name: p.name,
       tagline: p.description.length > 140 ? `${p.description.slice(0, 137).replace(/\s+\S*$/, "")}…` : p.description,
       image: p.image,
       imageAlt: `${p.name} sample pack cover`,
-      href: `/sample-packs#${p.id}`,
+      href: p.url,
       price: p.price || undefined,
-      square: true
+      square: true,
+      external: true
     }))
   }
 ];
@@ -111,8 +115,12 @@ const ProducerTools = () => {
             </Col>
             {c.href ? (
               <Col xs="auto">
-                <a href={c.href} style={{ color: GREEN, fontWeight: 600, textDecoration: "none" }}>
-                  View all →
+                <a
+                  href={c.href}
+                  {...(c.href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                  style={{ color: GREEN, fontWeight: 600, textDecoration: "none" }}
+                >
+                  {c.hrefLabel || "View all →"}
                 </a>
               </Col>
             ) : null}
@@ -123,6 +131,7 @@ const ProducerTools = () => {
               <Col key={item.href + item.name} xs={12} sm={6} lg={4} style={{ marginBottom: "1.5rem" }}>
                 <a
                   href={item.href}
+                  {...(item.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                   style={{
                     display: "flex",
                     flexDirection: "column",
@@ -157,7 +166,7 @@ const ProducerTools = () => {
                       style={{
                         position: "absolute",
                         top: 10,
-                        left: 10,
+                        right: 10,
                         background: item.price ? "#fff" : GREEN,
                         color: "#000",
                         fontWeight: 800,
@@ -173,7 +182,13 @@ const ProducerTools = () => {
                   <span style={{ display: "block", color: "#fff", fontSize: "1.2rem", fontWeight: 700, marginTop: "0.85rem" }}>{item.name}</span>
                   <span style={{ display: "block", color: "#c9c9c9", lineHeight: 1.55, marginTop: "0.3rem", flexGrow: 1 }}>{item.tagline}</span>
                   <span style={{ display: "block", color: GREEN, fontWeight: 600, marginTop: "0.75rem" }}>
-                    {item.price ? "View →" : "Download free →"}
+                    {item.external
+                      ? item.price
+                        ? `Buy on BeatStars — ${item.price} →`
+                        : "Download free on BeatStars →"
+                      : item.price
+                      ? "View →"
+                      : "Download free →"}
                   </span>
                 </a>
               </Col>
