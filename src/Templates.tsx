@@ -59,7 +59,7 @@ function startDownload() {
 
 const Templates = () => {
   useEffect(() => {
-    document.title = "FREE R&B Vocal Template for Logic Pro X | Enigma Labs";
+    document.title = "Enigma Labs Templates | FREE R&B Vocal Template for Logic Pro X";
     document.querySelector('meta[name="description"]')?.setAttribute(
       "content",
       "Download a FREE R&B vocal template for Logic Pro X: lead vocal chain, vocal bus, parallel saturation, chorus doubler, 1/2 and 1/4 delays, plate and room reverb. Stock-plugin and UAD & Waves versions."

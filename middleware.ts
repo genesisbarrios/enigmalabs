@@ -9,7 +9,7 @@ import { next } from "@vercel/edge";
 // everyone else (real browsers) falls through to the normal static SPA
 // untouched, so there is no behavior or performance change for humans.
 export const config = {
-  matcher: ["/audit", "/mockup", "/Blog", "/Blog/:slug"],
+  matcher: ["/audit", "/mockup", "/Blog", "/Blog/:slug", "/plugins", "/Plugins", "/templates", "/Templates"],
 };
 
 const BOT_UA =
@@ -22,6 +22,8 @@ type Meta = {
   image?: string;
   imageWidth?: number;
   imageHeight?: number;
+  imageType?: string;
+  imageAlt?: string;
   twitterCard?: string;
 };
 
@@ -129,6 +131,36 @@ function resolveStaticMeta(origin: string, pathname: string): Meta | null {
       url: `${origin}/mockup`,
     };
   }
+  // Keep these image paths in sync with src/Plugins.tsx / src/Templates.tsx
+  // when a new screenshot version is uploaded.
+  if (pathname.toLowerCase() === "/plugins") {
+    return {
+      title: "Enigma Labs Plugins | Texture Console — Free Chroma Console-Style Plugin",
+      description:
+        "Free plugins from Enigma Labs. Texture Console is a free Chroma Console-inspired multi-effect: character, movement, diffusion, and degrade in one, plus filter and reverb — for the Google Flow Music Flow Effect plugin.",
+      url: `${origin}/plugins`,
+      image: `${origin}/plugins/TextureConsoleV31.png`,
+      imageWidth: 1590,
+      imageHeight: 1190,
+      imageType: "image/png",
+      imageAlt: "Texture Console plugin by Enigma Labs",
+      twitterCard: "summary_large_image",
+    };
+  }
+  if (pathname.toLowerCase() === "/templates") {
+    return {
+      title: "Enigma Labs Templates | FREE R&B Vocal Template for Logic Pro X",
+      description:
+        "Free vocal templates from Enigma Labs. Download a FREE R&B vocal template for Logic Pro X: vocal chain, bus, parallel saturation, chorus doubler, delays, plate and room reverb.",
+      url: `${origin}/templates`,
+      image: `${origin}/templates/r%26b_vocal/rnb-vocal-template.jpg`,
+      imageWidth: 1600,
+      imageHeight: 900,
+      imageType: "image/jpeg",
+      imageAlt: "FREE R&B Vocal Template for Logic Pro X by Enigma Labs",
+      twitterCard: "summary_large_image",
+    };
+  }
   if (pathname === "/Blog") {
     return {
       title: "Blog | Enigma Labs",
@@ -168,6 +200,8 @@ function patchHtml(html: string, meta: Meta): string {
   }
   if (meta.imageWidth) out = replaceMetaContent(out, 'property="og:image:width"', String(meta.imageWidth));
   if (meta.imageHeight) out = replaceMetaContent(out, 'property="og:image:height"', String(meta.imageHeight));
+  if (meta.imageType) out = replaceMetaContent(out, 'property="og:image:type"', meta.imageType);
+  if (meta.imageAlt) out = replaceMetaContent(out, 'property="og:image:alt"', meta.imageAlt);
   if (meta.twitterCard) out = replaceMetaContent(out, 'name="twitter:card"', meta.twitterCard);
 
   return out;

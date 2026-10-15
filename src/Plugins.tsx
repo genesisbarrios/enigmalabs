@@ -66,7 +66,7 @@ const Plugins = () => {
     // Chroma Console is Hologram Electronics' product name — referenced only
     // as a comparison ("inspired by" / "alternative"), never as this plugin's
     // name, plus a non-affiliation note on the page.
-    document.title = "Free Chroma Console-Style Plugin — Texture Console | Enigma Labs";
+    document.title = "Enigma Labs Plugins | Texture Console — Free Chroma Console-Style Plugin";
     document.querySelector('meta[name="description"]')?.setAttribute(
       "content",
       "Texture Console is a free Chroma Console-inspired multi-effect plugin by Enigma Labs: character, movement, diffusion, and degrade in one, plus filter and reverb. Download free for the Google Flow Music Flow Effect plugin."
