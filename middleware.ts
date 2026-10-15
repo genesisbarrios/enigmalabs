@@ -135,15 +135,15 @@ function resolveStaticMeta(origin: string, pathname: string): Meta | null {
   // when a new screenshot version is uploaded.
   if (pathname.toLowerCase() === "/plugins") {
     return {
-      title: "Free Plugin: Texture Console (Chroma Console Alternative) | Enigma Labs Plugins",
+      title: "Free Plugins: Enigma Texture Console & Enigma Vocal Sauce | Enigma Labs Plugins",
       description:
-        "Download Texture Console, a free plugin from Enigma Labs. This free Chroma Console-style multi-effect plugin packs character, movement, diffusion, and degrade, plus filter and reverb. Free VST3/AU effect via Google Flow Music's Flow Effect (Mac).",
+        "Free plugins from Enigma Labs: Enigma Texture Console, a free Chroma Console-style multi-effect, and Enigma Vocal Sauce, a free vocal chain plugin with preamp, EQ, 1176- and LA-2A-style compression, Pultec-style EQ, and de-esser. Free VST3/AU via Flow Effect (Mac).",
       url: `${origin}/plugins`,
       image: `${origin}/plugins/TextureConsoleV32.png`,
       imageWidth: 1592,
       imageHeight: 1194,
       imageType: "image/png",
-      imageAlt: "Texture Console plugin by Enigma Labs",
+      imageAlt: "Enigma Texture Console plugin by Enigma Labs",
       twitterCard: "summary_large_image",
     };
   }
