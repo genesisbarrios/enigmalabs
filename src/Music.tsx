@@ -4,6 +4,21 @@ import { Row, Col, Container, Button } from "react-bootstrap";
 import { Alert } from "react-bootstrap";
 import axios from 'axios';
 
+const BEATSTARS_TRACKS_URL = "https://www.beatstars.com/genwav/tracks";
+
+// Beat pack deals shown under the BeatStars catalog embed.
+const BEAT_DEALS = [
+  { name: "Trap Pack", detail: "5 Trap Beats for $50", url: "https://www.beatstars.com/collection/208968" },
+  { name: "Reggaeton Pack", detail: "5 Reggaeton Beats for $50", url: "https://www.beatstars.com/collection/208970" }
+];
+
+// BeatStars logo mark (Simple Icons, CC0) in the site's red.
+const BeatStarsIcon = ({ size = 28, color = "#DF0000" }: { size?: number; color?: string }) => (
+  <svg viewBox="0 0 24 24" width={size} height={size} fill={color} role="img" aria-hidden="true" style={{ flexShrink: 0, display: "block" }}>
+    <path d="m17.217 11.996-3.308 1.079v3.478l-2.052-2.818-3.309 1.079 2.043-2.818-2.043-2.819 3.31 1.08 2.05-2.819v3.487zm0 0v7.277H6.854V4.584h10.363v7.412l4.585-1.49v-7.67L19.135 0H2.198v24h16.92l2.684-2.685v-7.83z" />
+  </svg>
+);
+
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 
 const Music = () => {
@@ -181,8 +196,15 @@ const Music = () => {
 
          
           <Row style={rowStyle}>
-            <Col sm={12}>
-              <h5 className="subsection-title" style={{marginTop: "5%"}}>Beats <span style={{color:"#DF0000"}}>(BUY 2 GET 1 FREE)</span></h5>
+            <Col sm={12} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", marginTop: "0.5rem" }}>
+              <h5 className="subsection-title" style={{ margin: 0 }}>
+                <a href={BEATSTARS_TRACKS_URL} target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "none" }}>
+                  Beats <span style={{color:"#DF0000"}}>(BUY 1 GET 1 FREE)</span>
+                </a>
+              </h5>
+              <a href={BEATSTARS_TRACKS_URL} target="_blank" rel="noopener noreferrer" aria-label="Beats on BeatStars" title="Beats on BeatStars">
+                <BeatStarsIcon size={30} />
+              </a>
             </Col>
           </Row>
           <Row style={rowStyle}>
@@ -193,6 +215,46 @@ const Music = () => {
               height="650">
           </iframe>
             </Col>
+          </Row>
+
+          <Row style={rowStyle}>
+            <Col sm={12}>
+              <h5 className="subsection-title" style={{marginTop: "5%"}}>Deals</h5>
+            </Col>
+          </Row>
+          <Row style={rowStyle}>
+            {BEAT_DEALS.map((deal) => (
+              <Col key={deal.url} xs={12} md={6} style={{ marginBottom: "1rem" }}>
+                <a
+                  href={deal.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "1rem",
+                    height: "100%",
+                    padding: "1.25rem 1.5rem",
+                    background: "#111",
+                    border: "1px solid #68FF00",
+                    borderRadius: 16,
+                    boxShadow: "0 0 24px rgba(104, 255, 0, 0.12)",
+                    color: "#fff",
+                    textDecoration: "none"
+                  }}
+                >
+                  <span>
+                    <span style={{ display: "block", fontSize: "1.35rem", fontWeight: 700, color: "#68FF00" }}>{deal.name}</span>
+                    <span style={{ display: "block", color: "#d4d4d4", marginTop: "0.2rem" }}>{deal.detail}</span>
+                    <span style={{ display: "inline-block", marginTop: "0.75rem", color: "#DF0000", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "0.85rem" }}>
+                      Get the pack →
+                    </span>
+                  </span>
+                  <BeatStarsIcon size={36} />
+                </a>
+              </Col>
+            ))}
           </Row>
 
           <Row style={rowStyle}>
@@ -289,7 +351,7 @@ const Music = () => {
               </Col>
                 <Col sm={6} style={{ marginBottom: "1.5rem" }}>
                 <div style={infoCardStyle}>
-                  <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Beat Licenses (BUY 2 GET 1 FREE)</h5>
+                  <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Beat Licenses (BUY 1 GET 1 FREE)</h5>
                   <ul style={{ marginBottom: 0 }}>
                     <li>Non-Exclusive License: $20</li>
                     <li>Unlimited Streams License: $100</li>
