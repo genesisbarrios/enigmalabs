@@ -55,6 +55,7 @@ const PAGE_NAMES: Record<string, string> = {
   "/about": "About",
   "/wallpapers": "Wallpapers",
   "/plugins": "Plugins",
+  "/templates": "Templates",
   "/mockup": "Free Website Mockup",
   "/audit": "Free Audit",
   "/newsletter": "Newsletter",
@@ -176,11 +177,12 @@ export function trackPageView(path: string) {
   sendSiteEvent({ type: "page_view", path, referrer: referrerHost() });
 }
 
-type LeadForm = "mockup" | "audit" | "plugin";
+type LeadForm = "mockup" | "audit" | "plugin" | "template";
 const FORM_NAMES: Record<LeadForm, string> = {
   mockup: "Free Website Mockup",
   audit: "Free Audit",
   plugin: "Plugin Download",
+  template: "Template Download",
 };
 
 // Someone viewed the form page — the "viewed" side of viewed vs. submitted.

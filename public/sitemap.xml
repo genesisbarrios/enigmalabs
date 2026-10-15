@@ -29,6 +29,10 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://enigma-labs.com/templates</loc>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://enigma-labs.com/payment</loc>
     <priority>0.5</priority>
   </url>

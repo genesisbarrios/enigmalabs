@@ -2106,7 +2106,7 @@ app.post('/api/newsletter/subscribe', async (req, res) => {
     }
     // Site Analytics: count the real (non-spam) submission by form.
     recordFormSubmit(
-      payload.freeaudit ? 'audit' : payload.freemockups ? 'mockup' : req.body.formSource === 'plugin' ? 'plugin' : 'newsletter',
+      payload.freeaudit ? 'audit' : payload.freemockups ? 'mockup' : ['plugin', 'template'].includes(req.body.formSource) ? req.body.formSource : 'newsletter',
       req
     );
 
