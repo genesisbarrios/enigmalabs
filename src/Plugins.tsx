@@ -11,9 +11,9 @@ const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 
 const TEXTURE_CONSOLE = {
   name: "Texture Console",
-  file: "/plugins/Texture_Console_v26_genwav.fmx",
-  fileName: "Texture_Console_v26_genwav.fmx",
-  image: "/plugins/TextureConsoleV26.png",
+  file: "/plugins/Texture_Console_EnigmaLabs_v29.fmx",
+  fileName: "Texture_Console_EnigmaLabs_v29.fmx",
+  image: "/plugins/TextureConsoleV29.png",
   // Straight from the plugin's own parameter list.
   modules: [
     { name: "Character", detail: "Drive, Sweeten, Crush, Cassette" },
@@ -23,6 +23,23 @@ const TEXTURE_CONSOLE = {
     { name: "Reverb", detail: "Size, damping, mix" },
     { name: "Filter", detail: "Lowpass, bandpass, highpass with modulation" }
   ]
+};
+
+// Google's Flow Music plugin installer (Flow Effect lives inside it). Google
+// only ships it for macOS — "Plugins currently work on macOS only" — so Mac
+// visitors download it straight from here; everyone else gets Google's page.
+const FLOW_MAC_DMG = "/plugins/FlowMusic-0.6.4-mac.dmg";
+const FLOW_HELP_URL = "https://support.google.com/flow/answer/18631279?hl=en&ref_topic=17084184";
+
+// iPadOS reports a Mac user agent, so rule out touch devices too.
+const isMacDesktop = () => {
+  try {
+    const ua = navigator.userAgent || "";
+    const platform = (navigator as any).userAgentData?.platform || navigator.platform || "";
+    return /mac/i.test(platform || ua) && !/iphone|ipad|ipod/i.test(ua) && (navigator.maxTouchPoints || 0) <= 1;
+  } catch {
+    return false;
+  }
 };
 
 const SIGNED_UP_KEY = "enigma_plugins_signed_up";
@@ -52,40 +69,27 @@ const Plugins = () => {
     document.title = "Free Chroma Console-Style Plugin — Texture Console | Enigma Labs";
     document.querySelector('meta[name="description"]')?.setAttribute(
       "content",
-      "Texture Console is a free Chroma Console-inspired multi-effect plugin by gen.wav: character, movement, diffusion, and degrade in one, plus filter and reverb. Download free for the Google Flow Music Flow Effect plugin."
+      "Texture Console is a free Chroma Console-inspired multi-effect plugin by Enigma Labs: character, movement, diffusion, and degrade in one, plus filter and reverb. Download free for the Google Flow Music Flow Effect plugin."
     );
     trackFormView("plugin");
   }, []);
 
   const [signedUp, setSignedUp] = useState(readSignedUp);
+  const [isMac] = useState(isMacDesktop);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
-  const [beats, setBeats] = useState(false);
-  const [loopsTemplates, setLoopsTemplates] = useState(false);
-  const [mixing, setMixing] = useState(false);
-  const [visuals, setVisuals] = useState(false); // "Branding" on the site
-  const [ads, setAds] = useState(false);
+  const [phone, setPhone] = useState("");
+  const [socialUrl, setSocialUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [alert, setAlert] = useState("");
   // Honeypot + timing trap, same as every other signup form on the site.
   const [honeypot, setHoneypot] = useState("");
   const [formLoadedAt] = useState(() => Date.now());
 
-  const interestOptions = [
-    { key: "beats", label: "Beats", active: beats, toggle: () => setBeats(!beats) },
-    { key: "loopsTemplates", label: "Loops & Templates", active: loopsTemplates, toggle: () => setLoopsTemplates(!loopsTemplates) },
-    { key: "mixing", label: "Mixing", active: mixing, toggle: () => setMixing(!mixing) },
-    { key: "visuals", label: "Branding", active: visuals, toggle: () => setVisuals(!visuals) },
-    { key: "ads", label: "Ads", active: ads, toggle: () => setAds(!ads) }
-  ];
 
   async function handleSubmit() {
     if (!email.trim()) {
       setAlert("Please enter your email address.");
-      return;
-    }
-    if (!interestOptions.some((o) => o.active)) {
-      setAlert("Pick at least one thing you're interested in.");
       return;
     }
     setSubmitting(true);
@@ -93,7 +97,17 @@ const Plugins = () => {
     try {
       await axios.post(
         `${API_BASE_URL}/newsletter/subscribe`,
-        { email: email.trim(), name, beats, loopsTemplates, mixing, visuals, ads, formSource: "plugin", website: honeypot, formLoadedAt },
+        // Plugin downloaders are always signed up for Loops & Templates.
+        {
+          email: email.trim(),
+          name,
+          phone: phone.trim(),
+          socialUrl: socialUrl.trim(),
+          loopsTemplates: true,
+          formSource: "plugin",
+          website: honeypot,
+          formLoadedAt
+        },
         { headers: { "Content-Type": "application/json" } }
       );
       trackFormSubmit("plugin");
@@ -148,20 +162,6 @@ const Plugins = () => {
     display: "inline-block",
     textDecoration: "none"
   };
-  const chipStyle = (active: boolean) => ({
-    display: "inline-block",
-    padding: "0.5rem 1rem",
-    margin: "0.3rem",
-    borderRadius: "2rem",
-    border: "1px solid #68FF00",
-    backgroundColor: active ? "#68FF00" : "transparent",
-    color: active ? "#000" : "#68FF00",
-    fontWeight: 600,
-    fontSize: "0.85rem",
-    cursor: "pointer",
-    userSelect: "none" as const,
-    transition: "all 0.15s ease"
-  });
   const stepNumber = {
     flexShrink: 0,
     width: 34,
@@ -186,7 +186,21 @@ const Plugins = () => {
     },
     {
       title: "Install the Flow Effect plugin",
-      body: <>Texture Console runs inside Google Flow Music's <strong>Flow Effect</strong> plugin — install Flow Effect first if you don't have it yet.</>
+      body: (
+        <>
+          Texture Console runs inside Google Flow Music's <FlowLink isMac={isMac} strong>Flow Effect</FlowLink> plugin —{" "}
+          <FlowLink isMac={isMac}>install Flow Effect</FlowLink> first if you don't have it yet.
+          {isMac ? (
+            <span style={{ display: "block", color: "#888", fontSize: "0.85rem", marginTop: "0.35rem" }}>
+              That link downloads the Mac installer (FlowMusic-0.6.4-mac.dmg) — open it and follow the installer.
+            </span>
+          ) : (
+            <span style={{ display: "block", color: "#888", fontSize: "0.85rem", marginTop: "0.35rem" }}>
+              Note: Google Flow Music plugins currently work on macOS only.
+            </span>
+          )}
+        </>
+      )
     },
     {
       title: "Drag the file into Flow Effect",
@@ -219,10 +233,13 @@ const Plugins = () => {
           <img
             src={TEXTURE_CONSOLE.image}
             alt="Texture Console plugin interface — Character, Movement, Diffusion, and Degrade modules with filter and reverb"
-            width={1590}
-            height={1192}
+            width={795}
+            height={596}
             style={{
+              display: "block",
+              margin: "0 auto",
               width: "100%",
+              maxWidth: 795, // the screenshot's real width — don't upscale it
               height: "auto",
               borderRadius: 16,
               border: "1px solid #2b2b2b",
@@ -240,7 +257,7 @@ const Plugins = () => {
           <h2 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>{TEXTURE_CONSOLE.name}</h2>
           <p style={{ color: "#d4d4d4", lineHeight: 1.7, maxWidth: 520 }}>
             Love the Chroma Console sound but not the price tag? Texture Console is a free, Chroma Console-inspired quad texture engine
-            by gen.wav — saturate it, move it, smear it, age it, and space it out, all in one effect.
+            by Enigma Labs — saturate it, move it, smear it, age it, and space it out, all in one effect.
           </p>
           <ul style={{ listStyle: "none", padding: 0, margin: 0, maxWidth: 520 }}>
             {TEXTURE_CONSOLE.modules.map((m) => (
@@ -299,27 +316,22 @@ const Plugins = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
-                <label style={{ display: "block", color: "#d4d4d4", margin: "0.5rem 0" }}>What are you interested in?</label>
-                <div>
-                  {interestOptions.map((option) => (
-                    <span
-                      key={option.key}
-                      role="checkbox"
-                      aria-checked={option.active}
-                      tabIndex={0}
-                      style={chipStyle(option.active)}
-                      onClick={option.toggle}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          option.toggle();
-                        }
-                      }}
-                    >
-                      {option.label}
-                    </span>
-                  ))}
-                </div>
+                <input
+                  type="tel"
+                  name="phone"
+                  placeholder="Phone number (optional)"
+                  style={inputStyle}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                />
+                <input
+                  type="text"
+                  name="social-url"
+                  placeholder="Instagram handle (optional)"
+                  style={inputStyle}
+                  value={socialUrl}
+                  onChange={(e) => setSocialUrl(e.target.value)}
+                />
                 <button type="submit" style={{ ...buttonStyle, opacity: submitting ? 0.6 : 1 }} disabled={submitting}>
                   {submitting ? "Signing you up..." : "Sign up & download"}
                 </button>
@@ -348,7 +360,7 @@ const Plugins = () => {
             ))}
           </ol>
           <p style={{ color: "#777", fontSize: "0.75rem", textAlign: "center", marginTop: "2rem" }}>
-            Texture Console is an independent plugin by gen.wav / Enigma Labs. It is not affiliated with, endorsed by, or connected to Hologram
+            Texture Console is an independent plugin by Enigma Labs. It is not affiliated with, endorsed by, or connected to Hologram
             Electronics. Chroma Console is a trademark of its respective owner and is mentioned for comparison only.
           </p>
         </Col>
@@ -356,5 +368,20 @@ const Plugins = () => {
     </Container>
   );
 };
+
+// Mac: downloads the Flow Music installer directly. Anything else: opens
+// Google's Flow plugin help page in a new tab.
+function FlowLink({ isMac, strong, children }: { isMac: boolean; strong?: boolean; children: React.ReactNode }) {
+  const style = { color: "#68FF00", fontWeight: strong ? 700 : undefined, textDecoration: "underline" };
+  return isMac ? (
+    <a href={FLOW_MAC_DMG} download style={style}>
+      {children}
+    </a>
+  ) : (
+    <a href={FLOW_HELP_URL} target="_blank" rel="noopener noreferrer" style={style}>
+      {children}
+    </a>
+  );
+}
 
 export default Plugins;
