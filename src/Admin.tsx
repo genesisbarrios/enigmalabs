@@ -2005,6 +2005,12 @@ const Admin = () => {
       </div>
 
       <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+        <Form.Control
+          placeholder="Search website clients & agreements by name or email..."
+          value={searchQuery}
+          onChange={(event) => setSearchQuery(event.target.value)}
+          style={{ flex: '1 1 320px', minWidth: 0 }}
+        />
         <Form.Select value={websiteFilter} onChange={(e) => setWebsiteFilter(e.target.value as 'all' | 'has' | 'none')} style={{ maxWidth: '220px' }}>
           <option value="all">Website: All</option>
           <option value="has">Has Website</option>
@@ -2280,15 +2286,6 @@ const Admin = () => {
 
       {message ? <Alert variant="success" className="mt-3">{message}</Alert> : null}
       {error ? <Alert variant="danger" className="mt-3">{error}</Alert> : null}
-
-      <div style={{ marginTop: '1rem', marginBottom: '1.25rem', display: 'flex', justifyContent: 'flex-end' }}>
-        <Form.Control
-          placeholder="Search website clients & agreements by name or email..."
-          value={searchQuery}
-          onChange={(event) => setSearchQuery(event.target.value)}
-          style={{ width: '50%' }}
-        />
-      </div>
 
       {/* Free Mockup Requests (left) and Free Audit Requests (right), side by side —
           stacked on smaller screens; Contact Us Submissions full width below. */}
