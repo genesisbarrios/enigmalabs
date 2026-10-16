@@ -18,8 +18,8 @@ type Category = { id: string; title: string; blurb: string; href?: string; hrefL
 const CATEGORIES: Category[] = [
   {
     id: "plugins",
-    title: "Plugins",
-    blurb: "Effects for your mixes and vocals.",
+    title: "Plugins & Synths",
+    blurb: "Effects for your mixes and vocals, plus synths you can play in your browser.",
     href: "/plugins",
     items: PLUGINS.map((p) => ({
       name: p.name,

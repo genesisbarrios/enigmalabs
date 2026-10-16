@@ -83,12 +83,12 @@ export const PLUGINS: Plugin[] = [
   {
     id: "stemcell",
     name: "Stemcell",
-    tagline: "A free granular synth in your browser: record or load any sound, grow it into pads, drones, and textures.",
+    tagline: "A free online granular synth — record or load any sound and grow it into pads, drones, and textures. Web-based, nothing to download.",
     description:
-      "Stemcell turns any sound into a playable instrument. Record your mic or load a source, drag to pick a region, and the granular engine breaks it into grains you can stretch, scatter, pitch, and play from your keyboard — then mutate it into something new. Runs right in your browser, nothing to install.",
+      "Stemcell turns any sound into a playable instrument. Record your mic or load a source, drag to pick a region, and the granular engine breaks it into grains you can stretch, scatter, pitch, and play from your keyboard — then mutate it into something new. A free web-based synth that runs right in your browser — no download, no install, no DAW needed.",
     url: "https://stemcell.enigma-labs.com",
     label: "Free synth · Web",
-    subCategory: "Granular synthesizer",
+    subCategory: "Granular synthesizer (free online synth)",
     image: encodeURI("/stemcell synth.png"),
     imageWidth: 3024,
     imageHeight: 1500,
@@ -130,11 +130,11 @@ const isMacDesktop = () => {
 };
 
 const SIGNED_UP_KEY = "enigma_plugins_signed_up";
-const PAGE_TITLE = "Free Plugins: Enigma Texture Console, Enigma Vocal Sauce & Stemcell | Enigma Labs Plugins";
+const PAGE_TITLE = "Free Plugins & Free Online Synth: Texture Console, Vocal Sauce & Stemcell Granular Synth | Enigma Labs";
 const PAGE_DESCRIPTION =
-  "Free plugins from Enigma Labs: Enigma Texture Console, a free Chroma Console-style multi-effect, Enigma Vocal Sauce, a free vocal chain plugin with preamp, EQ, 1176- and LA-2A-style compression, Pultec-style EQ, and de-esser, and Stemcell, a free granular synth that runs in your browser. Free VST3/AU via Flow Effect (Mac).";
+  "Free plugins from Enigma Labs: Enigma Texture Console, a free Chroma Console-style multi-effect, Enigma Vocal Sauce, a free vocal chain plugin with preamp, EQ, 1176- and LA-2A-style compression, Pultec-style EQ, and de-esser, and Stemcell, a free online granular synth — a web-based synth that runs in your browser, no download. Free VST3/AU via Flow Effect (Mac).";
 const PLUGIN_KEYWORDS =
-  "free plugin, free plugins, free VST plugin, free AU plugin, free audio plugin, free effect plugin, free multi-effect plugin, free chorus plugin, free phaser plugin, free tape delay plugin, free reverb plugin, free saturation plugin, free lo-fi plugin, free Chroma Console alternative, Chroma Console style plugin, free vocal plugin, free vocal chain plugin, free vocal preset plugin, free 1176 plugin, free LA-2A plugin, free CLA-2A alternative, free Pultec EQ plugin, free de-esser plugin, free granular synth, free online synth, free browser synth, granular synthesizer, Stemcell, Stemcell synth, Enigma Texture Console, Enigma Vocal Sauce, Google Flow Music plugin, Flow Effect plugin, Enigma Labs plugins";
+  "free plugin, free plugins, free VST plugin, free AU plugin, free audio plugin, free effect plugin, free multi-effect plugin, free chorus plugin, free phaser plugin, free tape delay plugin, free reverb plugin, free saturation plugin, free lo-fi plugin, free Chroma Console alternative, Chroma Console style plugin, free vocal plugin, free vocal chain plugin, free vocal preset plugin, free 1176 plugin, free LA-2A plugin, free CLA-2A alternative, free Pultec EQ plugin, free de-esser plugin, free synth, free synths, free online synth, free online synths, online synth, online synthesizer, free synthesizer, web based synth, web synth, browser synth, free browser synth, free web synth, synth in browser, play synth online, no download synth, free granular synth, granular synth online, online granular synth, free granular synthesizer, granular synthesizer, granular sampler, free sampler synth, free ambient synth, free drone synth, free pad synth, texture synth, mic sampler synth, Stemcell, Stemcell synth, Stemcell granular synth, Enigma Texture Console, Enigma Vocal Sauce, Google Flow Music plugin, Flow Effect plugin, Enigma Labs plugins";
 
 // Email links to existing subscribers add ?subscriber=1 — they're already on
 // the list, so skip the signup box (and remember it in this browser).
@@ -286,7 +286,7 @@ const Plugins = () => {
     <Container className="aboutContainer">
       <Row style={{ margin: "1%", marginTop: "1rem" }}>
         <Col xs={12} style={{ textAlign: "center" }}>
-          <h1 className="subpage-title aboutTitle">Free Plugins</h1>
+          <h1 className="subpage-title aboutTitle">Free Plugins &amp; Synths</h1>
         </Col>
       </Row>
 
