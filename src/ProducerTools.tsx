@@ -11,8 +11,8 @@ import { SAMPLE_PACKS } from "./samplePacks";
 // so names and images stay in sync. `price` empty = FREE badge; set it (e.g.
 // "$29") when paid products arrive.
 
-// external = opens in a new tab (e.g. BeatStars).
-type Item = { name: string; tagline: string; image: string; imageAlt: string; href: string; price?: string; square?: boolean; external?: boolean };
+// external = opens in a new tab (e.g. BeatStars). cta overrides the link label.
+type Item = { name: string; tagline: string; image: string; imageAlt: string; href: string; price?: string; square?: boolean; external?: boolean; cta?: string };
 type Category = { id: string; title: string; blurb: string; href?: string; hrefLabel?: string; items: Item[]; comingSoon?: string };
 
 const CATEGORIES: Category[] = [
@@ -26,7 +26,9 @@ const CATEGORIES: Category[] = [
       tagline: p.tagline,
       image: p.image,
       imageAlt: p.imageAlt,
-      href: `/plugins#${p.id}`
+      href: `/plugins#${p.id}`,
+      // Web apps (Stemcell) open in the browser — nothing to download.
+      cta: p.url ? "Try it for free →" : undefined
     }))
   },
   {
@@ -182,7 +184,9 @@ const ProducerTools = () => {
                   <span style={{ display: "block", color: "#fff", fontSize: "1.2rem", fontWeight: 700, marginTop: "0.85rem" }}>{item.name}</span>
                   <span style={{ display: "block", color: "#c9c9c9", lineHeight: 1.55, marginTop: "0.3rem", flexGrow: 1 }}>{item.tagline}</span>
                   <span style={{ display: "block", color: GREEN, fontWeight: 600, marginTop: "0.75rem" }}>
-                    {item.external
+                    {item.cta
+                      ? item.cta
+                      : item.external
                       ? item.price
                         ? `Buy on BeatStars — ${item.price} →`
                         : "Download free on BeatStars →"
