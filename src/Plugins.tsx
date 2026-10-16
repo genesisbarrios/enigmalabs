@@ -7,7 +7,8 @@ import { trackFormSubmit, trackFormView } from "./analytics";
 // Top: a card per plugin (image, name, description) that scrolls down to that
 // plugin's section. Each section has its own signup/download box and a
 // collapsible "How to use it" panel. One newsletter signup unlocks every
-// download (remembered in this browser).
+// download (remembered in this browser), but only the form they filled out
+// downloads (or, for web apps like Stemcell, redirects) automatically.
 
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 
@@ -16,8 +17,13 @@ export type Plugin = {
   name: string;
   tagline: string; // short description on the top card
   description: string;
-  file: string;
-  fileName: string;
+  // Flow Effect plugins ship a file; web apps (Stemcell) have a url instead.
+  file?: string;
+  fileName?: string;
+  url?: string;
+  label?: string; // small kicker above the name, default "Free plugin"
+  subCategory?: string; // structured data, default "Audio effect plugin"
+  howTo?: { title: string; body: string }[]; // replaces the Flow Effect steps
   image: string;
   imageWidth: number;
   imageHeight: number;
@@ -73,8 +79,38 @@ export const PLUGINS: Plugin[] = [
     ],
     signalFlow: "Pre-Amp → EQ → 1176 → 2A → Pultec → De-Esser",
     finalStep: "Put it on your vocal track and work top to bottom — drive, EQ, compression, air, then de-ess. Double-click any knob to reset it."
+  },
+  {
+    id: "stemcell",
+    name: "Stemcell",
+    tagline: "A free granular synth in your browser: record or load any sound, grow it into pads, drones, and textures.",
+    description:
+      "Stemcell turns any sound into a playable instrument. Record your mic or load a source, drag to pick a region, and the granular engine breaks it into grains you can stretch, scatter, pitch, and play from your keyboard — then mutate it into something new. Runs right in your browser, nothing to install.",
+    url: "https://stemcell.enigma-labs.com",
+    label: "Free synth · Web",
+    subCategory: "Granular synthesizer",
+    image: encodeURI("/stemcell synth.png"),
+    imageWidth: 3024,
+    imageHeight: 1500,
+    imageAlt: "Stemcell granular synth — source waveform, granular engine, organism visualizer, effects, mutations, and keyboard",
+    modules: [
+      { name: "Source", detail: "Record from your mic or load a sound, then drag to select the region to play" },
+      { name: "Granular Engine", detail: "Position, grain size, density, spray, speed, pitch, pitch spray, texture, stereo, mix" },
+      { name: "Effects", detail: "High-pass, low-pass, delay (time, feedback, mix), reverb, master" },
+      { name: "Mutations", detail: "Frozen Memory, Broken Radio, Liquid Metal, Dream Choir, Dust Storm, Glass Rain, Alien Flute, Endless Drone" },
+      { name: "Surprise Me", detail: "Randomize everything for instant happy accidents — save the ones you like" },
+      { name: "Keyboard", detail: "Play with A–; keys, Z/X for octave, space to preview, M for mono/poly" }
+    ],
+    howTo: [
+      { title: "Sign up to open Stemcell", body: "Join the newsletter and you'll be sent straight to stemcell.enigma-labs.com." },
+      { title: "Load a source", body: "Hit REC to record from your mic, or load a sound, then drag across the waveform to pick the region to play." },
+      { title: "Play it", body: "Play notes with the A–; keys on your computer keyboard (Z/X changes octave, M switches mono/poly)." }
+    ],
+    finalStep: "Shape the grains with the granular engine, try a mutation or hit Surprise Me, then add effects and save your sound."
   }
 ];
+
+const pluginShortName = (p: Plugin) => p.name.replace(/^Enigma /, "");
 
 // Google's Flow Music plugin installer (Flow Effect lives inside it). Google
 // only ships it for macOS — "Plugins currently work on macOS only" — so Mac
@@ -94,11 +130,11 @@ const isMacDesktop = () => {
 };
 
 const SIGNED_UP_KEY = "enigma_plugins_signed_up";
-const PAGE_TITLE = "Free Plugins: Enigma Texture Console & Enigma Vocal Sauce | Enigma Labs Plugins";
+const PAGE_TITLE = "Free Plugins: Enigma Texture Console, Enigma Vocal Sauce & Stemcell | Enigma Labs Plugins";
 const PAGE_DESCRIPTION =
-  "Free plugins from Enigma Labs: Enigma Texture Console, a free Chroma Console-style multi-effect, and Enigma Vocal Sauce, a free vocal chain plugin with preamp, EQ, 1176- and LA-2A-style compression, Pultec-style EQ, and de-esser. Free VST3/AU via Flow Effect (Mac).";
+  "Free plugins from Enigma Labs: Enigma Texture Console, a free Chroma Console-style multi-effect, Enigma Vocal Sauce, a free vocal chain plugin with preamp, EQ, 1176- and LA-2A-style compression, Pultec-style EQ, and de-esser, and Stemcell, a free granular synth that runs in your browser. Free VST3/AU via Flow Effect (Mac).";
 const PLUGIN_KEYWORDS =
-  "free plugin, free plugins, free VST plugin, free AU plugin, free audio plugin, free effect plugin, free multi-effect plugin, free chorus plugin, free phaser plugin, free tape delay plugin, free reverb plugin, free saturation plugin, free lo-fi plugin, free Chroma Console alternative, Chroma Console style plugin, free vocal plugin, free vocal chain plugin, free vocal preset plugin, free 1176 plugin, free LA-2A plugin, free CLA-2A alternative, free Pultec EQ plugin, free de-esser plugin, Enigma Texture Console, Enigma Vocal Sauce, Google Flow Music plugin, Flow Effect plugin, Enigma Labs plugins";
+  "free plugin, free plugins, free VST plugin, free AU plugin, free audio plugin, free effect plugin, free multi-effect plugin, free chorus plugin, free phaser plugin, free tape delay plugin, free reverb plugin, free saturation plugin, free lo-fi plugin, free Chroma Console alternative, Chroma Console style plugin, free vocal plugin, free vocal chain plugin, free vocal preset plugin, free 1176 plugin, free LA-2A plugin, free CLA-2A alternative, free Pultec EQ plugin, free de-esser plugin, free granular synth, free online synth, free browser synth, granular synthesizer, Stemcell, Stemcell synth, Enigma Texture Console, Enigma Vocal Sauce, Google Flow Music plugin, Flow Effect plugin, Enigma Labs plugins";
 
 // Email links to existing subscribers add ?subscriber=1 — they're already on
 // the list, so skip the signup box (and remember it in this browser).
@@ -115,9 +151,10 @@ const readSignedUp = () => {
 };
 
 function startDownload(plugin: Plugin) {
+  if (!plugin.file) return;
   const a = document.createElement("a");
   a.href = plugin.file;
-  a.download = plugin.fileName;
+  a.download = plugin.fileName || "";
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -218,8 +255,8 @@ const Plugins = () => {
         "@type": "SoftwareApplication",
         name: p.name,
         applicationCategory: "MultimediaApplication",
-        applicationSubCategory: "Audio effect plugin",
-        operatingSystem: "macOS",
+        applicationSubCategory: p.subCategory || "Audio effect plugin",
+        operatingSystem: p.url ? "Web browser" : "macOS",
         description: p.tagline,
         image: `${window.location.origin}${p.image}`,
         url: `${window.location.origin}/plugins#${p.id}`,
@@ -256,7 +293,7 @@ const Plugins = () => {
       {/* Plugin cards — click to jump to that plugin's section */}
       <Row style={{ margin: "1%", marginTop: "3%" }}>
         {PLUGINS.map((p) => (
-          <Col key={p.id} xs={12} md={6} style={{ marginBottom: "1.5rem" }}>
+          <Col key={p.id} xs={12} md={6} lg={4} style={{ marginBottom: "1.5rem" }}>
             <button
               type="button"
               onClick={() => scrollToPlugin(p.id)}
@@ -294,11 +331,13 @@ const Plugins = () => {
                 style={{ display: "block", width: "100%", height: "auto", borderRadius: 12 }}
               />
               <span style={{ display: "block", color: GREEN, letterSpacing: "0.2em", textTransform: "uppercase", fontSize: "0.75rem", marginTop: "1rem" }}>
-                Free plugin
+                {p.url ? "Free synth" : "Free plugin"}
               </span>
               <span style={{ display: "block", color: "#fff", fontSize: "1.4rem", fontWeight: 700, marginTop: "0.15rem" }}>{p.name}</span>
               <span style={{ display: "block", color: "#d4d4d4", lineHeight: 1.6, marginTop: "0.35rem" }}>{p.tagline}</span>
-              <span style={{ display: "inline-block", color: GREEN, marginTop: "0.75rem", fontWeight: 600 }}>View &amp; download ↓</span>
+              <span style={{ display: "inline-block", color: GREEN, marginTop: "0.75rem", fontWeight: 600 }}>
+                {p.url ? "View & open ↓" : "View & download ↓"}
+              </span>
             </button>
           </Col>
         ))}
@@ -318,7 +357,7 @@ const Plugins = () => {
       <Row style={{ margin: "1%", marginBottom: "6%" }}>
         <Col xs={12} lg={{ span: 8, offset: 2 }}>
           <p style={{ color: "#777", fontSize: "0.75rem", textAlign: "center", marginTop: "2rem" }}>
-            Enigma Texture Console and Enigma Vocal Sauce are independent plugins by Enigma Labs. They are not affiliated with, endorsed by, or
+            Enigma Texture Console, Enigma Vocal Sauce, and Stemcell are independent plugins by Enigma Labs. They are not affiliated with, endorsed by, or
             connected to Hologram Electronics, Universal Audio, Waves, or Pulse Techniques. Chroma Console, 1176, LA-2A, CLA-2A, and Pultec are
             trademarks of their respective owners and are mentioned only to describe the style of sound.
           </p>
@@ -346,7 +385,9 @@ function PluginSection({
   const [showHowTo, setShowHowTo] = useState(false);
   const howToId = `${plugin.id}-how-to`;
 
-  const steps = [
+  const steps = plugin.howTo
+    ? [...plugin.howTo.map((s) => ({ title: s.title, body: <>{s.body}</> })), { title: "Shape your sound", body: <>{plugin.finalStep}</> }]
+    : [
     {
       title: `Download ${plugin.name}`,
       body: (
@@ -387,7 +428,7 @@ function PluginSection({
       <Row style={{ margin: "1%", alignItems: "center" }}>
         <Col xs={12} md={6} style={{ marginBottom: "2rem" }}>
           <p style={{ color: GREEN, letterSpacing: "0.2em", textTransform: "uppercase", fontSize: "0.8rem", marginBottom: "0.25rem" }}>
-            Free plugin · Flow Effect
+            {plugin.label || "Free plugin · Flow Effect"}
           </p>
           <h2 className="subsection-title" style={{ color: GREEN, marginTop: 0 }}>{plugin.name}</h2>
           <p style={{ color: "#d4d4d4", lineHeight: 1.7, maxWidth: 520 }}>{plugin.description}</p>
@@ -549,7 +590,9 @@ function DownloadCard({ plugin, signedUp, onSignedUp }: { plugin: Plugin; signed
         /* private mode — they can still use the button */
       }
       onSignedUp();
-      startDownload(plugin);
+      // Web apps redirect; if that's blocked, the "You're in" card links to it.
+      if (plugin.url) window.location.assign(plugin.url);
+      else startDownload(plugin);
     } catch (error) {
       console.error("Plugin signup failed", error);
       setAlert("Something went wrong — please try again.");
@@ -563,15 +606,31 @@ function DownloadCard({ plugin, signedUp, onSignedUp }: { plugin: Plugin; signed
       {signedUp ? (
         <>
           <h3 style={{ color: GREEN, marginBottom: "0.5rem" }}>You're in!</h3>
-          <p style={{ color: "#d4d4d4", marginBottom: 0 }}>
-            If your download didn't start automatically, use the button below.
-          </p>
-          <a href={plugin.file} download={plugin.fileName} style={buttonStyle}>
-            Download {plugin.name.replace(/^Enigma /, "")}
-          </a>
-          <p style={{ color: "#888", fontSize: "0.8rem", marginTop: "1rem", marginBottom: 0 }}>
-            Open "How to use it" to load it into Flow Effect.
-          </p>
+          {plugin.url ? (
+            <>
+              <p style={{ color: "#d4d4d4", marginBottom: 0 }}>
+                {pluginShortName(plugin)} runs in your browser — if it didn't open automatically, use the button below.
+              </p>
+              <a href={plugin.url} target="_blank" rel="noopener noreferrer" style={buttonStyle}>
+                Open {pluginShortName(plugin)}
+              </a>
+              <p style={{ color: "#888", fontSize: "0.8rem", marginTop: "1rem", marginBottom: 0 }}>
+                {plugin.url.replace(/^https?:\/\//, "")}
+              </p>
+            </>
+          ) : (
+            <>
+              <p style={{ color: "#d4d4d4", marginBottom: 0 }}>
+                If your download didn't start automatically, use the button below.
+              </p>
+              <a href={plugin.file} download={plugin.fileName} style={buttonStyle}>
+                Download {pluginShortName(plugin)}
+              </a>
+              <p style={{ color: "#888", fontSize: "0.8rem", marginTop: "1rem", marginBottom: 0 }}>
+                Open "How to use it" to load it into Flow Effect.
+              </p>
+            </>
+          )}
         </>
       ) : (
         <form
@@ -580,9 +639,11 @@ function DownloadCard({ plugin, signedUp, onSignedUp }: { plugin: Plugin; signed
             handleSubmit();
           }}
         >
-          <h3 style={{ color: GREEN, marginBottom: "0.25rem" }}>Download it for free</h3>
+          <h3 style={{ color: GREEN, marginBottom: "0.25rem" }}>{plugin.url ? "Play it for free" : "Download it for free"}</h3>
           <p style={{ color: "#aaa", fontSize: "0.9rem", marginBottom: "1.25rem" }}>
-            Join the newsletter and the download starts right away.
+            {plugin.url
+              ? `Join the newsletter and ${pluginShortName(plugin)} opens right away.`
+              : "Join the newsletter and the download starts right away."}
           </p>
           {/* Honeypot — hidden from real users, tempting for bots that auto-fill every field */}
           <input
@@ -622,7 +683,7 @@ function DownloadCard({ plugin, signedUp, onSignedUp }: { plugin: Plugin; signed
             onChange={(e) => setSocialUrl(e.target.value)}
           />
           <button type="submit" style={{ ...buttonStyle, opacity: submitting ? 0.6 : 1 }} disabled={submitting}>
-            {submitting ? "Signing you up..." : "Sign up & download"}
+            {submitting ? "Signing you up..." : plugin.url ? `Sign up & open ${pluginShortName(plugin)}` : "Sign up & download"}
           </button>
           {alert ? (
             <Alert style={{ marginTop: "1.25rem", backgroundColor: "#2a0000", borderColor: "#ff4d4d", color: "#ff9d9d" }}>{alert}</Alert>

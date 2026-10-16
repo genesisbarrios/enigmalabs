@@ -106,8 +106,8 @@ const ProducerTools = () => {
         </Col>
       </Row>
 
-      {CATEGORIES.map((c) => (
-        <section key={c.id} id={c.id} style={{ scrollMarginTop: 90, marginTop: "3rem" }}>
+      {CATEGORIES.map((c, i) => (
+        <section key={c.id} id={c.id} style={{ scrollMarginTop: 90, marginTop: i === 0 ? "1.5rem" : "3rem" }}>
           <Row style={{ margin: "1%", alignItems: "flex-end" }}>
             <Col>
               <h2 className="subsection-title" style={{ color: GREEN, margin: 0 }}>{c.title}</h2>
