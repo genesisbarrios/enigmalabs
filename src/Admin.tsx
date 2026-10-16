@@ -575,21 +575,14 @@ const Admin = () => {
   const [analyticsSends, setAnalyticsSends] = useState<NewsletterSend[]>([]);
   const [loadingSubscriberAnalytics, setLoadingSubscriberAnalytics] = useState(false);
 
-  // Global "analytics for a newsletter type" view
-  const [showNewsletterAnalytics, setShowNewsletterAnalytics] = useState(false);
-  const [analyticsCategory, setAnalyticsCategory] = useState<'all' | NewsletterCategory>('all');
-  const [categoryStats, setCategoryStats] = useState<{ totalSent: number; totalOpened: number; totalClicked: number; openRate: number; clickRate: number } | null>(null);
-  const [categorySends, setCategorySends] = useState<NewsletterSend[]>([]);
-  const [loadingCategoryAnalytics, setLoadingCategoryAnalytics] = useState(false);
-
-  // Outreach analytics — personal (one-off Contact-panel) sends vs campaign
-  // blasts, shown underneath the Newsletter Subscribers table.
+  // Newsletters (outreach analytics) — personal (one-off Contact-panel) sends vs campaign
+  // blasts, shown underneath the Subscribers table.
   const [outreachAnalytics, setOutreachAnalytics] = useState<OutreachAnalytics | null>(null);
   const [loadingOutreachAnalytics, setLoadingOutreachAnalytics] = useState(true);
 
   // Blog — posts created here are served from the enigma database and
   // merged client-side with the static/Firestore posts on /Blog (see
-  // Blog.tsx and BlogEntry.tsx). Shown underneath Outreach Analytics.
+  // Blog.tsx and BlogEntry.tsx). Shown underneath Newsletters.
   const BLANK_BLOG_POST_FORM = { Title: '', Category: '', Excerpt: '', Body: '', datee: '' };
   const [blogPosts, setBlogPosts] = useState<BlogPostRecord[]>([]);
   const [loadingBlogPosts, setLoadingBlogPosts] = useState(true);
@@ -1007,34 +1000,6 @@ const Admin = () => {
     }
   };
 
-  // ── Global "analytics by newsletter type" view ──────────────────────────
-
-  const loadCategoryAnalytics = async (category: 'all' | NewsletterCategory) => {
-    setLoadingCategoryAnalytics(true);
-    try {
-      const response = await axios.get(`${API_BASE_URL}/newsletter/analytics`, { params: { category } });
-      setCategoryStats(response.data?.stats || null);
-      setCategorySends(response.data?.sends || []);
-    } catch (loadError) {
-      console.error(loadError);
-      setCategoryStats(null);
-      setCategorySends([]);
-    } finally {
-      setLoadingCategoryAnalytics(false);
-    }
-  };
-
-  const handleToggleNewsletterAnalytics = () => {
-    const next = !showNewsletterAnalytics;
-    setShowNewsletterAnalytics(next);
-    if (next) loadCategoryAnalytics(analyticsCategory);
-  };
-
-  const handleAnalyticsCategoryChange = (category: 'all' | NewsletterCategory) => {
-    setAnalyticsCategory(category);
-    loadCategoryAnalytics(category);
-  };
-
   // ── Create Campaign ──────────────────────────────────────────────────────
 
   const handleOpenCreateCampaign = () => {
@@ -1235,7 +1200,7 @@ const Admin = () => {
         const result = await runRemainingCampaignBatches(response.data.campaign._id, response.data, campaignAttachments);
         const shortfall =
           result.remaining > 0
-            ? ` ${result.remaining} couldn't be sent yet — use "Finish sending" in Outreach Analytics to retry.`
+            ? ` ${result.remaining} couldn't be sent yet — use "Finish sending" in Newsletters to retry.`
             : '';
         setNewsletterMessage(
           (scheduledAt
@@ -1243,7 +1208,6 @@ const Admin = () => {
             : `Campaign sent to ${result.sentSoFar} of ${result.total} subscribers.`) + shortfall
         );
         setShowCreateCampaign(false);
-        if (showNewsletterAnalytics) loadCategoryAnalytics(analyticsCategory);
         fetchOutreachAnalytics();
       } else {
         setNewsletterError(response.data?.message || 'Could not send campaign.');
@@ -1251,7 +1215,7 @@ const Admin = () => {
     } catch (sendError: any) {
       setNewsletterError(
         (sendError?.response?.data?.message || sendError?.message || 'Could not send campaign.') +
-          ' Anything already sent stays sent — use "Finish sending" in Outreach Analytics to send the rest.'
+          ' Anything already sent stays sent — use "Finish sending" in Newsletters to send the rest.'
       );
       fetchOutreachAnalytics();
     } finally {
@@ -2610,97 +2574,12 @@ const Admin = () => {
       ) : null}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginTop: '2.5rem', marginBottom: '1rem' }}>
-        <h2 style={{ color: '#68FF00', margin: 0 }}>Newsletter Subscribers</h2>
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          <Button size="sm" variant="outline-info" onClick={handleToggleNewsletterAnalytics}>
-            {showNewsletterAnalytics ? 'Hide Analytics' : '📊 Newsletter Analytics'}
-          </Button>
-          <Button size="sm" variant="outline-warning" onClick={handleOpenCreateCampaign}>
-            + Create Campaign
-          </Button>
-        </div>
+        <h2 style={{ color: '#68FF00', margin: 0 }}>Subscribers</h2>
       </div>
 
       {newsletterMessage ? <Alert variant="success" onClose={() => setNewsletterMessage('')} dismissible>{newsletterMessage}</Alert> : null}
       {newsletterError ? <Alert variant="danger" onClose={() => setNewsletterError('')} dismissible>{newsletterError}</Alert> : null}
 
-      {showNewsletterAnalytics ? (
-        <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', marginBottom: '1.25rem' }}>
-          <Card.Body>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1rem' }}>
-              <h3 style={{ margin: 0, fontSize: '1.1rem' }}>Analytics by Newsletter Type</h3>
-              <Form.Select
-                size="sm"
-                style={{ maxWidth: '220px' }}
-                value={analyticsCategory}
-                onChange={(e) => handleAnalyticsCategoryChange(e.target.value as 'all' | NewsletterCategory)}
-              >
-                <option value="all">All Types</option>
-                {NEWSLETTER_CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>{NEWSLETTER_CATEGORY_LABELS[cat]}</option>
-                ))}
-              </Form.Select>
-            </div>
-
-            {loadingCategoryAnalytics ? <p>Loading analytics...</p> : null}
-
-            {!loadingCategoryAnalytics && categoryStats ? (
-              <>
-                <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', marginBottom: '1.25rem' }}>
-                  <div>
-                    <div style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase' }}>Sent</div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold' }}>{categoryStats.totalSent}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase' }}>Opened</div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#68FF00' }}>
-                      {categoryStats.totalOpened} <small style={{ fontSize: '0.9rem', color: '#aaa' }}>({(categoryStats.openRate * 100).toFixed(0)}%)</small>
-                    </div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: '0.75rem', color: '#888', textTransform: 'uppercase' }}>Clicked</div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#38bdf8' }}>
-                      {categoryStats.totalClicked} <small style={{ fontSize: '0.9rem', color: '#aaa' }}>({(categoryStats.clickRate * 100).toFixed(0)}%)</small>
-                    </div>
-                  </div>
-                </div>
-
-                {categorySends.length === 0 ? (
-                  <Alert variant="secondary">No emails sent for this type yet.</Alert>
-                ) : (
-                  <Table striped bordered hover variant="dark" responsive size="sm">
-                    <thead>
-                      <tr>
-                        <th>Recipient</th>
-                        <th>Type</th>
-                        <th>Subject</th>
-                        <th>Sent</th>
-                        <th>Opened</th>
-                        <th>Clicked</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {categorySends.map((send) => {
-                        const recipient = typeof send.subscriberId === 'object' ? send.subscriberId : null;
-                        return (
-                          <tr key={send._id}>
-                            <td>{recipient?.email || '—'}</td>
-                            <td><Badge bg="secondary">{NEWSLETTER_CATEGORY_LABELS[send.category as NewsletterCategory] || send.category}</Badge></td>
-                            <td>{send.subject}</td>
-                            <td>{new Date(send.sentAt).toLocaleString()}</td>
-                            <td>{send.opened ? <span style={{ color: '#68FF00' }}>✓ {send.openedAt ? new Date(send.openedAt).toLocaleDateString() : ''}</span> : <span style={{ color: '#666' }}>—</span>}</td>
-                            <td>{send.clicked ? <span style={{ color: '#38bdf8' }}>✓ {send.clickedAt ? new Date(send.clickedAt).toLocaleDateString() : ''}</span> : <span style={{ color: '#666' }}>—</span>}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </Table>
-                )}
-              </>
-            ) : null}
-          </Card.Body>
-        </Card>
-      ) : null}
       <p style={{ color: '#d4d4d4', marginBottom: '1rem' }}>
         {subscribers.length} newsletter subscriber{subscribers.length === 1 ? '' : 's'}.
       </p>
@@ -3078,8 +2957,13 @@ const Admin = () => {
       ) : null}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginTop: '2.5rem', marginBottom: '1rem' }}>
-        <h2 style={{ color: '#68FF00', margin: 0 }}>Outreach Analytics</h2>
-        <Button size="sm" variant="outline-info" onClick={fetchOutreachAnalytics}>Refresh</Button>
+        <h2 style={{ color: '#68FF00', margin: 0 }}>Newsletters</h2>
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          <Button size="sm" variant="outline-warning" onClick={handleOpenCreateCampaign}>
+            + Create Campaign
+          </Button>
+          <Button size="sm" variant="outline-info" onClick={fetchOutreachAnalytics}>Refresh</Button>
+        </div>
       </div>
 
       {loadingOutreachAnalytics ? <p>Loading outreach analytics...</p> : null}

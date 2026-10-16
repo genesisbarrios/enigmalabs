@@ -202,7 +202,7 @@ export function RecipientPickerModal({
   );
 }
 
-// ── Campaign details (Outreach Analytics) ────────────────────────────────
+// ── Campaign details (Newsletters) ───────────────────────────────────────
 
 type SentRow = {
   subscriberId: string;
