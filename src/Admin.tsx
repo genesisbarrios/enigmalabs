@@ -315,6 +315,16 @@ const PRODUCT_EMAIL_PRESETS: Record<string, TemplatePreset> = {
     ctaLabel: 'Download Texture Console',
     ctaUrl: `${window.location.origin}/plugins?subscriber=1#texture-console`,
     imageUrl: `${window.location.origin}/plugins/TextureConsoleV32.png`
+  },
+  // Stemcell is a web app, not a download — the button goes straight to it.
+  'free-synth-stemcell': {
+    label: 'Free Synth: Stemcell (online granular synth)',
+    subject: 'Free online granular synth: Stemcell 🧬',
+    bodyText:
+      "Hey (name), I just launched Stemcell — a free granular synth that runs right in your browser. Nothing to download or install.\n\nRecord your mic or load any sound, drag across the waveform to pick a region, and Stemcell breaks it into grains you can stretch, scatter, pitch, and play from your computer keyboard. Hit a mutation like Frozen Memory, Dream Choir, or Glass Rain, or press Surprise Me and see what grows. Perfect for pads, drones, and textures. Try it free below.",
+    ctaLabel: 'Try Stemcell Free',
+    ctaUrl: 'https://stemcell.enigma-labs.com',
+    imageUrl: `${window.location.origin}/stemcell%20synth.png`
   }
 };
 
@@ -347,6 +357,7 @@ const TEMPLATE_PRESETS: Record<NewsletterCategory, Record<string, TemplatePreset
   mixing: {
     'free-plugin-vocal-sauce': PRODUCT_EMAIL_PRESETS['free-plugin-vocal-sauce'],
     'free-vocal-template': PRODUCT_EMAIL_PRESETS['free-vocal-template'],
+    'free-synth-stemcell': PRODUCT_EMAIL_PRESETS['free-synth-stemcell'],
     'custom-message': { label: 'Custom Message', subject: '', bodyText: '' }
   },
   loopsTemplates: {
@@ -361,6 +372,7 @@ const TEMPLATE_PRESETS: Record<NewsletterCategory, Record<string, TemplatePreset
     'free-vocal-template': PRODUCT_EMAIL_PRESETS['free-vocal-template'],
     'free-plugin-vocal-sauce': PRODUCT_EMAIL_PRESETS['free-plugin-vocal-sauce'],
     'free-plugin-texture-console': PRODUCT_EMAIL_PRESETS['free-plugin-texture-console'],
+    'free-synth-stemcell': PRODUCT_EMAIL_PRESETS['free-synth-stemcell'],
     'custom-message': { label: 'Custom Message', subject: '', bodyText: '' }
   },
   web: { 'custom-message': { label: 'Custom Message', subject: '', bodyText: '' } },
