@@ -336,7 +336,7 @@ const Plugins = () => {
               <span style={{ display: "block", color: "#fff", fontSize: "1.4rem", fontWeight: 700, marginTop: "0.15rem" }}>{p.name}</span>
               <span style={{ display: "block", color: "#d4d4d4", lineHeight: 1.6, marginTop: "0.35rem" }}>{p.tagline}</span>
               <span style={{ display: "inline-block", color: GREEN, marginTop: "0.75rem", fontWeight: 600 }}>
-                {p.url ? "View & open ↓" : "View & download ↓"}
+                {p.url ? "Try it out ↓" : "Download ↓"}
               </span>
             </button>
           </Col>
