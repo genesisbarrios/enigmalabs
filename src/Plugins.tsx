@@ -41,9 +41,9 @@ export const PLUGINS: Plugin[] = [
     tagline: "A free Chroma Console-style quad texture engine: character, movement, diffusion, and degrade.",
     description:
       "Love the Chroma Console sound but not the price tag? Enigma Texture Console is a free, Chroma Console-inspired quad texture engine — saturate it, move it, smear it, age it, and space it out, all in one effect.",
-    file: "/plugins/Enigma_Texture_Console_v32.fmx",
+    file: encodeURI("/plugins/Texture Console/Enigma_Texture_Console_v32.fmx"),
     fileName: "Enigma_Texture_Console_v32.fmx",
-    image: "/plugins/TextureConsoleV32.png",
+    image: encodeURI("/plugins/Texture Console/TextureConsoleV32.png"),
     imageWidth: 1592,
     imageHeight: 1194,
     imageAlt: "Enigma Texture Console plugin — Character, Movement, Diffusion, and Degrade modules with filter and reverb",

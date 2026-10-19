@@ -314,7 +314,7 @@ const PRODUCT_EMAIL_PRESETS: Record<string, TemplatePreset> = {
       "Hey (name), I just released Enigma Texture Console — a free, Chroma Console-style texture plugin.\n\nCharacter (drive, sweeten, crush, cassette), movement (chorus, phaser, tremolo, vibrato), diffusion (echo, space, tape lag, cascade), and degrade, plus filter and reverb — all in one effect. Download it free below.",
     ctaLabel: 'Download Texture Console',
     ctaUrl: `${window.location.origin}/plugins?subscriber=1#texture-console`,
-    imageUrl: `${window.location.origin}/plugins/TextureConsoleV32.png`
+    imageUrl: `${window.location.origin}/plugins/Texture%20Console/TextureConsoleV32.png`
   },
   // Stemcell is a web app, not a download — the button goes straight to it.
   'free-synth-stemcell': {
