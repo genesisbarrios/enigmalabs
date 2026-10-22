@@ -5,6 +5,7 @@ import { CampaignDetailsModal, RecipientPickerModal } from './CampaignRecipients
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import * as XLSX from 'xlsx';
+import { externalUrl, socialUrl } from './externalUrl';
 
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 const ADMIN_PASSWORD = process.env.REACT_APP_ONBOARD_PW;
@@ -2209,7 +2210,7 @@ const Admin = () => {
             <div style={{ flex: '1 1 160px', fontSize: '0.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {client.website ? (
                 <>
-                  <a href={client.website} target="_blank" rel="noreferrer" className="text-white">{client.website}</a>
+                  <a href={externalUrl(client.website)} target="_blank" rel="noreferrer" className="text-white">{client.website}</a>
                   {client.hasExistingWebsite ? (
                     <div><small style={{ color: '#888' }}>Existing website</small></div>
                   ) : null}
@@ -2311,7 +2312,12 @@ const Admin = () => {
                               </Badge>
                             );
                             if (!channel.value) return badge;
-                            const href = /^https?:\/\//i.test(channel.value) ? channel.value : `https://${channel.value.replace(/^@/, '')}`;
+                            const href =
+                              channel.label === 'IG'
+                                ? socialUrl(channel.value, 'https://instagram.com')
+                                : channel.label === 'FB'
+                                ? socialUrl(channel.value, 'https://facebook.com')
+                                : externalUrl(channel.value);
                             return (
                               <a key={channel.label} href={href} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
                                 {badge}
@@ -2397,7 +2403,12 @@ const Admin = () => {
                                   </Badge>
                                 );
                                 if (!channel.value) return badge;
-                                const href = /^https?:\/\//i.test(channel.value) ? channel.value : `https://${channel.value.replace(/^@/, '')}`;
+                                const href =
+                              channel.label === 'IG'
+                                ? socialUrl(channel.value, 'https://instagram.com')
+                                : channel.label === 'FB'
+                                ? socialUrl(channel.value, 'https://facebook.com')
+                                : externalUrl(channel.value);
                                 return (
                                   <a key={channel.label} href={href} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
                                     {badge}

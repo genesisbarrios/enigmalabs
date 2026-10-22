@@ -1,6 +1,7 @@
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from 'react';
 import { Alert, Badge, Button, Card, Col, Form, Modal, Pagination, Row, Table } from 'react-bootstrap';
 import axios from 'axios';
+import { externalUrl } from './externalUrl';
 
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 
@@ -1025,7 +1026,7 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
                     )}
                     {lead.website ? (
                       <div style={{ marginTop: '4px' }}>
-                        <a href={lead.website} target="_blank" rel="noreferrer" className="text-white">
+                        <a href={externalUrl(lead.website)} target="_blank" rel="noreferrer" className="text-white">
                           <small style={{ color: '#aaa' }}>
                             {lead.website.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '')}
                           </small>

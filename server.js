@@ -94,6 +94,14 @@ function buildAgreementFilename({ clientName, effectiveDate }) {
   return `WebDevAgreement_EnigmaLabs_${businessName}_${formatDateForFilename(effectiveDate)}.pdf`;
 }
 
+// Stored websites are often missing a scheme ("mhslube.com"); make links
+// absolute so they don't resolve relative to our own domain.
+function externalUrl(value) {
+  const url = String(value || '').trim();
+  if (!url || /^[a-z][a-z0-9+.-]*:/i.test(url)) return url;
+  return url.startsWith('//') ? `https:${url}` : `https://${url.replace(/^\/+/, '')}`;
+}
+
 function trackedUrl(leadId, url, type) {
   if (!url) return url;
   const typeParam = type ? `&type=${encodeURIComponent(type)}` : '';
@@ -952,7 +960,7 @@ async function autoSendColdEmailToLead(lead) {
 
 function buildWebsiteReviewEmailHtml(client) {
   const websiteLinkHtml = client.website
-    ? ` You can check it out here: <a href="${client.website}" style="color:#111; font-weight:bold;">${client.website.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '')}</a>.`
+    ? ` You can check it out here: <a href="${externalUrl(client.website)}" style="color:#111; font-weight:bold;">${client.website.replace(/^https?:\/\/(www\.)?/i, '').replace(/\/$/, '')}</a>.`
     : '';
 
   return renderBrandedEmail({
