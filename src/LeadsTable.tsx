@@ -36,6 +36,7 @@ export type Lead = {
   instagramNotFoundAt?: string;
   website?: string;
   outdatedWebsite?: boolean;
+  underConstructionWebsite?: boolean;
   city?: string;
   industry?: string;
   notes?: string;
@@ -97,6 +98,13 @@ const EMAIL_TYPE_LABELS: Record<EmailType, string> = {
   onboardingReminder: 'Onboarding Reminder',
   outdatedMockup: 'Outdated Website Cold Email'
 };
+
+// Outdated and under-construction sites both get the website cold email
+// (send-outdated-mockup); the server picks the opening line.
+const needsNewWebsite = (lead: Pick<Lead, 'outdatedWebsite' | 'underConstructionWebsite'>) =>
+  Boolean(lead.outdatedWebsite || lead.underConstructionWebsite);
+const websiteEmailLabel = (lead: Lead) =>
+  lead.underConstructionWebsite ? 'Website Cold Email' : 'Outdated Website Cold Email';
 
 // Which cold-email variant a lead was actually sent is a fact about the
 // past — it should never be re-derived from the lead's CURRENT website
@@ -174,6 +182,7 @@ type EditForm = {
   email: string;
   website: string;
   outdatedWebsite: boolean;
+  underConstructionWebsite: boolean;
   city: string;
   industry: string;
   notes: string;
@@ -189,6 +198,7 @@ const emptyEditForm: EditForm = {
   email: '',
   website: '',
   outdatedWebsite: false,
+  underConstructionWebsite: false,
   city: '',
   industry: '',
   notes: '',
@@ -204,6 +214,7 @@ const editFormFromLead = (lead: Lead): EditForm => ({
   email: lead.email || '',
   website: lead.website || '',
   outdatedWebsite: lead.outdatedWebsite || false,
+  underConstructionWebsite: lead.underConstructionWebsite || false,
   city: lead.city || '',
   industry: lead.industry || '',
   notes: lead.notes || '',
@@ -259,7 +270,7 @@ const canBeEmailed = (lead: Lead) =>
 // pitch, or (for an outdated site) the outdated-website email.
 const canGetWebsitePitch = (lead: Lead) =>
   !nextPitchIsMarketing(lead) ||
-  Boolean(lead.website && lead.outdatedWebsite && !lead.inbound && !lead.closedWebDevClient && !lead.declinedWebsite);
+  Boolean(lead.website && needsNewWebsite(lead) && !lead.inbound && !lead.closedWebDevClient && !lead.declinedWebsite);
 const websiteNotSent = (lead: Lead) => canBeEmailed(lead) && canGetWebsitePitch(lead) && !isMockupSent(lead);
 const marketingNotSent = (lead: Lead) => canBeEmailed(lead) && nextPitchIsMarketing(lead) && !isMarketingSent(lead);
 type EmailFilter = 'all' | 'has_email' | 'no_email';
@@ -522,7 +533,14 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
       }
     });
 
-  const handleSendReminderEmail = (lead: Lead) =>
+  const handleSendReminderEmail = (lead: Lead) => {
+    const who = lead.businessName || lead.email || 'this lead';
+    const confirmSend = window.confirm(
+      lead.reminderEmailSent
+        ? `Resend the reminder email to ${who}? They already received one before.`
+        : `Send the reminder email to ${who}?`
+    );
+    if (!confirmSend) return;
     runAction(lead, async () => {
       try {
         const response = await axios.post(`${API_BASE_URL}/crm/leads/${lead._id}/send-reminder-email`);
@@ -537,15 +555,16 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
         setError('Could not send reminder email.');
       }
     });
+  };
 
   const handleSendOutdatedMockup = (lead: Lead) => {
-    if (!lead.website || !lead.outdatedWebsite) {
-      setError('This email only applies to leads with a website flagged as outdated.');
+    if (!lead.website || !needsNewWebsite(lead)) {
+      setError('This email only applies to leads with a website flagged as outdated or under construction.');
       return;
     }
 
     const confirmSend = window.confirm(
-      `Send the outdated website cold email to ${lead.businessName || lead.email || 'this lead'}?`
+      `Send the ${websiteEmailLabel(lead).toLowerCase()} to ${lead.businessName || lead.email || 'this lead'}?`
     );
     if (!confirmSend) return;
 
@@ -553,7 +572,7 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
       try {
         const response = await axios.post(`${API_BASE_URL}/crm/leads/${lead._id}/send-outdated-mockup`);
         if (response.data?.ok) {
-          setMessage(`Outdated website cold email sent to ${lead.businessName || lead.email}.`);
+          setMessage(`${websiteEmailLabel(lead)} sent to ${lead.businessName || lead.email}.`);
           fetchLeads();
         } else {
           setError(response.data?.message || 'Could not send outdated website cold email.');
@@ -587,7 +606,14 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
     });
   };
 
-  const handleSendOnboardingReminder = (lead: Lead) =>
+  const handleSendOnboardingReminder = (lead: Lead) => {
+    const who = lead.businessName || lead.email || 'this lead';
+    const confirmSend = window.confirm(
+      lead.onboardingReminderSent
+        ? `Resend the onboarding reminder to ${who}? They already received one before.`
+        : `Send the onboarding reminder to ${who}?`
+    );
+    if (!confirmSend) return;
     runAction(lead, async () => {
       try {
         const response = await axios.post(`${API_BASE_URL}/crm/leads/${lead._id}/send-onboarding-reminder`);
@@ -602,6 +628,7 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
         setError('Could not send onboarding reminder.');
       }
     });
+  };
 
   // Two-step decline: "Decline Website Service" (website pitches stop,
   // marketing still allowed) → "Decline Marketing Services" (fully
@@ -1006,6 +1033,9 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
                         {lead.outdatedWebsite ? (
                           <div><small style={{ color: '#888' }}>Outdated</small></div>
                         ) : null}
+                        {lead.underConstructionWebsite ? (
+                          <div><small style={{ color: '#888' }}>Under construction</small></div>
+                        ) : null}
                       </div>
                     ) : null}
                   </td>
@@ -1149,11 +1179,11 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
                             ) : null}
                             {/* Outdated website pitch — never for a Closed Web Dev Client (their
                                 site is already being built); they only get marketing emails. */}
-                            {!lead.inbound && lead.website && lead.outdatedWebsite && !lead.closedWebDevClient && !lead.declinedWebsite ? (
+                            {!lead.inbound && lead.website && needsNewWebsite(lead) && !lead.closedWebDevClient && !lead.declinedWebsite ? (
                               lead.outdatedMockupSent ? (
                                 <>
                                   <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'outdatedMockup')}>
-                                    See Sent Outdated Website Cold Email
+                                    See Sent {websiteEmailLabel(lead)}
                                   </Button>
                                   <Button
                                     size="sm"
@@ -1161,23 +1191,23 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
                                     disabled={busy || lead.declined}
                                     onClick={() => {
                                       const confirmResend = window.confirm(
-                                        `Resend the outdated website cold email to ${lead.businessName || lead.email || 'this lead'}? They already received one before.`
+                                        `Resend the ${websiteEmailLabel(lead).toLowerCase()} to ${lead.businessName || lead.email || 'this lead'}? They already received one before.`
                                       );
                                       if (confirmResend) handleSendOutdatedMockup(lead);
                                     }}
                                   >
-                                    Resend Outdated Website Cold Email
+                                    Resend {websiteEmailLabel(lead)}
                                   </Button>
                                 </>
                               ) : (
                                 <Button size="sm" variant="outline-warning" disabled={busy || lead.declined} onClick={() => handleSendOutdatedMockup(lead)}>
-                                  Send Outdated Website Cold Email
+                                  Send {websiteEmailLabel(lead)}
                                 </Button>
                               )
                             ) : null}
                             {/* A Closed Web Dev Client always gets onboarding, even if
                                 they already have a (non-outdated) site on file. */}
-                            {lead.closedWebDevClient || !lead.website || lead.outdatedWebsite ? (
+                            {lead.closedWebDevClient || !lead.website || needsNewWebsite(lead) ? (
                               lead.onboardingSent ? (
                                 <>
                                   <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'onboarding')}>
@@ -1441,6 +1471,16 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
                     label="Website is outdated"
                     checked={editForm.outdatedWebsite}
                     onChange={(e) => setEditForm({ ...editForm, outdatedWebsite: e.target.checked })}
+                  />
+                </Form.Group>
+              </Col>
+              <Col md={6} className="d-flex align-items-end">
+                <Form.Group className="mb-2">
+                  <Form.Check
+                    type="checkbox"
+                    label="Website is under construction"
+                    checked={editForm.underConstructionWebsite}
+                    onChange={(e) => setEditForm({ ...editForm, underConstructionWebsite: e.target.checked })}
                   />
                 </Form.Group>
               </Col>

@@ -837,15 +837,23 @@ function buildReminderEmailHtml(lead) {
 // tells them we built a brand new website from scratch to replace their
 // outdated one, rather than the marketing/ads services pitch
 // (buildMarketingAdsColdEmailHtml), which stays available alongside this one.
+// Also sent for underConstructionWebsite leads, with a different opening.
 function buildOutdatedWebsiteMockupEmailHtml(lead) {
   const business = lead.businessName ? `<strong>${lead.businessName}</strong>'s` : 'your';
+  const opening = lead.underConstructionWebsite
+    ? [
+        `I came across ${business} business page and noticed your website is still under construction, so I went ahead and built you a brand new website from scratch. I'd love to show it to you — there's no obligation, and it only takes about 5-10 minutes.`
+      ]
+    : [
+        `I came across ${business} business page and noticed your website could benefit from a modern refresh. A more updated design can help build trust with new customers, improve your visibility online, and convert more visitors into appointments.`,
+        `To show you what's possible, I went ahead and built you a brand new website from scratch. I'd love to show it to you — there's no obligation, and it only takes about 5-10 minutes.`
+      ];
   return renderBrandedEmail({
     greetingName: lead.contactName,
     leadId: lead._id,
     type: 'outdatedMockup',
     paragraphs: [
-      `I came across ${business} business page and noticed your website could benefit from a modern refresh. A more updated design can help build trust with new customers, improve your visibility online, and convert more visitors into appointments.`,
-      `To show you what's possible, I went ahead and built you a brand new website from scratch. I'd love to show it to you — there's no obligation, and it only takes about 5-10 minutes.`,
+      ...opening,
       `Would you be available for a quick call sometime in the next day or two? Here's my calendar link for you to schedule it at your convenience:`
     ],
     ctaLabel: 'Schedule call',
@@ -1595,6 +1603,10 @@ const leadSchema = new mongoose.Schema({
   // refresh — unlocks a second cold-email option (the mockup-refresh pitch)
   // alongside the regular marketing/ads cold email.
   outdatedWebsite: { type: Boolean, default: false },
+  // Site is just an "under construction" placeholder — gets the same website
+  // cold email as outdatedWebsite (send-outdated-mockup), with an opening
+  // line about the placeholder instead of "could use a refresh".
+  underConstructionWebsite: { type: Boolean, default: false },
   city: String,
   industry: String,
   notes: String,
@@ -1874,6 +1886,7 @@ async function importSubscriberRow(row) {
 const LEAD_IMPORT_FIELDS = ['businessName', 'contactName', 'phone', 'instagram', 'website', 'city', 'industry', 'googleBusinessUrl'];
 const LEAD_IMPORT_FLAGS = {
   outdatedWebsite: null,
+  underConstructionWebsite: null,
   coldEmailSent: 'coldEmailSentAt',
   dmSent: 'dmSentAt',
   called: 'calledAt',
@@ -3501,6 +3514,9 @@ app.put('/api/crm/leads/:id', async (req, res) => {
     if (req.body.outdatedWebsite !== undefined) {
       lead.outdatedWebsite = Boolean(req.body.outdatedWebsite);
     }
+    if (req.body.underConstructionWebsite !== undefined) {
+      lead.underConstructionWebsite = Boolean(req.body.underConstructionWebsite);
+    }
     // Manual override for leads contacted outside the email flow (e.g. text,
     // in person) — doesn't touch coldEmailHtml/Subject/ResendId, since there
     // was no actual email sent through the system to snapshot.
@@ -3543,7 +3559,7 @@ app.put('/api/crm/leads/:id', async (req, res) => {
 
 app.post('/api/crm/leads', async (req, res) => {
   try {
-    const { businessName, contactName, phone, instagram, email, website, city, industry, notes, coldEmailSent, dmSent, called, instagramNotFound, emailNotFound, outdatedWebsite } = req.body;
+    const { businessName, contactName, phone, instagram, email, website, city, industry, notes, coldEmailSent, dmSent, called, instagramNotFound, emailNotFound, outdatedWebsite, underConstructionWebsite } = req.body;
     if (!businessName && !email && !phone) {
       return res.status(400).json({ ok: false, message: 'At least a business name, email, or phone is required.' });
     }
@@ -3565,6 +3581,7 @@ app.post('/api/crm/leads', async (req, res) => {
       emailNotFoundAt: emailNotFound ? new Date() : undefined,
       website: website || '',
       outdatedWebsite: Boolean(outdatedWebsite),
+      underConstructionWebsite: Boolean(underConstructionWebsite),
       city: city || '',
       industry: industry || '',
       notes: notes || '',
@@ -3631,6 +3648,7 @@ app.post('/api/crm/leads/import-bulk', async (req, res) => {
         emailNotFoundAt: row.emailNotFound ? new Date() : undefined,
         website: row.website || '',
         outdatedWebsite: Boolean(row.outdatedWebsite),
+        underConstructionWebsite: Boolean(row.underConstructionWebsite),
         city: row.city || '',
         industry: row.industry || '',
         notes: row.notes || '',
@@ -3985,8 +4003,8 @@ app.post('/api/crm/leads/:id/send-outdated-mockup', async (req, res) => {
     if (lead.inbound) {
       return res.status(400).json({ ok: false, message: 'Cold email is only for outbound leads.' });
     }
-    if (!lead.website || !lead.outdatedWebsite) {
-      return res.status(400).json({ ok: false, message: 'This email only applies to leads with a website flagged as outdated.' });
+    if (!lead.website || !(lead.outdatedWebsite || lead.underConstructionWebsite)) {
+      return res.status(400).json({ ok: false, message: 'This email only applies to leads with a website flagged as outdated or under construction.' });
     }
     if (lead.closedWebDevClient) {
       return res.status(400).json({ ok: false, message: 'This lead is already a Closed Web Dev Client — send a marketing email instead of a website pitch.' });
