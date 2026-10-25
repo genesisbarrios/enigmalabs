@@ -4,6 +4,12 @@
       top: 56px; /* Adjust this value as needed */
       right: 0;
       left: auto;
-      width: 50px; /* Adjust this value as needed */
+      width: auto; /* grows to fit the longest link ("Marketing") instead of cutting it off */
+      min-width: 50px;
+    }
+
+    .custom-navbar-collapse .navLinks {
+      font-size: 0.85rem;
+      white-space: nowrap;
     }
   }

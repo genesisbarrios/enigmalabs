@@ -184,9 +184,11 @@ button:disabled {
 }
 
 @media only screen and (max-width: 600px) {
+  /* One line on phones: shrink with the screen width instead of wrapping
+     (longest is "Music Production | Audio Engineering"). */
   .subpage-title{
-    font-size: 1.5rem;
-    white-space: normal;
+    font-size: min(1.5rem, 5vw);
+    white-space: nowrap;
   }
 
   .subsection-title{
