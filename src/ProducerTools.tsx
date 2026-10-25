@@ -188,8 +188,8 @@ const ProducerTools = () => {
                       ? item.cta
                       : item.external
                       ? item.price
-                        ? "Buy on BeatStars →"
-                        : "Download free on BeatStars →"
+                        ? "Buy →"
+                        : "Download free →"
                       : item.price
                       ? "View →"
                       : "Download free →"}
