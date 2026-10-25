@@ -170,7 +170,7 @@ function handleSubmit() {
               <h5 className="subsection-title" style={{marginTop: "5%"}}>Services</h5>
               <ul>
                 <li>Photography, Videography, Music Videos, Content Creation</li>
-                <li>Graphic Design: Logos, Branding, Album Covers, Stickers, Posters + more.</li>
+                <li>Graphic Design: Logos, Branding, Album Covers, Business Cards, Stickers, Posters + more.</li>
                 <li>Marketing, Social Media Management & Ads: Instagram, TikTok, YouTube, Facebook + more.</li>
               </ul>
             </Col>
@@ -323,6 +323,7 @@ function handleSubmit() {
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Graphic Design</h6>
                 <ul style={{ marginBottom: 0 }}>
                   <li>Logos: $100</li>
+                  <li>250 Business Cards: $100</li>
                   <li>Album Covers: $50</li>
                   <li>1 Hr Photo Shoot + Album Cover: $150</li>
                 </ul>
