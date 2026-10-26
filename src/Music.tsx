@@ -358,7 +358,7 @@ const Music = () => {
                 </div>
                 <div style={{ ...infoCardStyle, height: "auto", flexGrow: 1 }}>
                   <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Lessons</h5>
-                  <p style={{ color: "#d4d4d4", marginBottom: "0.75rem", lineHeight: 1.7 }}>
+                  <p style={{ color: "#aaa", fontSize: "0.9rem", marginBottom: "0.5rem" }}>
                     Music Production, Music Theory &amp; Composition, Arrangement, Recording &amp; Editing, Sound Design,
                     Mixing &amp; Mastering, Piano, Guitar &amp; Voice Lessons
                   </p>
