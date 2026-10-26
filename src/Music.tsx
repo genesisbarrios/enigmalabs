@@ -338,8 +338,8 @@ const Music = () => {
               </Col>
             </Row>
             <Row style={{ ...rowStyle, marginBottom: "1.5rem" }}>
-              <Col sm={6} style={{ marginBottom: "1.5rem" }}>
-                <div style={infoCardStyle}>
+              <Col sm={6} style={{ marginBottom: "1.5rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+                <div style={{ ...infoCardStyle, height: "auto" }}>
                   <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Recording Sessions</h5>
                   <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>Miami (Red Squid Studios)</h6>
                   <ul>
@@ -352,6 +352,17 @@ const Music = () => {
                     <li><a href="https://square.link/u/YiAS1wvn" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>1 Hour: $70</a></li>
                     <li><a href="https://square.link/u/lx6seMHc" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>2 Hours: $140</a></li>
                     <li><a href="https://square.link/u/2BjcuCt1" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>4 Hours: $260 (7% off)</a></li>
+                  </ul>
+                </div>
+                <div style={{ ...infoCardStyle, height: "auto", flexGrow: 1 }}>
+                  <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Lessons</h5>
+                  <p style={{ color: "#d4d4d4", marginBottom: "0.75rem", lineHeight: 1.7 }}>
+                    Music Production, Music Theory &amp; Composition, Arrangement, Recording &amp; Editing, Basic Sound Design,
+                    Mixing, Piano, Guitar &amp; Vocal Lessons
+                  </p>
+                  <ul style={{ marginBottom: 0 }}>
+                    <li><a href="https://square.link/u/b83sgnzY" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>1 Hour Lesson: $40</a></li>
+                    <li><a href="https://square.link/u/hzIc6YQg" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>2 Hour Lesson: $60</a></li>
                   </ul>
                 </div>
               </Col>
