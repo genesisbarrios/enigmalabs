@@ -183,8 +183,8 @@ const Music = () => {
             <Col sm={12}>
               <h5 className="subsection-title" style={{marginTop: "2%"}}>Services</h5>
               <ul>
-                <li>Music Production & Audio Engineering (Mixing, Mastering)</li>
-                <li>Vocal Production, Editing & Tuning</li>
+                <li>Music Production & Audio Engineering (Recording, Mixing & Mastering, Vocal Production, Editing & Tuning)</li>
+                <li>Songwriting, Production Lessons, Piano & Vocal Lessons</li>
               </ul>
             </Col>
           </Row>
