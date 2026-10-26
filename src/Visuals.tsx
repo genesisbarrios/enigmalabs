@@ -298,7 +298,20 @@ function handleSubmit() {
               <h5 className="subsection-title" style={{marginTop: "5%"}}>Pricing</h5>
              
             </Col>
-            <Col sm={4} style={{ marginBottom: '1.5rem' }}>
+            <Col sm={6} style={{ marginBottom: '1.5rem' }}>
+              <div style={infoCardStyle}>
+                <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Marketing</h6>
+                <ul style={{ marginBottom: 0 }}>
+                  <li>Social Media Management: $1000/mo — includes 1 shoot day + 4 weeks of scheduled content</li>
+                  <li>Music Release Rollout: $200 — 3 weeks of scheduled content across all platforms before, during &amp; after your release</li>
+                  <li>Basic Ad Package: $200/mo — includes $100 in ad spend, plus campaign setup, audience targeting &amp; management</li>
+                  <li>Standard Ad Package: $500/mo — includes $250 in ad spend, plus campaign setup, audience targeting &amp; management</li>
+                  <li>Premium Ad Package: $1000/mo — includes $500 in ad spend, plus campaign setup, audience targeting &amp; management</li>
+                  <li>250 Business Cards (logo design included): $100</li>
+                </ul>
+              </div>
+            </Col>
+            <Col sm={6} style={{ marginBottom: '1.5rem' }}>
               <div style={infoCardStyle}>
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Photography</h6>
                 <ul style={{ marginBottom: 0 }}>
@@ -308,7 +321,7 @@ function handleSubmit() {
                 </ul>
               </div>
             </Col>
-            <Col sm={4} style={{ marginBottom: '1.5rem' }}>
+            <Col sm={6} style={{ marginBottom: '1.5rem' }}>
               <div style={infoCardStyle}>
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Videography</h6>
                 <ul style={{ marginBottom: 0 }}>
@@ -318,12 +331,12 @@ function handleSubmit() {
                 </ul>
               </div>
             </Col>
-            <Col sm={4} style={{ marginBottom: '1.5rem' }}>
+            <Col sm={6} style={{ marginBottom: '1.5rem' }}>
               <div style={infoCardStyle}>
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Graphic Design</h6>
                 <ul style={{ marginBottom: 0 }}>
                   <li>Logos: $100</li>
-                  <li>250 Business Cards: $100</li>
+                  <li>250 Business Cards (logo design included): $100</li>
                   <li>Album Covers: $50</li>
                   <li>1 Hr Photo Shoot + Album Cover: $150</li>
                 </ul>
