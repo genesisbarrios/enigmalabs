@@ -330,8 +330,6 @@ const Music = () => {
             </Col>
           </Row>
 
-         <br></br>
-
             <Row style={rowStyle}>
               <Col sm={12}>
                 <h5 className="subsection-title" style={{marginTop: "5%"}}>Pricing</h5>
@@ -365,7 +363,7 @@ const Music = () => {
                   <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Lessons</h5>
                   <p style={{ color: "#d4d4d4", marginBottom: "0.75rem", lineHeight: 1.7 }}>
                     Music Production, Music Theory &amp; Composition, Arrangement, Recording &amp; Editing, Sound Design,
-                    Mixing &amp; Mastering, Piano, Guitar &amp; Vocal Lessons
+                    Mixing &amp; Mastering, Piano, Guitar &amp; Voice Lessons
                   </p>
                   <ul style={{ marginBottom: 0 }}>
                     <li><a href="https://square.link/u/b83sgnzY" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>1 Hour Lesson: $40</a></li>
@@ -386,9 +384,9 @@ const Music = () => {
                   >
                     <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Beat Licenses (BUY 1 GET 1 FREE)</h5>
                     <ul>
-                      <li>Non-Exclusive License: $20</li>
-                      <li>Unlimited Streams License: $100</li>
-                      <li>Exclusive License: NEGOTIABLE</li>
+                      <li><span style={bookLinkStyle}>Non-Exclusive License: $20</span></li>
+                      <li><span style={bookLinkStyle}>Unlimited Streams License: $100</span></li>
+                      <li><span style={bookLinkStyle}>Exclusive License: NEGOTIABLE</span></li>
                     </ul>
                   </a>
                   <h5 className="subsection-title" style={{ color: "#68FF00" }}>Songwriting</h5>
