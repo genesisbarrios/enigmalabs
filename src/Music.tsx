@@ -342,13 +342,13 @@ const Music = () => {
                   <ul>
                     <li>1 Hour: $100</li>
                     <li>2 Hours: $200</li>
-                    <li>4 Hours: $380</li>
+                    <li>4 Hours: $380 (5% off)</li>
                   </ul>
                   <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>Recording Session — Fort Lauderdale (Peace Kings Studios)</h6>
                   <ul style={{ marginBottom: 0 }}>
                     <li>1 Hour: $70</li>
                     <li>2 Hours: $140</li>
-                    <li>4 Hours: $260</li>
+                    <li>4 Hours: $260 (7% off)</li>
                   </ul>
                 </div>
               </Col>
