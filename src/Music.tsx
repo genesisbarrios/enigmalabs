@@ -338,13 +338,13 @@ const Music = () => {
               <Col sm={6} style={{ marginBottom: "1.5rem" }}>
                 <div style={infoCardStyle}>
                   <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Recording Sessions</h5>
-                  <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>Recording Session — Miami (Red Squid Studios)</h6>
+                  <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>Miami (Red Squid Studios)</h6>
                   <ul>
                     <li>1 Hour: $100</li>
                     <li>2 Hours: $200</li>
                     <li>4 Hours: $380 (5% off)</li>
                   </ul>
-                  <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>Recording Session — Fort Lauderdale (Peace Kings Studios)</h6>
+                  <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>Fort Lauderdale (Peace Kings Studios)</h6>
                   <ul style={{ marginBottom: 0 }}>
                     <li>1 Hour: $70</li>
                     <li>2 Hours: $140</li>
