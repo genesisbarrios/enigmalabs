@@ -252,7 +252,7 @@ function handleSubmit() {
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Pay Up Front - Custom Website</h6>
                 <ul style={{ marginBottom: 0 }}>
                   <li>$2000: 10 page website: Includes Google Business Setup, Hosting & Support, Built-in CRM, and 250 Business Cards (logo design included)</li>
-                  <li>$1000: 5 page website: Includes Google Business Setup, Hosting & Support, and Built-in CRM</li>
+                  <li>$1000: 5 page website: Includes Google Business Setup, Hosting & Support, Built-in CRM, and 100 Business Cards (logo design included)</li>
                 </ul>
               </div>
             </Col>
@@ -261,7 +261,7 @@ function handleSubmit() {
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Monthly Subscription</h6>
                 <ul style={{ marginBottom: 0 }}>
                   <li>$200/mo for a 10 Page Website: Includes Google Business Setup, Unlimited Edits, 24/7 Support, Hosting & Built-in CRM, and 250 Business Cards (logo design included)</li>
-                  <li>$100/mo for a 5 Page Website: Includes Google Business Setup, Hosting, General Support & Built-in CRM</li>
+                  <li>$100/mo for a 5 Page Website: Includes Google Business Setup, Hosting, General Support & Built-in CRM, and 100 Business Cards (logo design included)</li>
                 </ul>
               </div>
             </Col>
