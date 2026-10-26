@@ -338,21 +338,43 @@ const Music = () => {
               <Col sm={6} style={{ marginBottom: "1.5rem" }}>
                 <div style={infoCardStyle}>
                   <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Recording + Mixing</h5>
+                  <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>Recording Session — Miami (Red Squid Studios)</h6>
+                  <ul>
+                    <li>1 Hour: $100</li>
+                    <li>2 Hours: $200</li>
+                    <li>4 Hours: $380</li>
+                  </ul>
+                  <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>Recording Session — Fort Lauderdale (Peace Kings Studios)</h6>
+                  <ul>
+                    <li>1 Hour: $70</li>
+                    <li>2 Hours: $140</li>
+                    <li>4 Hours: $260</li>
+                  </ul>
+                  <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>Mixing + Mastering</h6>
                   <ul style={{ marginBottom: 0 }}>
-                    <li>Recording: $40/hr ($35/hr for 4+ hours)</li>
-                    <li>Mixing + Mastering: $200</li>
+                    <li>Basic Mix + Master: $100 (up to 10 stems)</li>
+                    <li>Premium Mix + Master: $200</li>
                   </ul>
                 </div>
               </Col>
                 <Col sm={6} style={{ marginBottom: "1.5rem" }}>
-                <div style={infoCardStyle}>
-                  <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Beat Licenses (BUY 1 GET 1 FREE)</h5>
-                  <ul style={{ marginBottom: 0 }}>
-                    <li>Non-Exclusive License: $20</li>
-                    <li>Unlimited Streams License: $100</li>
-                    <li>Exclusive License: NEGOTIABLE</li>
-                  </ul>
-                </div>
+                {/* Whole card links to the beat store. */}
+                <a
+                  href={BEATSTARS_TRACKS_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label="Beat licenses — browse beats on BeatStars"
+                  style={{ display: "block", height: "100%", color: "inherit", textDecoration: "none" }}
+                >
+                  <div style={{ ...infoCardStyle, cursor: "pointer" }}>
+                    <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Beat Licenses (BUY 1 GET 1 FREE)</h5>
+                    <ul style={{ marginBottom: 0 }}>
+                      <li>Non-Exclusive License: $20</li>
+                      <li>Unlimited Streams License: $100</li>
+                      <li>Exclusive License: NEGOTIABLE</li>
+                    </ul>
+                  </div>
+                </a>
               </Col>
             </Row>
 
