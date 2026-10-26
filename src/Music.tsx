@@ -1,5 +1,5 @@
 import { useEffect, useState, useLayoutEffect } from "react";
-import { Row, Col, Container, Button } from "react-bootstrap";
+import { Row, Col, Container } from "react-bootstrap";
 //import image1 from "./image1.png";
 import { Alert } from "react-bootstrap";
 import axios from 'axios';
@@ -337,7 +337,7 @@ const Music = () => {
             <Row style={{ ...rowStyle, marginBottom: "1.5rem" }}>
               <Col sm={6} style={{ marginBottom: "1.5rem" }}>
                 <div style={infoCardStyle}>
-                  <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Recording + Mixing</h5>
+                  <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Recording Sessions</h5>
                   <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>Recording Session — Miami (Red Squid Studios)</h6>
                   <ul>
                     <li>1 Hour: $100</li>
@@ -345,28 +345,23 @@ const Music = () => {
                     <li>4 Hours: $380</li>
                   </ul>
                   <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>Recording Session — Fort Lauderdale (Peace Kings Studios)</h6>
-                  <ul>
+                  <ul style={{ marginBottom: 0 }}>
                     <li>1 Hour: $70</li>
                     <li>2 Hours: $140</li>
                     <li>4 Hours: $260</li>
                   </ul>
-                  <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>Mixing + Mastering</h6>
-                  <ul style={{ marginBottom: 0 }}>
-                    <li>Basic Mix + Master: $100 (up to 10 stems)</li>
-                    <li>Premium Mix + Master: $200</li>
-                  </ul>
                 </div>
               </Col>
-                <Col sm={6} style={{ marginBottom: "1.5rem" }}>
+                <Col sm={6} style={{ marginBottom: "1.5rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
                 {/* Whole card links to the beat store. */}
                 <a
                   href={BEATSTARS_TRACKS_URL}
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label="Beat licenses — browse beats on BeatStars"
-                  style={{ display: "block", height: "100%", color: "inherit", textDecoration: "none" }}
+                  style={{ display: "block", color: "inherit", textDecoration: "none" }}
                 >
-                  <div style={{ ...infoCardStyle, cursor: "pointer" }}>
+                  <div style={{ ...infoCardStyle, height: "auto", cursor: "pointer" }}>
                     <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Beat Licenses (BUY 1 GET 1 FREE)</h5>
                     <ul style={{ marginBottom: 0 }}>
                       <li>Non-Exclusive License: $20</li>
@@ -375,16 +370,15 @@ const Music = () => {
                     </ul>
                   </div>
                 </a>
+                <div style={{ ...infoCardStyle, height: "auto", flexGrow: 1 }}>
+                  <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Mixing + Mastering</h5>
+                  <ul style={{ marginBottom: 0 }}>
+                    <li>Basic Mix + Master: $100 (up to 10 stems)</li>
+                    <li>Premium Mix + Master: $200</li>
+                  </ul>
+                </div>
               </Col>
             </Row>
-
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width:"100%" }}>
-              <a href="https://www.beatstars.com/genwav/services" style={{ color: "#000" }}>
-                <Button style={{ backgroundColor: "#68FF00", cursor: 'pointer', color: "#000", borderColor: "#68FF00", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", padding: "0.85rem 2.75rem", borderRadius: "2rem" }}>
-                  Beats + Mixing
-                </Button>
-              </a>
-          </div>
 
           <hr style={{backgroundColor:"white", marginTop:"5%"}}></hr>
 
