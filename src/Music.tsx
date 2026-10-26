@@ -187,7 +187,7 @@ const Music = () => {
               <h5 className="subsection-title" style={{marginTop: "2%"}}>Services</h5>
               <ul>
                 <li>Music Production & Audio Engineering (Recording, Mixing & Mastering, Vocal Production, Editing & Tuning)</li>
-                <li>Songwriting, Production Lessons, Piano & Vocal Lessons</li>
+                <li>Songwriting, Production Lessons, Piano, Guitar & Voice Lessons</li>
               </ul>
             </Col>
           </Row>
@@ -341,24 +341,31 @@ const Music = () => {
               <Col sm={6} style={{ marginBottom: "1.5rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
                 <div style={{ ...infoCardStyle, height: "auto" }}>
                   <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Recording Sessions</h5>
+                  {/* Miami | Fort Lauderdale side by side, 50/50 */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                  <div>
                   <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>Miami (Red Squid Studios)</h6>
-                  <ul>
+                  <ul style={{ marginBottom: 0, paddingLeft: "1.1rem" }}>
                     <li><a href="https://square.link/u/AtDYoDkM" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>1 Hour: $100</a></li>
                     <li><a href="https://square.link/u/APfouSRh" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>2 Hours: $200</a></li>
                     <li><a href="https://square.link/u/oHRAj0PJ" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>4 Hours: $380 (5% off)</a></li>
                   </ul>
+                  </div>
+                  <div>
                   <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>Fort Lauderdale (Peace Kings Studios)</h6>
-                  <ul style={{ marginBottom: 0 }}>
+                  <ul style={{ marginBottom: 0, paddingLeft: "1.1rem" }}>
                     <li><a href="https://square.link/u/YiAS1wvn" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>1 Hour: $70</a></li>
                     <li><a href="https://square.link/u/lx6seMHc" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>2 Hours: $140</a></li>
                     <li><a href="https://square.link/u/2BjcuCt1" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>4 Hours: $260 (7% off)</a></li>
                   </ul>
+                  </div>
+                  </div>
                 </div>
                 <div style={{ ...infoCardStyle, height: "auto", flexGrow: 1 }}>
                   <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Lessons</h5>
                   <p style={{ color: "#d4d4d4", marginBottom: "0.75rem", lineHeight: 1.7 }}>
-                    Music Production, Music Theory &amp; Composition, Arrangement, Recording &amp; Editing, Basic Sound Design,
-                    Mixing, Piano, Guitar &amp; Vocal Lessons
+                    Music Production, Music Theory &amp; Composition, Arrangement, Recording &amp; Editing, Sound Design,
+                    Mixing &amp; Mastering, Piano, Guitar &amp; Vocal Lessons
                   </p>
                   <ul style={{ marginBottom: 0 }}>
                     <li><a href="https://square.link/u/b83sgnzY" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>1 Hour Lesson: $40</a></li>
@@ -367,23 +374,29 @@ const Music = () => {
                 </div>
               </Col>
                 <Col sm={6} style={{ marginBottom: "1.5rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-                {/* Whole card links to the beat store. */}
-                <a
-                  href={BEATSTARS_TRACKS_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label="Beat licenses — browse beats on BeatStars"
-                  style={{ display: "block", color: "inherit", textDecoration: "none" }}
-                >
-                  <div style={{ ...infoCardStyle, height: "auto", cursor: "pointer" }}>
+                <div style={{ ...infoCardStyle, height: "auto" }}>
+                  {/* Beat Licenses title + list link to the beat store (Songwriting
+                      below has its own booking links, so the card itself isn't a link). */}
+                  <a
+                    href={BEATSTARS_TRACKS_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Beat licenses — browse beats on BeatStars"
+                    style={{ display: "block", color: "inherit", textDecoration: "none" }}
+                  >
                     <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Beat Licenses (BUY 1 GET 1 FREE)</h5>
-                    <ul style={{ marginBottom: 0 }}>
+                    <ul>
                       <li>Non-Exclusive License: $20</li>
                       <li>Unlimited Streams License: $100</li>
                       <li>Exclusive License: NEGOTIABLE</li>
                     </ul>
-                  </div>
-                </a>
+                  </a>
+                  <h5 className="subsection-title" style={{ color: "#68FF00" }}>Songwriting</h5>
+                  <ul style={{ marginBottom: 0 }}>
+                    <li><a href="https://square.link/u/T79pkaWm" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>2 Hour Session: $60</a></li>
+                    <li><a href="https://square.link/u/UorO2jUs" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>4 Hour Session: $120</a></li>
+                  </ul>
+                </div>
                 <div style={{ ...infoCardStyle, height: "auto", flexGrow: 1 }}>
                   <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Mixing + Mastering</h5>
                   <ul style={{ marginBottom: 0 }}>
