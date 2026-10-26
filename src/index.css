@@ -487,3 +487,22 @@ button:disabled {
     height: 440px;
   }
 }
+
+/* Music page pricing lines that link to checkout / BeatStars: price after
+   the colon in green, and the line grows a little on hover to show it's a link. */
+.price-link{
+  display: inline-block;
+  color: inherit;
+  text-decoration: none;
+  transform-origin: left center;
+  transition: transform 0.15s ease;
+}
+
+.price-link:hover{
+  color: inherit;
+  transform: scale(1.06);
+}
+
+.price-link .price{
+  color: #68FF00;
+}

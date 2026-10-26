@@ -94,9 +94,6 @@ const Music = () => {
     cursor: "pointer"
   };
 
-  // Pricing lines that open a Square checkout link.
-  const bookLinkStyle = { color: "inherit", textDecoration: "underline", textDecorationColor: "#68FF00", textUnderlineOffset: "3px" };
-
   const infoCardStyle = {
     backgroundColor: "#111",
     border: "1px solid #68FF00",
@@ -344,17 +341,17 @@ const Music = () => {
                   <div>
                   <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>Miami (Red Squid Studios)</h6>
                   <ul style={{ marginBottom: 0, paddingLeft: "1.1rem" }}>
-                    <li><a href="https://square.link/u/AtDYoDkM" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>1 Hour: $100</a></li>
-                    <li><a href="https://square.link/u/APfouSRh" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>2 Hours: $200</a></li>
-                    <li><a href="https://square.link/u/oHRAj0PJ" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>4 Hours: $380 (5% off)</a></li>
+                    <li><a href="https://square.link/u/AtDYoDkM" target="_blank" rel="noopener noreferrer" className="price-link">1 Hour: <span className="price">$100</span></a></li>
+                    <li><a href="https://square.link/u/APfouSRh" target="_blank" rel="noopener noreferrer" className="price-link">2 Hours: <span className="price">$200</span></a></li>
+                    <li><a href="https://square.link/u/oHRAj0PJ" target="_blank" rel="noopener noreferrer" className="price-link">4 Hours: <span className="price">$380 (5% off)</span></a></li>
                   </ul>
                   </div>
                   <div>
                   <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>Fort Lauderdale (Peace Kings Studios)</h6>
                   <ul style={{ marginBottom: 0, paddingLeft: "1.1rem" }}>
-                    <li><a href="https://square.link/u/YiAS1wvn" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>1 Hour: $70</a></li>
-                    <li><a href="https://square.link/u/lx6seMHc" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>2 Hours: $140</a></li>
-                    <li><a href="https://square.link/u/2BjcuCt1" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>4 Hours: $260 (7% off)</a></li>
+                    <li><a href="https://square.link/u/YiAS1wvn" target="_blank" rel="noopener noreferrer" className="price-link">1 Hour: <span className="price">$70</span></a></li>
+                    <li><a href="https://square.link/u/lx6seMHc" target="_blank" rel="noopener noreferrer" className="price-link">2 Hours: <span className="price">$140</span></a></li>
+                    <li><a href="https://square.link/u/2BjcuCt1" target="_blank" rel="noopener noreferrer" className="price-link">4 Hours: <span className="price">$260 (7% off)</span></a></li>
                   </ul>
                   </div>
                   </div>
@@ -366,8 +363,8 @@ const Music = () => {
                     Mixing &amp; Mastering, Piano, Guitar &amp; Voice Lessons
                   </p>
                   <ul style={{ marginBottom: 0 }}>
-                    <li><a href="https://square.link/u/b83sgnzY" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>1 Hour Lesson: $40</a></li>
-                    <li><a href="https://square.link/u/hzIc6YQg" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>2 Hour Lesson: $60</a></li>
+                    <li><a href="https://square.link/u/b83sgnzY" target="_blank" rel="noopener noreferrer" className="price-link">1 Hour Lesson: <span className="price">$40</span></a></li>
+                    <li><a href="https://square.link/u/hzIc6YQg" target="_blank" rel="noopener noreferrer" className="price-link">2 Hour Lesson: <span className="price">$60</span></a></li>
                   </ul>
                 </div>
               </Col>
@@ -384,22 +381,25 @@ const Music = () => {
                   >
                     <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Beat Licenses (BUY 1 GET 1 FREE)</h5>
                     <ul>
-                      <li><span style={bookLinkStyle}>Non-Exclusive License: $20</span></li>
-                      <li><span style={bookLinkStyle}>Unlimited Streams License: $100</span></li>
-                      <li><span style={bookLinkStyle}>Exclusive License: NEGOTIABLE</span></li>
+                      <li><span className="price-link">Non-Exclusive License: <span className="price">$20</span></span></li>
+                      <li><span className="price-link">Unlimited Streams License: <span className="price">$100</span></span></li>
+                      <li><span className="price-link">Exclusive License: <span className="price">NEGOTIABLE</span></span></li>
                     </ul>
                   </a>
                   <h5 className="subsection-title" style={{ color: "#68FF00" }}>Songwriting</h5>
+                  <p style={{ color: "#aaa", fontSize: "0.9rem", marginBottom: "0.5rem" }}>
+                    25% publishing for lyrics, 50% publishing for lyrics + top line melody
+                  </p>
                   <ul style={{ marginBottom: 0 }}>
-                    <li><a href="https://square.link/u/T79pkaWm" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>2 Hour Session: $60</a></li>
-                    <li><a href="https://square.link/u/UorO2jUs" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>4 Hour Session: $120</a></li>
+                    <li><a href="https://square.link/u/T79pkaWm" target="_blank" rel="noopener noreferrer" className="price-link">2 Hour Session: <span className="price">$60</span></a></li>
+                    <li><a href="https://square.link/u/UorO2jUs" target="_blank" rel="noopener noreferrer" className="price-link">4 Hour Session: <span className="price">$120</span></a></li>
                   </ul>
                 </div>
                 <div style={{ ...infoCardStyle, height: "auto", flexGrow: 1 }}>
                   <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Mixing + Mastering</h5>
                   <ul style={{ marginBottom: 0 }}>
-                    <li><a href="https://square.link/u/qsoscZeC" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>Basic Mix + Master: $100 (up to 10 stems)</a></li>
-                    <li><a href="https://square.link/u/BdD9A9Pn" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>Premium Mix + Master: $200</a></li>
+                    <li><a href="https://square.link/u/qsoscZeC" target="_blank" rel="noopener noreferrer" className="price-link">Basic Mix + Master: <span className="price">$100 (up to 10 stems)</span></a></li>
+                    <li><a href="https://square.link/u/BdD9A9Pn" target="_blank" rel="noopener noreferrer" className="price-link">Premium Mix + Master: <span className="price">$200</span></a></li>
                   </ul>
                 </div>
               </Col>
