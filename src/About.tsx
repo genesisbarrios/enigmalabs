@@ -168,6 +168,7 @@ const About = () => {
               <h2>Team</h2>
               <h5>CEO, Gen Barrios</h5>
               <p> Software Engineer, Music Producer & Audio Engineer, Content Creator </p>
+              <a  className="socialLinks" href="mailto:info@enigma-labs.com">Email</a>
               <a  className="socialLinks" href="https://linkedin.com/in/genesis-barrios" target="_blank">LinkedIn</a>
               <a  className="socialLinks" href="https://genesisbarrios.xyz" target="_blank">Programming Portfolio</a>
               <a  className="socialLinks" href="https://github.com/genesisbarrios" target="_blank">Github</a>

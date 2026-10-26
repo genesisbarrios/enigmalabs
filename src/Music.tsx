@@ -339,7 +339,7 @@ const Music = () => {
                   {/* Miami | Fort Lauderdale side by side, 50/50 */}
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
                   <div>
-                  <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>Miami (Red Squid Studios)</h6>
+                  <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>Miami (Red Squid Studios / Mars Miami Studios)</h6>
                   <ul style={{ marginBottom: 0, paddingLeft: "1.1rem" }}>
                     <li><a href="https://square.link/u/AtDYoDkM" target="_blank" rel="noopener noreferrer" className="price-link">1 Hour: <span className="price">$100</span></a></li>
                     <li><a href="https://square.link/u/APfouSRh" target="_blank" rel="noopener noreferrer" className="price-link">2 Hours: <span className="price">$200</span></a></li>
