@@ -15,7 +15,9 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY;
 // not a dedicated "outreach" address, so this test reflects the real sender.
 const FROM = process.env.AGREEMENT_FROM_EMAIL || 'agreements@enigma-labs.com';
 const SITE_URL = process.env.SITE_URL || 'https://enigma-labs.com';
-const CALENDAR_LINK = process.env.CALENDAR_LINK || 'https://calendly.com/enigmalabsmusic/chat';
+// Same env var as server.js — no hardcoded fallback, so a link change on
+// Vercel / in .env.local is the only place it ever needs updating.
+const CALENDAR_LINK = process.env.CALENDAR_LINK || '';
 const TO = process.argv[2] || 'genesisbarriosdev@gmail.com';
 
 if (!RESEND_API_KEY) {
