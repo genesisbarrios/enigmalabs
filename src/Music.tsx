@@ -94,6 +94,9 @@ const Music = () => {
     cursor: "pointer"
   };
 
+  // Pricing lines that open a Square checkout link.
+  const bookLinkStyle = { color: "inherit", textDecoration: "underline", textDecorationColor: "#68FF00", textUnderlineOffset: "3px" };
+
   const infoCardStyle = {
     backgroundColor: "#111",
     border: "1px solid #68FF00",
@@ -340,15 +343,15 @@ const Music = () => {
                   <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Recording Sessions</h5>
                   <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>Miami (Red Squid Studios)</h6>
                   <ul>
-                    <li>1 Hour: $100</li>
-                    <li>2 Hours: $200</li>
-                    <li>4 Hours: $380 (5% off)</li>
+                    <li><a href="https://square.link/u/AtDYoDkM" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>1 Hour: $100</a></li>
+                    <li><a href="https://square.link/u/APfouSRh" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>2 Hours: $200</a></li>
+                    <li><a href="https://square.link/u/oHRAj0PJ" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>4 Hours: $380 (5% off)</a></li>
                   </ul>
                   <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>Fort Lauderdale (Peace Kings Studios)</h6>
                   <ul style={{ marginBottom: 0 }}>
-                    <li>1 Hour: $70</li>
-                    <li>2 Hours: $140</li>
-                    <li>4 Hours: $260 (7% off)</li>
+                    <li><a href="https://square.link/u/YiAS1wvn" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>1 Hour: $70</a></li>
+                    <li><a href="https://square.link/u/lx6seMHc" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>2 Hours: $140</a></li>
+                    <li><a href="https://square.link/u/2BjcuCt1" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>4 Hours: $260 (7% off)</a></li>
                   </ul>
                 </div>
               </Col>
@@ -373,8 +376,8 @@ const Music = () => {
                 <div style={{ ...infoCardStyle, height: "auto", flexGrow: 1 }}>
                   <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Mixing + Mastering</h5>
                   <ul style={{ marginBottom: 0 }}>
-                    <li>Basic Mix + Master: $100 (up to 10 stems)</li>
-                    <li>Premium Mix + Master: $200</li>
+                    <li><a href="https://square.link/u/qsoscZeC" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>Basic Mix + Master: $100 (up to 10 stems)</a></li>
+                    <li><a href="https://square.link/u/BdD9A9Pn" target="_blank" rel="noopener noreferrer" style={bookLinkStyle}>Premium Mix + Master: $200</a></li>
                   </ul>
                 </div>
               </Col>
