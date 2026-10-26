@@ -210,7 +210,7 @@ function handleSubmit() {
             <Col sm={12}>
               <h5 className="subsection-title" style={{marginTop: "5%"}}>Services</h5>
               <ul>
-                <li>Web Design & Web Development, Google Business Setup, SEO</li>
+                <li>Web Design & Web Development, Search Engine Optimization (SEO), Google Business Profile Setup & Optimization</li>
                 <li>Support & Maintenance: Hosting, Domain Setup, Updates & a Built-in CRM, etc. </li>
                 <li>Digital Marketing, Branding, Logos, Business Cards & Ads</li> 
               </ul>
@@ -227,7 +227,7 @@ function handleSubmit() {
           </Row>
           <Row style={rowStyle}>
             {workProjects.map((project) => (
-              <Col xs={12} sm={6} key={project.name} style={{ marginBottom: '1.5rem' }}>
+              <Col xs={12} sm={6} md={4} key={project.name} style={{ marginBottom: '1.5rem' }}>
                 <a href={project.url} target="_blank" rel="noreferrer" style={{ display: 'block', color: 'white', textDecoration: 'none' }}>
                   {project.image ? (
                     <div className="work-img-wrap">

@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Card, Col, Container, Row } from 'react-bootstrap';
+import { Link } from 'react-router-dom';
 
 const PaymentIcon = () => (
   <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#68FF00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
@@ -92,6 +93,19 @@ const PlanCard = ({ plan }: { plan: Plan }) => {
   );
 };
 
+// Same filled-green pill as the agreement page's "Complete Onboarding" button.
+const agreementButtonStyle = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '0.5rem',
+  color: '#000',
+  backgroundColor: '#68FF00',
+  fontWeight: 700,
+  padding: '0.5rem 1.25rem',
+  borderRadius: '2rem',
+  textDecoration: 'none'
+};
+
 const Payment = () => {
   useEffect(() => {
     document.title = "Enigma Labs | Make a Payment";
@@ -103,6 +117,11 @@ const Payment = () => {
 
   return (
     <Container style={{ paddingTop: '6rem', paddingBottom: '3rem', maxWidth: '1000px' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '1.5rem' }}>
+        <Link to="/onboard/agreement" style={agreementButtonStyle}>
+          Sign Web Development Agreement &rarr;
+        </Link>
+      </div>
       <h1 style={{ color: '#68FF00', marginBottom: '0.5rem' }}>Make a Payment</h1>
       <p style={{ color: '#d4d4d4', marginBottom: '2.5rem' }}>
         Choose the option that matches your project to complete payment securely.
@@ -127,6 +146,13 @@ const Payment = () => {
           </Col>
         ))}
       </Row>
+
+      {/* Same bottom link as the agreement page. */}
+      <div style={{ marginTop: '2rem' }}>
+        <Link to="/onboard" style={{ color: '#68FF00', fontWeight: 600 }}>
+          &larr; Back to Onboarding
+        </Link>
+      </div>
     </Container>
   );
 };

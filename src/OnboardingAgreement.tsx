@@ -56,14 +56,14 @@ const completeOnboardingButtonStyle: React.CSSProperties = {
   textDecoration: 'none'
 };
 
-// Left-arrow button pinned to the top-left of the page content, pointing at
+// Next-step button pinned to the top-right of the page content, pointing at
 // the actual onboarding form (not just back to the /onboard menu, which the
 // existing "Back to Onboarding" text links already cover) — this is the
 // "next step" action once someone's found this page directly.
 const CompleteOnboardingButton = () => (
-  <div style={{ marginBottom: '1.5rem' }}>
+  <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
     <Link to="/onboard/form" style={completeOnboardingButtonStyle}>
-      &larr; Complete Onboarding
+      Complete Onboarding &rarr;
     </Link>
   </div>
 );
