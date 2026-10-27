@@ -339,7 +339,7 @@ function handleSubmit() {
                   <li>Logos: $100</li>
                   <li>250 Business Cards (logo design included): $100</li>
                   <li>Album Covers: $50</li>
-                  <li>1 Hr Photo Shoot + Album Cover: $150</li>
+                  <li>1 Hr Photo Shoot + Album Cover + 10 Edits: $150</li>
                 </ul>
               </div>
             </Col>
