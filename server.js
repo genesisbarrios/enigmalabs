@@ -73,6 +73,27 @@ const TRACKING_PIXEL = Buffer.from(
   'base64'
 );
 
+// Mail security scanners (Outlook/Defender, Proofpoint, Mimecast, Barracuda),
+// Apple Mail Privacy Protection, and link-preview bots fetch every image in
+// an email as soon as it's delivered — before (or without) a person ever
+// opening it. Counting those made fresh sends show as "opened". Only record
+// an open that looks like a person viewing the email: a real GET, not a
+// known bot/proxy prefetch, and not within the first couple of minutes after
+// sending, when that automated scanning happens.
+const OPEN_TRACKING_GRACE_MS = 2 * 60 * 1000;
+const AUTOMATED_FETCH_UA = /bot|crawl|spider|scan|preview|python|curl|wget|go-http|java\/|okhttp|axios|node-fetch|headless|barracuda|mimecast|proofpoint|symantec|forcepoint|slurp|facebookexternalhit/i;
+
+function isLikelyHumanOpen(req, sentAt) {
+  if (req.method !== 'GET') return false; // scanners often probe with HEAD
+  const ua = String(req.get('user-agent') || '').trim();
+  if (!ua || AUTOMATED_FETCH_UA.test(ua)) return false;
+  // Apple Mail Privacy Protection preloads images with a bare "Mozilla/5.0".
+  if (ua === 'Mozilla/5.0') return false;
+  const sent = sentAt ? new Date(sentAt).getTime() : NaN;
+  if (Number.isFinite(sent) && Date.now() - sent < OPEN_TRACKING_GRACE_MS) return false;
+  return true;
+}
+
 function escapeRegex(value) {
   return (value || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
@@ -2498,7 +2519,10 @@ app.post('/api/newsletter/subscribers/:id/run-audit', async (req, res) => {
 
 app.get('/api/newsletter/sends/:id/track/open', async (req, res) => {
   try {
-    await NewsletterSend.findByIdAndUpdate(req.params.id, { opened: true, openedAt: new Date() });
+    const send = await NewsletterSend.findById(req.params.id).select('sentAt').lean();
+    if (send && isLikelyHumanOpen(req, send.sentAt)) {
+      await NewsletterSend.findByIdAndUpdate(req.params.id, { opened: true, openedAt: new Date() });
+    }
   } catch (error) {
     console.error('Could not record newsletter email open', error);
   }
@@ -4089,13 +4113,25 @@ const EMAIL_TYPE_FIELD_PREFIX = {
 
 app.get('/api/crm/leads/:id/track/open', async (req, res) => {
   try {
-    const update = { opened: true, openedAt: new Date() };
     const prefix = EMAIL_TYPE_FIELD_PREFIX[req.query.type];
-    if (prefix) {
-      update[`${prefix}Opened`] = true;
-      update[`${prefix}OpenedAt`] = new Date();
+    const lead = await Lead.findById(req.params.id).select(
+      'coldEmailSentAt coldEmailResentAt outdatedMockupSentAt reminderEmailSentAt onboardingSentAt onboardingReminderSentAt'
+    ).lean();
+    // Most recent send of this email type (a cold email can be resent); for
+    // old pixels with no type, the most recent send of anything.
+    const sentTimes = (prefix
+      ? [lead?.[`${prefix}SentAt`], prefix === 'coldEmail' ? lead?.coldEmailResentAt : null]
+      : [lead?.coldEmailSentAt, lead?.coldEmailResentAt, lead?.outdatedMockupSentAt, lead?.reminderEmailSentAt, lead?.onboardingSentAt, lead?.onboardingReminderSentAt]
+    ).filter(Boolean).map((d) => new Date(d).getTime());
+    const sentAt = sentTimes.length ? Math.max(...sentTimes) : null;
+    if (lead && isLikelyHumanOpen(req, sentAt)) {
+      const update = { opened: true, openedAt: new Date() };
+      if (prefix) {
+        update[`${prefix}Opened`] = true;
+        update[`${prefix}OpenedAt`] = new Date();
+      }
+      await Lead.findByIdAndUpdate(req.params.id, update);
     }
-    await Lead.findByIdAndUpdate(req.params.id, update);
   } catch (error) {
     console.error('Could not record email open', error);
   }
