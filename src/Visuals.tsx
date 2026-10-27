@@ -314,8 +314,9 @@ function handleSubmit() {
                 </ul>
               </div>
             </Col>
-            <Col sm={6} style={{ marginBottom: '1.5rem' }}>
-              <div style={infoCardStyle}>
+            {/* Photography with Videography stacked underneath it */}
+            <Col sm={6} style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div style={{ ...infoCardStyle, height: 'auto' }}>
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Photography</h6>
                 <ul style={{ marginBottom: 0 }}>
                   <li>1 HR Shoot 10 Edits: $100</li>
@@ -323,9 +324,7 @@ function handleSubmit() {
                   <li>Full Day Shoot 100 Edits + Recap Video: $1000</li>
                 </ul>
               </div>
-            </Col>
-            <Col sm={6} style={{ marginBottom: '1.5rem' }}>
-              <div style={infoCardStyle}>
+              <div style={{ ...infoCardStyle, height: 'auto', flexGrow: 1 }}>
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Videography</h6>
                 <ul style={{ marginBottom: 0 }}>
                   <li>1HR Run and Gun Music Video: $200</li>
