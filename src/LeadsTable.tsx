@@ -1226,6 +1226,9 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
                             ) : null}
                           </>
                         ) : null}
+                        <Button size="sm" variant="outline-light" onClick={() => openEditModal(lead)}>
+                          Edit
+                        </Button>
                         {lead.declined ? (
                           <Button
                             size="sm"
@@ -1256,9 +1259,6 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
                             Decline Website Service
                           </Button>
                         )}
-                        <Button size="sm" variant="outline-light" onClick={() => openEditModal(lead)}>
-                          Edit
-                        </Button>
                       </div>
                   </td>
                 </tr>
