@@ -298,15 +298,17 @@ function handleSubmit() {
               <h5 className="subsection-title" style={{marginTop: "5%"}}>Pricing</h5>
              
             </Col>
-            <Col sm={6} style={{ marginBottom: '1.5rem' }}>
-              <div style={infoCardStyle}>
+            <Col sm={6} style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+              <div style={{ ...infoCardStyle, height: 'auto' }}>
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Marketing</h6>
                 <ul style={{ marginBottom: 0 }}>
                   <li>Social Media Management: $1000/mo — includes 1 shoot day + 4 weeks of scheduled content</li>
                   <li>Music Release Rollout: $200 — 3 weeks of scheduled content across all platforms before, during &amp; after your release</li>
                   <li>Music Promo Full Package: $500 — album cover, 2 hr run and gun music video + 3 weeks of scheduled content across all platforms before, during &amp; after your release</li>
                 </ul>
-                <h6 style={{ color: "#68FF00", fontWeight: 700, margin: "1.25rem 0 0.75rem" }}>Ads</h6>
+              </div>
+              <div style={{ ...infoCardStyle, height: 'auto' }}>
+                <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Ads</h6>
                 <ul style={{ marginBottom: 0 }}>
                   <li>Basic Ad Package: $200/mo — includes $100 in ad spend, plus campaign setup, audience targeting &amp; management</li>
                   <li>Standard Ad Package: $500/mo — includes $250 in ad spend, plus campaign setup, audience targeting &amp; management</li>
