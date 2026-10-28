@@ -34,7 +34,7 @@ const CATEGORIES: Category[] = [
   {
     id: "sample-packs",
     title: "Sample Packs",
-    blurb: "Loops, one-shots, and songstarters by gen.wav.",
+    blurb: "Free sample packs by gen.wav — loops, one-shots, and songstarters for trap, reggaeton, Latin, and R&B.",
     href: "https://www.beatstars.com/genwav/sound-kits",
     hrefLabel: "View all on BeatStars →",
     items: SAMPLE_PACKS.map((p) => ({
@@ -67,13 +67,60 @@ const CATEGORIES: Category[] = [
 
 const GREEN = "#68FF00";
 
+const SAMPLE_PACK_KEYWORDS = [
+  "free sample pack", "free sample packs", "free samples", "royalty free samples", "free loops", "free one shots",
+  "free reggaeton sample pack", "free latin sample pack", "free trap sample pack", "free r&b sample pack", "free hip hop sample pack",
+  "free guitar loops", "free drum loops", "free drum kit", "free songstarters", "free vocal samples", "free melody loops",
+  "gen.wav sample pack", "The Wav Pack", "Solar Flares sample pack", "free plugins", "free synth", "free vocal template", "producer tools"
+].join(", ");
+
 const ProducerTools = () => {
   useEffect(() => {
-    document.title = "Producer Tools: Free Plugins, Vocal Templates & Sample Packs | Enigma Labs Vault";
+    document.title = "Free Sample Packs, Free Plugins & Vocal Templates | Enigma Labs Producer Tools";
     document.querySelector('meta[name="description"]')?.setAttribute(
       "content",
-      "The Enigma Labs Vault: producer tools including free plugins (Enigma Texture Console, Enigma Vocal Sauce), a free R&B vocal template for Logic Pro X, and sample packs coming soon."
+      "Free sample packs, loops & one-shots for trap, reggaeton, Latin & R&B producers by gen.wav — plus free plugins & synths (Enigma Texture Console, Enigma Vocal Sauce, Stemcell) and a free R&B vocal template for Logic Pro X."
     );
+
+    // Search keywords + structured data for the sample packs — added on this
+    // page only and restored when leaving it (same pattern as /plugins).
+    let keywords = document.querySelector('meta[name="keywords"]');
+    const createdKeywords = !keywords;
+    if (!keywords) {
+      keywords = document.createElement("meta");
+      keywords.setAttribute("name", "keywords");
+      document.head.appendChild(keywords);
+    }
+    const previousKeywords = keywords.getAttribute("content");
+    keywords.setAttribute("content", SAMPLE_PACK_KEYWORDS);
+    const jsonLd = document.createElement("script");
+    jsonLd.type = "application/ld+json";
+    jsonLd.text = JSON.stringify(
+      SAMPLE_PACKS.map((p) => ({
+        "@context": "https://schema.org",
+        "@type": "Product",
+        name: `${p.name} ${p.price ? "Sample Pack" : "Free Sample Pack"}`,
+        category: "Sample pack",
+        description: p.description,
+        image: `${window.location.origin}${p.image}`,
+        url: p.url,
+        brand: { "@type": "Brand", name: "gen.wav / Enigma Labs" },
+        offers: {
+          "@type": "Offer",
+          price: p.price ? p.price.replace(/[^0-9.]/g, "") : "0",
+          priceCurrency: "USD",
+          availability: "https://schema.org/InStock",
+          url: p.url
+        }
+      }))
+    );
+    document.head.appendChild(jsonLd);
+
+    return () => {
+      jsonLd.remove();
+      if (createdKeywords) keywords?.remove();
+      else keywords?.setAttribute("content", previousKeywords || "");
+    };
   }, []);
 
   const jumpTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" });

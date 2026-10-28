@@ -18,10 +18,10 @@ const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 
 const Music = () => {
   useEffect(() => {
-    document.title = "Enigma Labs | Music Production & Audio Engineering";
+    document.title = "Enigma Labs | Music Producer, Recording & Audio Engineer in Miami & Fort Lauderdale";
     document.querySelector('meta[name="description"]')?.setAttribute(
       "content",
-      "Professional music production, mixing, mastering, and audio engineering services from Enigma Labs."
+      "Music producer, reggaeton & Latin music producer, recording engineer and audio engineer in Miami & Fort Lauderdale — recording sessions, mixing & mastering, songwriting, beats and music lessons for artists across South Florida, from Kendall and Little Havana to Davie, Sunrise and up to Tampa & Orlando."
     );
   }, []);
 

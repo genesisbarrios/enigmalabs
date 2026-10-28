@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Row, Col, Container, Alert } from "react-bootstrap";
 import axios from "axios";
+import { Link } from "react-router-dom";
 import { trackFormSubmit, trackFormView } from "./analytics";
 
 // Free plugins page — linked from the footer only, not the nav bar.
@@ -363,6 +364,12 @@ const Plugins = () => {
           </p>
         </Col>
       </Row>
+      {/* Back to the Producer Tools hub (/tools), bottom left. */}
+      <div style={{ margin: "0 1% 3rem", textAlign: "left" }}>
+        <Link to="/tools" style={{ color: "#68FF00", fontWeight: 600 }}>
+          &larr; More Tools
+        </Link>
+      </div>
     </Container>
   );
 };

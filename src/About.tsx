@@ -11,7 +11,7 @@ const About = () => {
     document.title = "Enigma Labs | About";
     document.querySelector('meta[name="description"]')?.setAttribute(
       "content",
-      "Learn about Enigma Labs — a Miami-based creative studio for music production, web development, and visual production."
+      "Learn about Enigma Labs — a Miami-based creative studio serving all of South Florida with web development, marketing, content creation, photography, videography, music production and audio engineering."
     );
   }, []);
 

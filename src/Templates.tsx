@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Row, Col, Container, Alert } from "react-bootstrap";
 import axios from "axios";
+import { Link } from "react-router-dom";
 import { trackFormSubmit, trackFormView } from "./analytics";
 
 // Free templates page — same format as /plugins: linked from the footer only,
@@ -423,6 +424,12 @@ const Templates = () => {
           </p>
         </Col>
       </Row>
+      {/* Back to the Producer Tools hub (/tools), bottom left. */}
+      <div style={{ margin: "0 1% 3rem", textAlign: "left" }}>
+        <Link to="/tools" style={{ color: "#68FF00", fontWeight: 600 }}>
+          &larr; More Tools
+        </Link>
+      </div>
     </Container>
   );
 };

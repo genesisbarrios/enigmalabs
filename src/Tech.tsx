@@ -8,10 +8,10 @@ const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 
 const Tech = () => {
   useEffect(() => {
-    document.title = "Enigma Labs | Web Development & Web Design";
+    document.title = "Enigma Labs | Web Design, Web Development & SEO in Miami & South Florida";
     document.querySelector('meta[name="description"]')?.setAttribute(
       "content",
-      "Web design and web development services from Enigma Labs — custom websites, hosting, seo, and ongoing support."
+      "Web design, web development, SEO and Google Business Profile setup for businesses in Miami, Fort Lauderdale, Kendall, Brickell, Doral, Hialeah, Homestead, Boca Raton and all of South Florida — custom websites, hosting, built-in CRM and ongoing support."
     );
   }, []);
 

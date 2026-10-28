@@ -8,10 +8,10 @@ const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 //import image1 from "./image1.png";
 const Visuals = () => {
 useEffect(() => {
-  document.title = "Enigma Labs | Branding, Marketing, Ads, Photography, Videography & Graphic Design";
+  document.title = "Enigma Labs | Marketing, Social Media, Photography & Videography in Miami & South Florida";
   document.querySelector('meta[name="description"]')?.setAttribute(
     "content",
-    "Branding, Marketing, Ads, Social Media Marketing, Digital marketing, Photography, videography, music videos, and graphic design services from Enigma Labs."
+    "Marketing, digital marketing, social media marketing & management, ads, content creation, branding, graphic design, photography, videography and music videos for businesses and artists in Miami, Fort Lauderdale, Kendall, Brickell, Homestead, the Florida Keys and all of South Florida — up to Tampa & Orlando."
   );
 }, []);
 
