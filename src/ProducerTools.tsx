@@ -34,7 +34,7 @@ const CATEGORIES: Category[] = [
   {
     id: "sample-packs",
     title: "Sample Packs",
-    blurb: "Free sample packs by gen.wav — loops, one-shots, and songstarters for trap, reggaeton, Latin, and R&B.",
+    blurb: "Free & premium sample packs by gen.wav — loops, one-shots, and songstarters for trap, reggaeton, Latin, and R&B.",
     href: "https://www.beatstars.com/genwav/sound-kits",
     hrefLabel: "View all on BeatStars →",
     items: SAMPLE_PACKS.map((p) => ({
