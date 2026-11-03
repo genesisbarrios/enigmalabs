@@ -306,8 +306,8 @@ function handleSubmit() {
                 </ul>
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginTop: "1.25rem", marginBottom: "0.75rem" }}>Music Promotion</h6>
                 <ul style={{ marginBottom: 0 }}>
-                  <li><a href="https://square.link/u/2Z8mCXP8" target="_blank" rel="noopener noreferrer" className="price-link">Music Release Rollout: <span className="price">$200</span> —3 weeks of scheduled content across all platforms before, during &amp; after your release</a></li>
-                  <li><a href="https://square.link/u/eCyRYB5C" target="_blank" rel="noopener noreferrer" className="price-link">Music Promo Full Package: <span className="price">$600</span> —3 hr Run and Gun Music Video + Photoshoot, Album Cover, 20 edited pictures, 3 weeks of scheduled content across all platforms before, during &amp; after your release</a></li>
+                  <li><a href="https://square.link/u/2Z8mCXP8" target="_blank" rel="noopener noreferrer" className="price-link">Music Release Rollout: <span className="price">$200</span> — 3 weeks of scheduled content across all platforms before, during &amp; after your release</a></li>
+                  <li><a href="https://square.link/u/eCyRYB5C" target="_blank" rel="noopener noreferrer" className="price-link">Music Promo Full Package: <span className="price">$600</span> — 3 hr Run and Gun Music Video + Photoshoot, Album Cover, 20 edited pictures, 3 weeks of scheduled content across all platforms before, during &amp; after your release</a></li>
                 </ul>
               </div>
               <div style={{ ...infoCardStyle, height: 'auto' }}>
