@@ -325,7 +325,7 @@ function handleSubmit() {
                 <ul style={{ marginBottom: 0 }}>
                   <li>1 HR Shoot 10 Edits: $100</li>
                   <li>2 HR Shoot 20 Edits: $200</li>
-                  <li>Full Day Shoot 100 Edits + Recap Video: $1000</li>
+                  <li>Full Day Shoot (8h) 100 Edits + Recap Video: $1000</li>
                 </ul>
               </div>
               <div style={{ ...infoCardStyle, height: 'auto' }}>
