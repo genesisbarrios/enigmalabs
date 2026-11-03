@@ -333,7 +333,7 @@ function handleSubmit() {
                 <ul style={{ marginBottom: 0 }}>
                   <li><a href="https://square.link/u/SFzsRiSr" target="_blank" rel="noopener noreferrer" className="price-link">1HR Run and Gun Music Video: <span className="price">$200</span></a></li>
                   <li><a href="https://square.link/u/NYzpWdUX" target="_blank" rel="noopener noreferrer" className="price-link">2HR Run and Gun Music Video: <span className="price">$350</span></a></li>
-                  <li>1HR Content Shoot + 2 Edits: $150</li>
+                  <li>1HR Content Shoot + 2 Edits: $200</li>
                 </ul>
               </div>
               <div style={{ ...infoCardStyle, height: 'auto' }}>
