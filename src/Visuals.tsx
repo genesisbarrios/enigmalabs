@@ -341,7 +341,7 @@ function handleSubmit() {
                 <ul style={{ marginBottom: 0 }}>
                   <li><a href="https://square.link/u/NbpKaUWt" target="_blank" rel="noopener noreferrer" className="price-link">Logo Design: <span className="price">$100</span></a></li>
                   <li><a href="https://square.link/u/hUgXLWXV" target="_blank" rel="noopener noreferrer" className="price-link">Logo Design + 250 Business Cards: <span className="price">$150</span></a></li>
-                  <li><a href="https://square.link/u/8JopaglI" target="_blank" rel="noopener noreferrer" className="price-link">Album Covers: <span className="price">$100</span></a></li>
+                  <li><a href="https://square.link/u/8JopaglI" target="_blank" rel="noopener noreferrer" className="price-link">Album Cover Design: <span className="price">$100</span></a></li>
                   <li><a href="https://square.link/u/mTD79ZpW" target="_blank" rel="noopener noreferrer" className="price-link">1 Hr Photo Shoot + Album Cover + 10 Edits: <span className="price">$150</span></a></li>
                 </ul>
               </div>
