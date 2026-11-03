@@ -324,7 +324,7 @@ function handleSubmit() {
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Photography</h6>
                 <ul style={{ marginBottom: 0 }}>
                   <li><a href="https://square.link/u/cuDKOR8q" target="_blank" rel="noopener noreferrer" className="price-link">1 HR Shoot 10 Edits: <span className="price">$100</span></a></li>
-                  <li>2 HR Shoot 20 Edits: $200</li>
+                  <li><a href="https://square.link/u/rTmMIOnl" target="_blank" rel="noopener noreferrer" className="price-link">2 HR Shoot 20 Edits: <span className="price">$200</span></a></li>
                   <li>Full Day Shoot (8h) 100 Edits + Recap Video: $1000</li>
                 </ul>
               </div>
