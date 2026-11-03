@@ -323,7 +323,7 @@ function handleSubmit() {
               <div style={{ ...infoCardStyle, height: 'auto' }}>
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Photography</h6>
                 <ul style={{ marginBottom: 0 }}>
-                  <li>1 HR Shoot 10 Edits: $100</li>
+                  <li><a href="https://square.link/u/cuDKOR8q" target="_blank" rel="noopener noreferrer" className="price-link">1 HR Shoot 10 Edits: <span className="price">$100</span></a></li>
                   <li>2 HR Shoot 20 Edits: $200</li>
                   <li>Full Day Shoot (8h) 100 Edits + Recap Video: $1000</li>
                 </ul>
