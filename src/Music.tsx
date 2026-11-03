@@ -336,7 +336,7 @@ const Music = () => {
               <Col sm={6} style={{ marginBottom: "1.5rem", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
                 <div style={{ ...infoCardStyle, height: "auto" }}>
                   <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Recording Sessions</h5>
-                  {/* Miami | Fort Lauderdale side by side, 50/50 */}
+                  {/* Miami | Fort Lauderdale on top, House Call | Remote below, 50/50 so rows line up */}
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
                   <div>
                   <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>Miami (Red Squid Studios / Mars Miami Studios)</h6>
@@ -345,14 +345,6 @@ const Music = () => {
                     <li><a href="https://square.link/u/oHRAj0PJ" target="_blank" rel="noopener noreferrer" className="price-link">4 Hours: <span className="price">$400</span></a></li>
                     <li><a href="https://square.link/u/AtDYoDkM" target="_blank" rel="noopener noreferrer" className="price-link">8 Hours: <span className="price">$760 (5% off)</span></a></li>
                   </ul>
-                  <div style={{ marginTop: "1rem" }}>
-                  <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>House Call / Your Studio of Choice</h6>
-                  <ul style={{ marginBottom: 0, paddingLeft: "1.1rem" }}>
-                    <li><a href="https://square.link/u/SKmN3wqc" target="_blank" rel="noopener noreferrer" className="price-link">2 Hours: <span className="price">$80</span></a></li>
-                    <li><a href="https://square.link/u/LuaYIdtm" target="_blank" rel="noopener noreferrer" className="price-link">4 Hours: <span className="price">$160</span></a></li>
-                    <li><a href="https://square.link/u/dxfSIwmh" target="_blank" rel="noopener noreferrer" className="price-link">8 Hours: <span className="price">$300 (6% off)</span></a></li>
-                  </ul>
-                  </div>
                   </div>
                   <div>
                   <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>Fort Lauderdale (Peace Kings Studios)</h6>
@@ -361,7 +353,16 @@ const Music = () => {
                     <li><a href="https://square.link/u/2BjcuCt1" target="_blank" rel="noopener noreferrer" className="price-link">4 Hours: <span className="price">$300</span></a></li>
                     <li><a href="https://square.link/u/YiAS1wvn" target="_blank" rel="noopener noreferrer" className="price-link">8 Hours: <span className="price">$570 (5% off)</span></a></li>
                   </ul>
-                  <div style={{ marginTop: "1rem" }}>
+                  </div>
+                  <div>
+                  <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>House Call / Your Studio of Choice</h6>
+                  <ul style={{ marginBottom: 0, paddingLeft: "1.1rem" }}>
+                    <li><a href="https://square.link/u/SKmN3wqc" target="_blank" rel="noopener noreferrer" className="price-link">2 Hours: <span className="price">$80</span></a></li>
+                    <li><a href="https://square.link/u/LuaYIdtm" target="_blank" rel="noopener noreferrer" className="price-link">4 Hours: <span className="price">$160</span></a></li>
+                    <li><a href="https://square.link/u/dxfSIwmh" target="_blank" rel="noopener noreferrer" className="price-link">8 Hours: <span className="price">$300 (6% off)</span></a></li>
+                  </ul>
+                  </div>
+                  <div>
                   <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>Remote Recording Session</h6>
                   <ul style={{ marginBottom: 0, paddingLeft: "1.1rem" }}>
                     {/* TODO: swap spans for square.link anchors once links are ready */}
@@ -369,7 +370,6 @@ const Music = () => {
                     <li><span className="price-link">4 Hours: <span className="price">$160</span></span></li>
                     <li><span className="price-link">8 Hours: <span className="price">$300 (6% off)</span></span></li>
                   </ul>
-                  </div>
                   </div>
                   </div>
                 </div>
