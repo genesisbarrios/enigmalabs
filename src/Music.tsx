@@ -350,7 +350,7 @@ const Music = () => {
                   <ul style={{ marginBottom: 0, paddingLeft: "1.1rem" }}>
                     {/* TODO: swap spans for square.link anchors once links are ready */}
                     <li><a href="https://square.link/u/SKmN3wqc" target="_blank" rel="noopener noreferrer" className="price-link">2 Hours: <span className="price">$80</span></a></li>
-                    <li><span className="price-link">4 Hours: <span className="price">$160</span></span></li>
+                    <li><a href="https://square.link/u/LuaYIdtm" target="_blank" rel="noopener noreferrer" className="price-link">4 Hours: <span className="price">$160</span></a></li>
                     <li><span className="price-link">8 Hours: <span className="price">$300 (6% off)</span></span></li>
                   </ul>
                   </div>
