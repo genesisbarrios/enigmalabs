@@ -340,7 +340,7 @@ function handleSubmit() {
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Graphic Design</h6>
                 <ul style={{ marginBottom: 0 }}>
                   <li><a href="https://square.link/u/NbpKaUWt" target="_blank" rel="noopener noreferrer" className="price-link">Logos: <span className="price">$100</span></a></li>
-                  <li>250 Business Cards (logo design included): $100</li>
+                  <li>250 Business Cards (logo design included): $150</li>
                   <li>Album Covers: $50</li>
                   <li>1 Hr Photo Shoot + Album Cover + 10 Edits: $150</li>
                 </ul>
