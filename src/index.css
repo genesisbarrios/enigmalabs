@@ -509,3 +509,29 @@ button:disabled {
 .price-link .price{
   color: #68FF00;
 }
+
+/* Producer Tools jump buttons: smaller on phones so all three fit on one line. */
+.tools-jump-row{
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.tools-jump{
+  padding: 0.4rem 1.1rem;
+  white-space: nowrap;
+}
+
+@media only screen and (max-width: 600px) {
+  .tools-jump-row{
+    flex-wrap: nowrap;
+    gap: 0.4rem;
+  }
+
+  .tools-jump{
+    padding: 0.35rem 0.7rem;
+    font-size: 0.75rem;
+  }
+}

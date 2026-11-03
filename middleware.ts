@@ -13,7 +13,7 @@ export const config = {
 };
 
 const BOT_UA =
-  /bot|facebookexternalhit|twitterbot|slackbot|linkedinbot|whatsapp|telegrambot|discordbot|pinterest|skypeuripreview|redditbot|iframely|w3c_validator|applebot|embedly|quora link preview|vkshare/i;
+  /bot|facebookexternalhit|meta-externalagent|meta-externalfetcher|instagram|twitterbot|slackbot|linkedinbot|whatsapp|telegrambot|discordbot|pinterest|skypeuripreview|redditbot|iframely|w3c_validator|applebot|embedly|quora link preview|vkshare/i;
 
 type Meta = {
   title: string;
@@ -132,17 +132,18 @@ function resolveStaticMeta(origin: string, pathname: string): Meta | null {
     };
   }
   // Keep these image paths in sync with src/Plugins.tsx / src/Templates.tsx
-  // when a new screenshot version is uploaded.
+  // when a new screenshot version is uploaded. Every page without its own
+  // image here uses the logo card from public/index.html (public/og/enigma-labs.png).
   if (pathname.toLowerCase() === "/tools") {
     return {
       title: "Producer Tools: Free Plugins, Vocal Templates & Sample Packs | Enigma Labs Vault",
       description:
-        "The Enigma Labs Vault: free plugins (Enigma Texture Console, Enigma Vocal Sauce), a free R&B vocal template for Logic Pro X, and sample packs coming soon.",
+        "The Enigma Labs Vault: free plugins (Enigma Texture Console, Enigma Vocal Sauce), the Stemcell synth you can play in your browser, a free R&B vocal template for Logic Pro X, and sample packs.",
       url: `${origin}/tools`,
-      image: `${origin}/plugins/TextureConsoleV32.png`,
-      imageWidth: 1592,
-      imageHeight: 1194,
-      imageType: "image/png",
+      image: `${origin}/og/stemcell.jpg`,
+      imageWidth: 1200,
+      imageHeight: 595,
+      imageType: "image/jpeg",
       imageAlt: "Enigma Labs Producer Tools",
       twitterCard: "summary_large_image",
     };
@@ -153,7 +154,7 @@ function resolveStaticMeta(origin: string, pathname: string): Meta | null {
       description:
         "Free plugins from Enigma Labs: Enigma Texture Console, a free Chroma Console-style multi-effect, and Enigma Vocal Sauce, a free vocal chain plugin with preamp, EQ, 1176- and LA-2A-style compression, Pultec-style EQ, and de-esser. Free VST3/AU via Flow Effect (Mac).",
       url: `${origin}/plugins`,
-      image: `${origin}/plugins/TextureConsoleV32.png`,
+      image: `${origin}/plugins/Texture%20Console/TextureConsoleV32.png`,
       imageWidth: 1592,
       imageHeight: 1194,
       imageType: "image/png",

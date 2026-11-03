@@ -132,18 +132,18 @@ const ProducerTools = () => {
           <p style={{ color: GREEN, letterSpacing: "0.3em", textTransform: "uppercase", fontSize: "0.8rem", marginBottom: "0.25rem" }}>The Vault</p>
           <h1 className="subpage-title aboutTitle" style={{ marginTop: 0 }}>Producer Tools</h1>
           <p style={{ color: "#d4d4d4", maxWidth: 600, margin: "0 auto" }}>Plugins, templates, and sample packs from Enigma Labs.</p>
-          <div style={{ display: "flex", justifyContent: "center", flexWrap: "wrap", gap: "0.5rem", marginTop: "1.25rem" }}>
+          <div className="tools-jump-row">
             {CATEGORIES.map((c) => (
               <button
                 key={c.id}
                 type="button"
                 onClick={() => jumpTo(c.id)}
+                className="tools-jump"
                 style={{
                   background: "transparent",
                   color: GREEN,
                   border: `1px solid ${GREEN}`,
                   borderRadius: "2rem",
-                  padding: "0.4rem 1.1rem",
                   fontWeight: 600,
                   cursor: "pointer"
                 }}
@@ -158,12 +158,13 @@ const ProducerTools = () => {
       {CATEGORIES.map((c, i) => (
         <section key={c.id} id={c.id} style={{ scrollMarginTop: 90, marginTop: i === 0 ? "1.5rem" : "3rem" }}>
           <Row style={{ margin: "1%", alignItems: "flex-end" }}>
-            <Col>
+            {/* Full width on phones (link drops below) so the blurb isn't squeezed. */}
+            <Col xs={12} md>
               <h2 className="subsection-title" style={{ color: GREEN, margin: 0 }}>{c.title}</h2>
               <p style={{ color: "#aaa", margin: "0.25rem 0 0" }}>{c.blurb}</p>
             </Col>
             {c.href ? (
-              <Col xs="auto">
+              <Col xs={12} md="auto" style={{ marginTop: "0.5rem" }}>
                 <a
                   href={c.href}
                   {...(c.href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
