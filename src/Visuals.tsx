@@ -313,7 +313,7 @@ function handleSubmit() {
               <div style={{ ...infoCardStyle, height: 'auto' }}>
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Ads</h6>
                 <ul style={{ marginBottom: 0 }}>
-                  <li>Basic Ad Package: $200/mo — includes $100 in ad spend, campaign setup, audience targeting &amp; management</li>
+                  <li><a href="https://square.link/u/oWzl59ES" target="_blank" rel="noopener noreferrer" className="price-link">Basic Ad Package: <span className="price">$200/mo</span> — includes $100 in ad spend, campaign setup, audience targeting &amp; management</a></li>
                   <li>Standard Ad Package: $500/mo — includes $250 in ad spend, campaign setup, audience targeting &amp; management</li>
                   <li>Premium Ad Package: $1000/mo — includes $500 in ad spend, campaign setup, audience targeting &amp; management</li>
                 </ul>
