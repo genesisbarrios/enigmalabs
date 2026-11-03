@@ -306,7 +306,7 @@ function handleSubmit() {
                 </ul>
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginTop: "1.25rem", marginBottom: "0.75rem" }}>Music Promotion</h6>
                 <ul style={{ marginBottom: 0 }}>
-                  <li>Music Release Rollout: $200 — 3 weeks of scheduled content across all platforms before, during &amp; after your release</li>
+                  <li><a href="https://square.link/u/2Z8mCXP8" target="_blank" rel="noopener noreferrer" className="price-link">Music Release Rollout: <span className="price">$200</span></a> —3 weeks of scheduled content across all platforms before, during &amp; after your release</li>
                   <li>Music Promo Full Package: $500 — album cover, 10 edited pictures, 2 hr run and gun music video + 3 weeks of scheduled content across all platforms before, during &amp; after your release</li>
                 </ul>
               </div>
