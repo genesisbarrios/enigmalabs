@@ -315,7 +315,7 @@ function handleSubmit() {
                 <ul style={{ marginBottom: 0 }}>
                   <li><a href="https://square.link/u/oWzl59ES" target="_blank" rel="noopener noreferrer" className="price-link">Basic Ad Package: <span className="price">$200/mo</span> — includes $100 in ad spend, campaign setup, audience targeting &amp; management</a></li>
                   <li><a href="https://square.link/u/HvTxW0Iq" target="_blank" rel="noopener noreferrer" className="price-link">Standard Ad Package: <span className="price">$500/mo</span> — includes $250 in ad spend, campaign setup, audience targeting &amp; management</a></li>
-                  <li>Premium Ad Package: $1000/mo — includes $500 in ad spend, campaign setup, audience targeting &amp; management</li>
+                  <li><a href="https://square.link/u/CB72yXJX" target="_blank" rel="noopener noreferrer" className="price-link">Premium Ad Package: <span className="price">$1000/mo</span> — includes $500 in ad spend, campaign setup, audience targeting &amp; management</a></li>
                 </ul>
               </div>
             </Col>
