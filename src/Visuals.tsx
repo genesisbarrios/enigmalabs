@@ -325,7 +325,7 @@ function handleSubmit() {
                 <ul style={{ marginBottom: 0 }}>
                   <li><a href="https://square.link/u/cuDKOR8q" target="_blank" rel="noopener noreferrer" className="price-link">1 HR Shoot 10 Edits: <span className="price">$100</span></a></li>
                   <li><a href="https://square.link/u/rTmMIOnl" target="_blank" rel="noopener noreferrer" className="price-link">2 HR Shoot 20 Edits: <span className="price">$200</span></a></li>
-                  <li>Full Day Shoot (8h) 100 Edits + Recap Video: $1000</li>
+                  <li><a href="https://square.link/u/xTNdvj5B" target="_blank" rel="noopener noreferrer" className="price-link">Full Day Shoot (8h) 100 Edits + Recap Video: <span className="price">$1000</span></a></li>
                 </ul>
               </div>
               <div style={{ ...infoCardStyle, height: 'auto' }}>
