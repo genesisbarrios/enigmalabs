@@ -302,7 +302,7 @@ function handleSubmit() {
               <div style={{ ...infoCardStyle, height: 'auto' }}>
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Marketing</h6>
                 <ul style={{ marginBottom: 0 }}>
-                  <li><a href="https://square.link/u/0dFh75Gd" target="_blank" rel="noopener noreferrer" className="price-link">Social Media Management: <span className="price">$1000/mo</span> — includes 1 shoot day (4hr) + 4 weeks of scheduled content (4 videos, 8 image posts)</a></li>
+                  <li><a href="https://square.link/u/0dFh75Gd" target="_blank" rel="noopener noreferrer" className="price-link">Social Media Management: <span className="price">$1000/mo</span> — 1 shoot day (4hr) + 4 weeks of scheduled content (4 videos, 8 image posts)</a></li>
                 </ul>
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginTop: "1.25rem", marginBottom: "0.75rem" }}>Music Promotion</h6>
                 <ul style={{ marginBottom: 0 }}>
