@@ -343,8 +343,7 @@ const Music = () => {
                   <ul style={{ marginBottom: 0, paddingLeft: "1.1rem" }}>
                     <li><a href="https://square.link/u/APfouSRh" target="_blank" rel="noopener noreferrer" className="price-link">2 Hours: <span className="price">$200</span></a></li>
                     <li><a href="https://square.link/u/oHRAj0PJ" target="_blank" rel="noopener noreferrer" className="price-link">4 Hours: <span className="price">$400</span></a></li>
-                    {/* TODO: swap span for square.link anchor once link is ready */}
-                    <li><span className="price-link">8 Hours: <span className="price">$760 (5% off)</span></span></li>
+                    <li><a href="https://square.link/u/AtDYoDkM" target="_blank" rel="noopener noreferrer" className="price-link">8 Hours: <span className="price">$760 (5% off)</span></a></li>
                   </ul>
                   <div style={{ marginTop: "1rem" }}>
                   <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>House Call / Your Studio of Choice</h6>
@@ -361,8 +360,7 @@ const Music = () => {
                   <ul style={{ marginBottom: 0, paddingLeft: "1.1rem" }}>
                     <li><a href="https://square.link/u/lx6seMHc" target="_blank" rel="noopener noreferrer" className="price-link">2 Hours: <span className="price">$150</span></a></li>
                     <li><a href="https://square.link/u/2BjcuCt1" target="_blank" rel="noopener noreferrer" className="price-link">4 Hours: <span className="price">$300</span></a></li>
-                    {/* TODO: swap span for square.link anchor once link is ready */}
-                    <li><span className="price-link">8 Hours: <span className="price">$570 (5% off)</span></span></li>
+                    <li><a href="https://square.link/u/YiAS1wvn" target="_blank" rel="noopener noreferrer" className="price-link">8 Hours: <span className="price">$570 (5% off)</span></a></li>
                   </ul>
                   <div style={{ marginTop: "1rem" }}>
                   <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>Remote Recording Session</h6>
