@@ -366,7 +366,7 @@ const Music = () => {
                   <h6 style={{ color: "#fff", fontWeight: 700, marginBottom: "0.4rem" }}>Remote Recording Session</h6>
                   <ul style={{ marginBottom: 0, paddingLeft: "1.1rem" }}>
                     {/* TODO: swap spans for square.link anchors once links are ready */}
-                    <li><span className="price-link">2 Hours: <span className="price">$80</span></span></li>
+                    <li><a href="https://square.link/u/xE8xTrox" target="_blank" rel="noopener noreferrer" className="price-link">2 Hours: <span className="price">$80</span></a></li>
                     <li><span className="price-link">4 Hours: <span className="price">$160</span></span></li>
                     <li><span className="price-link">8 Hours: <span className="price">$300 (6% off)</span></span></li>
                   </ul>
