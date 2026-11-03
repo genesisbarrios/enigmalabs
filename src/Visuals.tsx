@@ -331,7 +331,7 @@ function handleSubmit() {
               <div style={{ ...infoCardStyle, height: 'auto' }}>
                 <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Videography</h6>
                 <ul style={{ marginBottom: 0 }}>
-                  <li>1HR Run and Gun Music Video: $200</li>
+                  <li><a href="https://square.link/u/SFzsRiSr" target="_blank" rel="noopener noreferrer" className="price-link">1HR Run and Gun Music Video: <span className="price">$200</span></a></li>
                   <li>2HR Run and Gun Music Video: $350</li>
                   <li>1HR Content Shoot + 2 Edits: $150</li>
                 </ul>
