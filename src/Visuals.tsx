@@ -11,7 +11,7 @@ useEffect(() => {
   document.title = "Enigma Labs | Marketing, Social Media, Photography & Videography in Miami & South Florida";
   document.querySelector('meta[name="description"]')?.setAttribute(
     "content",
-    "Marketing, digital marketing, social media marketing & management, ads, content creation, branding, graphic design, photography, videography and music videos for businesses and artists in Miami, Fort Lauderdale, Kendall, Brickell, Homestead, the Florida Keys and all of South Florida — up to Tampa & Orlando."
+    "Marketing, digital marketing, social media marketing & management, ads, content creation, branding, graphic design, photography, videography, event photography & videography and music videos for businesses and artists in Miami, Fort Lauderdale, Kendall, Brickell, Homestead, the Florida Keys and all of South Florida — up to Tampa & Orlando."
   );
 }, []);
 
@@ -169,7 +169,7 @@ function handleSubmit() {
             <Col sm={12}>
               <h5 className="subsection-title" style={{marginTop: "5%"}}>Services</h5>
               <ul>
-                <li>Photography, Videography, Music Videos, Content Creation</li>
+                <li>Photography, Videography, Event Coverage, Music Videos, Content Creation</li>
                 <li>Graphic Design: Logos, Branding, Album Covers, Business Cards, Stickers, Posters + more.</li>
                 <li>Marketing, Social Media Management & Ads: Instagram, TikTok, YouTube, Facebook + more.</li>
               </ul>
@@ -325,7 +325,7 @@ function handleSubmit() {
                 <ul style={{ marginBottom: 0 }}>
                   <li><a href="https://square.link/u/cuDKOR8q" target="_blank" rel="noopener noreferrer" className="price-link">1 HR Shoot 10 Edits: <span className="price">$100</span></a></li>
                   <li><a href="https://square.link/u/rTmMIOnl" target="_blank" rel="noopener noreferrer" className="price-link">2 HR Shoot 20 Edits: <span className="price">$200</span></a></li>
-                  <li><a href="https://square.link/u/xTNdvj5B" target="_blank" rel="noopener noreferrer" className="price-link">Full Day Shoot (8h) 100 Edits + Recap Video: <span className="price">$1000</span></a></li>
+                  <li><a href="https://square.link/u/xTNdvj5B" target="_blank" rel="noopener noreferrer" className="price-link">Full Day Shoot / Event Coverage (8h) 100 Edits + Recap Video: <span className="price">$1000</span></a></li>
                 </ul>
               </div>
               <div style={{ ...infoCardStyle, height: 'auto' }}>
