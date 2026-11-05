@@ -257,52 +257,50 @@ const Music = () => {
               <h5 className="subsection-title" style={{marginTop: "5%"}}>Productions</h5>
             </Col>
           </Row>
-            <Row style={rowStyle}>
-               <Col sm={4}>
-                  <iframe width="100%" height="220" src="https://www.youtube.com/embed/Y0I3k4xsKxk?si=G3fnFW6WCNacD726" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen style={{ minWidth: 0 }}></iframe>
-                </Col>
-                  <Col sm={4}>
-                    <iframe width="100%" height="220" src="https://www.youtube.com/embed/9zTbm_5Q8hM?si=ePdfJjQyMXwqcbvh" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen style={{ minWidth: 0 }}></iframe>
-                  </Col>
-                <Col sm={4}>
-                  <iframe width="100%" height="220" src="https://www.youtube.com/embed/-l30sZtFzJw?si=-tfQfbMGpLSGdXHy" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen style={{ minWidth: 0 }}></iframe>
-                </Col>
-              </Row>
-              <Row style={rowStyle}>
-                 <Col sm={4}>
-                <iframe width="100%" height="220" src="https://www.youtube.com/embed/videoseries?list=PLcGBMxEyx5p8sfg853csGDXChKZo2ZNNi" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
-              </Col>
-                  <Col sm={4}>
-                <iframe width="100%" height="220" src="https://www.youtube.com/embed/videoseries?list=PLcGBMxEyx5p9cfbXNscaNm6tjNaOoWGBP" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
-              </Col>
-                <Col sm={4}>
-                  <iframe width="100%" height="220" src="https://www.youtube.com/embed/0qUe5yHrXME?si=9_69oglkzU8Ko0bC" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
-                </Col>
-              </Row>
-              <Row style={rowStyle}>
-                 <Col sm={4}>
-                  <iframe width="100%" height="220" src="https://www.youtube.com/embed/o5__bvpQ2TE?si=D_b6ni-SrcayntgQ" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
-                </Col>
-               
-                <Col sm={4}>
-                  <iframe width="100%" height="220" src="https://www.youtube.com/embed/LJwhyKUX7SI?si=obJ4UiI4FysglOGY" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
-                </Col>
-                <Col sm={4}>
-                 <iframe width="100%" height="220" src="https://www.youtube.com/embed/GN2xNbORvi8?si=POjqdPrWmx33gBb6" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
-                </Col>
-               
-              </Row>
-            <Row style={rowStyle}>
-                <Col sm={4}>
-                  <iframe width="100%" height="220" src="https://www.youtube.com/embed/W70uVdpZBxY?si=-gz8f2_oDLBXlWHW" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
-                </Col>
-                <Col sm={4}>
-                  <iframe width="100%" height="220" src="https://www.youtube.com/embed/rA59UKIzpgo?si=ycJ388eF3ULM1IxE" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
-                </Col>
-                 <Col sm={4}>
-                  
-                </Col>
-              </Row>
+          <Row style={rowStyle}>
+            <Col sm={4}>
+              <iframe width="100%" height="220" src="https://www.youtube.com/embed/Y0I3k4xsKxk?si=G3fnFW6WCNacD726" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen style={{ minWidth: 0 }}></iframe>
+            </Col>
+            <Col sm={4}>
+              <iframe width="100%" height="220" src="https://www.youtube.com/embed/9zTbm_5Q8hM?si=ePdfJjQyMXwqcbvh" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen style={{ minWidth: 0 }}></iframe>
+            </Col>
+            <Col sm={4}>
+              <iframe width="100%" height="220" src="https://www.youtube.com/embed/8DO6yVbZKhg?si=TlVBrFVtPLeqEdHv" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen style={{ minWidth: 0 }}></iframe>
+            </Col>
+          </Row>
+          <Row style={rowStyle}>
+            <Col sm={4}>
+              <iframe width="100%" height="220" src="https://www.youtube.com/embed/-l30sZtFzJw?si=-tfQfbMGpLSGdXHy" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen style={{ minWidth: 0 }}></iframe>
+            </Col>
+            <Col sm={4}>
+              <iframe width="100%" height="220" src="https://www.youtube.com/embed/videoseries?list=PLcGBMxEyx5p8sfg853csGDXChKZo2ZNNi" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen></iframe>
+            </Col>
+            <Col sm={4}>
+              <iframe width="100%" height="220" src="https://www.youtube.com/embed/videoseries?list=PLcGBMxEyx5p9cfbXNscaNm6tjNaOoWGBP" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
+            </Col>
+          </Row>
+          <Row style={rowStyle}>
+            <Col sm={4}>
+              <iframe width="100%" height="220" src="https://www.youtube.com/embed/0qUe5yHrXME?si=9_69oglkzU8Ko0bC" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
+            </Col>
+            <Col sm={4}>
+              <iframe width="100%" height="220" src="https://www.youtube.com/embed/o5__bvpQ2TE?si=D_b6ni-SrcayntgQ" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
+            </Col>
+            <Col sm={4}>
+              <iframe width="100%" height="220" src="https://www.youtube.com/embed/LJwhyKUX7SI?si=obJ4UiI4FysglOGY" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
+            </Col>
+          </Row>
+          <Row style={rowStyle}>
+            <Col sm={4}>
+              <iframe width="100%" height="220" src="https://www.youtube.com/embed/GN2xNbORvi8?si=POjqdPrWmx33gBb6" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
+            </Col>
+            <Col sm={4}>
+              <iframe width="100%" height="220" src="https://www.youtube.com/embed/W70uVdpZBxY?si=-gz8f2_oDLBXlWHW" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
+            </Col>
+            <Col sm={4}>
+              <iframe width="100%" height="220" src="https://www.youtube.com/embed/rA59UKIzpgo?si=ycJ388eF3ULM1IxE" title="YouTube video player" frameBorder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen></iframe>
+            </Col>
+          </Row>
 
            <Row style={rowStyle}>
             <Col sm={12}>
