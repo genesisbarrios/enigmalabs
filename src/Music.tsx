@@ -191,68 +191,6 @@ const Music = () => {
 
          
           <Row style={rowStyle}>
-            <Col sm={12} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", marginTop: "0.5rem" }}>
-              <h5 className="subsection-title" style={{ margin: 0 }}>
-                <a href={BEATSTARS_TRACKS_URL} target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "none" }}>
-                  Beats <span style={{color:"#DF0000"}}>(BUY 1 GET 1 FREE)</span>
-                </a>
-              </h5>
-              <a href={BEATSTARS_TRACKS_URL} target="_blank" rel="noopener noreferrer" aria-label="Beats on BeatStars" title="Beats on BeatStars">
-                <BeatStarsIcon size={30} />
-              </a>
-            </Col>
-          </Row>
-          <Row style={rowStyle}>
-            <Col sm={12}>
-            <iframe
-              className="beatstars-embed"
-              title="gen.wav beats on BeatStars"
-              src="https://player.beatstars.com/?storeId=140652">
-          </iframe>
-            </Col>
-          </Row>
-
-          <Row style={rowStyle}>
-            <Col sm={12}>
-              <h5 className="subsection-title" style={{marginTop: "5%"}}>Deals</h5>
-            </Col>
-          </Row>
-          <Row style={rowStyle}>
-            {BEAT_DEALS.map((deal) => (
-              <Col key={deal.url} xs={12} md={6} style={{ marginBottom: "1rem" }}>
-                <a
-                  href={deal.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: "1rem",
-                    height: "100%",
-                    padding: "1.25rem 1.5rem",
-                    background: "#111",
-                    border: "1px solid #68FF00",
-                    borderRadius: 16,
-                    boxShadow: "0 0 24px rgba(104, 255, 0, 0.12)",
-                    color: "#fff",
-                    textDecoration: "none"
-                  }}
-                >
-                  <span>
-                    <span style={{ display: "block", fontSize: "1.35rem", fontWeight: 700, color: "#68FF00" }}>{deal.name}</span>
-                    <span style={{ display: "block", color: "#d4d4d4", marginTop: "0.2rem" }}>{deal.detail}</span>
-                    <span style={{ display: "inline-block", marginTop: "0.75rem", color: "#DF0000", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "0.85rem" }}>
-                      Get the pack →
-                    </span>
-                  </span>
-                  <BeatStarsIcon size={36} />
-                </a>
-              </Col>
-            ))}
-          </Row>
-
-          <Row style={rowStyle}>
             <Col sm={12}>
               <h5 className="subsection-title" style={{marginTop: "5%"}}>Productions</h5>
             </Col>
@@ -418,6 +356,68 @@ const Music = () => {
                 </div>
               </Col>
             </Row>
+
+          <Row style={rowStyle}>
+            <Col sm={12} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem", marginTop: "5%" }}>
+              <h5 className="subsection-title" style={{ margin: 0 }}>
+                <a href={BEATSTARS_TRACKS_URL} target="_blank" rel="noopener noreferrer" style={{ color: "inherit", textDecoration: "none" }}>
+                  Beats <span style={{color:"#DF0000"}}>(BUY 1 GET 1 FREE)</span>
+                </a>
+              </h5>
+              <a href={BEATSTARS_TRACKS_URL} target="_blank" rel="noopener noreferrer" aria-label="Beats on BeatStars" title="Beats on BeatStars">
+                <BeatStarsIcon size={30} />
+              </a>
+            </Col>
+          </Row>
+          <Row style={rowStyle}>
+            <Col sm={12}>
+            <iframe
+              className="beatstars-embed"
+              title="gen.wav beats on BeatStars"
+              src="https://player.beatstars.com/?storeId=140652">
+          </iframe>
+            </Col>
+          </Row>
+
+          <Row style={rowStyle}>
+            <Col sm={12}>
+              <h5 className="subsection-title" style={{marginTop: "5%"}}>Deals</h5>
+            </Col>
+          </Row>
+          <Row style={rowStyle}>
+            {BEAT_DEALS.map((deal) => (
+              <Col key={deal.url} xs={12} md={6} style={{ marginBottom: "1rem" }}>
+                <a
+                  href={deal.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: "1rem",
+                    height: "100%",
+                    padding: "1.25rem 1.5rem",
+                    background: "#111",
+                    border: "1px solid #68FF00",
+                    borderRadius: 16,
+                    boxShadow: "0 0 24px rgba(104, 255, 0, 0.12)",
+                    color: "#fff",
+                    textDecoration: "none"
+                  }}
+                >
+                  <span>
+                    <span style={{ display: "block", fontSize: "1.35rem", fontWeight: 700, color: "#68FF00" }}>{deal.name}</span>
+                    <span style={{ display: "block", color: "#d4d4d4", marginTop: "0.2rem" }}>{deal.detail}</span>
+                    <span style={{ display: "inline-block", marginTop: "0.75rem", color: "#DF0000", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", fontSize: "0.85rem" }}>
+                      Get the pack →
+                    </span>
+                  </span>
+                  <BeatStarsIcon size={36} />
+                </a>
+              </Col>
+            ))}
+          </Row>
 
           <hr style={{backgroundColor:"white", marginTop:"5%"}}></hr>
 
