@@ -351,7 +351,7 @@ const Music = () => {
                   <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Mixing + Mastering</h5>
                   <ul style={{ marginBottom: 0 }}>
                     <li><a href="https://square.link/u/qsoscZeC" target="_blank" rel="noopener noreferrer" className="price-link">Basic Mix + Master: <span className="price">$100 (up to 10 stems)</span></a></li>
-                    <li><a href="https://square.link/u/BdD9A9Pn" target="_blank" rel="noopener noreferrer" className="price-link">Premium Mix + Master: <span className="price">$200</span></a></li>
+                    <li><a href="https://square.link/u/BdD9A9Pn" target="_blank" rel="noopener noreferrer" className="price-link">Premium Mix + Master: <span className="price">$200 (no stem limit)</span></a></li>
                   </ul>
                 </div>
               </Col>
