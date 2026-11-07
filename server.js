@@ -897,7 +897,9 @@ function buildOnboardingEmailHtml(lead) {
     leadId: lead._id,
     type: 'onboarding',
     paragraphs: [
-      `We're excited to get started on your new website! The next step is filling out our quick onboarding form so we have everything we need — your branding, business details, and preferences.`
+      `We're excited to get started on your new website! The next steps are all on our onboarding page:`,
+      // Same order as the /onboard page: payment, agreement, then the form.
+      `<strong>1. Make your payment</strong><br/><strong>2. Sign the web development agreement</strong><br/><strong>3. Fill out our quick onboarding form</strong> so we have everything we need — your branding, business details, and preferences.`
     ],
     ctaLabel: 'Start onboarding',
     ctaUrl: trackedUrl(lead._id, `${SITE_URL}/onboard`, 'onboarding')
@@ -912,7 +914,7 @@ function buildOnboardingReminderEmailHtml(lead) {
     leadId: lead._id,
     type: 'onboardingReminder',
     paragraphs: [
-      `Just a friendly reminder to complete your onboarding — we still need your payment and a few details from you (branding, business info, preferences) before we can get started on your new website.`
+      `Just a friendly reminder to complete your onboarding — we still need your payment, your signed web development agreement, and a few details from you (branding, business info, preferences) before we can get started on your new website.`
     ],
     ctaLabel: 'Complete onboarding',
     ctaUrl: trackedUrl(lead._id, `${SITE_URL}/onboard`, 'onboardingReminder')
