@@ -891,16 +891,19 @@ function buildOutdatedWebsiteMockupEmailHtml(lead) {
   });
 }
 
+// Shared by the lead onboarding email and the client-only send below.
+// Same order as the /onboard page: payment, agreement, then the form.
+const ONBOARDING_EMAIL_PARAGRAPHS = [
+  `We're excited to get started on your new website! The next steps are all on our onboarding page:`,
+  `<strong>1. Make your payment</strong><br/><strong>2. Sign the web development agreement</strong><br/><strong>3. Fill out our quick onboarding form</strong> so we have everything we need — your branding, business details, and preferences.`
+];
+
 function buildOnboardingEmailHtml(lead) {
   return renderBrandedEmail({
     greetingName: lead.contactName,
     leadId: lead._id,
     type: 'onboarding',
-    paragraphs: [
-      `We're excited to get started on your new website! The next steps are all on our onboarding page:`,
-      // Same order as the /onboard page: payment, agreement, then the form.
-      `<strong>1. Make your payment</strong><br/><strong>2. Sign the web development agreement</strong><br/><strong>3. Fill out our quick onboarding form</strong> so we have everything we need — your branding, business details, and preferences.`
-    ],
+    paragraphs: ONBOARDING_EMAIL_PARAGRAPHS,
     ctaLabel: 'Start onboarding',
     ctaUrl: trackedUrl(lead._id, `${SITE_URL}/onboard`, 'onboarding')
   });
@@ -3336,9 +3339,7 @@ app.post('/api/website-clients/:id/send-onboarding', async (req, res) => {
         // Client "name" is usually the business name — use the generic greeting.
         greetingName: '',
         type: 'onboarding',
-        paragraphs: [
-          `We're excited to get started on your new website! The next step is filling out our quick onboarding form so we have everything we need — your branding, business details, and preferences.`
-        ],
+        paragraphs: ONBOARDING_EMAIL_PARAGRAPHS,
         ctaLabel: 'Start onboarding',
         ctaUrl: `${SITE_URL}/onboard`
       });
