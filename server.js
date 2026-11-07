@@ -924,7 +924,7 @@ function buildOnboardingReminderEmailHtml(lead) {
   });
 }
 
-async function sendLeadEmail(lead, { subject, buildHtml, statusField, statusAtField, htmlField, subjectField, resendIdField }) {
+async function sendLeadEmail(lead, { subject, buildHtml, statusField, statusAtField, htmlField, subjectField, resendIdField, countField }) {
   if (!resend) {
     return { ok: false, message: 'RESEND_API_KEY not set — email delivery is not configured.' };
   }
@@ -954,6 +954,10 @@ async function sendLeadEmail(lead, { subject, buildHtml, statusField, statusAtFi
     return { ok: false, message: 'Failed to send the email.' };
   }
 
+  if (countField) {
+    // A lead already marked sent but with no count yet had one send before.
+    lead[countField] = (lead[countField] || (lead[statusField] ? 1 : 0)) + 1;
+  }
   lead[statusField] = true;
   lead[statusAtField] = new Date();
   // Snapshot exactly what was sent so it can be reviewed later — the lead's
@@ -1710,6 +1714,9 @@ const leadSchema = new mongoose.Schema({
   // out their details yet.
   onboardingReminderSent: { type: Boolean, default: false },
   onboardingReminderSentAt: Date,
+  // How many reminders have gone out (shown on the admin's "See Sent
+  // Reminder (N)" button). Leads reminded before this existed count as 1.
+  onboardingReminderCount: { type: Number, default: 0 },
   onboardingReminderHtml: String,
   onboardingReminderSubject: String,
   onboardingReminderResendId: String,
@@ -4098,7 +4105,8 @@ app.post('/api/crm/leads/:id/send-onboarding-reminder', async (req, res) => {
       statusAtField: 'onboardingReminderSentAt',
       htmlField: 'onboardingReminderHtml',
       subjectField: 'onboardingReminderSubject',
-      resendIdField: 'onboardingReminderResendId'
+      resendIdField: 'onboardingReminderResendId',
+      countField: 'onboardingReminderCount'
     });
     res.status(result.ok ? 200 : 400).json(result);
   } catch (error) {

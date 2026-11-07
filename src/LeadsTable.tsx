@@ -66,6 +66,7 @@ export type Lead = {
   onboardingClicked?: boolean;
   onboardingReminderSent?: boolean;
   onboardingReminderSentAt?: string;
+  onboardingReminderCount?: number;
   onboardingReminderHtml?: string;
   onboardingReminderOpened?: boolean;
   onboardingReminderClicked?: boolean;
@@ -1211,9 +1212,19 @@ const LeadsTable = forwardRef<LeadsTableHandle, LeadsTableProps>(({ defaultPageS
                             {lead.closedWebDevClient || !lead.website || needsNewWebsite(lead) ? (
                               lead.onboardingSent ? (
                                 <>
-                                  <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'onboarding')}>
-                                    See Sent Onboarding Email
-                                  </Button>
+                                  {/* Once a reminder's gone out, this shows the latest reminder
+                                      and how many have been sent. */}
+                                  {lead.onboardingReminderSent ? (
+                                    <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'onboardingReminder')}>
+                                      {(lead.onboardingReminderCount || 1) > 1
+                                        ? `See Resent Reminder (${lead.onboardingReminderCount})`
+                                        : 'See Sent Reminder'}
+                                    </Button>
+                                  ) : (
+                                    <Button size="sm" variant="outline-light" onClick={() => handleViewSentEmail(lead, 'onboarding')}>
+                                      See Sent Onboarding Email
+                                    </Button>
+                                  )}
                                   <Button size="sm" variant="outline-warning" disabled={busy || lead.declined} onClick={() => handleSendOnboardingReminder(lead)}>
                                     {lead.onboardingReminderSent ? 'Resend Reminder' : 'Send Reminder'}
                                   </Button>
