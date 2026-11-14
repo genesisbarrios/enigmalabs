@@ -295,7 +295,7 @@ function handleSubmit() {
 
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h5 className="subsection-title" style={{marginTop: "5%"}}>Pricing</h5>
+              <h5 id="pricing" className="subsection-title" style={{marginTop: "5%"}}>Pricing</h5>
              
             </Col>
             <Col sm={6} style={{ marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>

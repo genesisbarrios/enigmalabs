@@ -133,3 +133,7 @@ body {
   }
 
 }
+/* In-page anchors (e.g. /tech#pricing) land below the fixed navbar. */
+[id] {
+  scroll-margin-top: 90px;
+}

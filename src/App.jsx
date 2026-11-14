@@ -39,6 +39,27 @@ const PageViewTracker = () => {
   useEffect(() => {
     trackPageView(location.pathname);
   }, [location.pathname]);
+  // Anchor links like /tech#pricing: the page renders after the browser's own
+  // hash jump, so retry until the target exists (images can shift it too).
+  useEffect(() => {
+    const id = decodeURIComponent(location.hash.slice(1));
+    if (!id) return;
+    // Wait for the target, jump to it, then correct once after images settle.
+    let tries = 0;
+    let settle;
+    const timer = setInterval(() => {
+      const el = document.getElementById(id);
+      if (el) {
+        clearInterval(timer);
+        el.scrollIntoView();
+        settle = setTimeout(() => el.scrollIntoView({ behavior: "smooth" }), 800);
+      } else if (++tries >= 20) clearInterval(timer);
+    }, 100);
+    return () => {
+      clearInterval(timer);
+      clearTimeout(settle);
+    };
+  }, [location.pathname, location.hash]);
   return null;
 };
 

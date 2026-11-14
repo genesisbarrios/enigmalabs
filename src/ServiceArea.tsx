@@ -99,7 +99,7 @@ const AreaLinks = ({ current }: { current?: string }) => (
 const Pricing = () => (
   <Row style={rowStyle}>
     <Col sm={12}>
-      <h2 className="subsection-title" style={{ marginTop: "5%" }}>Pricing</h2>
+      <h2 id="pricing" className="subsection-title" style={{ marginTop: "5%" }}>Pricing</h2>
     </Col>
     {pricingCards.map((card) => (
       <Col sm={6} key={card.title} style={{ marginBottom: "1.5rem" }}>

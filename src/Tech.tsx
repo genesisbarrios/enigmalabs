@@ -206,7 +206,7 @@ function handleSubmit() {
 
           <Row style={rowStyle}>
             <Col sm={12}>
-              <h5 className="subsection-title" style={{marginTop: "5%"}}>Pricing</h5>
+              <h5 id="pricing" className="subsection-title" style={{marginTop: "5%"}}>Pricing</h5>
 
             </Col>
             {pricingCards.map((card) => (

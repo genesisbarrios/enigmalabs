@@ -265,7 +265,7 @@ const Music = () => {
 
             <Row style={rowStyle}>
               <Col sm={12}>
-                <h5 className="subsection-title" style={{marginTop: "5%"}}>Pricing</h5>
+                <h5 id="pricing" className="subsection-title" style={{marginTop: "5%"}}>Pricing</h5>
               </Col>
             </Row>
             <Row style={{ ...rowStyle, marginBottom: "1.5rem" }}>
