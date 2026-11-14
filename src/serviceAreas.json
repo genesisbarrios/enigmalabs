@@ -1,0 +1,70 @@
+{
+  "_comment": "Web design service-area pages (/web-design and /web-design/<slug>). Read by src/ServiceArea.tsx in the browser AND by scripts/prerender-service-areas.js after `npm run build`, which writes a static HTML file per page so crawlers get the real title, description and content. Edit cities here only. Keep copy factual: geography is fine, but don't claim local clients, rankings or stats we can't back up.",
+  "basePath": "/web-design",
+  "areas": [
+    {
+      "slug": "miami",
+      "name": "Miami",
+      "county": "Miami-Dade County",
+      "nearby": ["Brickell", "Downtown Miami", "Wynwood", "Little Havana", "Coral Gables", "Coconut Grove", "Miami Beach"],
+      "intro": "Enigma Labs is based in Miami. We design and build fast, custom websites for Miami businesses, then handle the hosting, Google Business Profile, SEO and updates so you can focus on running the business.",
+      "local": "From restaurants and shops to studios, contractors and nonprofits, Miami customers search on their phones before they call. We build sites that load fast on mobile, show up on Google for the neighborhoods you serve, and make it one tap to call, book or order."
+    },
+    {
+      "slug": "fort-lauderdale",
+      "name": "Fort Lauderdale",
+      "county": "Broward County",
+      "nearby": ["Las Olas", "Wilton Manors", "Oakland Park", "Lauderdale-by-the-Sea", "Plantation", "Davie", "Hollywood"],
+      "intro": "Custom web design and development for Fort Lauderdale businesses, from a Miami studio that serves all of Broward County. Every site includes hosting, Google Business Profile setup, a built-in CRM and ongoing support.",
+      "local": "Fort Lauderdale customers compare options on Google Maps and in search results before they ever call. We build fast, mobile-first websites with local SEO set up for the Fort Lauderdale areas you actually serve."
+    },
+    {
+      "slug": "kendall",
+      "name": "Kendall",
+      "county": "Miami-Dade County",
+      "nearby": ["The Hammocks", "Westchester", "Pinecrest", "South Miami", "Palmetto Bay", "Country Walk", "Kendall West"],
+      "intro": "Website design and development for Kendall businesses. We build custom sites, set up your Google Business Profile and handle hosting, SEO and updates, all from right here in Miami-Dade.",
+      "local": "A lot of Kendall businesses still rely on word of mouth and an Instagram page. A real website gives customers searching \"near me\" a place to land, with your hours, services, reviews and a one-tap call button."
+    },
+    {
+      "slug": "brickell",
+      "name": "Brickell",
+      "county": "Miami-Dade County",
+      "nearby": ["Downtown Miami", "Brickell Key", "The Roads", "Little Havana", "Coconut Grove", "Key Biscayne"],
+      "intro": "Custom web design for Brickell businesses, professional services, restaurants and startups. Fast, polished websites with SEO, Google Business Profile setup, hosting and a built-in CRM included.",
+      "local": "In Brickell, your website sits next to some of the most polished brands in Miami. We build custom-designed sites, not templates, that load fast and turn visitors into calls, bookings and inquiries."
+    },
+    {
+      "slug": "doral",
+      "name": "Doral",
+      "county": "Miami-Dade County",
+      "nearby": ["Miami Springs", "Medley", "Fontainebleau", "Sweetwater", "Hialeah", "Miami Lakes"],
+      "intro": "Web design and development for Doral businesses, from restaurants and retail to logistics, distribution and service companies. Custom websites with SEO, Google Business Profile setup, hosting and support included.",
+      "local": "Doral is packed with businesses competing for the same searches. We build fast websites with clear services pages and local SEO so the right customers in Doral and the surrounding areas find you first."
+    },
+    {
+      "slug": "hialeah",
+      "name": "Hialeah",
+      "county": "Miami-Dade County",
+      "nearby": ["Hialeah Gardens", "Miami Lakes", "Miami Springs", "Medley", "Doral", "Opa-locka"],
+      "intro": "Affordable custom websites for Hialeah businesses. We handle the design, development, hosting, Google Business Profile and SEO, with plans starting at $100/mo.",
+      "local": "Many Hialeah shops, restaurants and contractors get most of their business from Google Maps and word of mouth. A website ties it together: your services, hours, photos and reviews in one place, with a call button front and center."
+    },
+    {
+      "slug": "homestead",
+      "name": "Homestead",
+      "county": "Miami-Dade County",
+      "nearby": ["Florida City", "Redland", "Cutler Bay", "Naranja", "Princeton", "Leisure City"],
+      "intro": "Web design and development for Homestead and South Dade businesses. Custom websites with hosting, Google Business Profile setup, SEO and ongoing support, from a Miami-Dade studio.",
+      "local": "Homestead and the Redland draw locals and visitors heading to the Keys and the national parks. We build mobile-first websites that help both find you, whether you run a farm stand, restaurant, contractor or service business."
+    },
+    {
+      "slug": "boca-raton",
+      "name": "Boca Raton",
+      "county": "Palm Beach County",
+      "nearby": ["Delray Beach", "Deerfield Beach", "Highland Beach", "Boynton Beach", "Coconut Creek", "Parkland"],
+      "intro": "Custom web design and development for Boca Raton businesses. Polished, fast websites with SEO, Google Business Profile setup, hosting and a built-in CRM, from a South Florida studio.",
+      "local": "Boca Raton customers expect a professional online presence before they reach out. We design custom sites that look the part, load fast and make it easy to call, book or request a quote."
+    }
+  ]
+}

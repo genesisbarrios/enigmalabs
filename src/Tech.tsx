@@ -2,6 +2,8 @@ import { useEffect, useState, useLayoutEffect } from "react";
 import { Row, Col, Container, Alert } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import axios from "axios";
+import { workProjects, pricingCards, infoCardStyle } from "./webOffer";
+import serviceAreas from "./serviceAreas.json";
 //import image1 from "./image1.png";
 
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
@@ -47,14 +49,6 @@ const workImgStyle = {
   objectPosition: "top" as const
 };
 
-const infoCardStyle = {
-  backgroundColor: "#111",
-  border: "1px solid #68FF00",
-  borderRadius: "20px",
-  boxShadow: "0 0 20px rgba(104, 255, 0, 0.12)",
-  padding: "2rem 1.75rem",
-  height: "100%"
-};
 
 const newsletterCardStyle = {
   backgroundColor: "#111",
@@ -108,38 +102,6 @@ const workPlaceholderStyle = {
   padding: "1rem"
 };
 
-const workProjects = [
-  {
-    name: "Pretty Kitty Miami Rescue",
-    url: "https://prettykittymiamirescue.org",
-    image: "/work/prettykittymiami.png",
-    alt: "Pretty Kitty Miami Rescue"
-  },
-  {
-    name: "Photographer Portfolio Website",
-    url: "https://www.cinemautographer.com/",
-    image: "https://dl.dropboxusercontent.com/s/1jm89lj35tqm1qk0hp1yr/maury.gif?rlkey=tlzw5eq3vkz77q3vx5ol3hpt0&st=vhxcy8fv&dl=0",
-    alt: "Maury Ramos Peña Portfolio Website"
-  },
-  {
-    name: "Customized Stone",
-    url: "https://www.customizedstone.net",
-    image: "/work/customizedstone.png",
-    alt: "Customized Stone — custom granite, marble, and quartz countertops in Miami"
-  },
-  {
-    name: "Nuralume",
-    url: "https://nuralume.xyz",
-    image: "https://dl.dropboxusercontent.com/s/11xwqvyuioco1etjdeu27/nuralume.png?rlkey=xuiz2krmjop7kegb099q4jocg&st=xs0f6rkn&dl=0",
-    alt: "Nuralume"
-  },
-  {
-    name: "Influanto | Music Marketing Platform",
-    url: "https://influanto.com",
-    image: "https://dl.dropboxusercontent.com/s/a7lf48b7uht3dnyl59tc1/influantoHomepageLaptop.png?rlkey=pzp4yi2ns6ppjfmwb9m84t4tz&st=gjpea3z3&dl=0",
-    alt: "Influanto the all in one music marketing platform"
-  }
-];
 
 const newsletterChipStyle = (active: boolean) => ({
   display: "inline-block",
@@ -247,44 +209,33 @@ function handleSubmit() {
               <h5 className="subsection-title" style={{marginTop: "5%"}}>Pricing</h5>
 
             </Col>
-            <Col sm={6} style={{ marginBottom: '1.5rem' }}>
-              <div style={infoCardStyle}>
-                <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Pay Up Front - Custom Website</h6>
-                <ul style={{ marginBottom: 0 }}>
-                  <li>$2000: 10 page website: Includes Google Business Setup, Hosting & Support, Built-in CRM, and 250 Business Cards (logo design included)</li>
-                  <li>$1000: 5 page website: Includes Google Business Setup, Hosting & Support, Built-in CRM, and 100 Business Cards (logo design included)</li>
-                </ul>
-              </div>
-            </Col>
-            <Col sm={6} style={{ marginBottom: '1.5rem' }}>
-              <div style={infoCardStyle}>
-                <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Monthly Subscription</h6>
-                <ul style={{ marginBottom: 0 }}>
-                  <li>$200/mo for a 10 Page Website: Includes Google Business Setup, Unlimited Edits, 24/7 Support, Hosting & Built-in CRM, and 250 Business Cards (logo design included)</li>
-                  <li>$100/mo for a 5 Page Website: Includes Google Business Setup, Hosting, General Support & Built-in CRM, and 100 Business Cards (logo design included)</li>
-                </ul>
-              </div>
-            </Col>
-            <Col sm={6} style={{ marginBottom: '1.5rem' }}>
-              <div style={infoCardStyle}>
-                <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Hosting & Support</h6>
-                <ul style={{ marginBottom: 0 }}>
-                  <li>$15/mo: Hosting, General Support & Built-in CRM to manage your contacts, mailing list & newsletters</li>
-                  <li>$40/mo: Unlimited edits, 24/7 Support & Built-in CRM </li>
-                </ul>
-              </div>
-            </Col>
-             <Col sm={6} style={{ marginBottom: '1.5rem' }}>
-              <div style={infoCardStyle}>
-                <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>Add Ons</h6>
-                <ul style={{ marginBottom: 0 }}>
-                  <li>$1000: Custom Blog</li>
-                  <li>$1000: Headless E-Commerce Store (Shopify/Printify or Stripe/Square Backend)</li>
-                  <li>$1500: E-Commerce Store with Custom Backend</li>
-                </ul>
-              </div>
-            </Col>
+            {pricingCards.map((card) => (
+              <Col sm={6} key={card.title} style={{ marginBottom: '1.5rem' }}>
+                <div style={infoCardStyle}>
+                  <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>{card.title}</h6>
+                  <ul style={{ marginBottom: 0 }}>
+                    {card.items.map((item) => <li key={item}>{item}</li>)}
+                  </ul>
+                </div>
+              </Col>
+            ))}
             </Row>
+
+          <Row style={rowStyle}>
+            <Col sm={12}>
+              <h5 className="subsection-title" style={{marginTop: "3%"}}>Areas We Serve</h5>
+              <p style={{ lineHeight: 1.9 }}>
+                {serviceAreas.areas.map((area, i) => (
+                  <span key={area.slug}>
+                    {i > 0 && " · "}
+                    <Link to={`${serviceAreas.basePath}/${area.slug}`} style={{ color: "#68FF00" }}>Web Design {area.name}</Link>
+                  </span>
+                ))}
+                {" · "}
+                <Link to={serviceAreas.basePath} style={{ color: "#68FF00" }}>All of South Florida</Link>
+              </p>
+            </Col>
+          </Row>
 
           <hr style={{backgroundColor:"white", marginTop: "3%"}}/>
 

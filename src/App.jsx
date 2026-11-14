@@ -23,6 +23,7 @@ import Newsletter from './Newsletter';
 import Plugins from './Plugins';
 import Templates from './Templates';
 import ProducerTools from './ProducerTools';
+import { ServiceAreasIndex, ServiceAreaPage } from './ServiceArea';
 import {Route, Routes, useLocation} from 'react-router-dom';
 import { useEffect } from 'react';
 import { installClickTracking, trackPageView } from './analytics';
@@ -58,6 +59,8 @@ const App = () => {
          <Route path="/" element={<Home/>}/>
          <Route path="/About" element={<About/>}/>
          <Route path="/Tech" element={<Tech/>}/>
+         <Route path="/web-design" element={<ServiceAreasIndex/>}/>
+         <Route path="/web-design/:city" element={<ServiceAreaPage/>}/>
          <Route path="/Music" element={<Music/>}/>
          <Route path="/Visuals" element={<Visuals/>}/>
          <Route path="/Wallpapers" element={<Wallpapers/>}/>

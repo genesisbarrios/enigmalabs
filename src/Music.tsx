@@ -350,8 +350,10 @@ const Music = () => {
                 <div style={{ ...infoCardStyle, height: "auto", flexGrow: 1 }}>
                   <h5 className="subsection-title" style={{ color: "#68FF00", marginTop: 0 }}>Mixing + Mastering</h5>
                   <ul style={{ marginBottom: 0 }}>
-                    <li><a href="https://square.link/u/qsoscZeC" target="_blank" rel="noopener noreferrer" className="price-link">Basic Mix + Master: <span className="price">$100 (up to 10 stems)</span></a></li>
-                    <li><a href="https://square.link/u/BdD9A9Pn" target="_blank" rel="noopener noreferrer" className="price-link">Premium Mix + Master: <span className="price">$200 (no stem limit)</span></a></li>
+                    <li><a href="https://square.link/u/qsoscZeC" target="_blank" rel="noopener noreferrer" className="price-link">Basic Mix + Master: <span className="price">$100 (up to 5 stems)</span></a></li>
+                    <li><a href="https://square.link/u/BdD9A9Pn" target="_blank" rel="noopener noreferrer" className="price-link">Standard Mix + Master: <span className="price">$200 (up to 20 stems)</span></a></li>
+                    {/* TODO: Square link for the $500 Premium tier. */}
+                    <li><span className="price-link">Premium Mix + Master: <span className="price">$500 (no stem limit + manual tuning)</span></span></li>
                   </ul>
                 </div>
               </Col>

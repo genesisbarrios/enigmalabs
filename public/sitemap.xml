@@ -44,4 +44,40 @@
     <loc>https://enigma-labs.com/onboard</loc>
     <priority>0.6</priority>
   </url>
+  <url>
+    <loc>https://enigma-labs.com/web-design</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://enigma-labs.com/web-design/miami</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://enigma-labs.com/web-design/fort-lauderdale</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://enigma-labs.com/web-design/kendall</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://enigma-labs.com/web-design/brickell</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://enigma-labs.com/web-design/doral</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://enigma-labs.com/web-design/hialeah</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://enigma-labs.com/web-design/homestead</loc>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://enigma-labs.com/web-design/boca-raton</loc>
+    <priority>0.8</priority>
+  </url>
 </urlset>
