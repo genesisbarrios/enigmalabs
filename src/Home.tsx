@@ -567,7 +567,7 @@ const Home = () => {
                     Digital Marketing & Ads <br></br>
                    <br></br>
                   </Card.Text>
-                  <a href="/Tech" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>See Work</Button></a>
+                  <a href="/web" style={{color:"white"}}> <Button style={{width:"100%", backgroundColor:"green", cursor:'pointer', color:"white", borderColor:"green"}}>See Work</Button></a>
                 </Card.Body>
               </Card>
             </Col>

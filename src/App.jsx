@@ -24,7 +24,7 @@ import Plugins from './Plugins';
 import Templates from './Templates';
 import ProducerTools from './ProducerTools';
 import { ServiceAreasIndex, ServiceAreaPage } from './ServiceArea';
-import {Route, Routes, useLocation} from 'react-router-dom';
+import {Navigate, Route, Routes, useLocation} from 'react-router-dom';
 import { useEffect } from 'react';
 import { installClickTracking, trackPageView } from './analytics';
 import {BrowserRouter as Router} from 'react-router-dom';
@@ -39,11 +39,15 @@ const PageViewTracker = () => {
   useEffect(() => {
     trackPageView(location.pathname);
   }, [location.pathname]);
-  // Anchor links like /tech#pricing: the page renders after the browser's own
+  // Anchor links like /web#pricing: the page renders after the browser's own
   // hash jump, so retry until the target exists (images can shift it too).
   useEffect(() => {
     const id = decodeURIComponent(location.hash.slice(1));
-    if (!id) return;
+    // No anchor: start the new page at the top, not at the old scroll position.
+    if (!id) {
+      window.scrollTo(0, 0);
+      return;
+    }
     // Wait for the target, jump to it, then correct once after images settle.
     let tries = 0;
     let settle;
@@ -79,7 +83,8 @@ const App = () => {
 
          <Route path="/" element={<Home/>}/>
          <Route path="/About" element={<About/>}/>
-         <Route path="/Tech" element={<Tech/>}/>
+         <Route path="/web" element={<Tech/>}/>
+         <Route path="/Tech" element={<Navigate to={{ pathname: "/web", hash: window.location.hash }} replace/>}/>
          <Route path="/web-design" element={<ServiceAreasIndex/>}/>
          <Route path="/web-design/:city" element={<ServiceAreaPage/>}/>
          <Route path="/Music" element={<Music/>}/>

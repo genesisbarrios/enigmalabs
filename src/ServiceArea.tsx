@@ -3,6 +3,7 @@ import { Row, Col, Container } from "react-bootstrap";
 import { Link, useParams } from "react-router-dom";
 import serviceAreas from "./serviceAreas.json";
 import { workProjects, pricingCards, infoCardStyle } from "./webOffer";
+import PricingItem from "./PricingItem";
 
 // Service-area pages: /web-design (index) and /web-design/:city.
 // Content comes from src/serviceAreas.json. After `npm run build`,
@@ -106,7 +107,7 @@ const Pricing = () => (
         <div style={infoCardStyle}>
           <h3 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem", fontSize: "1rem" }}>{card.title}</h3>
           <ul style={{ marginBottom: 0 }}>
-            {card.items.map((item) => <li key={item}>{item}</li>)}
+            {card.items.map((item) => <PricingItem key={item} item={item} />)}
           </ul>
         </div>
       </Col>
@@ -158,7 +159,7 @@ export const ServiceAreasIndex = () => {
         <Col sm={12}>
           <h1 className="subpage-title aboutTitle">Web Design in South Florida</h1>
           <p style={{ maxWidth: "760px", lineHeight: 1.7, marginTop: "1rem" }}>
-            Enigma Labs is a Miami-based studio building custom websites for South Florida businesses, with SEO, Google
+            Enigma Labs is a Miami-based digital growth agency building custom websites for South Florida businesses, with SEO, Google
             Business Profile setup, hosting and a built-in CRM included. Pick your area:
           </p>
         </Col>
@@ -175,8 +176,8 @@ export const ServiceAreasIndex = () => {
           </Col>
         ))}
       </Row>
-      <Pricing />
       <Work />
+      <Pricing />
       <Contact />
     </Container>
   );
@@ -220,6 +221,8 @@ export const ServiceAreaPage = () => {
         </Col>
       </Row>
 
+      <Work />
+
       <Row style={rowStyle}>
         <Col md={6}>
           <h2 className="subsection-title" style={{ marginTop: "5%" }}>What we do for {area.name} businesses</h2>
@@ -237,7 +240,6 @@ export const ServiceAreaPage = () => {
       </Row>
 
       <Pricing />
-      <Work />
 
       <Row style={rowStyle}>
         <Col sm={12}>

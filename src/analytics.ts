@@ -46,9 +46,9 @@ export function initMetaPixel() {
 // document.title: each page sets its title in its own effect, which runs
 // after the route-change PageView, so the title would lag one page behind.
 const PAGE_NAMES: Record<string, string> = {
-  // Names match the site menu (Web = /Tech, Marketing = /Visuals).
+  // Names match the site menu (Web = /web, Marketing = /Visuals).
   "/": "Home",
-  "/tech": "Web Development & Design",
+  "/web": "Web Development & Design",
   "/visuals": "Marketing (Branding, Ads & Visuals)",
   "/music": "Music Production",
   "/blog": "Blog",

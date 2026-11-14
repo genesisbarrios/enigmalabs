@@ -13,5 +13,17 @@
       "source": "/(.*)",
       "destination": "/"
     }
+  ],
+  "redirects": [
+    {
+      "source": "/Tech",
+      "destination": "/web",
+      "permanent": true
+    },
+    {
+      "source": "/tech",
+      "destination": "/web",
+      "permanent": true
+    }
   ]
 }

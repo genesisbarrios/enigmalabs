@@ -3,6 +3,7 @@ import { Row, Col, Container, Alert } from "react-bootstrap";
 import { Link } from "react-router-dom";
 import axios from "axios";
 import { workProjects, pricingCards, infoCardStyle } from "./webOffer";
+import PricingItem from "./PricingItem";
 import serviceAreas from "./serviceAreas.json";
 //import image1 from "./image1.png";
 
@@ -165,6 +166,7 @@ function handleSubmit() {
             <Col sm={2}></Col>
             <Col sm={8}>
               <h1 className="subpage-title aboutTitle">Web Development | Web Design</h1>
+              <p style={{ lineHeight: 1.7, marginTop: "1rem" }}>Enigma Labs is a Miami-based digital growth agency.</p>
             </Col>
             <Col sm={2}></Col>
           </Row>
@@ -214,28 +216,12 @@ function handleSubmit() {
                 <div style={infoCardStyle}>
                   <h6 style={{ color: "#68FF00", fontWeight: 700, marginBottom: "0.75rem" }}>{card.title}</h6>
                   <ul style={{ marginBottom: 0 }}>
-                    {card.items.map((item) => <li key={item}>{item}</li>)}
+                    {card.items.map((item) => <PricingItem key={item} item={item} />)}
                   </ul>
                 </div>
               </Col>
             ))}
             </Row>
-
-          <Row style={rowStyle}>
-            <Col sm={12}>
-              <h5 className="subsection-title" style={{marginTop: "3%"}}>Areas We Serve</h5>
-              <p style={{ lineHeight: 1.9 }}>
-                {serviceAreas.areas.map((area, i) => (
-                  <span key={area.slug}>
-                    {i > 0 && " · "}
-                    <Link to={`${serviceAreas.basePath}/${area.slug}`} style={{ color: "#68FF00" }}>Web Design {area.name}</Link>
-                  </span>
-                ))}
-                {" · "}
-                <Link to={serviceAreas.basePath} style={{ color: "#68FF00" }}>All of South Florida</Link>
-              </p>
-            </Col>
-          </Row>
 
           <hr style={{backgroundColor:"white", marginTop: "3%"}}/>
 
@@ -341,6 +327,24 @@ function handleSubmit() {
             <Col sm={12}>
               <h4 className="subsection-title mt-5">Reach out to us</h4>
               <a href="mailto:info@enigma-labs.com" className="text-white">info@enigma-labs.com</a>
+              <div style={{marginBottom:"8%"}}></div>
+            </Col>
+          </Row>
+
+          {/* Hidden for now; the city links stay in the page for search engines. */}
+          <Row style={{ ...rowStyle, display: "none" }}>
+            <Col sm={12}>
+              <h5 className="subsection-title" style={{marginTop: "5%"}}>Areas We Serve</h5>
+              <p style={{ lineHeight: 1.9 }}>
+                {serviceAreas.areas.map((area, i) => (
+                  <span key={area.slug}>
+                    {i > 0 && " · "}
+                    <Link to={`${serviceAreas.basePath}/${area.slug}`} style={{ color: "#68FF00" }}>Web Design {area.name}</Link>
+                  </span>
+                ))}
+                {" · "}
+                <Link to={serviceAreas.basePath} style={{ color: "#68FF00" }}>All of South Florida</Link>
+              </p>
               <div style={{marginBottom:"8%"}}></div>
             </Col>
           </Row>
