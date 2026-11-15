@@ -189,6 +189,9 @@ button:disabled {
   .subpage-title{
     font-size: min(1.5rem, 5vw);
     white-space: nowrap;
+    /* the phone-wide h1 { width: 60% } rule made long titles spill out
+       of a narrow box to the right, so they looked off-center */
+    width: 100%;
   }
 
   .subsection-title{
