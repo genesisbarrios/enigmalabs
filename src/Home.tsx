@@ -708,9 +708,9 @@ const Home = () => {
           </Col>
         </Row>
 
-        <Row style={servicesStyle} id="newsletter">
+        <Row style={servicesStyle}>
           <Col xs={12}>
-            <h1 className="section-title-left" id="newsletter-heading" style={{marginTop:"10%"}}>NEWSLETTER</h1>
+            <h1 className="section-title-left" id="newsletter" style={{marginTop:"10%"}}>NEWSLETTER</h1>
           </Col>
         </Row>
         <Row className="mobile-center-row" style={{ ...newsletterSectionStyle, justifyContent: "center" }}>
