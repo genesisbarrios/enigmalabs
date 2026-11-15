@@ -166,7 +166,6 @@ function handleSubmit() {
             <Col sm={2}></Col>
             <Col sm={8}>
               <h1 className="subpage-title aboutTitle">Web Development | Web Design</h1>
-              <p style={{ lineHeight: 1.7, marginTop: "1rem" }}>Enigma Labs is a Miami-based digital growth agency.</p>
             </Col>
             <Col sm={2}></Col>
           </Row>
