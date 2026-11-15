@@ -169,7 +169,7 @@ function handleSubmit() {
             <Col sm={12}>
               <h5 className="subsection-title" style={{marginTop: "5%"}}>Services</h5>
               <ul>
-                <li>Photography, Videography, Event Coverage, Music Videos, Content Creation</li>
+                <li>Photography, Commercial Photography, Videography, Event Coverage, Music Videos, Content Creation</li>
                 <li>Graphic Design: Logos, Branding, Album Covers, Business Cards, Stickers, Posters + more.</li>
                 <li>Marketing, Social Media Management & Ads: Instagram, TikTok, YouTube, Facebook + more.</li>
               </ul>
@@ -257,6 +257,30 @@ function handleSubmit() {
             </Col>
             <Col sm={3}>
               <a href="https://www.instagram.com/neptunemiami/" target="_blank"><img style={imgStyle} className="servicesImg"  alt="neptune studios" src="/ETHINWAVE2.jpg" /></a>
+            </Col>
+          </Row>
+
+          <Row style={rowStyle}>
+            <Col sm={12}>
+              <h2 id="commercial-photography" className="subsection-title">COMMERCIAL PHOTOGRAPHY</h2>
+              <h5>Mars Miami Studios + DTA Studios</h5>
+            </Col>
+          </Row>
+          <Row style={rowStyle} className="justify-content-center">
+            <Col sm={4}>
+              <img style={{ ...imgStyle, height: "320px", marginBottom: "30px", borderRadius: "6px" }} alt="Pink-lit speaker wall in a recording studio" src="/commercial/mars-studio-speakers.jpg" loading="lazy" />
+            </Col>
+            <Col sm={4}>
+              <img style={{ ...imgStyle, height: "320px", marginBottom: "30px", borderRadius: "6px" }} alt="Vocal booth with a condenser microphone under purple light" src="/commercial/vocal-booth-purple.jpg" loading="lazy" />
+            </Col>
+            <Col sm={4}>
+              <img style={{ ...imgStyle, height: "320px", marginBottom: "30px", borderRadius: "6px" }} alt="Universal Audio 6176 preamp lit in purple" src="/commercial/ua-6176-preamp.jpg" loading="lazy" />
+            </Col>
+            <Col sm={4}>
+              <img style={{ ...imgStyle, height: "320px", marginBottom: "30px", borderRadius: "6px" }} alt="Recording studio control room with mixing console and wood ceiling" src="/commercial/control-room.jpg" loading="lazy" />
+            </Col>
+            <Col sm={4}>
+              <img style={{ ...imgStyle, height: "320px", marginBottom: "30px", borderRadius: "6px" }} alt="Wood-panelled vocal booth with a microphone" src="/commercial/vocal-booth-wood.jpg" loading="lazy" />
             </Col>
           </Row>
 
