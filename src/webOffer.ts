@@ -62,8 +62,8 @@ export const pricingCards: { title: string; items: string[] }[] = [
     title: "Add Ons",
     items: [
       "$1000: Custom Blog",
-      "$1000: Headless E-Commerce Store (Shopify/Printify or Stripe/Square Backend)",
-      "$1500: E-Commerce Store with Custom Backend"
+      "$500: Headless E-Commerce Store (Shopify/Printify or Stripe/Square Backend)",
+      "$1000: E-Commerce Store with Custom Backend"
     ]
   }
 ];
