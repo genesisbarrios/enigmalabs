@@ -32,28 +32,47 @@ const disabledCardStyle: React.CSSProperties = {
 type Plan = {
   title: string;
   description: string;
+  // a few short highlights under the price
+  details?: string[];
   url: string | null;
 };
 
+// One-time website builds (left column).
 const websitePlans: Plan[] = [
   {
-    title: '10-Page Site',
+    title: '10-Page Website',
     description: '$2,000 one-time payment',
     url: 'https://square.link/u/eJ9RcG2j'
-  }, 
+  },
   {
     title: '5-Page Website',
     description: '$1,000 one-time payment',
     url: 'https://square.link/u/nTuco1Ka'
   },
   {
-    title: 'Monthly Subscription',
-    description: '$200/mo - 10 Pages',
+    title: '3-Page Website',
+    description: '$500 one-time payment',
+    url: 'https://square.link/u/iDNAEz4G'
+  },
+  {
+    title: '1-Page Website',
+    description: '$250 one-time payment',
+    url: 'https://square.link/u/QjXr38Iv'
+  }
+];
+
+// Monthly website subscriptions (right column).
+const subscriptionPlans: Plan[] = [
+  {
+    title: '10-Page Website',
+    description: '$200/mo',
+    details: ['24/7 support', 'Unlimited edits', 'Hosting & built-in CRM'],
     url: 'https://buy.stripe.com/5kQ6oA5vF8c6g6v8gF33W00'
   },
   {
-    title:'Monthly Subscription',
-    description: '$100/mo - 5 Pages',
+    title: '5-Page Website',
+    description: '$100/mo',
+    details: ['General support', 'Hosting & built-in CRM'],
     url: 'https://buy.stripe.com/8x29AMgaj3VQg6v0Od33W04'
   }
 ];
@@ -76,7 +95,13 @@ const PlanCard = ({ plan }: { plan: Plan }) => {
     <Card style={plan.url ? optionCardStyle : disabledCardStyle} className={plan.url ? 'onboarding-option-card' : undefined}>
       <Card.Body>
         <h3 className="onboarding-option-title" style={{ color: '#68FF00', marginBottom: '1rem' }}>{plan.title}</h3>
-        <p style={{ color: '#d4d4d4' }}>{plan.description}</p>
+        <p style={{ color: '#d4d4d4', marginBottom: plan.details ? '0.5rem' : undefined }}>{plan.description}</p>
+        {plan.details && (
+          <ul style={{ color: '#a3a3a3', fontSize: '0.9rem', paddingLeft: '1.1rem', marginBottom: 0 }}>
+            {plan.details.map((d) => <li key={d}>{d}</li>)}
+          </ul>
+        )}
+        {!plan.url && <p style={{ color: '#a3a3a3', fontSize: '0.85rem', marginBottom: 0 }}>Payment link coming soon</p>}
         <div style={{ marginTop: '1.5rem' }}>
           <PaymentIcon />
         </div>
@@ -128,11 +153,26 @@ const Payment = () => {
       </p>
 
       <Row>
-        {websitePlans.map((plan) => (
-          <Col xs={12} md={3} key={plan.title} style={{ marginBottom: '1.5rem' }}>
-            <PlanCard plan={plan} />
-          </Col>
-        ))}
+        <Col xs={12} md={6}>
+          <h2 className="subsection-title" style={{ color: '#68FF00', marginBottom: '1.25rem' }}>Pay Up Front</h2>
+          <Row>
+            {websitePlans.map((plan) => (
+              <Col xs={12} sm={6} key={plan.title} style={{ marginBottom: '1.5rem' }}>
+                <PlanCard plan={plan} />
+              </Col>
+            ))}
+          </Row>
+        </Col>
+        <Col xs={12} md={6}>
+          <h2 className="subsection-title" style={{ color: '#68FF00', marginBottom: '1.25rem' }}>Monthly Subscription</h2>
+          <Row>
+            {subscriptionPlans.map((plan) => (
+              <Col xs={12} key={plan.title} style={{ marginBottom: '1.5rem' }}>
+                <PlanCard plan={plan} />
+              </Col>
+            ))}
+          </Row>
+        </Col>
       </Row>
 
       <h2 className="subsection-title" style={{ color: '#68FF00', marginTop: '1.5rem', marginBottom: '1.5rem' }}>

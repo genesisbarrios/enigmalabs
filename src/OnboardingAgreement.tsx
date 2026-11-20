@@ -6,26 +6,27 @@ import axios from 'axios';
 
 const API_BASE_URL = `${process.env.REACT_APP_API_BASE_URL || ''}/api`;
 
-type BackendPlanType = 'one_time' | 'monthly' | 'custom';
-type PlanType = 'one_time_5' | 'one_time_10' | 'monthly' | 'custom';
+type PlanType = 'one_time' | 'monthly' | 'custom';
 
 const PLAN_LABELS: Record<PlanType, string> = {
-  one_time_5: '5-Page Website (One-Time)',
-  one_time_10: '10-Page Website (One-Time)',
+  one_time: 'Pay Up Front',
   monthly: 'Monthly Subscription',
   custom: 'Custom / Negotiated'
 };
 
 const PLAN_DESCRIPTIONS: Record<PlanType, string> = {
-  one_time_5: '$1,000 due once',
-  one_time_10: '$2,000 due once',
-  monthly: 'Billed monthly',
+  one_time: 'One-time payment, from $250',
+  monthly: 'Billed monthly, from $100/mo',
   custom: 'You enter the agreed amount'
 };
 
-const FIXED_PLAN_AMOUNTS: Partial<Record<PlanType, number>> = {
-  one_time_5: 1000,
-  one_time_10: 2000
+type OneTimePages = '1' | '3' | '5' | '10';
+
+const ONE_TIME_AMOUNTS: Record<OneTimePages, number> = {
+  '1': 250,
+  '3': 500,
+  '5': 1000,
+  '10': 2000
 };
 
 type MonthlyPages = '5' | '10';
@@ -35,12 +36,8 @@ const MONTHLY_AMOUNTS: Record<MonthlyPages, number> = {
   '10': 200
 };
 
-const BACKEND_PLAN_TYPE: Record<PlanType, BackendPlanType> = {
-  one_time_5: 'one_time',
-  one_time_10: 'one_time',
-  monthly: 'monthly',
-  custom: 'custom'
-};
+// Older links used ?plan=one_time_5 / one_time_10; keep them working.
+const LEGACY_ONE_TIME: Record<string, OneTimePages> = { one_time_5: '5', one_time_10: '10' };
 
 const JURISDICTION = 'State of Florida, USA';
 
@@ -86,16 +83,14 @@ const planCardStyle = (active: boolean): React.CSSProperties => ({
   boxShadow: active ? '0 0 25px rgba(104, 255, 0, 0.15)' : 'none'
 });
 
-const formatFee = (backendPlanType: BackendPlanType, amount: number, monthlyPages?: MonthlyPages | '') => {
+const formatFee = (planType: PlanType, amount: number, pages?: string) => {
   const formatted = amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  if (backendPlanType === 'monthly') {
-    const pagesLabel = monthlyPages ? ` — ${monthlyPages}-page website` : '';
+  const pagesLabel = pages ? ` — ${pages}-page website` : '';
+  if (planType === 'monthly') {
     return `$${formatted} per month (recurring monthly subscription${pagesLabel})`;
   }
-  if (backendPlanType === 'one_time') {
-    if (amount === 1000) return `$${formatted} (one-time payment — 5-page website)`;
-    if (amount === 2000) return `$${formatted} (one-time payment — 10-page website)`;
-    return `$${formatted} (one-time payment)`;
+  if (planType === 'one_time') {
+    return `$${formatted} (one-time payment${pagesLabel})`;
   }
   return `$${formatted} (negotiated fee)`;
 };
@@ -103,11 +98,15 @@ const formatFee = (backendPlanType: BackendPlanType, amount: number, monthlyPage
 const OnboardingAgreement = () => {
   const [searchParams] = useSearchParams();
 
+  const planParam = searchParams.get('plan') || '';
   const [planType, setPlanType] = useState<PlanType | null>(
-    (searchParams.get('plan') as PlanType) && Object.keys(PLAN_LABELS).includes(searchParams.get('plan') || '')
-      ? (searchParams.get('plan') as PlanType)
-      : null
+    LEGACY_ONE_TIME[planParam]
+      ? 'one_time'
+      : Object.keys(PLAN_LABELS).includes(planParam)
+        ? (planParam as PlanType)
+        : null
   );
+  const [oneTimePages, setOneTimePages] = useState<OneTimePages | ''>(LEGACY_ONE_TIME[planParam] || '');
   const [customAmount, setCustomAmount] = useState(searchParams.get('amount') || '');
   const [monthlyPages, setMonthlyPages] = useState<MonthlyPages | ''>('');
   const [clientName, setClientName] = useState(searchParams.get('clientName') || '');
@@ -115,7 +114,7 @@ const OnboardingAgreement = () => {
   const [clientEmail, setClientEmail] = useState(searchParams.get('clientEmail') || '');
   const [clientPhone, setClientPhone] = useState(searchParams.get('clientPhone') || '');
 
-  const visiblePlans: PlanType[] = ['one_time_5', 'one_time_10', 'monthly'];
+  const visiblePlans: PlanType[] = ['one_time', 'monthly'];
 
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -141,8 +140,8 @@ const OnboardingAgreement = () => {
     if (!planType) return 0;
     if (planType === 'custom') return Number(customAmount) || 0;
     if (planType === 'monthly') return monthlyPages ? MONTHLY_AMOUNTS[monthlyPages] : 0;
-    return FIXED_PLAN_AMOUNTS[planType] ?? 0;
-  }, [planType, customAmount, monthlyPages]);
+    return oneTimePages ? ONE_TIME_AMOUNTS[oneTimePages] : 0;
+  }, [planType, customAmount, monthlyPages, oneTimePages]);
 
   const today = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
@@ -156,6 +155,10 @@ const OnboardingAgreement = () => {
 
     if (!planType) {
       setError('Please choose a plan.');
+      return;
+    }
+    if (planType === 'one_time' && !oneTimePages) {
+      setError('Please choose a website size.');
       return;
     }
     if (planType === 'monthly' && !monthlyPages) {
@@ -179,7 +182,7 @@ const OnboardingAgreement = () => {
     try {
       const signatureDataUrl = signatureRef.current.getTrimmedCanvas().toDataURL('image/png');
       const response = await axios.post(`${API_BASE_URL}/agreements/submit`, {
-        planType: BACKEND_PLAN_TYPE[planType],
+        planType,
         amount,
         clientName,
         clientAddress,
@@ -259,7 +262,7 @@ const OnboardingAgreement = () => {
 
       <Row className="g-3 mb-4">
         {visiblePlans.map((plan) => (
-          <Col xs={12} md={4} key={plan}>
+          <Col xs={12} md={6} key={plan}>
             <div style={planCardStyle(planType === plan)} onClick={() => setPlanType(plan)}>
               <h5 style={{ color: '#68FF00' }}>{PLAN_LABELS[plan]}</h5>
               <p style={{ color: '#d4d4d4', marginBottom: 0 }}>{PLAN_DESCRIPTIONS[plan]}</p>
@@ -281,6 +284,26 @@ const OnboardingAgreement = () => {
                 onChange={(event) => setCustomAmount(event.target.value)}
                 required
               />
+            </Form.Group>
+          ) : null}
+
+          {planType === 'one_time' ? (
+            <Form.Group className="mb-3" controlId="agreement-oneTimePages">
+              <Form.Label>Website Size</Form.Label>
+              <div>
+                {(['1', '3', '5', '10'] as OneTimePages[]).map((pages) => (
+                  <Form.Check
+                    key={pages}
+                    type="radio"
+                    id={`agreement-oneTimePages-${pages}`}
+                    name="oneTimePages"
+                    label={`$${ONE_TIME_AMOUNTS[pages].toLocaleString('en-US')} — ${pages}-Page Website`}
+                    checked={oneTimePages === pages}
+                    onChange={() => setOneTimePages(pages)}
+                    required
+                  />
+                ))}
+              </div>
             </Form.Group>
           ) : null}
 
@@ -372,7 +395,7 @@ const OnboardingAgreement = () => {
 
               <h6 style={{ color: 'white' }}>3. Payment Terms</h6>
               <p>
-                Total Project Fee: {planType ? formatFee(BACKEND_PLAN_TYPE[planType], amount, monthlyPages) : '—'}
+                Total Project Fee: {planType ? formatFee(planType, amount, planType === 'one_time' ? oneTimePages : planType === 'monthly' ? monthlyPages : '') : '—'}
                 <br />
                 The Total Project Fee does not include third-party costs such as hosting, domain registration, premium plugins/themes,
                 stock photography, or paid API/service subscriptions. These are billed separately or paid directly by Client.
