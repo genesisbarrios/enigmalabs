@@ -21,7 +21,7 @@ const buildDir = path.join(root, "build");
 const { basePath, areas } = require(path.join(root, "src", "serviceAreas.json"));
 
 // Keep in sync with src/webOffer.ts.
-const PRICE_SUMMARY = "Websites start at $1000 for 5 pages, or $100/mo with hosting, support and a built-in CRM included.";
+const PRICE_SUMMARY = "Websites start at $500 for 3 pages, or $100/mo with hosting, support and a built-in CRM included.";
 
 const escapeHtml = (v) =>
   String(v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
