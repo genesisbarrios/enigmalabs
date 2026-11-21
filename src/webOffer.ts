@@ -42,7 +42,7 @@ export const pricingCards: { title: string; items: string[] }[] = [
     items: [
       "$2000: 10 page website: Includes Google Business Setup and 250 Business Cards (logo design included)",
       "$1000: 5 page website: Includes Google Business Setup and 100 Business Cards (logo design included)",
-      "$500: 3 page website"
+      "$500: 3 page website: Includes Google Business Profile Setup"
     ]
   },
   {
