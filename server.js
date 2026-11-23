@@ -1828,17 +1828,30 @@ async function creditLeadCampaignSend(leadId, field) {
 // "Has opened"; cold emails (this window) went to "Not contacted".
 const LEAD_CAMPAIGN_BACKFILL_SINCE = new Date('2026-11-23T11:57:28Z');
 const LEAD_CAMPAIGN_GAP_MS = 15 * 60 * 1000;
-let leadCampaignBackfillDone = false;
+// Each pass runs once, claimed by a marker doc that's never listed. Pass 1
+// needed 3+ leads per group, which dropped the small "Has opened" reminder
+// send; pass 2 rebuilds reminder sends of any size.
+const LEAD_CAMPAIGN_BACKFILL_PASSES = [
+  { marker: '__marker__', kinds: ['cold', 'reminder'], minSize: 3 },
+  { marker: '__marker_v2__', kinds: ['reminder'], minSize: 1 }
+];
+const LEAD_CAMPAIGN_MARKERS = LEAD_CAMPAIGN_BACKFILL_PASSES.map((pass) => pass.marker);
+const leadCampaignBackfillDone = new Set();
 
 async function backfillLeadCampaigns() {
-  if (leadCampaignBackfillDone) return;
-  // Claim the run first (the marker is never listed), so it only ever runs once.
+  for (const pass of LEAD_CAMPAIGN_BACKFILL_PASSES) {
+    await runLeadCampaignBackfill(pass);
+  }
+}
+
+async function runLeadCampaignBackfill({ marker, kinds, minSize }) {
+  if (leadCampaignBackfillDone.has(marker)) return;
   const prior = await LeadCampaign.findOneAndUpdate(
-    { openedFilter: '__marker__' },
+    { openedFilter: marker },
     { $setOnInsert: { category: 'web', backfilled: true, createdAt: LEAD_CAMPAIGN_BACKFILL_SINCE } },
     { upsert: true }
   );
-  leadCampaignBackfillDone = true;
+  leadCampaignBackfillDone.add(marker);
   if (prior) return;
   const firstLogged = await LeadCampaign.findOne({ backfilled: { $ne: true } }).sort({ createdAt: 1 }).lean();
   const until = firstLogged ? firstLogged.createdAt : new Date();
@@ -1851,11 +1864,16 @@ async function backfillLeadCampaigns() {
     ] }]
   }).lean();
 
+  // Skip sends an earlier pass (or live logging) already recorded.
+  const logged = await LeadCampaignSend.find({ leadId: { $in: leads.map((l) => l._id) } }).select('leadId kind sentAt').lean();
+  const loggedKeys = new Set(logged.map((r) => `${r.leadId}:${r.kind}:${new Date(r.sentAt).getTime()}`));
+
   const groups = [];
-  for (const kind of ['cold', 'reminder']) {
+  for (const kind of kinds) {
     const at = kind === 'cold' ? 'coldEmailSentAt' : 'reminderEmailSentAt';
     const rows = leads
       .filter((l) => l[at] && l[at] >= LEAD_CAMPAIGN_BACKFILL_SINCE && l[at] < until)
+      .filter((l) => !loggedKeys.has(`${l._id}:${kind}:${new Date(l[at]).getTime()}`))
       .sort((a, b) => a[at] - b[at]);
     let current = null;
     for (const lead of rows) {
@@ -1869,7 +1887,7 @@ async function backfillLeadCampaigns() {
   }
 
   // A bulk send reaches several leads; one or two are one-off sends.
-  for (const group of groups.filter((g) => g.leads.length >= 3)) {
+  for (const group of groups.filter((g) => g.leads.length >= minSize)) {
     const at = group.kind === 'cold' ? 'coldEmailSentAt' : 'reminderEmailSentAt';
     const campaign = await LeadCampaign.create({
       category: 'web',
@@ -2769,7 +2787,7 @@ app.get('/api/newsletter/outreach-analytics', async (_req, res) => {
 
     await backfillLeadCampaigns().catch((backfillError) => console.error('Could not backfill lead campaigns', backfillError));
     const [leadCampaignDocs, leadSends] = await Promise.all([
-      LeadCampaign.find({ openedFilter: { $ne: '__marker__' } }).lean(),
+      LeadCampaign.find({ openedFilter: { $nin: LEAD_CAMPAIGN_MARKERS } }).lean(),
       LeadCampaignSend.find().select('campaignId kind opened clicked').lean()
     ]);
     const leadSendsByCampaign = new Map();
