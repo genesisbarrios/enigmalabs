@@ -1104,12 +1104,14 @@ const Admin = () => {
     let total = 0;
     try {
       let afterId: string | null = null;
+      let campaignId: string | null = null;
       for (;;) {
         const response: any = await axios.post(`${API_BASE_URL}/crm/leads/bulk-send-cold-email`, {
           category: campaignForm.category,
           openedFilter: leadAudienceOpenedFilter,
           clickedFilter: leadAudienceClickedFilter,
-          afterId
+          afterId,
+          campaignId
         });
         if (!response.data?.ok) {
           setNewsletterError(response.data?.message || 'Could not send to leads.');
@@ -1117,6 +1119,7 @@ const Admin = () => {
         }
         const batch = response.data;
         if (afterId === null) total = batch.total;
+        campaignId = batch.campaignId || campaignId;
         sent += batch.sent;
         reminders += batch.reminders || 0;
         failed += batch.failed || 0;
@@ -1136,6 +1139,7 @@ const Admin = () => {
     } finally {
       setCampaignSending(false);
       setCampaignProgress(null);
+      fetchOutreachAnalytics();
     }
   };
 

@@ -1775,6 +1775,128 @@ leadSchema.pre('save', function normalizePhoneBeforeSave(next) {
 
 const Lead = mongoose.model('Lead', leadSchema, 'leads');
 
+// Web Development / Ads bulk sends from Create Campaign go to leads, not
+// newsletter subscribers, so they're logged here (one LeadCampaign per bulk
+// send, one LeadCampaignSend per lead) to show up in Outreach Analytics.
+const leadCampaignSchema = new mongoose.Schema({
+  category: { type: String, enum: ['web', 'ads'], required: true },
+  openedFilter: String,
+  clickedFilter: String,
+  // Rebuilt from lead snapshots for sends made before logging existed.
+  backfilled: { type: Boolean, default: false },
+  createdAt: { type: Date, default: Date.now }
+});
+const LeadCampaign = mongoose.model('LeadCampaign', leadCampaignSchema, 'lead_campaigns');
+
+const leadCampaignSendSchema = new mongoose.Schema({
+  campaignId: { type: mongoose.Schema.Types.ObjectId, ref: 'LeadCampaign', required: true, index: true },
+  leadId: { type: mongoose.Schema.Types.ObjectId, ref: 'Lead', required: true, index: true },
+  kind: { type: String, enum: ['cold', 'reminder'], required: true },
+  subject: String,
+  html: String,
+  opened: { type: Boolean, default: false },
+  openedAt: Date,
+  clicked: { type: Boolean, default: false },
+  clickedAt: Date,
+  sentAt: { type: Date, default: Date.now }
+});
+const LeadCampaignSend = mongoose.model('LeadCampaignSend', leadCampaignSendSchema, 'lead_campaign_sends');
+
+const LEAD_OPENED_FILTER_LABELS = { all: 'Any', not_contacted: 'Not contacted', not_opened: "Hasn't opened", opened: 'Has opened' };
+
+// Analytics label for a lead campaign, from which emails it actually sent.
+function leadCampaignSubject(campaign, kinds) {
+  const email = kinds.has('cold') && kinds.has('reminder') ? 'Cold email + reminder' : kinds.has('reminder') ? 'Reminder' : 'Cold email';
+  const audience = LEAD_OPENED_FILTER_LABELS[campaign.openedFilter];
+  return audience ? `${email} — ${audience}` : email;
+}
+
+// Cold and reminder emails both track as type "cold" — credit an open/click
+// to the latest campaign send that lead got.
+async function creditLeadCampaignSend(leadId, field) {
+  const now = new Date();
+  await LeadCampaignSend.findOneAndUpdate(
+    { leadId, sentAt: { $lte: now }, [field]: { $ne: true } },
+    { [field]: true, [`${field}At`]: now },
+    { sort: { sentAt: -1 } }
+  );
+}
+
+// One-time rebuild of Web Development bulk sends made after the cold
+// email / reminder split shipped but before sends were logged: leads emailed
+// within a few minutes of each other form one campaign. Reminders went to
+// "Has opened"; cold emails (this window) went to "Not contacted".
+const LEAD_CAMPAIGN_BACKFILL_SINCE = new Date('2026-11-23T11:57:28Z');
+const LEAD_CAMPAIGN_GAP_MS = 15 * 60 * 1000;
+let leadCampaignBackfillDone = false;
+
+async function backfillLeadCampaigns() {
+  if (leadCampaignBackfillDone) return;
+  // Claim the run first (the marker is never listed), so it only ever runs once.
+  const prior = await LeadCampaign.findOneAndUpdate(
+    { openedFilter: '__marker__' },
+    { $setOnInsert: { category: 'web', backfilled: true, createdAt: LEAD_CAMPAIGN_BACKFILL_SINCE } },
+    { upsert: true }
+  );
+  leadCampaignBackfillDone = true;
+  if (prior) return;
+  const firstLogged = await LeadCampaign.findOne({ backfilled: { $ne: true } }).sort({ createdAt: 1 }).lean();
+  const until = firstLogged ? firstLogged.createdAt : new Date();
+  const noWebsite = { $or: [{ website: '' }, { website: { $exists: false } }] };
+  const leads = await Lead.find({
+    ...noWebsite,
+    $and: [{ $or: [
+      { coldEmailSentAt: { $gte: LEAD_CAMPAIGN_BACKFILL_SINCE, $lt: until } },
+      { reminderEmailSentAt: { $gte: LEAD_CAMPAIGN_BACKFILL_SINCE, $lt: until } }
+    ] }]
+  }).lean();
+
+  const groups = [];
+  for (const kind of ['cold', 'reminder']) {
+    const at = kind === 'cold' ? 'coldEmailSentAt' : 'reminderEmailSentAt';
+    const rows = leads
+      .filter((l) => l[at] && l[at] >= LEAD_CAMPAIGN_BACKFILL_SINCE && l[at] < until)
+      .sort((a, b) => a[at] - b[at]);
+    let current = null;
+    for (const lead of rows) {
+      if (!current || lead[at] - current.last > LEAD_CAMPAIGN_GAP_MS) {
+        current = { kind, last: lead[at], leads: [] };
+        groups.push(current);
+      }
+      current.leads.push(lead);
+      current.last = lead[at];
+    }
+  }
+
+  // A bulk send reaches several leads; one or two are one-off sends.
+  for (const group of groups.filter((g) => g.leads.length >= 3)) {
+    const at = group.kind === 'cold' ? 'coldEmailSentAt' : 'reminderEmailSentAt';
+    const campaign = await LeadCampaign.create({
+      category: 'web',
+      openedFilter: group.kind === 'reminder' ? 'opened' : 'not_contacted',
+      backfilled: true,
+      createdAt: group.leads[0][at]
+    });
+    await LeadCampaignSend.insertMany(group.leads.map((lead) => {
+      const sentAt = lead[at];
+      const openedAt = lead.coldEmailOpenedAt && lead.coldEmailOpenedAt >= sentAt ? lead.coldEmailOpenedAt : null;
+      const clickedAt = lead.coldEmailClickedAt && lead.coldEmailClickedAt >= sentAt ? lead.coldEmailClickedAt : null;
+      return {
+        campaignId: campaign._id,
+        leadId: lead._id,
+        kind: group.kind,
+        subject: group.kind === 'cold' ? lead.coldEmailSubject : lead.reminderEmailSubject,
+        html: group.kind === 'cold' ? lead.coldEmailHtml : lead.reminderEmailHtml,
+        opened: Boolean(openedAt),
+        openedAt,
+        clicked: Boolean(clickedAt),
+        clickedAt,
+        sentAt
+      };
+    }));
+  }
+}
+
 // The email field may hold multiple comma-separated addresses — match if any
 // individual address (on either side) overlaps, not just an exact full-field match.
 function splitEmails(value) {
@@ -2645,6 +2767,31 @@ app.get('/api/newsletter/outreach-analytics', async (_req, res) => {
       sendsByCampaign.get(key).push(send);
     });
 
+    await backfillLeadCampaigns().catch((backfillError) => console.error('Could not backfill lead campaigns', backfillError));
+    const [leadCampaignDocs, leadSends] = await Promise.all([
+      LeadCampaign.find({ openedFilter: { $ne: '__marker__' } }).lean(),
+      LeadCampaignSend.find().select('campaignId kind opened clicked').lean()
+    ]);
+    const leadSendsByCampaign = new Map();
+    leadSends.forEach((send) => {
+      const key = String(send.campaignId);
+      if (!leadSendsByCampaign.has(key)) leadSendsByCampaign.set(key, []);
+      leadSendsByCampaign.get(key).push(send);
+    });
+    const leadCampaignRows = leadCampaignDocs
+      .filter((c) => leadSendsByCampaign.has(String(c._id)))
+      .map((c) => {
+        const rows = leadSendsByCampaign.get(String(c._id));
+        return {
+          id: String(c._id),
+          category: c.category,
+          subject: leadCampaignSubject(c, new Set(rows.map((r) => r.kind))),
+          sentAt: c.createdAt,
+          recipientCount: 0,
+          ...summarizeSends(rows)
+        };
+      });
+
     const campaigns = [...sendsByCampaign.entries()]
       .map(([id, campaignSendRows]) => {
         const campaign = campaignById.get(id);
@@ -2659,13 +2806,14 @@ app.get('/api/newsletter/outreach-analytics', async (_req, res) => {
           ...summarizeSends(campaignSendRows)
         };
       })
+      .concat(leadCampaignRows)
       .sort((a, b) => new Date(b.sentAt) - new Date(a.sentAt));
 
     res.json({
       ok: true,
       personal: summarizeSends(personalSends),
       signup: summarizeSends(signupSends),
-      campaignsSummary: { totalCampaigns: campaigns.length, ...summarizeSends(campaignSends) },
+      campaignsSummary: { totalCampaigns: campaigns.length, ...summarizeSends([...campaignSends, ...leadSends]) },
       campaigns: campaigns.slice(0, 20)
     });
   } catch (error) {
@@ -2765,12 +2913,56 @@ async function sendCampaignBatch(campaign, uploadedAttachments) {
   return { sent, failed, sentSoFar, total, remaining: pending.length - attempted };
 }
 
+// Same shape as a newsletter campaign's details. Each lead's email is
+// personalized, so the preview shows one real sent copy per email kind.
+async function leadCampaignDetails(campaign) {
+  const sends = await LeadCampaignSend.find({ campaignId: campaign._id }).lean();
+  const leads = await Lead.find({ _id: { $in: sends.map((s) => s.leadId) } }).select('email contactName businessName').lean();
+  const byId = new Map(leads.map((l) => [String(l._id), l]));
+  const kinds = new Set(sends.map((s) => s.kind));
+  const previews = ['cold', 'reminder']
+    .map((kind) => sends.find((s) => s.kind === kind && s.html))
+    .filter(Boolean)
+    .map((s) => {
+      const lead = byId.get(String(s.leadId));
+      const label = `${s.kind === 'cold' ? 'Cold email' : 'Reminder'}: "${s.subject || ''}" — example sent to ${lead?.businessName || lead?.email || 'a lead'}`;
+      return { label, html: untrackedPreviewHtml(s.html) };
+    });
+  return {
+    ok: true,
+    campaign: { id: campaign._id, subject: leadCampaignSubject(campaign, kinds), category: campaign.category, createdAt: campaign.createdAt, previews },
+    sent: sends
+      .map((s) => {
+        const lead = byId.get(String(s.leadId)) || {};
+        return {
+          subscriberId: s._id,
+          email: lead.email || '(deleted lead)',
+          name: lead.contactName || '',
+          businessName: lead.businessName || '',
+          kind: s.kind,
+          sentAt: s.sentAt,
+          opened: Boolean(s.opened),
+          openedAt: s.openedAt || null,
+          clicked: Boolean(s.clicked),
+          clickedAt: s.clickedAt || null
+        };
+      })
+      .sort((a, b) => Number(b.clicked) - Number(a.clicked) || Number(b.opened) - Number(a.opened) || String(a.email).localeCompare(String(b.email))),
+    notSent: []
+  };
+}
+
 // Per-recipient detail for Outreach Analytics: who it was sent to, who
 // opened and clicked (and when), and anyone it hasn't reached yet.
 app.get('/api/newsletter/campaigns/:id/recipients', async (req, res) => {
   try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) return res.status(404).json({ ok: false, message: 'Campaign not found.' });
     const campaign = await NewsletterCampaign.findById(req.params.id);
-    if (!campaign) return res.status(404).json({ ok: false, message: 'Campaign not found.' });
+    if (!campaign) {
+      const leadCampaign = await LeadCampaign.findById(req.params.id).lean();
+      if (!leadCampaign) return res.status(404).json({ ok: false, message: 'Campaign not found.' });
+      return res.json(await leadCampaignDetails(leadCampaign));
+    }
     const [sends, recipients] = await Promise.all([
       NewsletterSend.find({ campaignId: campaign._id }).select('subscriberId sentAt opened openedAt clicked clickedAt').lean(),
       campaignRecipients(campaign).select('email name businessName').lean()
@@ -2796,7 +2988,8 @@ app.get('/api/newsletter/campaigns/:id/recipients', async (req, res) => {
     });
     res.json({
       ok: true,
-      campaign: { id: campaign._id, subject: campaign.subject, category: campaign.category, createdAt: campaign.createdAt, scheduledAt: campaign.scheduledAt, previewHtml,
+      campaign: { id: campaign._id, subject: campaign.subject, category: campaign.category, createdAt: campaign.createdAt, scheduledAt: campaign.scheduledAt,
+        previews: [{ label: 'Email — "(name)" becomes each recipient\'s first name', html: previewHtml }],
         // Auto-attached PDFs only — one-off uploads aren't stored on the campaign.
         attachmentNames: autoAttachmentsForCategory(campaign.category).map((a) => a.filename) },
       sent: sends
@@ -4039,6 +4232,14 @@ app.post('/api/crm/leads/bulk-send-cold-email', async (req, res) => {
       return res.status(400).json({ ok: false, message: 'No leads match those filters.' });
     }
 
+    // First batch creates the campaign log; later batches pass its id back.
+    let leadCampaign = req.body.campaignId && mongoose.Types.ObjectId.isValid(req.body.campaignId)
+      ? await LeadCampaign.findById(req.body.campaignId)
+      : null;
+    if (!leadCampaign && leads.length) {
+      leadCampaign = await LeadCampaign.create({ category, openedFilter: openedFilter || 'all', clickedFilter: clickedFilter || 'all' });
+    }
+
     const deadline = Date.now() + CAMPAIGN_BATCH_MS;
     let sent = 0;
     let reminders = 0;
@@ -4057,10 +4258,20 @@ app.post('/api/crm/leads/bulk-send-cold-email', async (req, res) => {
       if (result.ok) {
         sent += 1;
         if (sendReminder) reminders += 1;
+        if (leadCampaign) {
+          const kind = sendReminder ? 'reminder' : 'cold';
+          await LeadCampaignSend.create({
+            campaignId: leadCampaign._id,
+            leadId: lead._id,
+            kind,
+            subject: kind === 'cold' ? lead.coldEmailSubject : lead.reminderEmailSubject,
+            html: kind === 'cold' ? lead.coldEmailHtml : lead.reminderEmailHtml
+          }).catch((logError) => console.error('Could not log lead campaign send', logError));
+        }
       } else failed += 1;
     }
 
-    res.status(201).json({ ok: true, sent, reminders, failed, processed, remaining: leads.length - processed, nextAfterId, total: leads.length });
+    res.status(201).json({ ok: true, campaignId: leadCampaign ? String(leadCampaign._id) : null, sent, reminders, failed, processed, remaining: leads.length - processed, nextAfterId, total: leads.length });
   } catch (error) {
     console.error('Could not bulk-send cold email', error);
     res.status(500).json({ ok: false, message: 'Could not send to leads.' });
@@ -4173,6 +4384,7 @@ app.get('/api/crm/leads/:id/track/open', async (req, res) => {
         update[`${prefix}OpenedAt`] = new Date();
       }
       await Lead.findByIdAndUpdate(req.params.id, update);
+      if (!req.query.type || req.query.type === 'cold') await creditLeadCampaignSend(req.params.id, 'opened');
     }
   } catch (error) {
     console.error('Could not record email open', error);
@@ -4192,6 +4404,7 @@ app.get('/api/crm/leads/:id/track/click', async (req, res) => {
       update[`${prefix}ClickedAt`] = new Date();
     }
     await Lead.findByIdAndUpdate(req.params.id, update);
+    if (!req.query.type || req.query.type === 'cold') await creditLeadCampaignSend(req.params.id, 'clicked');
   } catch (error) {
     console.error('Could not record link click', error);
   }

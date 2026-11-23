@@ -214,10 +214,11 @@ type SentRow = {
   openedAt: string | null;
   clicked: boolean;
   clickedAt: string | null;
+  kind?: 'cold' | 'reminder';
 };
 type NotSentRow = { subscriberId: string; email: string; name: string; businessName: string };
 type Details = {
-  campaign: { id: string; subject: string; category: string; createdAt: string; scheduledAt?: string; previewHtml?: string; attachmentNames?: string[] };
+  campaign: { id: string; subject: string; category: string; createdAt: string; scheduledAt?: string; previews?: { label: string; html: string }[]; attachmentNames?: string[] };
   sent: SentRow[];
   notSent: NotSentRow[];
 };
@@ -245,6 +246,7 @@ export function CampaignDetailsModal({ campaignId, onClose }: { campaignId: stri
   }, [campaignId]);
 
   const sent = details?.sent || [];
+  const hasKinds = sent.some((r) => r.kind);
   const notSent = details?.notSent || [];
   const opened = sent.filter((r) => r.opened).length;
   const clicked = sent.filter((r) => r.clicked).length;
@@ -294,23 +296,27 @@ export function CampaignDetailsModal({ campaignId, onClose }: { campaignId: stri
         ) : null}
         {details ? (
           <>
-            {details.campaign.previewHtml ? (
+            {details.campaign.previews?.length ? (
               <div style={{ marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
-                  <div style={{ fontSize: '0.7rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888' }}>
-                    Email — "(name)" becomes each recipient's first name
-                  </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.4rem' }}>
                   <Button size="sm" variant="outline-light" onClick={() => setShowEmail((v) => !v)}>
                     {showEmail ? 'Hide email' : 'Show email'}
                   </Button>
                 </div>
                 {showEmail ? (
-                  <iframe
-                    title="Campaign email"
-                    srcDoc={details.campaign.previewHtml}
-                    sandbox=""
-                    style={{ width: '100%', height: 460, border: '1px solid #2b2b2b', borderRadius: 8, background: '#fff' }}
-                  />
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '0.75rem' }}>
+                    {details.campaign.previews.map((preview) => (
+                      <div key={preview.label}>
+                        <div style={{ fontSize: '0.75rem', color: '#aaa', marginBottom: '0.3rem' }}>{preview.label}</div>
+                        <iframe
+                          title={preview.label}
+                          srcDoc={preview.html}
+                          sandbox=""
+                          style={{ width: '100%', height: 460, border: '1px solid #2b2b2b', borderRadius: 8, background: '#fff' }}
+                        />
+                      </div>
+                    ))}
+                  </div>
                 ) : null}
                 {details.campaign.attachmentNames?.length ? (
                   <div style={{ fontSize: '0.8rem', color: '#aaa', marginTop: '0.4rem' }}>
@@ -357,6 +363,7 @@ export function CampaignDetailsModal({ campaignId, onClose }: { campaignId: stri
                   <th>Email</th>
                   <th>Name</th>
                   <th>Business</th>
+                  {hasKinds ? <th>Email</th> : null}
                   <th>Sent</th>
                   <th>Opened</th>
                   <th>Clicked</th>
@@ -368,6 +375,7 @@ export function CampaignDetailsModal({ campaignId, onClose }: { campaignId: stri
                     <td>{r.email}</td>
                     <td>{r.name || '—'}</td>
                     <td>{r.businessName || '—'}</td>
+                    {hasKinds ? <td><Badge bg={r.kind === 'reminder' ? 'warning' : 'secondary'} text={r.kind === 'reminder' ? 'dark' : undefined}>{r.kind === 'reminder' ? 'Reminder' : 'Cold email'}</Badge></td> : null}
                     <td><small>{when(r.sentAt)}</small></td>
                     <td>{r.opened ? <Badge bg="info" text="dark">{when(r.openedAt)}</Badge> : <span style={{ color: '#666' }}>—</span>}</td>
                     <td>{r.clicked ? <Badge bg="success">{when(r.clickedAt)}</Badge> : <span style={{ color: '#666' }}>—</span>}</td>
@@ -378,12 +386,12 @@ export function CampaignDetailsModal({ campaignId, onClose }: { campaignId: stri
                     <td>{r.email}</td>
                     <td>{r.name || '—'}</td>
                     <td>{r.businessName || '—'}</td>
-                    <td colSpan={3}><Badge bg="secondary">Not sent yet</Badge></td>
+                    <td colSpan={hasKinds ? 4 : 3}><Badge bg="secondary">Not sent yet</Badge></td>
                   </tr>
                 ))}
                 {rows.length + pendingRows.length === 0 ? (
                   <tr>
-                    <td colSpan={6} style={{ textAlign: 'center', color: '#888', padding: '1.5rem' }}>Nobody matches this filter.</td>
+                    <td colSpan={hasKinds ? 7 : 6} style={{ textAlign: 'center', color: '#888', padding: '1.5rem' }}>Nobody matches this filter.</td>
                   </tr>
                 ) : null}
               </tbody>
