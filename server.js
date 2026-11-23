@@ -847,7 +847,8 @@ function buildReminderEmailHtml(lead) {
     ];
   } else {
     paragraphs = [
-      `Hey, I just wanted to follow up because we noticed ${businessFor} doesn't have a website, so I went ahead and built you one from scratch! I'd love to show it to you — feel free to schedule a quick call at your convenience:`
+      `Hey, just a quick reminder — we noticed ${businessFor} doesn't have a website, so we went ahead and built you one from scratch!`,
+      `It only takes about 5 minutes to review it together on a call. Grab whatever time works best for you:`
     ];
   }
 
@@ -3911,17 +3912,7 @@ app.post('/api/crm/leads/:id/send-cold-email', async (req, res) => {
     if (lead.coldEmailSent) {
       lead.coldEmailResentAt = new Date();
     }
-    const result = await sendLeadEmail(lead, {
-      subject: pitchesMarketing(lead)
-        ? `A few content ideas for ${lead.businessName || 'your business'} 💡`
-        : `We built a new website for ${lead.businessName || 'your business'} 🖥️`,
-      buildHtml: buildColdEmailHtml,
-      statusField: 'coldEmailSent',
-      statusAtField: 'coldEmailSentAt',
-      htmlField: 'coldEmailHtml',
-      subjectField: 'coldEmailSubject',
-      resendIdField: 'coldEmailResendId'
-    });
+    const result = await sendLeadEmail(lead, coldEmailOptions(lead));
     res.status(result.ok ? 200 : 400).json(result);
   } catch (error) {
     console.error('Could not send cold email', error);
@@ -3937,24 +3928,41 @@ app.post('/api/crm/leads/:id/send-reminder-email', async (req, res) => {
     }
     // No open/click block: leads who opened or clicked but never booked are
     // exactly who reminders are for.
-    const reminderSubject = !lead.closedWebDevClient && !lead.declinedWebsite && (lead.source === 'newsletter' || !lead.website)
-      ? 'Your new website is ready! 🎉'
-      : 'Following up on your content & ads ideas';
-    const result = await sendLeadEmail(lead, {
-      subject: reminderSubject,
-      buildHtml: buildReminderEmailHtml,
-      statusField: 'reminderEmailSent',
-      statusAtField: 'reminderEmailSentAt',
-      htmlField: 'reminderEmailHtml',
-      subjectField: 'reminderEmailSubject',
-      resendIdField: 'reminderEmailResendId'
-    });
+    const result = await sendLeadEmail(lead, reminderEmailOptions(lead));
     res.status(result.ok ? 200 : 400).json(result);
   } catch (error) {
     console.error('Could not send reminder email', error);
     res.status(500).json({ ok: false, message: 'Could not send reminder email.' });
   }
 });
+
+function reminderEmailOptions(lead) {
+  return {
+    subject: !lead.closedWebDevClient && !lead.declinedWebsite && (lead.source === 'newsletter' || !lead.website)
+      ? 'Your new website is ready! 🎉'
+      : 'Following up on your content & ads ideas',
+    buildHtml: buildReminderEmailHtml,
+    statusField: 'reminderEmailSent',
+    statusAtField: 'reminderEmailSentAt',
+    htmlField: 'reminderEmailHtml',
+    subjectField: 'reminderEmailSubject',
+    resendIdField: 'reminderEmailResendId'
+  };
+}
+
+function coldEmailOptions(lead) {
+  return {
+    subject: pitchesMarketing(lead)
+      ? `A few content ideas for ${lead.businessName || 'your business'} 💡`
+      : `We built a new website for ${lead.businessName || 'your business'} 🖥️`,
+    buildHtml: buildColdEmailHtml,
+    statusField: 'coldEmailSent',
+    statusAtField: 'coldEmailSentAt',
+    htmlField: 'coldEmailHtml',
+    subjectField: 'coldEmailSubject',
+    resendIdField: 'coldEmailResendId'
+  };
+}
 
 // Web/ads "campaigns" don't use the newsletter-interest checkbox system —
 // they always target leads (not newsletter subscribers), split by whether
@@ -3968,8 +3976,17 @@ function buildLeadAudienceQuery({ category, openedFilter, clickedFilter }) {
     declined: { $ne: true },
     ...(category === 'ads' ? { website: { $ne: '' } } : { $or: [{ website: '' }, { website: { $exists: false } }] })
   };
+  // not_contacted: never emailed (no cold email or outdated-site mockup).
+  // not_opened: emailed, but hasn't opened the cold email yet.
+  if (openedFilter === 'not_contacted') {
+    query.coldEmailSent = { $ne: true };
+    query.outdatedMockupSent = { $ne: true };
+  }
+  if (openedFilter === 'not_opened') {
+    query.coldEmailSent = true;
+    query.coldEmailOpened = { $ne: true };
+  }
   if (openedFilter === 'opened') query.coldEmailOpened = true;
-  if (openedFilter === 'not_opened') query.coldEmailOpened = { $ne: true };
   if (clickedFilter === 'clicked') query.coldEmailClicked = true;
   if (clickedFilter === 'not_clicked') query.coldEmailClicked = { $ne: true };
   return query;
@@ -4007,6 +4024,7 @@ app.post('/api/crm/leads/bulk-send-cold-email', async (req, res) => {
 
     const deadline = Date.now() + CAMPAIGN_BATCH_MS;
     let sent = 0;
+    let reminders = 0;
     let failed = 0;
     let processed = 0;
     let nextAfterId = afterId;
@@ -4014,22 +4032,18 @@ app.post('/api/crm/leads/bulk-send-cold-email', async (req, res) => {
       if (Date.now() >= deadline) break;
       processed += 1;
       nextAfterId = String(lead._id);
-      const result = await sendLeadEmail(lead, {
-        subject: pitchesMarketing(lead)
-          ? `A few content ideas for ${lead.businessName || 'your business'} 💡`
-          : `We built a new website for ${lead.businessName || 'your business'} 🖥️`,
-        buildHtml: buildColdEmailHtml,
-        statusField: 'coldEmailSent',
-        statusAtField: 'coldEmailSentAt',
-        htmlField: 'coldEmailHtml',
-        subjectField: 'coldEmailSubject',
-        resendIdField: 'coldEmailResendId'
-      });
-      if (result.ok) sent += 1;
-      else failed += 1;
+      // Web Development: leads who already opened the cold email get the
+      // "we built your website, 5 minutes on a call" reminder instead of the
+      // same cold email again. Everyone else gets the cold email.
+      const sendReminder = category === 'web' && lead.coldEmailOpened;
+      const result = await sendLeadEmail(lead, sendReminder ? reminderEmailOptions(lead) : coldEmailOptions(lead));
+      if (result.ok) {
+        sent += 1;
+        if (sendReminder) reminders += 1;
+      } else failed += 1;
     }
 
-    res.status(201).json({ ok: true, sent, failed, processed, remaining: leads.length - processed, nextAfterId, total: leads.length });
+    res.status(201).json({ ok: true, sent, reminders, failed, processed, remaining: leads.length - processed, nextAfterId, total: leads.length });
   } catch (error) {
     console.error('Could not bulk-send cold email', error);
     res.status(500).json({ ok: false, message: 'Could not send to leads.' });

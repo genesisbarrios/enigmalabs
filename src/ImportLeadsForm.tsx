@@ -484,7 +484,9 @@ const ImportLeadsForm = ({ onImported }: { onImported: () => void }) => {
 
   const handleParsePaste = () => {
     setError('');
-    const parsed = parsePastedLeads(pasteText, industryOptions);
+    // Pasted contacts are ones we've already DM'd, so DM Sent starts checked
+    // for every row (still editable per row in the preview).
+    const parsed = parsePastedLeads(pasteText, industryOptions).map((lead) => ({ ...lead, dmSent: true }));
     if (!parsed.length) {
       setError('Could not detect any leads in the pasted text.');
       return;

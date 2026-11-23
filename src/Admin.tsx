@@ -608,7 +608,7 @@ const Admin = () => {
   // they always resend the fixed cold-email pitch to matching leads,
   // filtered by whether the lead has already opened/clicked it.
   const LEAD_CAMPAIGN_CATEGORIES: NewsletterCategory[] = ['web', 'ads'];
-  const [leadAudienceOpenedFilter, setLeadAudienceOpenedFilter] = useState<'all' | 'opened' | 'not_opened'>('not_opened');
+  const [leadAudienceOpenedFilter, setLeadAudienceOpenedFilter] = useState<'all' | 'not_contacted' | 'opened' | 'not_opened'>('not_opened');
   const [leadAudienceClickedFilter, setLeadAudienceClickedFilter] = useState<'all' | 'clicked' | 'not_clicked'>('not_clicked');
   const [leadAudienceCount, setLeadAudienceCount] = useState<number | null>(null);
   const [leadAudienceLoading, setLeadAudienceLoading] = useState(false);
@@ -1058,6 +1058,14 @@ const Admin = () => {
   const campaignRecipientCount = effectiveRecipientIds.length;
 
   const isLeadCampaign = LEAD_CAMPAIGN_CATEGORIES.includes(campaignForm.category);
+  // Mirrors the server: in Web Development campaigns, leads who opened the
+  // cold email get the reminder instead.
+  const leadCampaignEmailLabel =
+    campaignForm.category !== 'web' || leadAudienceOpenedFilter === 'not_contacted' || leadAudienceOpenedFilter === 'not_opened'
+      ? 'cold email'
+      : leadAudienceOpenedFilter === 'opened'
+        ? 'reminder email'
+        : 'cold email (reminder email for leads who opened it)';
 
   useEffect(() => {
     if (!showCreateCampaign || !isLeadCampaign) {
@@ -1085,12 +1093,13 @@ const Admin = () => {
   }, [showCreateCampaign, isLeadCampaign, campaignForm.category, leadAudienceOpenedFilter, leadAudienceClickedFilter]);
 
   const handleSendLeadCampaign = async () => {
-    if (!window.confirm(`Resend the cold email to all ${leadAudienceCount ?? 0} matching lead(s)?`)) {
+    if (!window.confirm(`Send the ${leadCampaignEmailLabel} to all ${leadAudienceCount ?? 0} matching lead(s)?`)) {
       return;
     }
     setCampaignSending(true);
     // Sent in server-side batches — pass back nextAfterId until none remain.
     let sent = 0;
+    let reminders = 0;
     let failed = 0;
     let total = 0;
     try {
@@ -1109,10 +1118,12 @@ const Admin = () => {
         const batch = response.data;
         if (afterId === null) total = batch.total;
         sent += batch.sent;
+        reminders += batch.reminders || 0;
         failed += batch.failed || 0;
         setCampaignProgress({ sentSoFar: sent + failed, total });
         if (!batch.remaining || !batch.processed) {
-          setNewsletterMessage(`Cold email sent to ${sent} of ${total} leads${failed ? ` (${failed} failed — check those leads' email addresses)` : ''}.`);
+          const breakdown = reminders ? ` (${sent - reminders} cold email, ${reminders} reminder)` : '';
+          setNewsletterMessage(`Sent to ${sent} of ${total} leads${breakdown}${failed ? ` (${failed} failed — check those leads' email addresses)` : ''}.`);
           setShowCreateCampaign(false);
           break;
         }
@@ -3211,7 +3222,7 @@ const Admin = () => {
               <p style={{ fontSize: '0.8rem', color: '#aaa' }}>
                 {campaignForm.category === 'ads'
                   ? 'Ads campaigns always resend the marketing/ads cold-email pitch to leads that already have a website.'
-                  : 'Web Development campaigns always resend the free-mockup cold-email pitch to leads without a website yet.'}{' '}
+                  : 'Web Development campaigns go to leads without a website yet: not contacted and hasn\'t opened get the website cold email; has opened gets the reminder that we built their website and it only takes 5 minutes to review on a call.'}{' '}
                 Leads already onboarded (moved to Website Clients) or declined are excluded automatically.
               </p>
               <Row>
@@ -3220,6 +3231,7 @@ const Admin = () => {
                     <Form.Label style={{ fontSize: '0.8rem' }}>Opened the cold email?</Form.Label>
                     <Form.Select size="sm" value={leadAudienceOpenedFilter} onChange={(e) => setLeadAudienceOpenedFilter(e.target.value as typeof leadAudienceOpenedFilter)}>
                       <option value="all">Doesn't matter</option>
+                      <option value="not_contacted">Not contacted</option>
                       <option value="not_opened">Hasn't opened</option>
                       <option value="opened">Has opened</option>
                     </Form.Select>
@@ -3238,7 +3250,7 @@ const Admin = () => {
               </Row>
               <Alert variant="secondary" style={{ fontSize: '0.85rem' }}>
                 {leadAudienceLoading ? 'Counting matching leads...' : (
-                  <>This will resend the cold email to <strong>{leadAudienceCount ?? 0}</strong> matching lead{leadAudienceCount === 1 ? '' : 's'}.</>
+                  <>This will send the {leadCampaignEmailLabel} to <strong>{leadAudienceCount ?? 0}</strong> matching lead{leadAudienceCount === 1 ? '' : 's'}.</>
                 )}
               </Alert>
             </>
