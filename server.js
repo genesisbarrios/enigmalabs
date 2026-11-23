@@ -2779,9 +2779,26 @@ app.get('/api/newsletter/campaigns/:id/recipients', async (req, res) => {
     const people = await NewsletterSubscriber.find({ _id: { $in: sentIds } }).select('email name businessName').lean();
     const byId = new Map(people.map((p) => [String(p._id), p]));
     const sentSet = new Set(sentIds.map(String));
+    // The email as recipients got it, rendered with the same template but no
+    // sendId (so no open pixel or click tracking) and "(name)" left as the
+    // per-recipient placeholder.
+    const isEnigma = campaign.category === 'web' || campaign.category === 'ads';
+    const previewHtml = renderNewsletterEmail({
+      subscriber: { name: '(name)' },
+      subject: campaign.subject,
+      bodyText: campaign.html,
+      ctaLabel: campaign.ctaLabel,
+      ctaUrl: campaign.ctaUrl,
+      imageUrl: campaign.imageUrl,
+      sendId: null,
+      instagramUrl: isEnigma ? ENIGMA_INSTAGRAM_URL : GENWAV_INSTAGRAM_URL,
+      instagramLabel: isEnigma ? '@_enigmalabs' : '@gen.wav'
+    });
     res.json({
       ok: true,
-      campaign: { id: campaign._id, subject: campaign.subject, category: campaign.category, createdAt: campaign.createdAt, scheduledAt: campaign.scheduledAt },
+      campaign: { id: campaign._id, subject: campaign.subject, category: campaign.category, createdAt: campaign.createdAt, scheduledAt: campaign.scheduledAt, previewHtml,
+        // Auto-attached PDFs only — one-off uploads aren't stored on the campaign.
+        attachmentNames: autoAttachmentsForCategory(campaign.category).map((a) => a.filename) },
       sent: sends
         .map((s) => {
           const p = byId.get(String(s.subscriberId)) || {};

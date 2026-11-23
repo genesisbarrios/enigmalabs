@@ -217,7 +217,7 @@ type SentRow = {
 };
 type NotSentRow = { subscriberId: string; email: string; name: string; businessName: string };
 type Details = {
-  campaign: { id: string; subject: string; category: string; createdAt: string; scheduledAt?: string };
+  campaign: { id: string; subject: string; category: string; createdAt: string; scheduledAt?: string; previewHtml?: string; attachmentNames?: string[] };
   sent: SentRow[];
   notSent: NotSentRow[];
 };
@@ -229,10 +229,12 @@ export function CampaignDetailsModal({ campaignId, onClose }: { campaignId: stri
   const [error, setError] = useState('');
   const [filter, setFilter] = useState<'all' | 'opened' | 'clicked' | 'not_opened' | 'not_sent'>('all');
   const [search, setSearch] = useState('');
+  const [showEmail, setShowEmail] = useState(true);
 
   useEffect(() => {
     if (!campaignId) return;
     setDetails(null);
+    setShowEmail(true);
     setError('');
     setFilter('all');
     setSearch('');
@@ -292,6 +294,31 @@ export function CampaignDetailsModal({ campaignId, onClose }: { campaignId: stri
         ) : null}
         {details ? (
           <>
+            {details.campaign.previewHtml ? (
+              <div style={{ marginBottom: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.4rem' }}>
+                  <div style={{ fontSize: '0.7rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888' }}>
+                    Email — "(name)" becomes each recipient's first name
+                  </div>
+                  <Button size="sm" variant="outline-light" onClick={() => setShowEmail((v) => !v)}>
+                    {showEmail ? 'Hide email' : 'Show email'}
+                  </Button>
+                </div>
+                {showEmail ? (
+                  <iframe
+                    title="Campaign email"
+                    srcDoc={details.campaign.previewHtml}
+                    sandbox=""
+                    style={{ width: '100%', height: 460, border: '1px solid #2b2b2b', borderRadius: 8, background: '#fff' }}
+                  />
+                ) : null}
+                {details.campaign.attachmentNames?.length ? (
+                  <div style={{ fontSize: '0.8rem', color: '#aaa', marginTop: '0.4rem' }}>
+                    📎 Attached: {details.campaign.attachmentNames.join(', ')}
+                  </div>
+                ) : null}
+              </div>
+            ) : null}
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.6rem', marginBottom: '1rem' }}>
               {[
                 ['Sent', String(sent.length), notSent.length ? `${notSent.length} not sent yet` : 'everyone reached'],
