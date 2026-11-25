@@ -559,3 +559,75 @@ button:disabled {
     margin-right: auto !important;
   }
 }
+
+/* Make a Payment: two cards per row at every width — on phones the text,
+   padding and icon shrink so the cards still fit side by side. */
+.payment-col{
+  margin-bottom: 1.5rem;
+}
+.payment-card-head{
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 1rem;
+}
+.payment-card-icon{
+  flex-shrink: 0;
+}
+.payment-card-details{
+  font-size: 0.9rem;
+}
+
+@media only screen and (max-width: 767px) {
+  .payment-monthly-title{
+    margin-top: 1.25rem;
+  }
+  .payment-row{
+    margin-left: -6px;
+    margin-right: -6px;
+  }
+  .payment-col{
+    padding-left: 6px;
+    padding-right: 6px;
+    margin-bottom: 12px;
+  }
+  .payment-card{
+    padding: 0.25rem !important;
+    border-radius: 12px !important;
+  }
+  .payment-card .card-body{
+    padding: 0.75rem;
+  }
+  .payment-card-head{
+    gap: 0.4rem;
+    margin-bottom: 0.5rem;
+  }
+  .payment-card-icon{
+    width: 18px;
+    height: 18px;
+  }
+  .payment-card-title.onboarding-option-title{
+    font-size: 0.95rem;
+    line-height: 1.2;
+  }
+  .payment-card-price{
+    font-size: 0.85rem;
+  }
+  .payment-card-details{
+    font-size: 0.72rem;
+    padding-left: 0.9rem !important;
+  }
+}
+
+/* Onboarding / payment / agreement page titles: always one full-width
+   line. Overrides the global mobile h1 rule (width 60%, 3rem) that wrapped
+   them onto two lines; the vw size shrinks long titles to fit phones. */
+h1.onboarding-page-title{
+  width: 100% !important;
+  white-space: nowrap;
+  font-size: min(3.5rem, 5.6vw) !important;
+  line-height: 1.15;
+}
+h1.onboarding-page-title--long{
+  font-size: min(3rem, 3.8vw) !important;
+}

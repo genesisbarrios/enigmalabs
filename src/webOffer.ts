@@ -33,6 +33,18 @@ export const workProjects = [
     url: "https://influanto.com",
     image: "https://dl.dropboxusercontent.com/s/a7lf48b7uht3dnyl59tc1/influantoHomepageLaptop.png?rlkey=pzp4yi2ns6ppjfmwb9m84t4tz&st=gjpea3z3&dl=0",
     alt: "Influanto the all in one music marketing platform"
+  },
+  {
+    name: "Oscilux | Music Visualizer & Clip Maker",
+    url: "https://oscilux.app",
+    image: "/work/oscilux.png",
+    alt: "Oscilux — music visualizer and clip maker for artists, producers and creators"
+  },
+  {
+    name: "Stemcell | Free Online Granular Synth",
+    url: "https://stemcell.enigma-labs.com",
+    image: "/work/stemcell.png",
+    alt: "Stemcell — free web-based granular synth"
   }
 ];
 

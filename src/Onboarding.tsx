@@ -207,7 +207,7 @@ const Onboarding = () => {
     <Container style={{ paddingTop: '6rem', paddingBottom: '3rem', maxWidth: '1000px' }}>
       <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b' }}>
         <Card.Body style={{ padding: '2rem' }}>
-          <h1 style={{ color: '#68FF00', marginBottom: '0.5rem' }}>
+          <h1 className="onboarding-page-title onboarding-page-title--long" style={{ color: '#68FF00', marginBottom: '0.5rem' }}>
             {editId ? 'Edit Your Onboarding Submission' : 'Web Development Client Onboarding'}
           </h1>
           <p style={{ color: '#d4d4d4', marginBottom: '2rem' }}>

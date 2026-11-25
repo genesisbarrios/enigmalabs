@@ -212,7 +212,7 @@ const OnboardingAgreement = () => {
         <CompleteOnboardingButton />
         <Card style={{ ...cardStyle, textAlign: 'center' }}>
           <Card.Body style={{ padding: '2.5rem' }}>
-            <h1 style={{ color: '#68FF00', marginBottom: '1rem' }}>Agreement Signed</h1>
+            <h1 className="onboarding-page-title" style={{ color: '#68FF00', marginBottom: '1rem' }}>Agreement Signed</h1>
             <p style={{ color: '#d4d4d4', marginBottom: '2rem' }}>
               Thanks, {clientName}. Your web development agreement has been signed and saved — a
               copy has also been emailed to {clientEmail} and downloaded to this device.
@@ -255,7 +255,7 @@ const OnboardingAgreement = () => {
   return (
     <Container style={{ paddingTop: '6rem', paddingBottom: '3rem', maxWidth: '900px' }}>
       <CompleteOnboardingButton />
-      <h1 style={{ color: '#68FF00', marginBottom: '0.5rem' }}>Web Development Agreement</h1>
+      <h1 className="onboarding-page-title" style={{ color: '#68FF00', marginBottom: '0.5rem' }}>Web Development Agreement</h1>
       <p style={{ color: '#d4d4d4', marginBottom: '2rem' }}>
         Choose a plan, fill in your details, review the agreement, and sign at the bottom.
       </p>

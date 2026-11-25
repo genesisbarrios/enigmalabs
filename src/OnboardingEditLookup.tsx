@@ -35,7 +35,7 @@ const OnboardingEditLookup = () => {
     <Container style={{ paddingTop: '6rem', paddingBottom: '3rem', maxWidth: '500px' }}>
       <Card style={{ background: '#111', color: 'white', border: '1px solid #2b2b2b', borderRadius: '16px' }}>
         <Card.Body style={{ padding: '2rem' }}>
-          <h1 style={{ color: '#68FF00', marginBottom: '0.5rem', fontSize: '2rem' }}>Edit Submitted Form</h1>
+          <h1 className="onboarding-page-title" style={{ color: '#68FF00', marginBottom: '0.5rem' }}>Edit Submitted Form</h1>
           <p style={{ color: '#d4d4d4', marginBottom: '1.5rem' }}>
             Enter the email you used when you submitted your onboarding form to pull it up and make changes.
           </p>

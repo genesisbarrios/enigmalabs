@@ -45,7 +45,7 @@ const OnboardingLanding = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    document.title = "Enigma Labs | Client Onboarding";
+    document.title = "Enigma Labs | Web Development Onboarding";
     document.querySelector('meta[name="description"]')?.setAttribute(
       "content",
       "Start your web development project with Enigma Labs — sign the agreement or fill out the onboarding form."
@@ -54,7 +54,7 @@ const OnboardingLanding = () => {
 
   return (
     <Container style={{ paddingTop: '6rem', paddingBottom: '3rem', maxWidth: '1200px' }}>
-      <h1 style={{ color: '#68FF00', marginBottom: '0.5rem' }}>Client Onboarding</h1>
+      <h1 className="onboarding-page-title" style={{ color: '#68FF00', marginBottom: '0.5rem' }}>Web Development Onboarding</h1>
       <p style={{ color: '#d4d4d4', marginBottom: '2.5rem' }}>
         Let's get your project started. Choose an option below.
       </p>

@@ -3,7 +3,7 @@ import { Card, Col, Container, Row } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 
 const PaymentIcon = () => (
-  <svg width="26" height="26" style={{ flexShrink: 0 }} viewBox="0 0 24 24" fill="none" stroke="#68FF00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg className="payment-card-icon" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#68FF00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <rect x="2" y="5" width="20" height="14" rx="2" />
     <path d="M2 10h20" />
     <path d="M6 15h4" />
@@ -92,15 +92,15 @@ const supportPlans: Plan[] = [
 
 const PlanCard = ({ plan }: { plan: Plan }) => {
   const body = (
-    <Card style={plan.url ? optionCardStyle : disabledCardStyle} className={plan.url ? 'onboarding-option-card' : undefined}>
+    <Card style={plan.url ? optionCardStyle : disabledCardStyle} className={`payment-card${plan.url ? ' onboarding-option-card' : ''}`}>
       <Card.Body>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
+        <div className="payment-card-head">
           <PaymentIcon />
-          <h3 className="onboarding-option-title" style={{ color: '#68FF00', margin: 0 }}>{plan.title}</h3>
+          <h3 className="onboarding-option-title payment-card-title" style={{ color: '#68FF00', margin: 0 }}>{plan.title}</h3>
         </div>
-        <p style={{ color: '#d4d4d4', marginBottom: plan.details ? '0.5rem' : undefined }}>{plan.description}</p>
+        <p className="payment-card-price" style={{ color: '#d4d4d4', marginBottom: plan.details ? '0.5rem' : 0 }}>{plan.description}</p>
         {plan.details && (
-          <ul style={{ color: '#a3a3a3', fontSize: '0.9rem', paddingLeft: '1.1rem', marginBottom: 0 }}>
+          <ul className="payment-card-details" style={{ color: '#a3a3a3', paddingLeft: '1.1rem', marginBottom: 0 }}>
             {plan.details.map((d) => <li key={d}>{d}</li>)}
           </ul>
         )}
@@ -147,7 +147,7 @@ const Payment = () => {
           Sign Web Development Agreement &rarr;
         </Link>
       </div>
-      <h1 style={{ color: '#68FF00', marginBottom: '0.5rem' }}>Make a Payment</h1>
+      <h1 className="onboarding-page-title" style={{ color: '#68FF00', marginBottom: '0.5rem' }}>Make a Payment</h1>
       <p style={{ color: '#d4d4d4', marginBottom: '2.5rem' }}>
         Choose the option that matches your project to complete payment securely.
       </p>
@@ -155,19 +155,19 @@ const Payment = () => {
       <Row>
         <Col xs={12} md={6}>
           <h2 className="subsection-title" style={{ color: '#68FF00', marginBottom: '1.25rem' }}>Pay Up Front</h2>
-          <Row>
+          <Row className="payment-row">
             {websitePlans.map((plan) => (
-              <Col xs={12} sm={6} key={plan.title} style={{ marginBottom: '1.5rem' }}>
+              <Col xs={6} key={plan.title} className="payment-col">
                 <PlanCard plan={plan} />
               </Col>
             ))}
           </Row>
         </Col>
         <Col xs={12} md={6}>
-          <h2 className="subsection-title" style={{ color: '#68FF00', marginBottom: '1.25rem' }}>Monthly Subscription</h2>
-          <Row>
+          <h2 className="subsection-title payment-monthly-title" style={{ color: '#68FF00', marginBottom: '1.25rem' }}>Monthly Subscription</h2>
+          <Row className="payment-row">
             {subscriptionPlans.map((plan) => (
-              <Col xs={12} sm={6} key={plan.title} style={{ marginBottom: '1.5rem' }}>
+              <Col xs={6} key={plan.title} className="payment-col">
                 <PlanCard plan={plan} />
               </Col>
             ))}
@@ -179,9 +179,9 @@ const Payment = () => {
         Hosting &amp; Support
       </h2>
 
-      <Row>
+      <Row className="payment-row">
         {supportPlans.map((plan) => (
-          <Col xs={12} sm={6} md={3} key={plan.title} style={{ marginBottom: '1.5rem' }}>
+          <Col xs={6} md={3} key={plan.title} className="payment-col">
             <PlanCard plan={plan} />
           </Col>
         ))}
