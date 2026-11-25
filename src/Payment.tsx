@@ -3,7 +3,7 @@ import { Card, Col, Container, Row } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 
 const PaymentIcon = () => (
-  <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#68FF00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+  <svg width="26" height="26" style={{ flexShrink: 0 }} viewBox="0 0 24 24" fill="none" stroke="#68FF00" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <rect x="2" y="5" width="20" height="14" rx="2" />
     <path d="M2 10h20" />
     <path d="M6 15h4" />
@@ -94,7 +94,10 @@ const PlanCard = ({ plan }: { plan: Plan }) => {
   const body = (
     <Card style={plan.url ? optionCardStyle : disabledCardStyle} className={plan.url ? 'onboarding-option-card' : undefined}>
       <Card.Body>
-        <h3 className="onboarding-option-title" style={{ color: '#68FF00', marginBottom: '1rem' }}>{plan.title}</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1rem' }}>
+          <PaymentIcon />
+          <h3 className="onboarding-option-title" style={{ color: '#68FF00', margin: 0 }}>{plan.title}</h3>
+        </div>
         <p style={{ color: '#d4d4d4', marginBottom: plan.details ? '0.5rem' : undefined }}>{plan.description}</p>
         {plan.details && (
           <ul style={{ color: '#a3a3a3', fontSize: '0.9rem', paddingLeft: '1.1rem', marginBottom: 0 }}>
@@ -102,9 +105,6 @@ const PlanCard = ({ plan }: { plan: Plan }) => {
           </ul>
         )}
         {!plan.url && <p style={{ color: '#a3a3a3', fontSize: '0.85rem', marginBottom: 0 }}>Payment link coming soon</p>}
-        <div style={{ marginTop: '1.5rem' }}>
-          <PaymentIcon />
-        </div>
       </Card.Body>
     </Card>
   );
@@ -167,7 +167,7 @@ const Payment = () => {
           <h2 className="subsection-title" style={{ color: '#68FF00', marginBottom: '1.25rem' }}>Monthly Subscription</h2>
           <Row>
             {subscriptionPlans.map((plan) => (
-              <Col xs={12} key={plan.title} style={{ marginBottom: '1.5rem' }}>
+              <Col xs={12} sm={6} key={plan.title} style={{ marginBottom: '1.5rem' }}>
                 <PlanCard plan={plan} />
               </Col>
             ))}
@@ -181,7 +181,7 @@ const Payment = () => {
 
       <Row>
         {supportPlans.map((plan) => (
-          <Col xs={12} md={4} key={plan.title} style={{ marginBottom: '1.5rem' }}>
+          <Col xs={12} sm={6} md={3} key={plan.title} style={{ marginBottom: '1.5rem' }}>
             <PlanCard plan={plan} />
           </Col>
         ))}

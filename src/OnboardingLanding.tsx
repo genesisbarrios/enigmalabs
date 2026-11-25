@@ -59,8 +59,8 @@ const OnboardingLanding = () => {
         Let's get your project started. Choose an option below.
       </p>
 
-      <Row className="g-4">
-        <Col xs={12} md={4}>
+      <Row>
+        <Col xs={12} md={4} className="mb-4">
           <Card
             style={optionCardStyle}
             className="onboarding-option-card"
@@ -78,7 +78,7 @@ const OnboardingLanding = () => {
           </Card>
         </Col>
 
-        <Col xs={12} md={4}>
+        <Col xs={12} md={4} className="mb-4">
           <Card
             style={optionCardStyle}
             className="onboarding-option-card"
@@ -97,7 +97,7 @@ const OnboardingLanding = () => {
           </Card>
         </Col>
 
-        <Col xs={12} md={4}>
+        <Col xs={12} md={4} className="mb-4">
           <Card
             style={optionCardStyle}
             className="onboarding-option-card"

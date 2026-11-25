@@ -262,7 +262,7 @@ const OnboardingAgreement = () => {
 
       <Row className="g-3 mb-4">
         {visiblePlans.map((plan) => (
-          <Col xs={12} md={6} key={plan}>
+          <Col xs={12} md={6} key={plan} className="mb-3">
             <div style={planCardStyle(planType === plan)} onClick={() => setPlanType(plan)}>
               <h5 style={{ color: '#68FF00' }}>{PLAN_LABELS[plan]}</h5>
               <p style={{ color: '#d4d4d4', marginBottom: 0 }}>{PLAN_DESCRIPTIONS[plan]}</p>
