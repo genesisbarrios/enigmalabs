@@ -25,7 +25,7 @@ export const workProjects = [
   {
     name: "Nuralume",
     url: "https://nuralume.xyz",
-    image: "https://dl.dropboxusercontent.com/s/11xwqvyuioco1etjdeu27/nuralume.png?rlkey=xuiz2krmjop7kegb099q4jocg&st=xs0f6rkn&dl=0",
+    image: "/work/nuralume.png",
     alt: "Nuralume"
   },
   {

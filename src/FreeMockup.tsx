@@ -35,6 +35,12 @@ const workProjects = [
     url: "https://influanto.com",
     image: "/work/influanto.png",
     alt: "Influanto the all in one music marketing platform"
+  },
+  {
+    name: "Oscilux | Music Visualizer & Clip Maker",
+    url: "https://oscilux.app",
+    image: "/work/oscilux.png",
+    alt: "Oscilux — music visualizer and clip maker for artists, producers and creators"
   }
 ];
 

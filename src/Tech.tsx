@@ -160,7 +160,7 @@ function handleSubmit() {
 }
 
       return (
-        <Container className="aboutContainer">
+        <Container className="aboutContainer web-page-container">
           
           <Row style={rowStyle}>
             <Col sm={2}></Col>

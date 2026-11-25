@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { Card, Col, Container, Row } from 'react-bootstrap';
 import { Link } from 'react-router-dom';
 
@@ -90,13 +90,40 @@ const supportPlans: Plan[] = [
   }
 ];
 
+// Card titles stay on one line: start from the stylesheet size and step the
+// font down until the title fits its card (re-checked on resize).
+const FitTitle = ({ children }: { children: string }) => {
+  const ref = useRef<HTMLHeadingElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const fit = () => {
+      el.style.fontSize = '';
+      let size = parseFloat(getComputedStyle(el).fontSize);
+      while (el.scrollWidth > el.clientWidth && size > 10) {
+        size -= 0.5;
+        el.style.fontSize = `${size}px`;
+      }
+    };
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(el.parentElement || el);
+    return () => observer.disconnect();
+  }, [children]);
+  return (
+    <h3 ref={ref} className="onboarding-option-title payment-card-title" style={{ color: '#68FF00', margin: 0 }}>
+      {children}
+    </h3>
+  );
+};
+
 const PlanCard = ({ plan }: { plan: Plan }) => {
   const body = (
     <Card style={plan.url ? optionCardStyle : disabledCardStyle} className={`payment-card${plan.url ? ' onboarding-option-card' : ''}`}>
       <Card.Body>
         <div className="payment-card-head">
           <PaymentIcon />
-          <h3 className="onboarding-option-title payment-card-title" style={{ color: '#68FF00', margin: 0 }}>{plan.title}</h3>
+          <FitTitle>{plan.title}</FitTitle>
         </div>
         <p className="payment-card-price" style={{ color: '#d4d4d4', marginBottom: plan.details ? '0.5rem' : 0 }}>{plan.description}</p>
         {plan.details && (
@@ -172,19 +199,19 @@ const Payment = () => {
               </Col>
             ))}
           </Row>
+
+          {/* Under Monthly Subscription so it sits beside Pay Up Front on desktop. */}
+          <h2 className="subsection-title" style={{ color: '#68FF00', marginTop: '0.5rem', marginBottom: '1.25rem' }}>
+            Hosting &amp; Support
+          </h2>
+          <Row className="payment-row">
+            {supportPlans.map((plan) => (
+              <Col xs={6} key={plan.title} className="payment-col">
+                <PlanCard plan={plan} />
+              </Col>
+            ))}
+          </Row>
         </Col>
-      </Row>
-
-      <h2 className="subsection-title" style={{ color: '#68FF00', marginTop: '1.5rem', marginBottom: '1.5rem' }}>
-        Hosting &amp; Support
-      </h2>
-
-      <Row className="payment-row">
-        {supportPlans.map((plan) => (
-          <Col xs={6} md={3} key={plan.title} className="payment-col">
-            <PlanCard plan={plan} />
-          </Col>
-        ))}
       </Row>
 
       {/* Same bottom link as the agreement page. */}
