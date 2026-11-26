@@ -587,6 +587,9 @@ button:disabled {
 .payment-card .card-body{
   padding: 1rem 0.85rem;
 }
+.payment-card-details li{
+  white-space: nowrap;
+}
 .payment-card-details{
   font-size: 0.9rem;
 }

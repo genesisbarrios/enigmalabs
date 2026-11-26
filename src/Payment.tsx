@@ -66,7 +66,7 @@ const subscriptionPlans: Plan[] = [
   {
     title: '10-Page Website',
     description: '$200/mo',
-    details: ['24/7 support', 'Unlimited edits', 'Hosting & built-in CRM'],
+    details: ['24/7 support & unlimited edits', 'Hosting & built-in CRM'],
     url: 'https://buy.stripe.com/5kQ6oA5vF8c6g6v8gF33W00'
   },
   {
@@ -92,6 +92,34 @@ const supportPlans: Plan[] = [
 
 // Card titles stay on one line: start from the stylesheet size and step the
 // font down until the title fits its card (re-checked on resize).
+// Bullet list where every line stays on one line: the whole list steps its
+// font down together until the longest bullet fits the card.
+const FitList = ({ items }: { items: string[] }) => {
+  const ref = useRef<HTMLUListElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const fit = () => {
+      el.style.fontSize = '';
+      let size = parseFloat(getComputedStyle(el).fontSize);
+      const overflows = () => Array.from(el.children).some((li) => li.scrollWidth > li.clientWidth);
+      while (overflows() && size > 9) {
+        size -= 0.5;
+        el.style.fontSize = `${size}px`;
+      }
+    };
+    fit();
+    const observer = new ResizeObserver(fit);
+    observer.observe(el.parentElement || el);
+    return () => observer.disconnect();
+  }, [items]);
+  return (
+    <ul ref={ref} className="payment-card-details" style={{ color: '#a3a3a3', paddingLeft: '1.1rem', marginBottom: 0 }}>
+      {items.map((d) => <li key={d}>{d}</li>)}
+    </ul>
+  );
+};
+
 const FitTitle = ({ children }: { children: string }) => {
   const ref = useRef<HTMLHeadingElement>(null);
   useLayoutEffect(() => {
@@ -127,9 +155,7 @@ const PlanCard = ({ plan }: { plan: Plan }) => {
         </div>
         <p className="payment-card-price" style={{ color: '#d4d4d4', marginBottom: plan.details ? '0.5rem' : 0 }}>{plan.description}</p>
         {plan.details && (
-          <ul className="payment-card-details" style={{ color: '#a3a3a3', paddingLeft: '1.1rem', marginBottom: 0 }}>
-            {plan.details.map((d) => <li key={d}>{d}</li>)}
-          </ul>
+          <FitList items={plan.details} />
         )}
         {!plan.url && <p style={{ color: '#a3a3a3', fontSize: '0.85rem', marginBottom: 0 }}>Payment link coming soon</p>}
       </Card.Body>
@@ -189,23 +215,22 @@ const Payment = () => {
               </Col>
             ))}
           </Row>
-        </Col>
-        <Col xs={12} md={6}>
-          <h2 className="subsection-title payment-monthly-title" style={{ color: '#68FF00', marginBottom: '1.25rem' }}>Monthly Subscription</h2>
-          <Row className="payment-row">
-            {subscriptionPlans.map((plan) => (
-              <Col xs={6} key={plan.title} className="payment-col">
-                <PlanCard plan={plan} />
-              </Col>
-            ))}
-          </Row>
 
-          {/* Under Monthly Subscription so it sits beside Pay Up Front on desktop. */}
           <h2 className="subsection-title" style={{ color: '#68FF00', marginTop: '0.5rem', marginBottom: '1.25rem' }}>
             Hosting &amp; Support
           </h2>
           <Row className="payment-row">
             {supportPlans.map((plan) => (
+              <Col xs={6} key={plan.title} className="payment-col">
+                <PlanCard plan={plan} />
+              </Col>
+            ))}
+          </Row>
+        </Col>
+        <Col xs={12} md={6}>
+          <h2 className="subsection-title payment-monthly-title" style={{ color: '#68FF00', marginBottom: '1.25rem' }}>Monthly Subscription</h2>
+          <Row className="payment-row">
+            {subscriptionPlans.map((plan) => (
               <Col xs={6} key={plan.title} className="payment-col">
                 <PlanCard plan={plan} />
               </Col>
