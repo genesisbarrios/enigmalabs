@@ -145,15 +145,19 @@ const FitTitle = ({ children }: { children: string }) => {
   );
 };
 
-const PlanCard = ({ plan }: { plan: Plan }) => {
+// inlinePrice puts the price on the title line (monthly cards), so the card is shorter.
+const PlanCard = ({ plan, inlinePrice = false }: { plan: Plan; inlinePrice?: boolean }) => {
   const body = (
     <Card style={plan.url ? optionCardStyle : disabledCardStyle} className={`payment-card${plan.url ? ' onboarding-option-card' : ''}`}>
       <Card.Body>
         <div className="payment-card-head">
           <PaymentIcon />
           <FitTitle>{plan.title}</FitTitle>
+          {inlinePrice && <span className="payment-card-price payment-card-price--inline">{plan.description}</span>}
         </div>
-        <p className="payment-card-price" style={{ color: '#d4d4d4', marginBottom: plan.details ? '0.5rem' : 0 }}>{plan.description}</p>
+        {!inlinePrice && (
+          <p className="payment-card-price" style={{ color: '#d4d4d4', marginBottom: plan.details ? '0.5rem' : 0 }}>{plan.description}</p>
+        )}
         {plan.details && (
           <FitList items={plan.details} />
         )}
@@ -215,22 +219,22 @@ const Payment = () => {
               </Col>
             ))}
           </Row>
+        </Col>
+        <Col xs={12} md={6}>
+          <h2 className="subsection-title payment-monthly-title" style={{ color: '#68FF00', marginBottom: '1.25rem' }}>Monthly Subscription</h2>
+          <Row className="payment-row">
+            {subscriptionPlans.map((plan) => (
+              <Col xs={6} key={plan.title} className="payment-col">
+                <PlanCard plan={plan} inlinePrice />
+              </Col>
+            ))}
+          </Row>
 
           <h2 className="subsection-title" style={{ color: '#68FF00', marginTop: '0.5rem', marginBottom: '1.25rem' }}>
             Hosting &amp; Support
           </h2>
           <Row className="payment-row">
             {supportPlans.map((plan) => (
-              <Col xs={6} key={plan.title} className="payment-col">
-                <PlanCard plan={plan} />
-              </Col>
-            ))}
-          </Row>
-        </Col>
-        <Col xs={12} md={6}>
-          <h2 className="subsection-title payment-monthly-title" style={{ color: '#68FF00', marginBottom: '1.25rem' }}>Monthly Subscription</h2>
-          <Row className="payment-row">
-            {subscriptionPlans.map((plan) => (
               <Col xs={6} key={plan.title} className="payment-col">
                 <PlanCard plan={plan} />
               </Col>

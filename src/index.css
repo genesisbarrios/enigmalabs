@@ -568,6 +568,12 @@ button:disabled {
 .payment-col{
   margin-bottom: 1.5rem;
 }
+.payment-card-price--inline{
+  flex-shrink: 0;
+  color: #d4d4d4;
+  margin-left: auto;
+  white-space: nowrap;
+}
 .payment-card-head{
   display: flex;
   align-items: center;
